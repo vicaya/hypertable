@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2008 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -20,57 +20,54 @@
  */
 
 #include "Common/Compat.h"
-#include "MasterMetaLogEntryFactory.h"
+#include "MasterMetaLogEntries.h"
 
-using namespace std;
+namespace Hypertable { namespace MetaLogEntryFactory {
 
-namespace Hypertable {
-namespace MetaLogEntryFactory {
+using namespace MasterTxn;
 
-MetaLogEntry *
-new_m_load_range_start(const TableIdentifier &, const RangeSpec &,
-                       const RangeState &, const char *rs_to) {
-  // TODO
-  return NULL;
+MetaLogEntry *new_master_server_joined(const String &loc) {
+  return new ServerJoined(loc);
+}
+
+MetaLogEntry *new_master_server_left(const String &loc) {
+  return new ServerLeft(loc);
+}
+
+MetaLogEntry *new_master_server_removed(const String &loc) {
+  return new ServerRemoved(loc);
 }
 
 MetaLogEntry *
-new_m_load_range_done(const TableIdentifier &, const RangeSpec &) {
-  // TODO
-  return NULL;
+new_master_range_assigned(const TableIdentifier &tid, const RangeSpec &rspec,
+                          const String &log, uint64_t sl,
+                          const String &loc) {
+  return new RangeAssigned(tid, rspec, log, sl, loc);
 }
 
 MetaLogEntry *
-new_m_move_range_start(const TableIdentifier &, const RangeSpec &,
-                       const RangeState &, const char *rs_from,
-                       const char * rs_to) {
-  // TODO
-  return NULL;
+new_master_range_loaded(const TableIdentifier &tid, const RangeSpec &rspec,
+                        const String &loc) {
+  return new RangeLoaded(tid, rspec, loc);
 }
 
 MetaLogEntry *
-new_m_move_range_done(const TableIdentifier &, const RangeSpec &) {
-  // TODO
-  return NULL;
+new_from_payload(MasterMetaLogEntryType t, int64_t timestamp,
+                 StaticBuffer &buf) {
+  MetaLogEntry *p = 0;
+
+  switch (t) {
+    case MASTER_SERVER_JOINED:  p = new ServerJoined();     break;
+    case MASTER_SERVER_LEFT:    p = new ServerLeft();       break;
+    case MASTER_SERVER_REMOVED: p = new ServerRemoved();    break;
+    case MASTER_RANGE_ASSIGNED: p = new RangeAssigned();    break;
+    case MASTER_RANGE_LOADED:   p = new RangeLoaded();      break;
+    case MASTER_LOG_RECOVER:    p = new MmlRecover();       break;
+    default: HT_THROWF(Error::METALOG_ENTRY_BAD_TYPE, "unknown type (%d)", t);
+  }
+  p->timestamp = timestamp;
+  p->read(buf);
+  return p;
 }
 
-MetaLogEntry *
-new_m_recovery_start(const char *rs_from) {
-  // TODO
-  return NULL;
-}
-
-MetaLogEntry *
-new_m_recovery_done(const char *rs_from) {
-  // TODO
-  return NULL;
-}
-
-MetaLogEntry *
-new_from_payload(MasterMetaLogEntryType, uint64_t ts, StaticBuffer &) {
-  // TODO
-  return NULL;
-}
-
-} // namespace MetaLogEntryFactory
-} // namespace Hypertable
+}} // namespace Hypertable::MetaLogEntryFactory

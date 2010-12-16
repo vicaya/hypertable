@@ -46,7 +46,7 @@ struct OrderByTimestamp {
 } // local namespace
 
 RangeServerMetaLog::RangeServerMetaLog(Filesystem *fs, const String &path)
-    : Parent(fs, path) {
+  : Parent(fs, path, "rsml_backup") {
 
   while (fd() == -1) {
     HT_DEBUG_OUT << path <<" exists, recovering..."<< HT_END;

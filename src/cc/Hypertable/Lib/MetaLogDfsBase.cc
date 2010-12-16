@@ -52,11 +52,11 @@ namespace {
   };
 } // local namespace
 
-MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path)
+MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path, const String &backup_dir)
   : m_fd(-1), m_fs(fs), m_path(path), m_fileno(-1) {
   HT_EXPECT(Config::properties, Error::FAILED_EXPECTATION);
   Path data_dir = Config::properties->get_str("Hypertable.DataDirectory"); 
-  m_backup_path = (data_dir /= "/run/rsml_backup").string(); 
+  m_backup_path = (data_dir /= "/run/" + backup_dir).string(); 
   if (!FileUtils::exists(m_backup_path))
     FileUtils::mkdirs(m_backup_path);
   find_or_create_file();
@@ -88,7 +88,7 @@ void MetaLogDfsBase::get_filename() {
         break;
     }
     if (*ptr != 0) {
-      HT_WARNF("Invalid RSML file name encountered '%s', skipping...",
+      HT_WARNF("Invalid META LOG file name encountered '%s', skipping...",
                listing[i].c_str());
       continue;
     }

@@ -22,7 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/Time.h"
 #include "RangeServerMetaLogEntries.h"
-//#include "MasterMetaLogEntries.h"
+#include "MasterMetaLogEntries.h"
 
 #define R_CAST_AND_OUTPUT(_type_, _ep_, _out_) \
   _type_ *sp = (_type_ *)_ep_; _out_ <<'{'<< #_type_ <<": timestamp='" \
@@ -67,6 +67,34 @@ operator<<(std::ostream &out, const MetaLogEntry *ep) {
     } break;
     case RS_LOG_RECOVER: {
       out << "{RsmlRecover: timestamp='" << hires_ts_date << "'}";
+    } break;
+    case MASTER_SERVER_JOINED: {
+      out << "{ServerJoined: timestamp='" << hires_ts_date 
+          << "' location='" << ((MasterTxn::ServerJoined *)ep)->location << "'}";
+    } break;
+    case MASTER_SERVER_LEFT: {
+      out << "{ServerLeft: timestamp='" << hires_ts_date 
+          << "' location='" << ((MasterTxn::ServerLeft *)ep)->location << "'}";
+    } break;
+    case MASTER_SERVER_REMOVED: {
+      out << "{ServerRemoved: timestamp='" << hires_ts_date 
+          << "' location='" << ((MasterTxn::ServerRemoved *)ep)->location << "'}";
+    } break;
+    case MASTER_RANGE_ASSIGNED: {
+      MasterTxn::RangeAssigned *sp = (MasterTxn::RangeAssigned *)ep;
+      out << "{RangeAssigned: timestamp='" << hires_ts_date 
+          <<"' table="<< sp->table <<" range="<< sp->range
+          <<"' transfer_log='" << sp->transfer_log << "' soft_limit="
+          << sp->soft_limit << " location='" << sp->location << "'}";
+    } break;
+    case MASTER_RANGE_LOADED: {
+      MasterTxn::RangeLoaded *sp = (MasterTxn::RangeLoaded *)ep;
+      out << "{RangeLoaded: timestamp='" << hires_ts_date 
+          <<"' table="<< sp->table <<" range="<< sp->range 
+          <<"' location='" << sp->location << "'}";
+    } break;
+    case MASTER_LOG_RECOVER: {
+      out << "{MmlRecover: timestamp='" << hires_ts_date << "'}";
     } break;
     default: out <<"{UnknownEntry("<< ep->get_type() <<")}";
   }

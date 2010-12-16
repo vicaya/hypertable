@@ -1,0 +1,44 @@
+testdir=/mmltest000065379
+Log entries:
+{MmlRecover: timestamp='2010-12-16 05:12:24.484683000'}
+{ServerJoined: timestamp='2010-12-16 05:12:24.484722000' location='rs8'}
+{ServerJoined: timestamp='2010-12-16 05:12:24.484734000' location='rs1'}
+{ServerJoined: timestamp='2010-12-16 05:12:24.484745000' location='rs7'}
+{ServerJoined: timestamp='2010-12-16 05:12:24.484757000' location='rs3'}
+{ServerJoined: timestamp='2010-12-16 05:12:24.484768000' location='rs2'}
+{ServerJoined: timestamp='2010-12-16 05:12:24.484779000' location='rs6'}
+{ServerJoined: timestamp='2010-12-16 05:12:24.484791000' location='rs4'}
+{ServerJoined: timestamp='2010-12-16 05:12:24.484802000' location='rs5'}
+{RangeAssigned: timestamp='2010-12-16 05:12:24.484816000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='A' end='B'}' transfer_log='/logs/1' soft_limit=1234 location='rs3'}
+{ServerLeft: timestamp='2010-12-16 05:12:24.484842000' location='rs3'}
+{RangeAssigned: timestamp='2010-12-16 05:12:24.484856000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='B' end='C'}' transfer_log='/logs/2' soft_limit=2345 location='rs6'}
+{RangeAssigned: timestamp='2010-12-16 05:12:24.484908000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='C' end='D'}' transfer_log='/logs/3' soft_limit=3456 location='rs7'}
+{ServerLeft: timestamp='2010-12-16 05:12:24.484924000' location='rs1'}
+{RangeLoaded: timestamp='2010-12-16 05:12:24.484937000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='B' end='C'}' location='rs6'}
+{ServerLeft: timestamp='2010-12-16 05:12:24.484951000' location='rs5'}
+{ServerRemoved: timestamp='2010-12-16 05:12:24.484964000' location='rs5'}
+Range states:
+{ServerStateInfo: location=rs1
+  transactions=[
+    {ServerLeft: timestamp='2010-12-16 05:12:24.486142000' location='rs1'}
+  ]
+}
+{ServerStateInfo: location=rs2
+}
+{ServerStateInfo: location=rs3
+  transactions=[
+    {RangeAssigned: timestamp='2010-12-16 05:12:24.486153000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='A' end='B'}' transfer_log='/logs/1' soft_limit=1234 location='rs3'}
+    {ServerLeft: timestamp='2010-12-16 05:12:24.486172000' location='rs3'}
+  ]
+}
+{ServerStateInfo: location=rs4
+}
+{ServerStateInfo: location=rs6
+}
+{ServerStateInfo: location=rs7
+  transactions=[
+    {RangeAssigned: timestamp='2010-12-16 05:12:24.486181000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='C' end='D'}' transfer_log='/logs/3' soft_limit=3456 location='rs7'}
+  ]
+}
+{ServerStateInfo: location=rs8
+}

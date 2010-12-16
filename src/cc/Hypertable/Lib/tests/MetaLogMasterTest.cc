@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2010 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -20,24 +20,31 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/FileUtils.h"
 #include "Common/Init.h"
+#include "Common/InetAddr.h"
+#include "Common/StringExt.h"
 #include <iostream>
+#include <fstream>
+#include "DfsBroker/Lib/Client.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/ReactorFactory.h"
+#include "AsyncComm/ConnectionManager.h"
 #include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/MasterMetaLog.h"
 #include "Hypertable/Lib/MasterMetaLogEntryFactory.h"
 #include "Hypertable/Lib/MasterMetaLogReader.h"
+#include "Hypertable/Lib/MasterMetaLog.h"
 
 using namespace Hypertable;
-using namespace MetaLogEntryFactory;
 using namespace Config;
+using namespace MetaLogEntryFactory;
 
 namespace {
 
-struct MyPolicy : Config::Policy {
+struct MyPolicy : Policy {
   static void init_options() {
-    Config::cmdline_desc().add_options()
+    cmdline_desc().add_options()
       ("save,s", "Don't delete generated the log files")
-      ("no-diff,n", "Don't compare with golden files yet")
       ;
   }
 };
@@ -45,24 +52,128 @@ struct MyPolicy : Config::Policy {
 typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
 
 void
-write_test() {
-  MasterMetaLogPtr metalog(new MasterMetaLog(NULL, "/test/master.log"));
-  MetaLogEntryPtr log_entry(new_m_recovery_start("test_rs"));
+write_test(Filesystem *fs, const String &fname) {
+  MasterMetaLogPtr metalog = new MasterMetaLog(fs, fname);
 
-  metalog->write(log_entry.get());
-  metalog->close();
+  TableIdentifier table("1");
+
+  metalog->log_server_joined("rs8");
+  metalog->log_server_joined("rs1");
+  metalog->log_server_joined("rs7");
+  metalog->log_server_joined("rs3");
+  metalog->log_server_joined("rs2");
+  metalog->log_server_joined("rs6");
+  metalog->log_server_joined("rs4");
+  metalog->log_server_joined("rs5");
+
+  RangeSpec r1("A", "B");
+  metalog->log_range_assigned(table, r1, "/logs/1", 1234, "rs3");
+  metalog->log_server_left("rs3");
+
+  RangeSpec r2("B", "C");
+  metalog->log_range_assigned(table, r2, "/logs/2", 2345, "rs6");
+
+  RangeSpec r3("C", "D");
+  metalog->log_range_assigned(table, r3, "/logs/3", 3456, "rs7");
+  
+  metalog->log_server_left("rs1");
+
+  metalog->log_range_loaded(table, r2, "rs6");
+
+  metalog->log_server_left("rs5");
+  metalog->log_server_removed("rs5");
+
 }
 
 void
-read_test() {
-  MasterMetaLogReaderPtr reader(
-      new MasterMetaLogReader(NULL, "/test/master.log"));
-  MetaLogEntryPtr log_entry = reader->read();
-  const MasterStates &mstates = reader->load_master_states();
+read_states(Filesystem *fs, const String &fname, std::ostream &out) {
+  MasterMetaLogReaderPtr reader = new MasterMetaLogReader(fs, fname);
 
-  foreach(const MasterStateInfo *i, mstates)
-    std::cout << *i << std::endl;
+  out <<"Log entries:\n";
+
+  MetaLogEntryPtr entry;
+
+  while ((entry = reader->read()))
+    out << entry.get() <<"\n";
+
+  out <<"Range states:\n";
+
+  const ServerStates &sstates = reader->load_server_states();
+
+  foreach(ServerStateInfo *i, sstates) {
+    i->timestamp = 0;
+    out << *i;
+  }
 }
+
+void
+write_more(Filesystem *fs, const String &fname) {
+  MasterMetaLogPtr metalog = new MasterMetaLog(fs, fname);
+
+  TableIdentifier table("1");
+
+  metalog->log_server_joined("rs9");
+  metalog->log_server_joined("rs11");
+  metalog->log_server_joined("rs12");
+  metalog->log_server_joined("rs10");
+
+  RangeSpec r1("E", "F");
+  metalog->log_range_assigned(table, r1, "/logs/4", 4567, "rs11");
+  metalog->log_server_left("rs7");
+
+  RangeSpec r2("F", "G");
+  metalog->log_range_assigned(table, r2, "/logs/5", 5678, "rs4");
+
+  RangeSpec r3("G", "H");
+  metalog->log_range_assigned(table, r3, "/logs/6", 6789, "rs7");
+  metalog->log_range_loaded(table, r3, "rs7");
+
+  metalog->log_range_loaded(table, r1, "rs11");
+  
+  metalog->log_server_left("rs10");
+
+}
+
+void
+restart_test(Filesystem *fs, const String &fname) {
+  write_more(fs, fname);
+  std::ofstream out("mmltest2.out");
+  read_states(fs, fname, out);
+}
+
+void
+write_more_again(Filesystem *fs, const String &fname) {
+  MasterMetaLogPtr metalog = new MasterMetaLog(fs, fname);
+
+  TableIdentifier table("1");
+
+  metalog->log_server_joined("rs15");
+  metalog->log_server_joined("rs14");
+  metalog->log_server_joined("rs16");
+  metalog->log_server_joined("rs13");
+
+  RangeSpec r1("H", "I");
+  metalog->log_range_assigned(table, r1, "/logs/7", 7891, "rs16");
+  metalog->log_server_left("rs11");
+
+  RangeSpec r2("I", "J");
+  metalog->log_range_assigned(table, r2, "/logs/8", 8912, "rs13");
+
+  RangeSpec r3("J", "K");
+  metalog->log_range_assigned(table, r3, "/logs/9", 9123, "rs1");
+  metalog->log_range_loaded(table, r2, "rs13");
+
+  metalog->log_server_removed("rs11");
+
+}
+
+void
+restart_test_again(Filesystem *fs, const String &fname) {
+  write_more_again(fs, fname);
+  std::ofstream out("mmltest3.out");
+  read_states(fs, fname, out);
+}
+
 
 } // local namespace
 
@@ -70,9 +181,75 @@ int
 main(int ac, char *av[]) {
   try {
     init_with_policies<Policies>(ac, av);
-    //TODO
-    //write_test();
-    //read_test();
+
+    int timeout = has("dfs-timeout") ? get_i32("dfs-timeout") : 180000;
+    String host = get_str("dfs-host");
+    uint16_t port = get_i16("dfs-port");
+
+    DfsBroker::Client *client = new DfsBroker::Client(host, port, timeout);
+
+    if (!client->wait_for_connection(timeout)) {
+      HT_ERROR_OUT <<"Unable to connect to DFS: "<< host <<':'<< port << HT_END;
+      return 1;
+    }
+
+    String testdir;
+
+    {
+      std::ofstream out("mmltest.out");
+
+      testdir = format("/mmltest%09d", (int)getpid());
+      client->mkdirs(testdir);
+
+      out <<"testdir="<< testdir <<'\n';
+      write_test(client, testdir);
+      read_states(client, testdir, out);
+      out << std::flush;
+    }
+
+    HT_ASSERT(FileUtils::size("mmltest.out") == FileUtils::size("mmltest.golden"));
+
+    restart_test(client, testdir);
+
+    HT_ASSERT(FileUtils::size("mmltest2.out") == FileUtils::size("mmltest2.golden"));
+
+    restart_test_again(client, testdir);
+
+    HT_ASSERT(FileUtils::size("mmltest3.out") == FileUtils::size("mmltest3.golden"));
+
+    // Now created a truncated MML file '3'
+    String source_file = testdir;
+    source_file += String("/") + 2;
+    int64_t log_size = client->length(source_file) / 2;
+
+    String dest_file = testdir;
+    dest_file += String("/") + 3;
+
+    StaticBuffer sbuf(log_size);
+
+    int src_fd = client->open(source_file);
+    client->read(src_fd, sbuf.base, log_size);
+    client->close(src_fd);
+
+    int dst_fd = client->create(dest_file, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
+    client->append(dst_fd, sbuf, Filesystem::O_FLUSH);
+    client->close(dst_fd);
+
+    // Now read the MML and 
+    {
+      MasterMetaLogPtr ml = new MasterMetaLog(client, testdir);
+
+      {
+        std::ofstream out("mmltest4.out");
+        read_states(client, testdir, out);
+      }
+
+      // size of mml dump should be same as the last one
+      HT_ASSERT(FileUtils::size("mmltest4.out") == FileUtils::size("mmltest3.golden"));
+    }
+
+    if (!has("save"))
+      client->rmdir(testdir);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

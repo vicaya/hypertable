@@ -36,6 +36,18 @@ const char *TableIdentifier::METADATA_ID = "0/0";
 const char *TableIdentifier::METADATA_NAME= "sys/METADATA";
 const int TableIdentifier::METADATA_ID_LENGTH = 3;
 
+bool TableIdentifier::operator==(const TableIdentifier &other) const {
+  if (strcmp(id, other.id) ||
+      generation != other.generation)
+    return false;
+  return true;
+}
+
+bool TableIdentifier::operator!=(const TableIdentifier &other) const {
+  return !(*this == other);
+}
+
+
 size_t TableIdentifier::encoded_length() const {
   return 4 + encoded_length_vstr(id);
 }
@@ -49,6 +61,30 @@ void TableIdentifier::decode(const uint8_t **bufp, size_t *remainp) {
   HT_TRY("decoding table identitier",
     id = decode_vstr(bufp, remainp);
     generation = decode_i32(bufp, remainp));
+}
+
+bool RangeSpec::operator==(const RangeSpec &other) const {
+  if (start_row == 0 || other.start_row == 0) {
+    if (start_row != other.start_row)
+      return false;
+  }
+  else {
+    if (strcmp(start_row, other.start_row))
+      return false;
+  }
+  if (end_row == 0 || other.end_row == 0) {
+    if (end_row != other.end_row)
+      return false;
+  }
+  else {
+    if (strcmp(end_row, other.end_row))
+      return false;
+  }
+  return true;
+}
+
+bool RangeSpec::operator!=(const RangeSpec &other) const {
+  return !(*this == other);
 }
 
 size_t RangeSpec::encoded_length() const {

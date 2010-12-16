@@ -44,6 +44,9 @@ namespace Hypertable {
     TableIdentifier(const uint8_t **bufp, size_t *remainp) {
       decode(bufp, remainp);
     }
+    bool operator==(const TableIdentifier &other) const;
+    bool operator!=(const TableIdentifier &other) const;
+
     bool is_metadata() const { return !strcmp(id, METADATA_ID); }
 
     uint32_t index() {
@@ -130,6 +133,8 @@ namespace Hypertable {
     RangeSpec(const char *start, const char *end)
         : start_row(start), end_row(end) {}
     RangeSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
+    bool operator==(const RangeSpec &other) const;
+    bool operator!=(const RangeSpec &other) const;
 
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;

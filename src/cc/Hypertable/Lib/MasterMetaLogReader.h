@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2008 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,29 +25,42 @@
 #include "Common/String.h"
 #include "MetaLogReaderDfsBase.h"
 
+#include <list>
+
 namespace Hypertable {
 
-struct MasterStateInfo {
-  String range_server_to_recover;
-  MetaLogEntries transactions;
+struct ServerStateInfo {
+  ServerStateInfo(const String &loc, uint64_t ts)
+    : location(loc), timestamp(ts) {}
+
+  ServerStateInfo(const String &loc)
+    : location(loc) { }
+
+  String location;
+  int64_t timestamp; // time when the range is loaded
+  std::list<MetaLogEntryPtr> transactions; // log entries associated with current txn
 };
 
-std::ostream &operator<<(std::ostream &, const MasterStateInfo &);
+std::ostream &operator<<(std::ostream &, const ServerStateInfo &);
 
-typedef std::vector<MasterStateInfo *> MasterStates;
+typedef std::vector<ServerStateInfo *> ServerStates;
 
 class MasterMetaLogReader : public MetaLogReaderDfsBase {
 public:
-  MasterMetaLogReader(Filesystem *, const String& path);
+  typedef MetaLogReaderDfsBase Parent;
 
-  virtual ScanEntry *next(ScanEntry &);
+  MasterMetaLogReader(Filesystem *, const String& path);
+  virtual ~MasterMetaLogReader();
+
   virtual MetaLogEntry *read();
 
-  const MasterStates &load_master_states(bool force = false);
+  const ServerStates &load_server_states(bool force = false);
 
 private:
-  MasterStates m_master_states;
+  ServerStates m_server_states;
+  MetaLogEntries m_log_entries;
 };
+
 typedef intrusive_ptr<MasterMetaLogReader> MasterMetaLogReaderPtr;
 
 } // namespace Hypertable

@@ -67,8 +67,9 @@ RangeServerMetaLog.cc
 RangeServerMetaLogReader.cc
 MetaLogEntryBase.cc
 RangeServerMetaLogEntries.cc
-MasterMetaLogEntryFactory.cc
 MasterMetaLog.cc
+MasterMetaLogEntries.cc
+MasterMetaLogEntryFactory.cc
 MasterMetaLogReader.cc
 RangeLocator.cc
 RangeServerClient.cc
@@ -222,6 +223,12 @@ configure_file(${SRC_DIR}/rsmltest2.golden ${DST_DIR}/rsmltest2.golden
                COPYONLY)
 configure_file(${SRC_DIR}/rsmltest3.golden ${DST_DIR}/rsmltest3.golden
                COPYONLY)
+configure_file(${SRC_DIR}/mmltest.golden ${DST_DIR}/mmltest.golden
+               COPYONLY)
+configure_file(${SRC_DIR}/mmltest2.golden ${DST_DIR}/mmltest2.golden
+               COPYONLY)
+configure_file(${SRC_DIR}/mmltest3.golden ${DST_DIR}/mmltest3.golden
+               COPYONLY)
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
 configure_file (${SRC_DIR}/MutatorNoLogSyncTest.cfg ${DST_DIR}/MutatorNoLogSyncTest.cfg)
@@ -237,7 +244,7 @@ add_test(BlockCompressor-NONE compressor_test none)
 add_test(BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test(BlockCompressor-ZLIB compressor_test zlib)
 add_test(CommitLog commit_log_test)
-#add_test(MetaLog-Master metalog_master_test)
+add_test(MetaLog-Master metalog_master_test)
 add_test(MetaLog-RangeServer metalog_rs_test)
 add_test(Client-large-block large_insert_test)
 add_test(Client-row-delete row_delete_test)

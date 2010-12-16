@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2008 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_MASTER_METALOG_ENTRY_FACTORY_H
 #define HYPERTABLE_MASTER_METALOG_ENTRY_FACTORY_H
 
+#include <Common/String.h>
 #include "Types.h"
 #include "RangeState.h"
 #include "MetaLog.h"
@@ -29,38 +30,33 @@
 namespace Hypertable { namespace MetaLogEntryFactory {
 
 enum MasterMetaLogEntryType {
-  M_LOAD_RANGE_START    = 101,
-  M_LOAD_RANGE_DONE     = 102,
-  M_MOVE_RANGE_START    = 103,
-  M_MOVE_RANGE_DONE     = 104,
-  M_RECOVERY_START      = 105,
-  M_RECOVERY_DONE       = 106
+  MASTER_SERVER_JOINED  = 101,
+  MASTER_SERVER_LEFT    = 102,
+  MASTER_SERVER_REMOVED = 103,
+  MASTER_RANGE_ASSIGNED = 104,
+  MASTER_RANGE_LOADED   = 105,
+  MASTER_LOG_RECOVER    = 106
 };
 
-MetaLogEntry *
-new_m_load_range_start(const TableIdentifier &, const RangeSpec &,
-                       const RangeState &, const char *rs_to);
+MetaLogEntry *new_master_server_joined(const String &loc);
+
+MetaLogEntry *new_master_server_left(const String &loc);
+
+MetaLogEntry *new_master_server_removed(const String &loc);
 
 MetaLogEntry *
-new_m_load_range_done(const TableIdentifier &, const RangeSpec &);
+new_master_range_assigned(const TableIdentifier &tid, const RangeSpec &rspec,
+                          const String &log, uint64_t sl,
+                          const String &loc);
 
 MetaLogEntry *
-new_m_move_range_start(const TableIdentifier &, const RangeSpec &,
-                       const RangeState &, const char *rs_from,
-                       const char *rs_to);
-MetaLogEntry *
-new_m_move_range_done(const TableIdentifier &, const RangeSpec &);
+new_master_range_loaded(const TableIdentifier &tid, const RangeSpec &rspec,
+                        const String &loc);
 
 MetaLogEntry *
-new_m_recovery_start(const char *rs_from);
+new_from_payload(MasterMetaLogEntryType, int64_t timestamp,
+                 StaticBuffer &);
 
-MetaLogEntry *
-new_m_recovery_done(const char *rs_from);
-
-MetaLogEntry *
-new_from_payload(MasterMetaLogEntryType, int64_t timestamp, StaticBuffer &);
-
-
-}}  // namespace Hypertable::MetaLogEntryFactory
+}} // namespace Hypertable::MetaLogEntryFactory
 
 #endif // HYPERTABLE_MASTER_METALOG_ENTRY_FACTORY_H
