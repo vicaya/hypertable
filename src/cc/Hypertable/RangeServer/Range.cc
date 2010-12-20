@@ -856,8 +856,9 @@ void Range::split_notify_master() {
       soft_limit = Global::range_split_size;
   }
 
-  m_master_client->report_split(&m_identifier, range,
-                                m_state.transfer_log, soft_limit);
+  m_master_client->move_range(&m_identifier, range,
+                              m_state.transfer_log,
+                              soft_limit, true);
 
   /**
    * NOTE: try the following crash and make sure that the master does

@@ -29,7 +29,7 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "Master.h"
-#include "RequestHandlerReportSplit.h"
+#include "RequestHandlerMoveRange.h"
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -37,7 +37,7 @@ using namespace Serialization;
 /**
  *
  */
-void RequestHandlerReportSplit::run() {
+void RequestHandlerMoveRange::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
   const uint8_t *decode_ptr = m_event_ptr->payload;
   size_t decode_remain = m_event_ptr->payload_len;
@@ -47,11 +47,13 @@ void RequestHandlerReportSplit::run() {
     RangeSpec range(&decode_ptr, &decode_remain);
     const char *log_dir = decode_vstr(&decode_ptr, &decode_remain);
     uint64_t soft_limit = decode_i64(&decode_ptr, &decode_remain);
+    HT_ASSERT(decode_remain == 1);
+    bool split = *decode_ptr ? true : false;
 
-    m_master->report_split(&cb, table, range, log_dir, soft_limit);
+    m_master->move_range(&cb, table, range, log_dir, soft_limit, split);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    cb.error(e.code(), "Error handling ReportSplit message");
+    cb.error(e.code(), "Error handling MoveRange message");
   }
 }

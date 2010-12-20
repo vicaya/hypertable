@@ -801,16 +801,17 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
  * whole system to wedge under certain situations
  */
 void
-Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
-    const RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
+Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
+                   const RangeSpec &range, const char *transfer_log_dir,
+                   uint64_t soft_limit, bool split) {
   RangeServerClient rsc(m_conn_manager_ptr->get_comm());
   QualifiedRangeSpec fqr_spec(table, range);
   bool server_pinned = false;
   String location;
   CommAddress addr;
 
-  HT_INFOF("Entering report_split for %s[%s:%s].", table.id, range.start_row,
-           range.end_row);
+  HT_INFOF("Entering move_range for %s[%s:%s] (split=%d).", table.id, range.start_row,
+           range.end_row, (int)split);
 
   wait_for_root_metadata_server();
 
@@ -846,7 +847,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     RangeState range_state;
     range_state.soft_limit = soft_limit;
     rsc.load_range(addr, table, range, transfer_log_dir, range_state);
-    HT_INFOF("report_split for %s[%s:%s] successful.", table.id,
+    HT_INFOF("move_range for %s[%s:%s] successful.", table.id,
              range.start_row, range.end_row);
   }
   catch (Exception &e) {

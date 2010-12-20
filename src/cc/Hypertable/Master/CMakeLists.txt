@@ -34,9 +34,9 @@ RequestHandlerDropTable.cc
 RequestHandlerRenameTable.cc
 RequestHandlerDoMaintenance.cc
 RequestHandlerGetSchema.cc
+RequestHandlerMoveRange.cc
 RequestHandlerStatus.cc
 RequestHandlerRegisterServer.cc
-RequestHandlerReportSplit.cc
 RequestHandlerClose.cc
 RequestHandlerShutdown.cc
 ResponseCallbackGetSchema.cc

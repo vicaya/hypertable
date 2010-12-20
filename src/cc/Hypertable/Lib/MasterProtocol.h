@@ -41,7 +41,7 @@ namespace Hypertable {
     static const uint64_t COMMAND_GET_SCHEMA            = 1;
     static const uint64_t COMMAND_STATUS                = 2;
     static const uint64_t COMMAND_REGISTER_SERVER       = 3;
-    static const uint64_t COMMAND_REPORT_SPLIT          = 4;
+    static const uint64_t COMMAND_MOVE_RANGE            = 4;
     static const uint64_t COMMAND_DROP_TABLE            = 5;
     static const uint64_t COMMAND_ALTER_TABLE           = 6;
     static const uint64_t COMMAND_SHUTDOWN              = 7;
@@ -70,8 +70,9 @@ namespace Hypertable {
                                                    StatsSystem &system_stats);
 
     static CommBuf *
-    create_report_split_request(const TableIdentifier *, const RangeSpec &,
-        const String &transfer_log_dir, uint64_t soft_limit);
+    create_move_range_request(const TableIdentifier *, const RangeSpec &,
+                              const String &transfer_log_dir,
+                              uint64_t soft_limit, bool split);
     static CommBuf *create_rename_table_request(const String &old_name, const String &new_name);
     static CommBuf *create_drop_table_request(const String &table_name,
                                               bool if_exists);

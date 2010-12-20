@@ -274,20 +274,23 @@ void MasterClient::register_server(std::string &location, StatsSystem &system_st
 
 
 void
-MasterClient::report_split(TableIdentifier *table, RangeSpec &range,
-                           const String &log_dir, uint64_t soft_limit,
-                           DispatchHandler *handler, Timer *timer) {
-  CommBufPtr cbp(MasterProtocol::create_report_split_request(table, range, log_dir, soft_limit));
+MasterClient::move_range(TableIdentifier *table, RangeSpec &range,
+                         const String &log_dir, uint64_t soft_limit,
+                         bool split, DispatchHandler *handler, Timer *timer) {
+  CommBufPtr cbp(MasterProtocol::create_move_range_request(table, range, log_dir,
+                                                           soft_limit, split));
   send_message(cbp, handler, timer);
 }
 
 
 void
-MasterClient::report_split(TableIdentifier *table, RangeSpec &range,
-    const String &log_dir, uint64_t soft_limit, Timer *timer) {
+MasterClient::move_range(TableIdentifier *table, RangeSpec &range,
+                         const String &log_dir, uint64_t soft_limit,
+                         bool split, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(MasterProtocol::create_report_split_request(table, range, log_dir, soft_limit));
+  CommBufPtr cbp(MasterProtocol::create_move_range_request(table, range, log_dir,
+                                                           soft_limit, split));
 
   send_message(cbp, &sync_handler, timer);
 

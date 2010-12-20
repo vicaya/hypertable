@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_REQUESTHANDLERREPORTSPLIT_H
-#define HYPERTABLE_REQUESTHANDLERREPORTSPLIT_H
+#ifndef HYPERTABLE_REQUESTHANDLERMOVERANGE_H
+#define HYPERTABLE_REQUESTHANDLERMOVERANGE_H
 
 #include "Common/Runnable.h"
 
@@ -33,9 +33,9 @@ namespace Hypertable {
 
   class Master;
 
-  class RequestHandlerReportSplit : public ApplicationHandler {
+  class RequestHandlerMoveRange : public ApplicationHandler {
   public:
-    RequestHandlerReportSplit(Comm *comm, Master *master, EventPtr &event_ptr)
+    RequestHandlerMoveRange(Comm *comm, Master *master, EventPtr &event_ptr)
       : ApplicationHandler(event_ptr), m_comm(comm), m_master(master) { }
 
     virtual void run();
@@ -47,4 +47,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_REQUESTHANDLERREPORTSPLIT_H
+#endif // HYPERTABLE_REQUESTHANDLERMOVERANGE_H

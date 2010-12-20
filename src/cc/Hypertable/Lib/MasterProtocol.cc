@@ -103,16 +103,20 @@ namespace Hypertable {
   }
 
   CommBuf *
-  MasterProtocol::create_report_split_request(const TableIdentifier *table,
+  MasterProtocol::create_move_range_request(const TableIdentifier *table,
       const RangeSpec &range, const String &transfer_log_dir,
-      uint64_t soft_limit) {
-    CommHeader header(COMMAND_REPORT_SPLIT);
+      uint64_t soft_limit, bool split) {
+    CommHeader header(COMMAND_MOVE_RANGE);
     CommBuf *cbuf = new CommBuf(header, table->encoded_length()
-        + range.encoded_length() + encoded_length_vstr(transfer_log_dir) + 8);
+        + range.encoded_length() + encoded_length_vstr(transfer_log_dir) + 9);
     table->encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
     cbuf->append_vstr(transfer_log_dir);
     cbuf->append_i64(soft_limit);
+    if (split)
+      cbuf->append_byte(1);
+    else
+      cbuf->append_byte(0);
     return cbuf;
   }
 
