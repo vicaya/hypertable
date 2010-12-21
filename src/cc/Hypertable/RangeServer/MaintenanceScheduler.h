@@ -71,6 +71,7 @@ namespace Hypertable {
     int32_t m_maintenance_interval;
     boost::xtime m_last_maintenance;
     int64_t m_query_cache_memory;
+    int32_t m_low_memory_limit_percentage;
   };
 
   typedef intrusive_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;

@@ -58,6 +58,7 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPt
   // Setup to immediately schedule maintenance
   boost::xtime_get(&m_last_maintenance, TIME_UTC);
   m_last_maintenance.sec -= m_maintenance_interval / 1000;
+  m_low_memory_limit_percentage = get_i32("Hypertable.RangeServer.LowMemoryLimit.Percentage");
 }
 
 
@@ -77,7 +78,7 @@ void MaintenanceScheduler::schedule() {
     if (Global::maintenance_queue->pending() < Global::maintenance_queue->workers())
       m_scheduling_needed = true;
     int64_t excess = (memory_state.balance > Global::memory_limit) ? memory_state.balance - Global::memory_limit : 0;
-    memory_state.needed = ((Global::memory_limit * 10) / 100) + excess;
+    memory_state.needed = ((Global::memory_limit * m_low_memory_limit_percentage) / 100) + excess;
   }
 
   boost::xtime now;
