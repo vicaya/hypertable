@@ -79,7 +79,9 @@ namespace Hypertable {
       int16_t  maintenance_flags;
       uint64_t memory_used;
       uint64_t memory_allocated;
+      double compression_ratio;
       uint64_t disk_used;
+      uint64_t disk_estimate;
       uint64_t shadow_cache_memory;
       uint64_t block_index_memory;
       uint64_t bloom_filter_memory;

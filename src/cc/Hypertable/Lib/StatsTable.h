@@ -42,6 +42,7 @@ namespace Hypertable {
       cells_written = other.cells_written;
       bytes_written = other.bytes_written;
       disk_used = other.disk_used;
+      compression_ratio = other.compression_ratio;
       memory_used = other.memory_used;
       memory_allocated = other.memory_allocated;
       shadow_cache_memory = other.shadow_cache_memory;
@@ -65,6 +66,7 @@ namespace Hypertable {
     uint64_t cells_written;
     uint64_t bytes_written;
     uint64_t disk_used;
+    double compression_ratio;
     uint64_t memory_used;
     uint64_t memory_allocated;
     uint64_t shadow_cache_memory;

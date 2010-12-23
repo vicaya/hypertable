@@ -2059,7 +2059,7 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
 	out << ag_name << "\tmemory\t" << ag_data->mem_used << "\n";
 	out << ag_name << "\tcached items\t" << ag_data->cached_items << "\n";
 	out << ag_name << "\timmutable items\t" << ag_data->immutable_items << "\n";
-	out << ag_name << "\tdisk\t" << ag_data->disk_used << "\n";
+	out << ag_name << "\tdisk\t" << ag_data->disk_estimate << "\n";
 	out << ag_name << "\tscanners\t" << ag_data->outstanding_scanners << "\n";
 	out << ag_name << "\tbindex_mem\t" << block_index_memory << "\n";
 	out << ag_name << "\tbloom_mem\t" << bloom_filter_memory << "\n";
@@ -2153,6 +2153,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     if (table_stat.table_id == "")
       table_stat.table_id = range_data[ii]->table_id;
     else if (strcmp(table_stat.table_id.c_str(), range_data[ii]->table_id)) {
+      table_stat.compression_ratio /= (double)table_stat.range_count;
       m_stats->tables.push_back(table_stat);
       table_stat.clear();
       table_stat.table_id = range_data[ii]->table_id;
@@ -2164,6 +2165,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     table_stat.cells_written += range_data[ii]->cells_written;
     table_stat.bytes_written += range_data[ii]->bytes_written;
     table_stat.disk_used += range_data[ii]->disk_used;
+    table_stat.compression_ratio += range_data[ii]->compression_ratio;
     table_stat.memory_used += range_data[ii]->memory_used;
     table_stat.memory_allocated += range_data[ii]->memory_allocated;
     table_stat.shadow_cache_memory += range_data[ii]->shadow_cache_memory;
@@ -2175,8 +2177,10 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   }
 
   m_stats->range_count = range_data.size();
-  if (table_stat.table_id != "")
+  if (table_stat.table_id != "") {
+    table_stat.compression_ratio /= (double)table_stat.range_count;
     m_stats->tables.push_back(table_stat);
+  }
 
   if (m_query_cache) {
     m_query_cache->get_stats(&m_stats->query_cache_max_memory,

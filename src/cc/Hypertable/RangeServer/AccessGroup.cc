@@ -397,9 +397,10 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
   mdata->compression_ratio = (m_compression_ratio == 0.0) ? 1.0 : m_compression_ratio;
 
   int64_t du = m_in_memory ? 0 : m_disk_usage;
-  mdata->disk_used = du + (int64_t)(m_compression_ratio * (float)mu);
-  if (mdata->disk_used < 0)
-    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << mdata->disk_used
+  mdata->disk_used = du;
+  mdata->disk_estimate = du + (int64_t)(m_compression_ratio * (float)mu);
+  if (mdata->disk_estimate < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << mdata->disk_estimate
                 << HT_END;
   mdata->outstanding_scanners = m_outstanding_scanner_count;
   mdata->in_memory = m_in_memory;

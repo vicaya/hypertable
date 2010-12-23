@@ -782,15 +782,16 @@ void CellStoreV4::load_block_index() {
                        m_index_builder.variable_buf(),
                        m_trailer.fix_index_offset, m_start_row, m_end_row);
     record_split_row( m_index_map64.middle_key() );
+    m_disk_usage = m_index_map64.disk_used();
   }
   else {
     m_index_map32.load(m_index_builder.fixed_buf(),
                        m_index_builder.variable_buf(),
                        m_trailer.fix_index_offset, m_start_row, m_end_row);
     record_split_row( m_index_map32.middle_key() );
+    m_disk_usage = m_index_map32.disk_used();
   }
 
-  m_disk_usage = m_index_map32.disk_used();
   if (m_disk_usage < 0)
     HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
                 << HT_END;

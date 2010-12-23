@@ -134,7 +134,7 @@ MaintenancePrioritizer::schedule_splits(RangeStatsVector &range_data,
 
     // compute disk and memory totals
     for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
-      disk_total += ag_data->disk_used;
+      disk_total += ag_data->disk_estimate;
       mem_total += ag_data->mem_allocated;
       for (cs_data=ag_data->csdata; cs_data; cs_data=cs_data->next)
 	mem_total +=
@@ -214,7 +214,7 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeStatsVector &range_d
         continue;
       }
 
-      disk_total += ag_data->disk_used;
+      disk_total += ag_data->disk_estimate;
 
       if (ag_data->earliest_cached_revision == TIMESTAMP_MAX ||
           cumulative_size_map.empty())

@@ -78,6 +78,7 @@ namespace Hypertable {
       int64_t cached_items;
       int64_t immutable_items;
       int64_t disk_used;
+      int64_t disk_estimate;
       int64_t log_space_pinned;
       int32_t deletes;
       int32_t outstanding_scanners;

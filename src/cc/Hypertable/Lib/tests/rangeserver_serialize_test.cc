@@ -17,32 +17,31 @@ int main(int argc, char *argv[]) {
   PropertiesPtr props = new Properties();
   String dirs = "/,/tmp";
   StatsRangeServerPtr stats1, stats2;
-  Random rng;
   char idbuf[32];
 
-  rng.seed(1);
+  Random::seed(1);
 
   props->set("Hypertable.RangeServer.Monitoring.DataDirectories", dirs);
 
   stats1 = new StatsRangeServer(props);
   stats1->set_location("rs1");
 
-  stats1->timestamp = rng.number64();
-  stats1->scan_count = rng.number64();
-  stats1->scanned_cells = rng.number64();
-  stats1->scanned_bytes = rng.number64();
-  stats1->update_count = rng.number64();
-  stats1->updated_cells = rng.number64();
-  stats1->updated_bytes = rng.number64();
-  stats1->sync_count = rng.number64();
-  stats1->query_cache_max_memory = rng.number64();
-  stats1->query_cache_available_memory = rng.number64();
-  stats1->query_cache_accesses = rng.number64();
-  stats1->query_cache_hits = rng.number64();
-  stats1->block_cache_max_memory = rng.number64();
-  stats1->block_cache_available_memory = rng.number64();
-  stats1->block_cache_accesses = rng.number64();
-  stats1->block_cache_hits = rng.number64();
+  stats1->timestamp = Random::number64();
+  stats1->scan_count = Random::number64();
+  stats1->scanned_cells = Random::number64();
+  stats1->scanned_bytes = Random::number64();
+  stats1->update_count = Random::number64();
+  stats1->updated_cells = Random::number64();
+  stats1->updated_bytes = Random::number64();
+  stats1->sync_count = Random::number64();
+  stats1->query_cache_max_memory = Random::number64();
+  stats1->query_cache_available_memory = Random::number64();
+  stats1->query_cache_accesses = Random::number64();
+  stats1->query_cache_hits = Random::number64();
+  stats1->block_cache_max_memory = Random::number64();
+  stats1->block_cache_available_memory = Random::number64();
+  stats1->block_cache_accesses = Random::number64();
+  stats1->block_cache_hits = Random::number64();
 
   stats1->system.refresh();
 
@@ -53,21 +52,22 @@ int main(int argc, char *argv[]) {
     sprintf(idbuf, "1/%d", (int)i+1);
     table_stat.table_id = idbuf;
 
-    table_stat.scans = rng.number64();
-    table_stat.cells_read = rng.number64();
-    table_stat.bytes_read = rng.number64();
-    table_stat.cells_written = rng.number64();
-    table_stat.bytes_written = rng.number64();
-    table_stat.disk_used = rng.number64();
-    table_stat.memory_used = rng.number64();
-    table_stat.memory_allocated = rng.number64();
-    table_stat.shadow_cache_memory = rng.number64();
-    table_stat.block_index_memory = rng.number64();
-    table_stat.bloom_filter_memory = rng.number64();
-    table_stat.bloom_filter_accesses = rng.number64();
-    table_stat.bloom_filter_maybes = rng.number64();
+    table_stat.scans = Random::number64();
+    table_stat.cells_read = Random::number64();
+    table_stat.bytes_read = Random::number64();
+    table_stat.cells_written = Random::number64();
+    table_stat.bytes_written = Random::number64();
+    table_stat.disk_used = Random::number64();
+    table_stat.compression_ratio = Random::uniform01();
+    table_stat.memory_used = Random::number64();
+    table_stat.memory_allocated = Random::number64();
+    table_stat.shadow_cache_memory = Random::number64();
+    table_stat.block_index_memory = Random::number64();
+    table_stat.bloom_filter_memory = Random::number64();
+    table_stat.bloom_filter_accesses = Random::number64();
+    table_stat.bloom_filter_maybes = Random::number64();
 
-    table_stat.range_count = rng.number32() % 2000;
+    table_stat.range_count = Random::number32() % 2000;
 
     stats1->tables.push_back(table_stat);
   }
