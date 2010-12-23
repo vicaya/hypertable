@@ -48,11 +48,9 @@ module HTMonitoring
     end
 
     get '/' do
-      @table_stats = TableStats.new
-      @table_stats.get_stats_totals
 
-      @range_servers = RangeServerStats.new
-      @range_servers.get_stats_totals
+      @range_servers = StatsJson.new(:file => 'rangeserver_summary.json')
+      @rs_records = @range_servers.parse_stats_file
 
       erb :index
     end
