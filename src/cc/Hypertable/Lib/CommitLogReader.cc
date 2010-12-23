@@ -98,6 +98,7 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
   if (!(*fragment_queue_iter).block_stream->next(infop, header)) {
     delete (*fragment_queue_iter).block_stream;
     (*fragment_queue_iter).block_stream = 0;
+    assert(m_revision != TIMESTAMP_MIN);
     (*fragment_queue_iter).revision = m_revision;
     m_fragment_queue_offset++;
     m_revision = TIMESTAMP_MIN;
@@ -108,6 +109,10 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
     assert(header->get_compression_type() == BlockCompressionCodec::NONE);
     String log_dir = (const char *)(infop->block_ptr + header->length());
     load_fragments(log_dir, true);
+    if (header->get_revision() > m_latest_revision)
+      m_latest_revision = header->get_revision();
+    if (header->get_revision() > m_revision)
+      m_revision = header->get_revision();
     goto try_again;
   }
 

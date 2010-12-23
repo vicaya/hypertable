@@ -314,6 +314,7 @@ int CommitLog::roll() {
     file_info.log_dir = m_log_dir;
     file_info.num = m_cur_fragment_num;
     file_info.size = m_cur_fragment_length;
+    assert(m_latest_revision != TIMESTAMP_MIN);
     file_info.revision = m_latest_revision;
     file_info.purge_log_dir = false;
     file_info.block_stream = 0;
