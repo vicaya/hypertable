@@ -175,17 +175,13 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
   if (m_block.base != 0 && eob) {
     Global::block_cache->checkin(m_file_id, m_block.offset);
     memset(&m_block, 0, sizeof(m_block));
+    ++m_iter;
 
     // find next block requested by scan and filter rows
     if (m_rowset.size()) {
-      SerializedKey sk;
-      m_dbuf.clear();
-      create_key_and_append(m_dbuf, *m_rowset.begin());
-      sk.ptr = m_dbuf.base;
-      m_iter = m_index->lower_bound(sk);
+      while (m_iter != m_index->end() && strcmp(*m_rowset.begin(), m_iter.key().row()) > 0)
+        ++m_iter;
     }
-    else
-      ++m_iter;
   }
 
   if (m_block.base == 0 && m_iter != m_index->end()) {

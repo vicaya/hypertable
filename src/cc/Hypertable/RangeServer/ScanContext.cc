@@ -180,6 +180,9 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         foreach (const RowInterval& ri, spec->row_intervals) {
           rowset.insert(arena.dup(ri.start)); // ri.end is set to "" in order to safe space
         }
+        end_row = *rowset.rbegin();
+        end_inclusive = true;
+        single_row = rowset.size() == 1;
       }
     }
     else if (!spec->cell_intervals.empty()) {

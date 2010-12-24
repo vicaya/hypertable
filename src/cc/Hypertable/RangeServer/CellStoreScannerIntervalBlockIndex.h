@@ -67,7 +67,6 @@ namespace Hypertable {
     int                   m_file_id;
     ScanContextPtr        m_scan_ctx;
     ScanContext::CstrRowSet& m_rowset;
-    DynamicBuffer         m_dbuf;
   };
 
 }
