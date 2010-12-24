@@ -68,12 +68,20 @@ namespace Hypertable {
     }
 
     /**
-     * Sets limit to memory currently used
+     * Sets limit to memory currently used, it will not reduce the limit
+     * below min_memory
      */
     void cap_memory_use() {
       ScopedLock lock(m_mutex);
-      m_limit -= m_available;
-      m_available = 0;
+      int64_t memory_used = m_limit - m_available;
+      if (memory_used > m_min_memory) {
+        m_limit -= m_available;
+        m_available = 0;
+      }
+      else {
+        m_limit = m_min_memory;
+        m_available = m_limit - memory_used;
+      }
     }
 
     int64_t memory_used() {
