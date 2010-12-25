@@ -112,6 +112,7 @@ void MaintenanceScheduler::schedule() {
   {
     int64_t revision_user = Global::user_log ? Global::user_log->get_latest_revision() : TIMESTAMP_MIN;
     int64_t revision_metadata = Global::metadata_log ? Global::metadata_log->get_latest_revision() : TIMESTAMP_MIN;
+    int64_t revision_system = Global::system_log ? Global::system_log->get_latest_revision() : TIMESTAMP_MIN;
     int64_t revision_root = Global::root_log ? Global::root_log->get_latest_revision() : TIMESTAMP_MIN;
     AccessGroup::CellStoreMaintenanceData *cs_data;
 
@@ -134,6 +135,10 @@ void MaintenanceScheduler::schedule() {
             if (ag_data->earliest_cached_revision < revision_metadata)
               revision_metadata = ag_data->earliest_cached_revision;
           }
+          else if (range_data[i]->is_system) {
+            if (ag_data->earliest_cached_revision < revision_system)
+              revision_system = ag_data->earliest_cached_revision;
+          }
           else {
             if (ag_data->earliest_cached_revision < revision_user)
               revision_user = ag_data->earliest_cached_revision;
@@ -144,6 +149,7 @@ void MaintenanceScheduler::schedule() {
 
     trace_str += String("STAT revision_root\t") + revision_root + "\n";
     trace_str += String("STAT revision_metadata\t") + revision_metadata + "\n";
+    trace_str += String("STAT revision_system\t") + revision_system + "\n";
     trace_str += String("STAT revision_user\t") + revision_user + "\n";
 
     if (Global::root_log)
@@ -151,6 +157,9 @@ void MaintenanceScheduler::schedule() {
 
     if (Global::metadata_log)
       Global::metadata_log->purge(revision_metadata);
+
+    if (Global::system_log)
+      Global::system_log->purge(revision_system);
 
     if (Global::user_log)
       Global::user_log->purge(revision_user);

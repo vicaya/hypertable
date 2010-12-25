@@ -55,12 +55,12 @@ Range::Range(MasterClientPtr &master_client,
              const TableIdentifier *identifier, SchemaPtr &schema,
              const RangeSpec *range, RangeSet *range_set,
              const RangeState *state)
-    : m_bytes_read(0), m_cells_read(0), m_scans(0), m_bytes_written(0), m_cells_written(0),
-      m_master_client(master_client), m_identifier(*identifier), m_schema(schema),
-      m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN), m_split_off_high(false),
-      m_added_inserts(0), m_range_set(range_set), m_state(*state),
+    : m_bytes_read(0), m_cells_read(0), m_scans(0), m_updates(0), m_bytes_written(0),
+      m_cells_written(0), m_master_client(master_client), m_identifier(*identifier),
+      m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
+      m_split_off_high(false), m_added_inserts(0), m_range_set(range_set), m_state(*state),
       m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
-      m_maintenance_generation(0) {
+      m_maintenance_generation(0), m_load_metrics(identifier->id, range->end_row) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -402,7 +402,8 @@ bool Range::cancel_maintenance() {
 }
 
 
-Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now) {
+Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now,
+                                                    TableMutator *mutator) {
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc( sizeof(MaintenanceData) );
   AccessGroup::MaintenanceData **tailp = 0;
   AccessGroupVector  ag_vector(0);
@@ -415,6 +416,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     ScopedLock lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
     mdata->scans = m_scans;
+    mdata->updates = m_updates;
     mdata->bytes_written = m_bytes_written;
     mdata->cells_written = m_cells_written;
   }
@@ -422,6 +424,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
   mdata->range = this;
   mdata->table_id = m_identifier.id;
   mdata->is_metadata = m_identifier.is_metadata();
+  mdata->is_system = m_identifier.is_system();
   mdata->schema_generation = m_identifier.generation;
 
   // record starting maintenance generation
@@ -455,6 +458,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->bloom_filter_maybes += (*tailp)->bloom_filter_maybes;
     mdata->bloom_filter_fps += (*tailp)->bloom_filter_fps;
     mdata->shadow_cache_memory += (*tailp)->shadow_cache_memory;
+    mdata->cell_count += (*tailp)->cell_count;
   }
   
   if (ag_vector.size() > 0)
@@ -470,6 +474,13 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
   }
 
   mdata->busy = m_maintenance_guard.in_progress();
+
+  if (mutator)
+    m_load_metrics.compute_and_store(mutator, now,
+                                     mdata->disk_used, mdata->memory_used,
+                                     mdata->scans, mdata->updates,
+                                     mdata->cells_read, mdata->cells_written,
+                                     mdata->bytes_read, mdata->bytes_written);
 
   return mdata;
 }
@@ -1016,6 +1027,7 @@ void Range::recovery_finalize() {
 
 void Range::lock() {
   m_schema_mutex.lock();
+  m_updates++;  // assumes this method is called for updates only
   for (size_t i=0; i<m_access_group_vector.size(); ++i)
     m_access_group_vector[i]->lock();
   m_revision = TIMESTAMP_MIN;

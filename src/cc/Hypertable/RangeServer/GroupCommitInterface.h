@@ -106,6 +106,7 @@ namespace Hypertable {
   public:
     TableUpdate() : flags(0), commit_interval(0), total_count(0),
                     total_buffer_size(0), wait_for_metadata_recovery(false),
+                    wait_for_system_recovery(false),
                     split_added(0), total_added(0), error(0) {}
     TableIdentifier id;
     std::vector<UpdateRequest *> requests;
@@ -119,6 +120,7 @@ namespace Hypertable {
     std::set<Range *> wait_ranges;
     DynamicBuffer go_buf;
     bool wait_for_metadata_recovery;
+    bool wait_for_system_recovery;
     uint32_t split_added;
     uint32_t total_added;
     int error;

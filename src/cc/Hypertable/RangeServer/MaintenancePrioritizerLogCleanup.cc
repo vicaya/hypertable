@@ -37,6 +37,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
                                              String &trace_str) {
   RangeStatsVector range_data_root;
   RangeStatsVector range_data_metadata;
+  RangeStatsVector range_data_system;
   RangeStatsVector range_data_user;
   int32_t priority = 1;
   int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
@@ -46,6 +47,8 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
       range_data_root.push_back(range_data[i]);
     else if (range_data[i]->is_metadata)
       range_data_metadata.push_back(range_data[i]);
+    else if (range_data[i]->is_system)
+      range_data_system.push_back(range_data[i]);
     else
       range_data_user.push_back(range_data[i]);
   }
@@ -68,18 +71,26 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
                       Global::log_prune_threshold_min,
                       memory_state, priority, trace_str);
 
-
   /**
-   * Assign priority for USER ranges
+   *  Compute prune threshold based on load activity
    */
   int64_t prune_threshold = (int64_t)(m_server_stats->get_update_mbps(collector_id) * (double)Global::log_prune_threshold_max);
-
   if (prune_threshold < Global::log_prune_threshold_min)
     prune_threshold = Global::log_prune_threshold_min;
   else if (prune_threshold > Global::log_prune_threshold_max)
     prune_threshold = Global::log_prune_threshold_max;
-
   trace_str += String("STATS user log prune threshold\t") + prune_threshold + "\n";
+
+  /**
+   * Assign priority other SYSTEM ranges
+   */
+  if (!range_data_system.empty())
+    assign_priorities(range_data_system, Global::system_log, prune_threshold,
+                      memory_state, priority, trace_str);
+
+  /**
+   * Assign priority for USER ranges
+   */
 
   if (!range_data_user.empty())
     assign_priorities(range_data_user, Global::user_log, prune_threshold,

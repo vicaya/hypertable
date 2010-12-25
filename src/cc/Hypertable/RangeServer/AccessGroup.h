@@ -76,6 +76,7 @@ namespace Hypertable {
       int64_t mem_used;
       int64_t mem_allocated;
       int64_t cached_items;
+      uint64_t cell_count;
       int64_t immutable_items;
       int64_t disk_used;
       int64_t disk_estimate;
@@ -111,15 +112,17 @@ namespace Hypertable {
  bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0)  {
         init_from_trailer();
       }
-      CellStoreInfo() : shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0),
+      CellStoreInfo() : cell_count(0), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0),
       bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0) { }
       void init_from_trailer() {
         try {
+          cell_count = boost::any_cast<int64_t>(cs->get_trailer()->get("total_entries"));
           timestamp_min = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_min"));
           timestamp_max = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_max"));
           expirable_data = boost::any_cast<int64_t>(cs->get_trailer()->get("expirable_data"));
         }
         catch (std::exception &e) {
+          cell_count = 0;
           timestamp_min = TIMESTAMP_MAX;
           timestamp_max = TIMESTAMP_MIN;
           expirable_data = 0;
@@ -127,6 +130,7 @@ namespace Hypertable {
       }
       CellStorePtr cs;
       CellCachePtr shadow_cache;
+      uint64_t cell_count;
       int64_t shadow_cache_ecr;
       uint32_t shadow_cache_hits;
       uint32_t bloom_filter_accesses;

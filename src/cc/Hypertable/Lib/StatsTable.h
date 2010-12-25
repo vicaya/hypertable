@@ -35,6 +35,7 @@ namespace Hypertable {
       memcpy(group_ids, other.group_ids, group_count);
       table_id = other.table_id;
       range_count = other.range_count;
+      cell_count = other.cell_count;
       scans = other.scans;
       cells_read = other.cells_read;
       bytes_read = other.bytes_read;
@@ -59,6 +60,7 @@ namespace Hypertable {
 
     String table_id;
     uint32_t range_count;
+    uint64_t cell_count;
     uint64_t scans;
     uint64_t cells_read;
     uint64_t bytes_read;

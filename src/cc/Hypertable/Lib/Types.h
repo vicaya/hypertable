@@ -48,6 +48,7 @@ namespace Hypertable {
     bool operator!=(const TableIdentifier &other) const;
 
     bool is_metadata() const { return !strcmp(id, METADATA_ID); }
+    bool is_system() const { return !strncmp(id, "0/", 2); }
 
     uint32_t index() {
       assert(id);

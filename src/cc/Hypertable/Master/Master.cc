@@ -643,7 +643,20 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       HT_INFO("Initializing METADATA");
 
       /**
-       * Create METADATA table
+       *  Create "sys" namespace
+       */
+      try {
+        create_namespace("sys");
+      }
+      catch (Exception &e) {
+        if (e.code() != Error::NAMESPACE_EXISTS) {
+          HT_ERROR_OUT << e << HT_END;
+          HT_ABORT;
+        }
+      }
+
+      /**
+       * Create sys/METADATA table
        */
       {
         String metadata_schema_file = System::install_dir
@@ -651,16 +664,6 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
         off_t schemalen;
         const char *schemastr =
           FileUtils::file_to_buffer(metadata_schema_file.c_str(), &schemalen);
-
-        try {
-          create_namespace("sys");
-        }
-        catch (Exception &e) {
-          if (e.code() != Error::NAMESPACE_EXISTS) {
-            HT_ERROR_OUT << e << HT_END;
-            HT_ABORT;
-          }
-        }
 
         try {
           create_table(TableIdentifier::METADATA_NAME, schemastr);
@@ -777,7 +780,27 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
                   location.c_str(), Error::get_text(e.code()));
       }
 
-      HT_INFO("METADATA table successfully initialized");
+      HT_INFO("sys/METADATA table successfully initialized");
+
+      /**
+       * Create sys/RS_METRICS table
+       */
+      {
+        String rs_stats_schema_file = System::install_dir+"/conf/RS_METRICS.xml";
+        off_t schemalen;
+        const char *schemastr = FileUtils::file_to_buffer(rs_stats_schema_file.c_str(), &schemalen);
+
+        try {
+          create_table("sys/RS_METRICS", schemastr);
+          HT_INFO("sys/RS_METRICS table successfully created");
+        }
+        catch (Exception &e) {
+          if (e.code() != Error::MASTER_TABLE_EXISTS) {
+            HT_ERROR_OUT << e << HT_END;
+            HT_ABORT;
+          }
+        }
+      }
 
       m_root_server_location = location;
       m_root_server_addr = addr;

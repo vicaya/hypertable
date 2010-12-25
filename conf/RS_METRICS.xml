@@ -1,0 +1,22 @@
+<Schema>
+  <AccessGroup name="server">
+    <ColumnFamily>
+      <Name>server</Name>
+      <MaxVersions>168</MaxVersions>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="range">
+    <ColumnFamily>
+      <Name>range</Name>
+      <MaxVersions>24</MaxVersions>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>range_start_row</Name>
+      <MaxVersions>1</MaxVersions>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>range_move</Name>
+      <MaxVersions>1</MaxVersions>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>

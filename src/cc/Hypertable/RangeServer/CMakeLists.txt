@@ -60,6 +60,7 @@ KeyCompressorPrefix.cc
 KeyDecompressorNone.cc
 KeyDecompressorPrefix.cc
 LiveFileTracker.cc
+LoadMetricsRange.cc
 Location.cc
 MaintenancePrioritizer.cc
 MaintenancePrioritizerLogCleanup.cc

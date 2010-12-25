@@ -59,6 +59,7 @@ namespace Hypertable {
     static Hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
     static CommitLog     *user_log;
+    static CommitLog     *system_log;
     static CommitLog     *metadata_log;
     static CommitLog     *root_log;
     static Hypertable::RangeServerMetaLog *range_log;
@@ -73,6 +74,7 @@ namespace Hypertable {
     static ScannerMap     scanner_map;
     static Hypertable::FileBlockCache *block_cache;
     static TablePtr       metadata_table;
+    static TablePtr       rs_stats_table;
     static int64_t        range_metadata_split_size;
     static Hypertable::MemoryTracker *memory_tracker;
     static int64_t        log_prune_threshold_min;
@@ -81,6 +83,7 @@ namespace Hypertable {
     static uint64_t       access_counter;
     static bool           enable_shadow_cache;
     static std::string    toplevel_dir;
+    static int32_t        metrics_interval;
   };
 
 } // namespace Hypertable

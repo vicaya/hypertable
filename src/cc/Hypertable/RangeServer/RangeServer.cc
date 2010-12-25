@@ -40,6 +40,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/HashMap.h"
 #include "Common/md5.h"
+#include "Common/Random.h"
 #include "Common/StringExt.h"
 #include "Common/SystemInfo.h"
 
@@ -75,7 +76,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_replay_finished(false), m_props(props), m_verbose(false),
     m_comm(conn_mgr->get_comm()), m_conn_manager(conn_mgr), m_app_queue(app_queue),
     m_hyperspace(hyperspace), m_timer_handler(0),
-    m_group_commit_timer_handler(0), m_query_cache(0), m_last_revision(TIMESTAMP_MIN) {
+    m_group_commit_timer_handler(0), m_query_cache(0), m_last_revision(TIMESTAMP_MIN),
+    m_loadavg_accum(0.0), m_loadavg_samples(0)
+{
 
   uint16_t port;
   uint32_t maintenance_threads = std::min(2, System::cpu_info().total_cores);
@@ -112,6 +115,12 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_group_commit_timer_handler = new GroupCommitTimerHandler(m_comm, this, m_app_queue);
 
   m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
+
+  Global::metrics_interval = props->get_i32("Hypertable.LoadMetrics.Interval");
+  m_next_metrics_update = time(0) + Global::metrics_interval;
+  m_next_metrics_update -= m_next_metrics_update % Global::metrics_interval;
+  // randomly pick a time within 5 minutes of the next update
+  m_next_metrics_update = (m_next_metrics_update-150) + (Random::number32()%300);
 
   if (Global::access_group_merge_files > Global::access_group_max_files)
     Global::access_group_merge_files = Global::access_group_max_files;
@@ -268,6 +277,7 @@ void RangeServer::shutdown() {
   // delete global objects
   delete Global::block_cache;
   delete Global::user_log;
+  delete Global::system_log;
   delete Global::metadata_log;
   delete Global::root_log;
   delete Global::range_log;
@@ -276,6 +286,7 @@ void RangeServer::shutdown() {
 
   Global::maintenance_queue = 0;
   Global::metadata_table = 0;
+  Global::rs_stats_table = 0;
   Global::hyperspace = 0;
 
   if (Global::log_dfs != Global::dfs)
@@ -357,6 +368,7 @@ void RangeServer::local_recover() {
   String meta_log_dir = Global::log_dir + "/range_txn";
   RangeServerMetaLogReaderPtr rsml_reader;
   CommitLogReaderPtr root_log_reader;
+  CommitLogReaderPtr system_log_reader;
   CommitLogReaderPtr metadata_log_reader;
   CommitLogReaderPtr user_log_reader;
   std::vector<RangePtr> rangev;
@@ -496,7 +508,62 @@ void RangeServer::local_recover() {
       }
 
       /**
-       * Then recover the normal ranges
+       * Then recover SYSTEM ranges
+       */
+      m_replay_group = RangeServerProtocol::GROUP_SYSTEM;
+
+      // clear the replay map
+      m_replay_map->clear();
+
+      foreach(const RangeStateInfo *i, range_states) {
+        if (i->table.is_system() && !i->table.is_metadata())
+          replay_load_range(0, &i->table, &i->range, &i->range_state, false);
+      }
+
+      if (!m_replay_map->empty()) {
+        system_log_reader =
+            new CommitLogReader(Global::log_dfs, Global::log_dir + "/system");
+        replay_log(system_log_reader);
+
+        // Perform any range specific post-replay tasks
+        rangev.clear();
+        m_replay_map->get_range_vector(rangev);
+        foreach(RangePtr &range, rangev) {
+          range->recovery_finalize();
+	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
+	      range->get_state() == RangeState::SPLIT_SHRUNK)
+	    maintenance_tasks.push_back(new MaintenanceTaskSplit(now, range));
+	  else
+	    HT_ASSERT(range->get_state() == RangeState::STEADY);
+	}
+      }
+
+      // Create system log and wake up anybody waiting for system replay to
+      // complete
+      {
+        ScopedLock lock(m_mutex);
+
+	if (!m_replay_map->empty())
+	  m_live_map->merge(m_replay_map);
+
+        if (system_log_reader)
+          Global::system_log = new CommitLog(Global::log_dfs,
+              Global::log_dir + "/system", m_props,
+              system_log_reader.get());
+        m_system_replay_finished = true;
+        m_system_replay_finished_cond.notify_all();
+      }
+
+      // Finish mid-maintenance
+      if (!maintenance_tasks.empty()) {
+	for (size_t i=0; i<maintenance_tasks.size(); i++)
+	  Global::maintenance_queue->add(maintenance_tasks[i]);
+	Global::maintenance_queue->wait_for_empty();
+	maintenance_tasks.clear();
+      }
+
+      /**
+       * Then recover the USER ranges
        */
       m_replay_group = RangeServerProtocol::GROUP_USER;
 
@@ -504,7 +571,7 @@ void RangeServer::local_recover() {
       m_replay_map->clear();
 
       foreach(const RangeStateInfo *i, range_states) {
-        if (!i->table.is_metadata())
+        if (!i->table.is_system())
           replay_load_range(0, &i->table, &i->range, &i->range_state, false);
       }
 
@@ -565,6 +632,10 @@ void RangeServer::local_recover() {
         Global::metadata_log = new CommitLog(Global::log_dfs, Global::log_dir
             + "/metadata", m_props, metadata_log_reader.get());
 
+      if (system_log_reader)
+        Global::system_log = new CommitLog(Global::log_dfs, Global::log_dir
+            + "/system", m_props, system_log_reader.get());
+
       Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir
           + "/user", m_props, user_log_reader.get());
 
@@ -573,10 +644,12 @@ void RangeServer::local_recover() {
 
       m_root_replay_finished = true;
       m_metadata_replay_finished = true;
+      m_system_replay_finished = true;
       m_replay_finished = true;
 
       m_root_replay_finished_cond.notify_all();
       m_metadata_replay_finished_cond.notify_all();
+      m_system_replay_finished_cond.notify_all();
       m_replay_finished_cond.notify_all();
     }
 
@@ -973,7 +1046,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         return;
       }
 
-      HT_MAYBE_FAIL("load-range-1");
+      HT_MAYBE_FAIL_X("load-range-1", !table->is_system());
 
       if (!m_replay_finished)
         wait_for_recovery_finish(table, range_spec);
@@ -1006,7 +1079,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       }
 
       /**
-       * Lazily create METADATA table pointer
+       * Lazily create sys/METADATA table pointer
        */
       if (!Global::metadata_table) {
         ScopedLock lock(m_mutex);
@@ -1078,6 +1151,11 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
                                                Global::log_dir + "/metadata", m_props);
         }
       }
+      else if (table->is_system() && Global::system_log == 0) {
+        Global::log_dfs->mkdirs(Global::log_dir + "/system");
+        Global::system_log = new CommitLog(Global::log_dfs,
+                                           Global::log_dir + "/system", m_props);
+      }
 
       /**
        * NOTE: The range does not need to be locked in the following replay since
@@ -1093,6 +1171,8 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
             log = Global::root_log;
           else if (table->is_metadata())
             log = Global::metadata_log;
+          else if (table->is_system())
+            log = Global::system_log;
           else
             log = Global::user_log;
 
@@ -1328,6 +1408,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       wait_for_root_recovery_finish();
       table_update.wait_for_metadata_recovery = true;
     }
+    else if (table->is_system()) {
+      wait_for_metadata_recovery_finish();
+      table_update.wait_for_system_recovery = true;
+    }
     else
       wait_for_recovery_finish();
   }
@@ -1512,6 +1596,10 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
         if (table_update->wait_for_metadata_recovery && !rulist->range->is_root()) {
           wait_for_metadata_recovery_finish();
           table_update->wait_for_metadata_recovery = false;
+        }
+        else if (table_update->wait_for_system_recovery) {
+          wait_for_system_recovery_finish();
+          table_update->wait_for_system_recovery = false;
         }
 
         // See if range has some other error preventing it from receiving updates
@@ -1803,6 +1891,9 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
         HT_ASSERT(sync == true);
         log = Global::metadata_log;
       }
+      else if (table_update->id.is_system()) {
+        log = Global::system_log;
+      }
       else {
         log = Global::user_log;
         if (sync)
@@ -2083,6 +2174,9 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
     if (Global::metadata_log)
       Global::metadata_log->get_stats("METADATA", str);
 
+    if (Global::system_log)
+      Global::system_log->get_stats("SYSTEM", str);
+
     if (Global::user_log)
       Global::user_log->get_stats("USER", str);
 
@@ -2106,13 +2200,17 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   RangeStatsGathererPtr stats_gatherer = new RangeStatsGatherer(m_live_map);
   RangeStatsVector range_data;
   int64_t timestamp = Hypertable::get_ts64();
+  time_t now = (time_t)(timestamp/1000000000LL);
   int collector_id = RSStats::STATS_COLLECTOR_MONITORING;
   size_t table_count;
 
-  HT_INFO_OUT << "get_statistics()" << HT_END;
+  HT_INFO_OUT << "Entering get_statistics()" << HT_END;
 
   m_server_stats->recompute(collector_id);
   m_stats->system.refresh();
+
+  m_loadavg_accum += m_stats->system.loadavg_stat.loadavg[0];
+  m_loadavg_samples++;
 
   m_stats->set_location(Location::get());
   m_stats->timestamp = timestamp;
@@ -2136,13 +2234,31 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
                                    &m_stats->block_cache_accesses,
                                    &m_stats->block_cache_hits);
 
+  TableMutatorPtr mutator;
+  if (now > m_next_metrics_update) {
+    ScopedLock lock(m_mutex);
+    if (!Global::rs_stats_table) {
+      try {
+        Global::rs_stats_table = new Table(m_props, m_conn_manager,
+                                           Global::hyperspace, m_namemap,
+                                           "sys/RS_METRICS");
+      }
+      catch (Hypertable::Exception &e) {
+        HT_ERRORF("Unable to open 'sys/RS_METRICS' - %s (%s)",
+                  Error::get_text(e.code()), e.what());
+      }
+    }
+    if (Global::rs_stats_table)
+      mutator = Global::rs_stats_table->create_mutator();
+  }
+
   /**
    * Aggregate per-table stats
    */
   StatsTable table_stat;
   StatsTableMap::iterator iter;
   m_stats->tables.clear();
-  stats_gatherer->fetch(range_data, &table_count);
+  stats_gatherer->fetch(range_data, &table_count, mutator.get());
   for (size_t ii=0; ii<range_data.size(); ii++) {
 
     if (range_data[ii]->table_id == 0) {
@@ -2160,6 +2276,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     }
 
     table_stat.scans += range_data[ii]->scans;
+    table_stat.updates += range_data[ii]->updates;
     table_stat.cells_read += range_data[ii]->cells_read;
     table_stat.bytes_read += range_data[ii]->bytes_read;
     table_stat.cells_written += range_data[ii]->cells_written;
@@ -2173,6 +2290,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     table_stat.bloom_filter_memory += range_data[ii]->bloom_filter_memory;
     table_stat.bloom_filter_accesses += range_data[ii]->bloom_filter_accesses;
     table_stat.bloom_filter_maybes += range_data[ii]->bloom_filter_maybes;
+    table_stat.cell_count += range_data[ii]->cell_count;
     table_stat.range_count++;
   }
 
@@ -2208,6 +2326,25 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     m_stats->block_cache_hits = 0;
   }
 
+  /**
+   * If created a mutator above, write data to sys/RS_METRICS
+   */
+  if (mutator) {
+    String location = Location::get();
+    String value = format("1:%.6f", m_loadavg_accum / m_loadavg_samples);
+    KeySpec key;
+    key.row = location.c_str();
+    key.row_len = location.length();
+    key.column_family = "server";
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+    mutator->set(key, (uint8_t *)value.c_str(), value.length()+1);
+    mutator->flush();
+    m_next_metrics_update += Global::metrics_interval;
+    m_loadavg_accum = 0.0;
+    m_loadavg_samples = 0;
+  }
+
   {
     StaticBuffer ext(m_stats->encoded_length());
     uint8_t *ptr = ext.base;
@@ -2215,6 +2352,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     HT_ASSERT((ptr-ext.base) == ext.size);
     cb->response(ext);
   }
+
+  HT_INFO_OUT << "Exiting get_statistics()" << HT_END;
 
   return;
 }
@@ -2299,7 +2438,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
                 table->id, range_spec->start_row, range_spec->end_row);
 
     /**
-     * Lazily create METADATA table pointer
+     * Lazily create sys/METADATA table pointer
      */
     if (!Global::metadata_table) {
       ScopedLock lock(m_mutex);
@@ -2466,6 +2605,8 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
       log = Global::root_log;
     else if (m_replay_group == RangeServerProtocol::GROUP_METADATA)
       log = Global::metadata_log;
+    else if (m_replay_group == RangeServerProtocol::GROUP_SYSTEM)
+      log = Global::system_log;
     else if (m_replay_group == RangeServerProtocol::GROUP_USER)
       log = Global::user_log;
 
@@ -2559,6 +2700,9 @@ void RangeServer::close(ResponseCallback *cb) {
     Global::root_log->close();
 
   if (Global::metadata_log)
+    Global::metadata_log->close();
+
+  if (Global::system_log)
     Global::metadata_log->close();
 
   if (Global::user_log)
@@ -2664,6 +2808,14 @@ void RangeServer::wait_for_metadata_recovery_finish() {
   }
 }
 
+void RangeServer::wait_for_system_recovery_finish() {
+  ScopedLock lock(m_mutex);
+  while (!m_system_replay_finished) {
+    HT_INFO_OUT << "Waiting for SYSTEM recovery to complete..." << HT_END;
+    m_system_replay_finished_cond.wait(lock);
+  }
+}
+
 
 void
 RangeServer::wait_for_recovery_finish(const TableIdentifier *table,
@@ -2681,6 +2833,12 @@ RangeServer::wait_for_recovery_finish(const TableIdentifier *table,
         HT_INFO_OUT << "Waiting for METADATA recovery to complete..." << HT_END;
         m_metadata_replay_finished_cond.wait(lock);
       }
+    }
+  }
+  else if (table->is_system()) {
+    while (!m_system_replay_finished) {
+      HT_INFO_OUT << "Waiting for SYSTEM recovery to complete..." << HT_END;
+      m_system_replay_finished_cond.wait(lock);
     }
   }
   else {

@@ -117,6 +117,7 @@ namespace Hypertable {
     void wait_for_recovery_finish();
     void wait_for_root_recovery_finish();
     void wait_for_metadata_recovery_finish();
+    void wait_for_system_recovery_finish();
     void wait_for_recovery_finish(const TableIdentifier *table,
                                   const RangeSpec *range);
 
@@ -140,9 +141,11 @@ namespace Hypertable {
     Mutex                  m_drop_table_mutex;
     boost::condition       m_root_replay_finished_cond;
     boost::condition       m_metadata_replay_finished_cond;
+    boost::condition       m_system_replay_finished_cond;
     boost::condition       m_replay_finished_cond;
     bool                   m_root_replay_finished;
     bool                   m_metadata_replay_finished;
+    bool                   m_system_replay_finished;
     bool                   m_replay_finished;
     Mutex                  m_update_mutex_a;
     Mutex                  m_update_mutex_b;
@@ -182,6 +185,9 @@ namespace Hypertable {
     QueryCache            *m_query_cache;
     int64_t                m_last_revision;
     int64_t                m_scanner_buffer_size;
+    time_t                 m_next_metrics_update;
+    double                 m_loadavg_accum;
+    size_t                 m_loadavg_samples;
 
   };
 

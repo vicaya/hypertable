@@ -41,8 +41,6 @@
 
 namespace Hypertable {
 
-  typedef std::stack<CommitLogFileInfo> LogFragmentStack;
-
   class CommitLogReader : public CommitLogBase {
 
   public:

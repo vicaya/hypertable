@@ -39,6 +39,7 @@
 
 #include "AccessGroup.h"
 #include "CellStore.h"
+#include "LoadMetricsRange.h"
 #include "MaintenanceFlag.h"
 #include "Metadata.h"
 #include "RangeMaintenanceGuard.h"
@@ -65,11 +66,12 @@ namespace Hypertable {
       Range *range;
       AccessGroup::MaintenanceData *agdata;
       const char *table_id;
-      uint64_t bytes_read;
       uint64_t scans;
+      uint64_t updates;
       uint64_t cells_read; // only includes cells returned by scans not skipped cells
-      uint64_t bytes_written;
       uint64_t cells_written;
+      uint64_t bytes_read;
+      uint64_t bytes_written;
       int64_t  purgeable_index_memory;
       int64_t  compact_memory;
       uint32_t schema_generation;
@@ -77,6 +79,7 @@ namespace Hypertable {
       int32_t  priority;
       int16_t  state;
       int16_t  maintenance_flags;
+      uint64_t cell_count;
       uint64_t memory_used;
       uint64_t memory_allocated;
       double compression_ratio;
@@ -90,6 +93,7 @@ namespace Hypertable {
       uint32_t bloom_filter_fps;
       bool     busy;
       bool     is_metadata;
+      bool     is_system;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
@@ -123,9 +127,13 @@ namespace Hypertable {
 
     /**
      * Returns the end row of the range.
+     *
+     * NOTE: There is no lock protection for m_end_row because it never changes.
+     *       If this ever changes, then it should be lock protected and the end_row
+     *       value in LoadMetricsRange should be changed to a String instead of
+     *       a const char *
      */
     String end_row() {
-      ScopedLock lock(m_mutex);
       return m_end_row;
     }
     /**
@@ -141,7 +149,7 @@ namespace Hypertable {
 
     void replay_transfer_log(CommitLogReader *commit_log_reader);
 
-    MaintenanceData *get_maintenance_data(ByteArena &arena, time_t now);
+    MaintenanceData *get_maintenance_data(ByteArena &arena, time_t now, TableMutator *mutator);
 
     void wait_for_maintenance_to_complete() {
       m_maintenance_guard.wait_for_complete();
@@ -261,6 +269,7 @@ namespace Hypertable {
     uint64_t         m_bytes_read;
     uint64_t         m_cells_read;
     uint64_t         m_scans;
+    uint64_t         m_updates;
     uint64_t         m_bytes_written;
     uint64_t         m_cells_written;
 
@@ -293,6 +302,7 @@ namespace Hypertable {
     bool             m_dropped;
     bool             m_capacity_exceeded_throttle;
     int64_t          m_maintenance_generation;
+    LoadMetricsRange m_load_metrics;
   };
 
   typedef intrusive_ptr<Range> RangePtr;

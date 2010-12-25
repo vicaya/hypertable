@@ -395,6 +395,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
   mdata->mem_used = mu;
   mdata->compression_ratio = (m_compression_ratio == 0.0) ? 1.0 : m_compression_ratio;
+  mdata->cell_count = mdata->cached_items + mdata->immutable_items;
 
   int64_t du = m_in_memory ? 0 : m_disk_usage;
   mdata->disk_used = du;
@@ -427,6 +428,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
     mdata->bloom_filter_accesses += m_stores[i].bloom_filter_accesses;
     mdata->bloom_filter_maybes += m_stores[i].bloom_filter_maybes;
     mdata->bloom_filter_fps += m_stores[i].bloom_filter_fps;
+    mdata->cell_count += m_stores[i].cell_count;
 
     if (m_stores[i].shadow_cache) {
       (*tailp)->shadow_cache_size = m_stores[i].shadow_cache->memory_allocated();

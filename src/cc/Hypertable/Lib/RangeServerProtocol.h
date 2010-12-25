@@ -117,6 +117,7 @@ namespace Hypertable {
     enum RangeGroup {
       GROUP_METADATA_ROOT,
       GROUP_METADATA,
+      GROUP_SYSTEM,
       GROUP_USER
     };
 
