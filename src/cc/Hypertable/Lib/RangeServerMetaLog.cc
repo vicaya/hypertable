@@ -97,13 +97,15 @@ RangeServerMetaLog::recover(const String &path) {
     // copy entries
     MetaLogEntryPtr entry;
     try {
-      while ((entry = reader->read())) {
-        if (entry->get_type() == MetaLogEntryFactory::RS_LOG_RECOVER) {
-          found_recover_entry = true;
-          continue;
-        }
-        serialize_entry(entry.get(), buf);
-      }
+      MetaLogEntries entries;
+      RangeStates range_states = reader->load_range_states(&found_recover_entry);
+
+      foreach(const RangeStateInfo *state, range_states)
+        foreach (const MetaLogEntryPtr &e, state->transactions)
+          entries.push_back(e);
+      std::sort(entries.begin(), entries.end(), OrderByTimestamp());
+      foreach(MetaLogEntryPtr &e, entries)
+        serialize_entry(e.get(), buf);
     }
     catch (Hypertable::Exception &e) {
       HT_ERROR_OUT << e << HT_END;
@@ -151,13 +153,7 @@ RangeServerMetaLog::purge(const RangeStates &rs) {
   MetaLogEntries entries;
 
   foreach(const RangeStateInfo *i, rs) {
-    if (i->transactions.empty()) {
-      MetaLogEntry *entry = new_rs_range_loaded(i->table, i->range,
-                                                i->range_state);
-      entry->timestamp = i->timestamp; // important
-      entries.push_back(entry);
-    }
-    else foreach (const MetaLogEntryPtr &p, i->transactions)
+    foreach (const MetaLogEntryPtr &p, i->transactions)
       entries.push_back(p);
   }
   std::sort(entries.begin(), entries.end(), OrderByTimestamp());

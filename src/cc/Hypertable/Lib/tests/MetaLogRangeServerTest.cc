@@ -127,7 +127,12 @@ read_states(Filesystem *fs, const String &fname, std::ostream &out) {
 
   out <<"Range states:\n";
 
-  const RangeStates &rstates = reader->load_range_states();
+  bool found_recover_entry;
+  const RangeStates &rstates = reader->load_range_states(&found_recover_entry);
+  if (found_recover_entry)
+    out << "Found recover entry\n";
+  else
+    out << "Recover entry not found\n";
 
   foreach(RangeStateInfo *i, rstates) {
     i->timestamp = 0;
@@ -170,7 +175,7 @@ write_more_again(Filesystem *fs, const String &fname) {
   TableIdentifier table("1");
   RangeSpec rs("a", "z");
   RangeState s;
-  
+
   s.clear();
   s.soft_limit = 40*M;
   s.state = RangeState::SPLIT_SHRUNK;
@@ -248,7 +253,7 @@ main(int ac, char *av[]) {
     client->append(dst_fd, sbuf, Filesystem::O_FLUSH);
     client->close(dst_fd);
 
-    // Now read the RSML and 
+    // Now read the RSML and
     {
       RangeServerMetaLogPtr ml = new RangeServerMetaLog(client, testdir);
 
@@ -258,7 +263,7 @@ main(int ac, char *av[]) {
       }
 
       // size of rsml dump should be same as the last one
-      HT_ASSERT(FileUtils::size("rsmltest4.out") == FileUtils::size("rsmltest3.golden"));
+      HT_ASSERT(FileUtils::size("rsmltest4.out") == FileUtils::size("rsmltest4.golden"));
     }
 
     if (!has("save"))

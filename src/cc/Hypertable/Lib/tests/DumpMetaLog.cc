@@ -53,8 +53,13 @@ struct MyPolicy : Policy {
 typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
 
 void dump_range_states(RangeServerMetaLogReader *rdr) {
-  const RangeStates &rstates = rdr->load_range_states();
+  bool found_recover_entry;
+  const RangeStates &rstates = rdr->load_range_states(&found_recover_entry);
 
+  if (found_recover_entry)
+    std::cout << "Found recover entry" << std::endl;
+  else
+    std::cout << "Recover entry not found" << std::endl;
   foreach(const RangeStateInfo *i, rstates) std::cout << *i;
 }
 

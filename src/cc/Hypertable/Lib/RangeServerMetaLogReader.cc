@@ -76,6 +76,7 @@ RangeSpec original_range(const MetaLogEntryRangeCommon &e) {
 void load_entry(Reader &rd, RsiSet &rsi_set, RangeLoaded *ep) {
   RangeStateInfo *rsi = new RangeStateInfo(ep->table, ep->range,
       ep->range_state, ep->timestamp);
+  rsi->transactions.push_back(ep);
   RsiInsRes res = rsi_set.insert(rsi);
 
   if (!res.second) {
@@ -113,8 +114,8 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end() ||
-      (*it)->transactions.empty() ||
-      (*it)->transactions.front()->get_type() != RS_SPLIT_START) {
+      (*it)->transactions.size() < 2 ||
+      (*it)->transactions[1]->get_type() != RS_SPLIT_START) {
     HT_ERROR_OUT <<"Unexpected SplitShrunk "<< ep << " at "<< rd.pos() <<'/'
                  << rd.size() <<" in "<< rd.path() << HT_END;
 
@@ -142,8 +143,8 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end() ||
-      (*it)->transactions.empty() ||
-      (*it)->transactions.front()->get_type() != RS_SPLIT_START) {
+      (*it)->transactions.size() < 2 ||
+      (*it)->transactions[1]->get_type() != RS_SPLIT_START) {
     HT_ERROR_OUT <<"Unexpected SplitDone "<< ep << " at "<< rd.pos() <<'/'
                  << rd.size() <<" in "<<  rd.path() << HT_END;
 
@@ -157,6 +158,11 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
   }
   (*it)->transactions.clear();
   (*it)->range_state.clear();
+  // add range loaded txn
+  (*it)->range_state.timestamp = ep->timestamp;
+  MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_range_loaded(ep->table, ep->range,
+      (*it)->range_state));
+  (*it)->transactions.push_back(entry.get());
 }
 
 
@@ -198,7 +204,7 @@ namespace Hypertable {
 
 RangeServerMetaLogReader::RangeServerMetaLogReader(Filesystem *fs,
                                                    const String &path)
-    : Parent(fs, path) {
+    : Parent(fs, path), m_recover(false) {
   uint8_t buf[RSML_HEADER_SIZE];
 
   if (fd() == -1)
@@ -233,16 +239,20 @@ RangeServerMetaLogReader::read() {
 }
 
 const RangeStates &
-RangeServerMetaLogReader::load_range_states(bool force) {
-  if (!force && m_range_states.size())
+RangeServerMetaLogReader::load_range_states(bool *recover, bool force) {
+  *recover = false;
+  if (!force && m_range_states.size()) {
+    *recover = m_recover;
     return m_range_states;      // already loaded
+  }
 
   if (pos() > RSML_HEADER_SIZE) {
     // need to start from scratch, as seek doesn't work on buffered reads yet
     RangeServerMetaLogReaderPtr p(new RangeServerMetaLogReader(&fs(), path()));
-    p->load_range_states();
+    p->load_range_states(&m_recover);
     p->m_log_entries.swap(m_log_entries);
     p->m_range_states.swap(m_range_states);
+    *recover = m_recover;
     return m_range_states;
   }
   RsiSet rsi_set;
@@ -266,13 +276,15 @@ RangeServerMetaLogReader::load_range_states(bool force) {
     case RS_DROP_TABLE:
       load_entry(*this, rsi_set, (DropTable *)p);       break;
     case RS_LOG_RECOVER:
-      load_entry(*this, rsi_set, (RsmlRecover *)p);     break;
+      load_entry(*this, rsi_set, (RsmlRecover *)p);
+      m_recover = true;                                 break;
     default:
       HT_FATALF("Bad code: unhandled entry type: %d", p->get_type());
     }
     m_log_entries.push_back(p);
   }
   std::copy(rsi_set.begin(), rsi_set.end(), back_inserter(m_range_states));
+  *recover = m_recover;
 
   return m_range_states;
 }

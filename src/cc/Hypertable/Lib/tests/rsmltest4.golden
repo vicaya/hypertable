@@ -1,0 +1,32 @@
+Log entries:
+{RangeLoaded: timestamp='2010-12-24 00:49:56.755409000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='A' end='Z'} state={RangeState: state=STEADY timestamp=1293151794762924000 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}}
+{RangeLoaded: timestamp='2010-12-24 00:49:56.755429000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='Z' end='a'} state={RangeState: state=STEADY timestamp=1293151795135814000 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}}
+{RangeLoaded: timestamp='2010-12-24 00:49:56.755443000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='m' end='s'} state={RangeState: state=STEADY timestamp=0 soft_limit=40000000 transfer_log='' split_point='' old_boundary_row=''}}
+{RangeLoaded: timestamp='2010-12-24 00:49:56.755457000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='a' end='m'} state={RangeState: state=STEADY timestamp=1293151796100845000 soft_limit=40000000 transfer_log='' split_point='' old_boundary_row=''}}
+{RsmlRecover: timestamp='2010-12-24 00:49:56.855742000'}
+Range states:
+Found recover entry
+{RangeStateInfo: table={TableIdentifier: id='1' generation=0}
+  range={RangeSpec: start='A' end='Z'}
+  transactions=[
+    {RangeLoaded: timestamp='2010-12-24 00:49:56.857144000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='A' end='Z'} state={RangeState: state=STEADY timestamp=1293151794762924000 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}}
+  ]
+}
+{RangeStateInfo: table={TableIdentifier: id='1' generation=0}
+  range={RangeSpec: start='Z' end='a'}
+  transactions=[
+    {RangeLoaded: timestamp='2010-12-24 00:49:56.857157000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='Z' end='a'} state={RangeState: state=STEADY timestamp=1293151795135814000 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}}
+  ]
+}
+{RangeStateInfo: table={TableIdentifier: id='1' generation=0}
+  range={RangeSpec: start='a' end='m'}
+  transactions=[
+    {RangeLoaded: timestamp='2010-12-24 00:49:56.857175000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='a' end='m'} state={RangeState: state=STEADY timestamp=1293151796100845000 soft_limit=40000000 transfer_log='' split_point='' old_boundary_row=''}}
+  ]
+}
+{RangeStateInfo: table={TableIdentifier: id='1' generation=0}
+  range={RangeSpec: start='m' end='s'}
+  transactions=[
+    {RangeLoaded: timestamp='2010-12-24 00:49:56.857186000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='m' end='s'} state={RangeState: state=STEADY timestamp=0 soft_limit=40000000 transfer_log='' split_point='' old_boundary_row=''}}
+  ]
+}

@@ -146,7 +146,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_max_clock_skew = cfg.get_i32("ClockSkew.Max");
 
   m_update_delay = cfg.get_i32("UpdateDelay", 0);
-  
+
   int64_t block_cache_min = cfg.get_i64("BlockCache.MinMemory");
   int64_t block_cache_max;
   if (cfg.has("BlockCache.MaxMemory"))
@@ -390,7 +390,8 @@ void RangeServer::local_recover() {
       HT_DEBUG_OUT <<"Found "<< meta_log_dir <<", start recovering"<< HT_END;
 
       // Load range states
-      const RangeStates &range_states = rsml_reader->load_range_states();
+      bool found_recover_entry;
+      const RangeStates &range_states = rsml_reader->load_range_states(&found_recover_entry);
 
       // Re-open RSML for writing
       Global::range_log = new RangeServerMetaLog(Global::log_dfs, meta_log_dir);
@@ -406,7 +407,8 @@ void RangeServer::local_recover() {
       foreach(const RangeStateInfo *i, range_states) {
         if (i->table.is_metadata() && i->range.end_row
             && !strcmp(i->range.end_row, Key::END_ROOT_ROW)) {
-          HT_ASSERT(i->transactions.empty());
+          HT_ASSERT(i->transactions.size() == 1 &&
+              i->transactions.front()->get_type() == MetaLogEntryFactory::RS_RANGE_LOADED);
           replay_load_range(0, &i->table, &i->range, &i->range_state, false);
         }
       }
@@ -848,7 +850,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND,
                 "Range %s[%s..%s] dropped or relinquished",
                 table->id, range_spec->start_row, range_spec->end_row);
-      
+
     decrement_needed = true;
 
     // Check to see if range jus shrunk
@@ -881,7 +883,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     decrement_needed = false;
 
     uint64_t cells_scanned, cells_returned, bytes_scanned, bytes_returned;
-    
+
     more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size);
 
     MergeScanner *mscanner = dynamic_cast<MergeScanner*>(scanner.get());
@@ -890,7 +892,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
                                      &cells_scanned, &cells_returned);
-    
+
     {
       Locker<RSStats> lock(*m_server_stats);
       m_server_stats->add_scan_data(1, cells_scanned, bytes_scanned);
@@ -995,7 +997,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
     mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
                                      &cells_scanned, &cells_returned);
-    
+
     {
       Locker<RSStats> lock(*m_server_stats);
       m_server_stats->add_scan_data(0, cells_scanned, bytes_scanned);
@@ -1124,14 +1126,14 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
         if (m_pending_metrics_updates == 0)
           m_pending_metrics_updates = new CellsBuilder();
-        
+
         String row = Location::get() + ":" + table->id;
         cell.row_key = row.c_str();
         cell.column_family = "range_start_row";
         cell.column_qualifier = range_spec->end_row;
         cell.value = (const uint8_t *)range_spec->start_row;
         cell.value_len = strlen(range_spec->start_row)+1;
-        
+
         m_pending_metrics_updates->add(cell);
       }
 
@@ -1564,7 +1566,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
     if (table_update->table_info->get_schema()->get_generation() !=
         table_update->id.generation) {
       table_update->error = Error::RANGESERVER_GENERATION_MISMATCH;
-      table_update->error_msg = 
+      table_update->error_msg =
         format("Update schema generation mismatch for table %s (received %u != %u)",
                table_update->id.id, table_update->id.generation,
                table_update->table_info->get_schema()->get_generation());
@@ -1583,7 +1585,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
     foreach (UpdateRequest *request, table_update->requests) {
 
       total_updates++;
-        
+
       mod_end = request->buffer.base + request->buffer.size;
       mod = request->buffer.base;
 
@@ -1670,7 +1672,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
 
         /*
          *  Increment update count on range
-         *  (block if maintenance in progress) 
+         *  (block if maintenance in progress)
          */
         if (!rulist->range_blocked) {
           if (!rulist->range->increment_update_counter()) {
@@ -1770,7 +1772,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
         range_update.bufp = cur_bufp;
         range_update.offset = cur_bufp->fill();
 
-        while (mod < mod_end && 
+        while (mod < mod_end &&
                (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
 
           if (transfer_pending) {
@@ -1829,7 +1831,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
           mod = key.ptr;
 
           table_update->total_added++;
-            
+
           if (mod < mod_end)
             row = key.row();
         }
@@ -1846,7 +1848,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
           }
         }
         else {
-          /* 
+          /*
            * If we drop into here, this means that the request is
            * being aborted, so reset all of the RangeUpdateLists,
            * reset the go_buf and the root_buf
@@ -1862,7 +1864,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
         }
         range_update.bufp = 0;
       }
-        
+
       transfer_log = 0;
 
       if (send_back.count > 0) {
@@ -1892,7 +1894,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
       HT_WARNF("Table update for %s aborted, up to %u bytes of commits written to transfer logs",
                table_update->id.id, committed_transfer_data);
     else
-      HT_DEBUGF("Added %d (%d transferring) updates to '%s'", 
+      HT_DEBUGF("Added %d (%d transferring) updates to '%s'",
                 table_update->total_added, table_update->transfer_count,
                 table_update->id.id);
     if (!table_update->id.is_metadata())

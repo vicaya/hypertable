@@ -56,10 +56,11 @@ public:
 
   virtual MetaLogEntry *read();
 
-  const RangeStates &load_range_states(bool force = false);
+  const RangeStates &load_range_states(bool *recover, bool force = false);
 
 private:
   RangeStates m_range_states;
+  bool m_recover;
   MetaLogEntries m_log_entries;
 };
 
