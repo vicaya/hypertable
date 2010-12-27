@@ -29,7 +29,7 @@
 namespace Hypertable {
 
   bool FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf,
-                     int64_t buffer_size, size_t *countp);
+                     int64_t buffer_size);
 
 }
 

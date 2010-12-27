@@ -61,6 +61,7 @@ extern "C" {
 #include "MaintenanceScheduler.h"
 #include "MaintenanceTaskCompaction.h"
 #include "MaintenanceTaskSplit.h"
+#include "MergeScanner.h"
 #include "RangeServer.h"
 #include "RangeStatsGatherer.h"
 #include "ScanContext.h"
@@ -77,7 +78,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_comm(conn_mgr->get_comm()), m_conn_manager(conn_mgr), m_app_queue(app_queue),
     m_hyperspace(hyperspace), m_timer_handler(0),
     m_group_commit_timer_handler(0), m_query_cache(0), m_last_revision(TIMESTAMP_MIN),
-    m_loadavg_accum(0.0), m_loadavg_samples(0)
+    m_loadavg_accum(0.0), m_page_in_accum(0), m_page_out_accum(0), m_metric_samples(0)
 {
 
   uint16_t port;
@@ -876,20 +877,28 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     range->decrement_scan_counter();
     decrement_needed = false;
 
-    size_t count;
+    uint64_t cells_scanned, cells_returned, bytes_scanned, bytes_returned;
+    
+    more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size);
 
-    more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size, &count);
+    MergeScanner *mscanner = dynamic_cast<MergeScanner*>(scanner.get());
 
-    if (!table->is_metadata())
-      m_server_stats->add_scan_data(1, count, rbuf.fill(), range.get());
-    else
-      range->add_read_data(count, rbuf.fill());
+    assert(mscanner);
+
+    mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
+                                     &cells_scanned, &cells_returned);
+    
+    {
+      Locker<RSStats> lock(*m_server_stats);
+      m_server_stats->add_scan_data(1, cells_scanned, bytes_scanned);
+      range->add_read_data(cells_scanned, cells_returned, bytes_scanned, bytes_returned);
+    }
 
     id = (more) ? Global::scanner_map.put(scanner, range, table) : 0;
 
     if (table->is_metadata())
       HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
-               "%d k/v pairs", id, table->id, (int)count);
+               "%lld k/v pairs", id, table->id, (Lld)cells_returned);
 
     /**
      *  Send back data
@@ -973,10 +982,22 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
                       schema->get_generation(), scanner_table.generation));
     }
 
-    size_t count;
-    more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size, &count);
+    uint64_t cells_scanned, cells_returned, bytes_scanned, bytes_returned;
 
-    m_server_stats->add_scan_data(0, count, rbuf.fill(), range.get());
+    more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size);
+
+    MergeScanner *mscanner = dynamic_cast<MergeScanner*>(scanner.get());
+
+    assert(mscanner);
+
+    mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
+                                     &cells_scanned, &cells_returned);
+    
+    {
+      Locker<RSStats> lock(*m_server_stats);
+      m_server_stats->add_scan_data(0, cells_scanned, bytes_scanned);
+      range->add_read_data(cells_scanned, cells_returned, bytes_scanned, bytes_returned);
+    }
 
     if (!more)
       Global::scanner_map.remove(scanner_id);
@@ -991,8 +1012,8 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
       if ((error = cb->response(moreflag, scanner_id, ext)) != Error::OK)
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
 
-      HT_DEBUGF("Successfully fetched %u bytes (%d k/v pairs) of scan data",
-                ext.size-4, (int)count);
+      HT_DEBUGF("Successfully fetched %u bytes (%lld k/v pairs) of scan data",
+                ext.size-4, (Lld)cells_returned);
     }
 
   }
@@ -2045,7 +2066,10 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
       delete (*iter).second;
   }
 
-  m_server_stats->add_update_data(total_updates, total_added, total_bytes_added, total_syncs);
+  {
+    Locker<RSStats> lock(*m_server_stats);
+    m_server_stats->add_update_data(total_updates, total_added, total_bytes_added, total_syncs);
+  }
 
 }
 
@@ -2210,7 +2234,9 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   m_stats->system.refresh();
 
   m_loadavg_accum += m_stats->system.loadavg_stat.loadavg[0];
-  m_loadavg_samples++;
+  m_page_in_accum += m_stats->system.swap_stat.page_in;
+  m_page_out_accum += m_stats->system.swap_stat.page_out;
+  m_metric_samples++;
 
   m_stats->set_location(Location::get());
   m_stats->timestamp = timestamp;
@@ -2277,8 +2303,10 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
 
     table_stat.scans += range_data[ii]->scans;
     table_stat.updates += range_data[ii]->updates;
-    table_stat.cells_read += range_data[ii]->cells_read;
-    table_stat.bytes_read += range_data[ii]->bytes_read;
+    table_stat.cells_scanned += range_data[ii]->cells_scanned;
+    table_stat.cells_returned += range_data[ii]->cells_returned;
+    table_stat.bytes_scanned += range_data[ii]->bytes_scanned;
+    table_stat.bytes_returned += range_data[ii]->bytes_returned;
     table_stat.cells_written += range_data[ii]->cells_written;
     table_stat.bytes_written += range_data[ii]->bytes_written;
     table_stat.disk_used += range_data[ii]->disk_used;
@@ -2329,9 +2357,11 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   /**
    * If created a mutator above, write data to sys/RS_METRICS
    */
-  if (mutator) {
+  if (mutator && m_metric_samples > 0) {
+    String value = format("1:%.6f,%.6f,%.6f", m_loadavg_accum / (double)m_metric_samples,
+                          (double)m_page_in_accum / (double)m_metric_samples,
+                          (double)m_page_out_accum / (double)m_metric_samples);
     String location = Location::get();
-    String value = format("1:%.6f", m_loadavg_accum / m_loadavg_samples);
     KeySpec key;
     key.row = location.c_str();
     key.row_len = location.length();
@@ -2342,7 +2372,9 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     mutator->flush();
     m_next_metrics_update += Global::metrics_interval;
     m_loadavg_accum = 0.0;
-    m_loadavg_samples = 0;
+    m_page_in_accum = 0;
+    m_page_out_accum = 0;
+    m_metric_samples = 0;
   }
 
   {

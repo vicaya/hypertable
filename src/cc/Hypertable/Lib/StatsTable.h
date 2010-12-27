@@ -37,8 +37,10 @@ namespace Hypertable {
       range_count = other.range_count;
       cell_count = other.cell_count;
       scans = other.scans;
-      cells_read = other.cells_read;
-      bytes_read = other.bytes_read;
+      cells_scanned = other.cells_returned;
+      cells_returned = other.cells_returned;
+      bytes_scanned = other.bytes_scanned;
+      bytes_returned = other.bytes_returned;
       updates = other.updates;
       cells_written = other.cells_written;
       bytes_written = other.bytes_written;
@@ -62,8 +64,10 @@ namespace Hypertable {
     uint32_t range_count;
     uint64_t cell_count;
     uint64_t scans;
-    uint64_t cells_read;
-    uint64_t bytes_read;
+    uint64_t cells_scanned;
+    uint64_t cells_returned;
+    uint64_t bytes_scanned;
+    uint64_t bytes_returned;
     uint64_t updates;
     uint64_t cells_written;
     uint64_t bytes_written;

@@ -53,8 +53,10 @@ int main(int argc, char *argv[]) {
     table_stat.table_id = idbuf;
 
     table_stat.scans = Random::number64();
-    table_stat.cells_read = Random::number64();
-    table_stat.bytes_read = Random::number64();
+    table_stat.cells_scanned = Random::number64();
+    table_stat.cells_returned = Random::number64();
+    table_stat.bytes_scanned = Random::number64();
+    table_stat.bytes_returned = Random::number64();
     table_stat.cells_written = Random::number64();
     table_stat.bytes_written = Random::number64();
     table_stat.disk_used = Random::number64();

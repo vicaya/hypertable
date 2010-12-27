@@ -37,9 +37,10 @@ MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes, bool a
     m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0),
     m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(return_deletes),
     m_no_forward(false), m_count_present(false), m_skip_remaining_counter(false),
-    m_counted_value(12), m_tmp_count(8), m_ag_scanner(ag_scanner), m_track_io(false),
+    m_counted_value(12), m_tmp_count(8), m_ag_scanner(ag_scanner), 
     m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_revs_count(0),
     m_revs_limit(0), m_cell_cutoff(0), m_bytes_input(0), m_bytes_output(0),
+    m_cells_input(0), m_cells_output(0),
     m_cur_bytes(0), m_prev_key(0), m_prev_cf(-1) {
 
   if (scan_ctx->spec != 0) {
@@ -116,10 +117,10 @@ void MergeScanner::forward() {
       }
       sstate = m_queue.top();
 
-      if (m_track_io) {
-        m_cur_bytes = sstate.key.length + sstate.value.length();
-        m_bytes_input += m_cur_bytes;
-      }
+      // I/O tracking
+      m_cur_bytes = sstate.key.length + sstate.value.length();
+      m_bytes_input += m_cur_bytes;
+      m_cells_input++;
 
       // we only need to care about counters for a MergeScanner which is merging over
       // a single access group since no counter will span multiple access groups
@@ -384,8 +385,8 @@ void MergeScanner::forward() {
     }
     break;
   }
-  if (m_track_io)
-    m_bytes_output += m_cur_bytes;
+  m_bytes_output += m_cur_bytes;
+  m_cells_output++;
 }
 
 bool MergeScanner::get(Key &key, ByteString &value) {
@@ -434,8 +435,7 @@ void MergeScanner::initialize() {
   ScannerState sstate;
   bool counter;
 
-  if (m_track_io)
-    m_cur_bytes = 0;
+  m_cur_bytes = 0;
 
   while (!m_queue.empty())
     m_queue.pop();
@@ -449,10 +449,10 @@ void MergeScanner::initialize() {
   while (!m_queue.empty()) {
     sstate = m_queue.top();
 
-    if (m_track_io) {
-      m_cur_bytes = sstate.key.length + sstate.value.length();
-      m_bytes_input += m_cur_bytes;
-    }
+    // I/O tracking
+    m_cur_bytes = sstate.key.length + sstate.value.length();
+    m_bytes_input += m_cur_bytes;
+    m_cells_input++;
 
     m_cell_cutoff = m_scan_context_ptr->family_info[
         sstate.key.column_family_code].cutoff_time;
@@ -481,6 +481,7 @@ void MergeScanner::initialize() {
       m_delete_present = true;
       if (!m_return_deletes) {
         forward();
+        m_initialized = true;
         return;
       }
     }
@@ -494,6 +495,7 @@ void MergeScanner::initialize() {
       m_delete_present = true;
       if (!m_return_deletes) {
         forward();
+        m_initialized = true;
         return;
       }
     }
@@ -507,6 +509,7 @@ void MergeScanner::initialize() {
       m_delete_present = true;
       if (!m_return_deletes) {
         forward();
+        m_initialized = true;
         return;
       }
     }
@@ -584,13 +587,15 @@ void MergeScanner::initialize() {
         m_counted_key.load(sstate.key.serial);
         increment_count(sstate.key, sstate.value);
         forward();
+        m_initialized = true;
+        return;
       }
     }
     break;
   }
 
-  if (m_track_io)
-    m_bytes_output += m_cur_bytes;
+  m_bytes_output += m_cur_bytes;
+  m_cells_input++;
 
   m_initialized = true;
 }

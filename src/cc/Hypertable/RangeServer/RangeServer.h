@@ -187,8 +187,9 @@ namespace Hypertable {
     int64_t                m_scanner_buffer_size;
     time_t                 m_next_metrics_update;
     double                 m_loadavg_accum;
-    size_t                 m_loadavg_samples;
-
+    uint64_t               m_page_in_accum;
+    uint64_t               m_page_out_accum;
+    size_t                 m_metric_samples;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

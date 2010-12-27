@@ -55,12 +55,13 @@ Range::Range(MasterClientPtr &master_client,
              const TableIdentifier *identifier, SchemaPtr &schema,
              const RangeSpec *range, RangeSet *range_set,
              const RangeState *state)
-    : m_bytes_read(0), m_cells_read(0), m_scans(0), m_updates(0), m_bytes_written(0),
-      m_cells_written(0), m_master_client(master_client), m_identifier(*identifier),
-      m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
-      m_split_off_high(false), m_added_inserts(0), m_range_set(range_set), m_state(*state),
-      m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
-      m_maintenance_generation(0), m_load_metrics(identifier->id, range->end_row) {
+  : m_scans(0), m_cells_scanned(0), m_cells_returned(0), m_cells_written(0),
+    m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
+    m_master_client(master_client), m_identifier(*identifier),
+    m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
+    m_split_off_high(false), m_added_inserts(0), m_range_set(range_set), m_state(*state),
+    m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
+    m_maintenance_generation(0), m_load_metrics(identifier->id, range->end_row) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -431,8 +432,10 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
   {
     ScopedLock lock(m_mutex);
     starting_maintenance_generation = m_maintenance_generation;
-    mdata->bytes_read = m_bytes_read;
-    mdata->cells_read = m_cells_read;
+    mdata->cells_scanned = m_cells_scanned;
+    mdata->cells_returned = m_cells_returned;
+    mdata->bytes_scanned = m_bytes_scanned;
+    mdata->bytes_returned = m_bytes_returned;
     mdata->state = m_state.state;
     mdata->range_id = m_start_end_id;
   }
@@ -479,8 +482,8 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     m_load_metrics.compute_and_store(mutator, now,
                                      mdata->disk_used, mdata->memory_used,
                                      mdata->scans, mdata->updates,
-                                     mdata->cells_read, mdata->cells_written,
-                                     mdata->bytes_read, mdata->bytes_written);
+                                     mdata->cells_scanned, mdata->cells_written,
+                                     mdata->bytes_scanned, mdata->bytes_written);
 
   return mdata;
 }

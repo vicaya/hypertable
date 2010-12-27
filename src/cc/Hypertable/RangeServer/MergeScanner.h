@@ -99,11 +99,14 @@ namespace Hypertable {
       m_release_callback = cb;
     }
 
-    void enable_io_accounting() { m_track_io = true; }
-
-    void get_io_accounting_data(int64_t *inp, int64_t *outp) {
-      *inp = m_bytes_input;
-      *outp = m_bytes_output;
+    void get_io_accounting_data(uint64_t *inbytesp, uint64_t *outbytesp,
+                                uint64_t *incellsp=0, uint64_t *outcellsp=0) {
+      *inbytesp = m_bytes_input;
+      *outbytesp = m_bytes_output;
+      if (incellsp)
+        *incellsp = m_cells_input;
+      if (outcellsp)
+        *outcellsp = m_cells_output;
     }
 
   private:
@@ -204,9 +207,11 @@ namespace Hypertable {
     int64_t       m_cell_cutoff;
     int64_t       m_start_timestamp;
     int64_t       m_end_timestamp;
-    int64_t       m_bytes_input;
-    int64_t       m_bytes_output;
-    int64_t       m_cur_bytes;
+    uint64_t       m_bytes_input;
+    uint64_t       m_bytes_output;
+    uint64_t       m_cells_input;
+    uint64_t       m_cells_output;
+    uint64_t       m_cur_bytes;
     int64_t       m_revision;
     DynamicBuffer m_prev_key;
     int32_t       m_prev_cf;

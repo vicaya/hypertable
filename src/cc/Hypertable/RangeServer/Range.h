@@ -68,9 +68,11 @@ namespace Hypertable {
       const char *table_id;
       uint64_t scans;
       uint64_t updates;
-      uint64_t cells_read; // only includes cells returned by scans not skipped cells
+      uint64_t cells_scanned;
+      uint64_t cells_returned;
       uint64_t cells_written;
-      uint64_t bytes_read;
+      uint64_t bytes_scanned;
+      uint64_t bytes_returned;
       uint64_t bytes_written;
       int64_t  purgeable_index_memory;
       int64_t  compact_memory;
@@ -216,9 +218,12 @@ namespace Hypertable {
       return retval;
     }
 
-    void add_read_data(uint64_t cells, uint64_t bytes) {
-      m_bytes_read += bytes;
-      m_cells_read += cells;
+    void add_read_data(uint64_t cells_scanned, uint64_t cells_returned,
+                       uint64_t bytes_scanned, uint64_t bytes_returned) {
+      m_cells_scanned += cells_scanned;
+      m_cells_returned += cells_returned;
+      m_bytes_scanned += bytes_scanned;
+      m_bytes_returned += bytes_returned;
     }
 
     void add_bytes_written(uint64_t n) {
@@ -266,12 +271,14 @@ namespace Hypertable {
     void split_install_log_rollback_metadata();
 
     // these need to be aligned
-    uint64_t         m_bytes_read;
-    uint64_t         m_cells_read;
     uint64_t         m_scans;
-    uint64_t         m_updates;
-    uint64_t         m_bytes_written;
+    uint64_t         m_cells_scanned;
+    uint64_t         m_cells_returned;
     uint64_t         m_cells_written;
+    uint64_t         m_updates;
+    uint64_t         m_bytes_scanned;
+    uint64_t         m_bytes_returned;
+    uint64_t         m_bytes_written;
 
     Mutex            m_mutex;
     Mutex            m_schema_mutex;

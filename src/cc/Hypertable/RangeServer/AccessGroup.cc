@@ -503,13 +503,12 @@ namespace {
 
 }
 
-void AccessGroup::compute_garbage_stats(int64_t *input_bytesp, int64_t *output_bytesp) {
+void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp) {
   ScanContextPtr scan_context = new ScanContext(m_schema);
   MergeScannerPtr mscanner = new MergeScanner(scan_context, false, true);
   ByteString value;
   Key key;
 
-  mscanner->enable_io_accounting();
   mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
   for (size_t i=0; i<m_stores.size(); i++) {
     HT_ASSERT(m_stores[i].cs);
@@ -616,7 +615,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
        * compaction
        */
       if (minor && m_garbage_tracker.check_needed( m_immutable_cache->memory_used() )) {
-        int64_t total_bytes, valid_bytes;
+        uint64_t total_bytes, valid_bytes;
         compute_garbage_stats(&total_bytes, &valid_bytes);
         garbage_check_performed = true;
         m_garbage_tracker.set_garbage_stats(total_bytes, valid_bytes);
@@ -641,8 +640,6 @@ void AccessGroup::run_compaction(int maintenance_flags) {
 	       tableidx < m_stores.size()) {
         bool return_everything = (MaintenanceFlag::major_compaction(maintenance_flags)) ? false : (tableidx > 0);
         mscanner = new MergeScanner(scan_context, return_everything, true);
-        if (tableidx == 0)
-          mscanner->enable_io_accounting();
         scanner = mscanner;
         mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         for (size_t i=tableidx; i<m_stores.size(); i++) {
@@ -687,7 +684,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
        */
       if (tableidx == 0 && mscanner) {
         if (!garbage_check_performed) {
-          int64_t input_bytes, output_bytes;
+          uint64_t input_bytes, output_bytes;
           mscanner->get_io_accounting_data(&input_bytes, &output_bytes);
           m_garbage_tracker.set_garbage_stats(input_bytes, output_bytes);
         }

@@ -50,17 +50,17 @@ namespace Hypertable {
       }
     }
 
-    void add_scan_data(uint32_t count, uint32_t cells, uint64_t total_bytes, Range *range=0) {
-      ScopedLock lock(m_mutex);
+    void lock() { m_mutex.lock(); }
+    void unlock() { m_mutex.unlock(); }
+
+    void add_scan_data(uint32_t count, uint32_t cells, uint64_t total_bytes) {
       for(vector<StatsCollector>::iterator it = m_stats_collectors.begin();
           it != m_stats_collectors.end(); ++it) {
         it->add_scan_data(count, cells, total_bytes);
       }
-      range->add_read_data(cells, total_bytes);
     }
 
     void add_update_data(uint32_t count, uint32_t cells, uint64_t total_bytes, uint32_t syncs) {
-      ScopedLock lock(m_mutex);
       for(vector<StatsCollector>::iterator it = m_stats_collectors.begin();
           it != m_stats_collectors.end(); ++it) {
         it->add_update_data(count, cells, total_bytes, syncs);

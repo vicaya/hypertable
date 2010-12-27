@@ -177,7 +177,7 @@ namespace Hypertable {
     void space_usage(int64_t *memp, int64_t *diskp);
     void add_cell_store(CellStorePtr &cellstore, uint32_t id);
 
-    void compute_garbage_stats(int64_t *input_bytesp, int64_t *output_bytesp);
+    void compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp);
 
     void run_compaction(int maintenance_flags);
 
