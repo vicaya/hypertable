@@ -75,7 +75,7 @@ write_test(Filesystem *fs, const String &fname) {
 
   RangeSpec r3("C", "D");
   metalog->log_range_assigned(table, r3, "/logs/3", 3456, "rs7");
-  
+
   metalog->log_server_left("rs1");
 
   metalog->log_range_loaded(table, r2, "rs6");
@@ -98,7 +98,12 @@ read_states(Filesystem *fs, const String &fname, std::ostream &out) {
 
   out <<"Range states:\n";
 
-  const ServerStates &sstates = reader->load_server_states();
+  bool found_recover_entry;
+  const ServerStates &sstates = reader->load_server_states(&found_recover_entry);
+  if (found_recover_entry)
+    out << "Found recover entry\n";
+  else
+    out << "Recover entry not found\n";
 
   foreach(ServerStateInfo *i, sstates) {
     i->timestamp = 0;
@@ -129,7 +134,7 @@ write_more(Filesystem *fs, const String &fname) {
   metalog->log_range_loaded(table, r3, "rs7");
 
   metalog->log_range_loaded(table, r1, "rs11");
-  
+
   metalog->log_server_left("rs10");
 
 }
@@ -235,7 +240,7 @@ main(int ac, char *av[]) {
     client->append(dst_fd, sbuf, Filesystem::O_FLUSH);
     client->close(dst_fd);
 
-    // Now read the MML and 
+    // Now read the MML and
     {
       MasterMetaLogPtr ml = new MasterMetaLog(client, testdir);
 
@@ -244,8 +249,7 @@ main(int ac, char *av[]) {
         read_states(client, testdir, out);
       }
 
-      // size of mml dump should be same as the last one
-      HT_ASSERT(FileUtils::size("mmltest4.out") == FileUtils::size("mmltest3.golden"));
+      HT_ASSERT(FileUtils::size("mmltest4.out") == FileUtils::size("mmltest4.golden"));
     }
 
     if (!has("save"))

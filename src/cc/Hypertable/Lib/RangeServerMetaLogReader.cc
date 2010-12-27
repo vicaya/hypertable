@@ -275,8 +275,11 @@ RangeServerMetaLogReader::read() {
 
 const RangeStates &
 RangeServerMetaLogReader::load_range_states(bool *recover, bool force) {
+
   *recover = false;
-  if (!force && m_range_states.size()) {
+  if (force)
+    m_recover = false;
+  else if (m_range_states.size()) {
     *recover = m_recover;
     return m_range_states;      // already loaded
   }

@@ -54,11 +54,12 @@ public:
 
   virtual MetaLogEntry *read();
 
-  const ServerStates &load_server_states(bool force = false);
+  const ServerStates &load_server_states(bool *recover, bool force = false);
 
 private:
   ServerStates m_server_states;
   MetaLogEntries m_log_entries;
+  bool m_recover;
 };
 
 typedef intrusive_ptr<MasterMetaLogReader> MasterMetaLogReaderPtr;

@@ -50,6 +50,7 @@ typedef MasterMetaLogReader Reader;
 
 void load_entry(Reader &rd, SsiSet &ssi_set, ServerJoined *ep) {
   ServerStateInfo *ssi = new ServerStateInfo(ep->location, ep->timestamp);
+  ssi->transactions.push_back(ep);
   SsiInsRes res = ssi_set.insert(ssi);
 
   if (!res.second) {
@@ -154,7 +155,7 @@ void load_entry(Reader &rd, SsiSet &ssi_set, MmlRecover *ep) {
 namespace Hypertable {
 
 MasterMetaLogReader::MasterMetaLogReader(Filesystem *fs, const String &path)
-    : Parent(fs, path) {
+    : Parent(fs, path), m_recover(false) {
   uint8_t buf[MML_HEADER_SIZE];
 
   if (fd() == -1)
@@ -189,16 +190,23 @@ MasterMetaLogReader::read() {
 }
 
 const ServerStates &
-MasterMetaLogReader::load_server_states(bool force) {
-  if (!force && m_server_states.size())
+MasterMetaLogReader::load_server_states(bool *recover, bool force) {
+
+  *recover = false;
+  if (force)
+    m_recover = false;
+  else if (m_server_states.size()) {
+    *recover = m_recover;
     return m_server_states;      // already loaded
+  }
 
   if (pos() > MML_HEADER_SIZE) {
     // need to start from scratch, as seek doesn't work on buffered reads yet
     MasterMetaLogReaderPtr p(new MasterMetaLogReader(&fs(), path()));
-    p->load_server_states();
+    p->load_server_states(&m_recover);
     p->m_log_entries.swap(m_log_entries);
     p->m_server_states.swap(m_server_states);
+    *recover = m_recover;
     return m_server_states;
   }
   SsiSet ssi_set;
@@ -206,17 +214,18 @@ MasterMetaLogReader::load_server_states(bool force) {
   for (MetaLogEntry *p = read(); p; p = read()) {
     switch (p->get_type()) {
     case MASTER_SERVER_JOINED:
-      load_entry(*this, ssi_set, (ServerJoined *)p);    break;
+      load_entry(*this, ssi_set, (ServerJoined *)p);        break;
     case MASTER_SERVER_LEFT:
-      load_entry(*this, ssi_set, (ServerLeft *)p);      break;
+      load_entry(*this, ssi_set, (ServerLeft *)p);          break;
     case MASTER_SERVER_REMOVED:
-      load_entry(*this, ssi_set, (ServerRemoved *)p);      break;
+      load_entry(*this, ssi_set, (ServerRemoved *)p);       break;
     case MASTER_RANGE_ASSIGNED:
-      load_entry(*this, ssi_set, (RangeAssigned *)p);   break;
+      load_entry(*this, ssi_set, (RangeAssigned *)p);       break;
     case MASTER_RANGE_LOADED:
-      load_entry(*this, ssi_set, (RangeLoaded *)p);   break;
+      load_entry(*this, ssi_set, (RangeLoaded *)p);         break;
     case MASTER_LOG_RECOVER:
-      load_entry(*this, ssi_set, (MmlRecover *)p);     break;
+      load_entry(*this, ssi_set, (MmlRecover *)p);
+      m_recover = true;                                     break;
     default:
       HT_FATALF("Bad code: unhandled entry type: %d", p->get_type());
     }
@@ -224,6 +233,7 @@ MasterMetaLogReader::load_server_states(bool force) {
   }
   std::copy(ssi_set.begin(), ssi_set.end(), back_inserter(m_server_states));
 
+  *recover = m_recover;
   return m_server_states;
 }
 

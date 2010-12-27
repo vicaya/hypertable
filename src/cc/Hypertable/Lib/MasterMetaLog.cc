@@ -97,13 +97,15 @@ MasterMetaLog::recover(const String &path) {
     // copy entries
     MetaLogEntryPtr entry;
     try {
-      while ((entry = reader->read())) {
-        if (entry->get_type() == MetaLogEntryFactory::MASTER_LOG_RECOVER) {
-          found_recover_entry = true;
-          continue;
-        }
-        serialize_entry(entry.get(), buf);
-      }
+      MetaLogEntries entries;
+      ServerStates server_states = reader->load_server_states(&found_recover_entry);
+
+      foreach(const ServerStateInfo *state, server_states)
+        foreach (const MetaLogEntryPtr &e, state->transactions)
+          entries.push_back(e);
+      std::sort(entries.begin(), entries.end(), OrderByTimestamp());
+      foreach(MetaLogEntryPtr &e, entries)
+        serialize_entry(e.get(), buf);
     }
     catch (Hypertable::Exception &e) {
       HT_ERROR_OUT << e << HT_END;
