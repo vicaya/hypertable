@@ -56,9 +56,6 @@ operator<<(std::ostream &out, const MetaLogEntry *ep) {
       R_CAST_AND_OUTPUT(MoveStart, ep, out)
           <<" state="<< sp->range_state <<'}';
     } break;
-    case RS_MOVE_PREPARED: {
-      R_CAST_AND_OUTPUT(MovePrepared, ep, out) <<'}';
-    } break;
     case RS_MOVE_DONE: {
       R_CAST_AND_OUTPUT(MoveDone, ep, out) <<'}';
     } break;
@@ -69,28 +66,28 @@ operator<<(std::ostream &out, const MetaLogEntry *ep) {
       out << "{RsmlRecover: timestamp='" << hires_ts_date << "'}";
     } break;
     case MASTER_SERVER_JOINED: {
-      out << "{ServerJoined: timestamp='" << hires_ts_date 
+      out << "{ServerJoined: timestamp='" << hires_ts_date
           << "' location='" << ((MasterTxn::ServerJoined *)ep)->location << "'}";
     } break;
     case MASTER_SERVER_LEFT: {
-      out << "{ServerLeft: timestamp='" << hires_ts_date 
+      out << "{ServerLeft: timestamp='" << hires_ts_date
           << "' location='" << ((MasterTxn::ServerLeft *)ep)->location << "'}";
     } break;
     case MASTER_SERVER_REMOVED: {
-      out << "{ServerRemoved: timestamp='" << hires_ts_date 
+      out << "{ServerRemoved: timestamp='" << hires_ts_date
           << "' location='" << ((MasterTxn::ServerRemoved *)ep)->location << "'}";
     } break;
     case MASTER_RANGE_ASSIGNED: {
       MasterTxn::RangeAssigned *sp = (MasterTxn::RangeAssigned *)ep;
-      out << "{RangeAssigned: timestamp='" << hires_ts_date 
+      out << "{RangeAssigned: timestamp='" << hires_ts_date
           <<"' table="<< sp->table <<" range="<< sp->range
           <<"' transfer_log='" << sp->transfer_log << "' soft_limit="
           << sp->soft_limit << " location='" << sp->location << "'}";
     } break;
     case MASTER_RANGE_LOADED: {
       MasterTxn::RangeLoaded *sp = (MasterTxn::RangeLoaded *)ep;
-      out << "{RangeLoaded: timestamp='" << hires_ts_date 
-          <<"' table="<< sp->table <<" range="<< sp->range 
+      out << "{RangeLoaded: timestamp='" << hires_ts_date
+          <<"' table="<< sp->table <<" range="<< sp->range
           <<"' location='" << sp->location << "'}";
     } break;
     case MASTER_LOG_RECOVER: {

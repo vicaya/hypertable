@@ -112,6 +112,13 @@ write_test(Filesystem *fs, const String &fname) {
   st.split_point = "m";
   st.old_boundary_row = "z"; // split off high
   metalog->log_split_start(table, r2high, st);
+
+  // 4. start range move
+  st.clear();
+  st.soft_limit = 40*M;
+  metalog->log_range_loaded(table, RangeSpec("s", "v"), st);
+  metalog->log_move_start(table, RangeSpec("s", "v"), st);
+
 }
 
 void
@@ -147,6 +154,11 @@ write_more(Filesystem *fs, const String &fname) {
   TableIdentifier table("1");
   RangeState s;
 
+  // finish range move
+  s.clear();
+  s.soft_limit = 40*M;
+  ml->log_move_done(table, RangeSpec("s", "v"));
+
   s.clear();
   s.soft_limit = 40*M;
   ml->log_range_loaded(table, RangeSpec("m", "s"), s);
@@ -159,6 +171,8 @@ write_more(Filesystem *fs, const String &fname) {
   s.old_boundary_row = "z"; // split off high
   rs.end_row = "m";
   ml->log_split_shrunk(table, rs, s);
+
+
 }
 
 void
@@ -183,6 +197,7 @@ write_more_again(Filesystem *fs, const String &fname) {
   rs.end_row = "m";
 
   ml->log_split_done(table, rs, s);
+
 }
 
 void

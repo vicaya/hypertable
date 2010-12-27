@@ -168,14 +168,49 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
 
 void load_entry(Reader &rd, RsiSet &rsi_set, MoveStart *ep) {
   // TODO
+  RangeStateInfo ri(ep->table, ep->range);
+  RsiSet::iterator it = rsi_set.find(&ri);
+
+  if (it == rsi_set.end()) {
+    HT_ERROR_OUT <<"Unexpected MoveStart" << ep << " at "<< rd.pos() <<'/'
+                 << rd.size() <<" in "<< rd.path() << HT_END;
+
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
+  }
+  (*it)->transactions.push_back(ep);
+  (*it)->range_state = ep->range_state;
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, MovePrepared *ep) {
-  // TODO
+  // Not needed
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, MoveDone *ep) {
   // TODO
+  RangeStateInfo ri(ep->table, ep->range);
+  RsiSet::iterator it = rsi_set.find(&ri);
+
+  if (it == rsi_set.end() ||
+      (*it)->transactions.size() < 2 ||
+      (*it)->transactions[1]->get_type() != RS_MOVE_START) {
+    HT_ERROR_OUT <<"Unexpected MoveDone"<< ep << " at "<< rd.pos() <<'/'
+                 << rd.size() <<" in "<<  rd.path() << HT_END;
+
+    if (it != rsi_set.end())
+      HT_DEBUG_OUT << *it << HT_END;
+
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
+  }
+
+  // delete range info from set
+  delete *it;
+  rsi_set.erase(it);
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, DropTable *ep) {
