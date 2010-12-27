@@ -245,18 +245,19 @@ void MasterClient::status(Timer *timer) {
 
 
 void
-MasterClient::register_server(std::string &location, StatsSystem &system_stats,
+MasterClient::register_server(std::string &location, uint16_t listen_port,
+                              StatsSystem &system_stats,
                               DispatchHandler *handler, Timer *timer) {
-  CommBufPtr cbp(MasterProtocol::create_register_server_request(location, system_stats));
+  CommBufPtr cbp(MasterProtocol::create_register_server_request(location, listen_port, system_stats));
   send_message(cbp, handler, timer);
 }
 
 
-void MasterClient::register_server(std::string &location, StatsSystem &system_stats,
-                                   Timer *timer) {
+void MasterClient::register_server(std::string &location, uint16_t listen_port,
+                                   StatsSystem &system_stats, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(MasterProtocol::create_register_server_request(location, system_stats));
+  CommBufPtr cbp(MasterProtocol::create_register_server_request(location, listen_port, system_stats));
 
   send_message(cbp, &sync_handler, timer);
 

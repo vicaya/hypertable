@@ -98,10 +98,11 @@ namespace Hypertable {
 
     void status(Timer *timer=0);
 
-    void register_server(std::string &location, StatsSystem &system_stats,
+    void register_server(std::string &location, uint16_t listen_port,
+                         StatsSystem &system_stats,
                          DispatchHandler *handler, Timer *timer = 0);
-    void register_server(std::string &location, StatsSystem &system_stats,
-                         Timer *timer=0);
+    void register_server(std::string &location, uint16_t listen_port,
+                         StatsSystem &system_stats, Timer *timer=0);
 
     void move_range(TableIdentifier *table, RangeSpec &range,
                     const String &log_dir, uint64_t soft_limit,

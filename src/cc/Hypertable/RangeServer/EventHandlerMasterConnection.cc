@@ -75,6 +75,7 @@ void EventHandlerMasterConnection::run() {
   StatsSystem stats;
   const char *base, *ptr;
   String datadirs = properties->get_str("Hypertable.RangeServer.Monitoring.DataDirectories");
+  uint16_t port = properties->get_i16("Hypertable.RangeServer.Port");
   String dir;
   std::vector<String> dirs;
 
@@ -95,7 +96,7 @@ void EventHandlerMasterConnection::run() {
   while (true) {
     String location = Location::get();
     try {
-      m_master->register_server(location, stats);
+      m_master->register_server(location, port, stats);
       if (!m_location_persisted) {
 	Location::set(location);
 	location += "\n";

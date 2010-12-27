@@ -79,7 +79,7 @@ namespace Hypertable {
                       const char *schemastr);
     void get_schema(ResponseCallbackGetSchema *cb, const char *tablename);
     void register_server(ResponseCallbackRegisterServer *cb, String &location,
-                         StatsSystem &system_stats);
+                         uint16_t listen_port, StatsSystem &system_stats);
     void move_range(ResponseCallback *cb, const TableIdentifier &table,
                     const RangeSpec &range, const char *transfer_log_dir,
                     uint64_t soft_limit, bool split);

@@ -556,14 +556,14 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
  */
 void
 Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
-                        StatsSystem &system_stats) {
+                        uint16_t listen_port, StatsSystem &system_stats) {
   RangeServerStateMap::iterator iter;
   HandleCallbackPtr lock_file_handler;
   LockSequencer lock_sequencer;
   String hsfname;
   bool exists = false;
   InetAddr connection = cb->get_address();
-  InetAddr addr = InetAddr(system_stats.net_info.primary_addr, m_rangeserver_port);
+  InetAddr addr = InetAddr(system_stats.net_info.primary_addr, listen_port);
   String addr_str = InetAddr::format(addr);
 
   if (location == "") {

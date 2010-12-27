@@ -45,8 +45,9 @@ void RequestHandlerRegisterServer::run() {
 
   try {
     String location = decode_vstr(&decode_ptr, &decode_remain);
+    uint16_t listen_port = decode_i16(&decode_ptr, &decode_remain);
     stats.decode(&decode_ptr, &decode_remain);
-    m_master->register_server(&cb, location, stats);
+    m_master->register_server(&cb, location, listen_port, stats);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

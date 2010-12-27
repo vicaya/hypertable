@@ -67,6 +67,7 @@ namespace Hypertable {
     static CommBuf *create_status_request();
 
     static CommBuf *create_register_server_request(const String &location,
+                                                   uint16_t listen_port,
                                                    StatsSystem &system_stats);
 
     static CommBuf *

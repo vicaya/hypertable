@@ -100,7 +100,6 @@ void TimerHandler::complete_maintenance_notify() {
 void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
   ScopedLock lock(m_mutex);
   int error;
-  int64_t memory_used = Global::memory_tracker->balance();
 
   if (m_shutdown) {
     HT_INFO("TimerHandler shutting down.");
@@ -108,6 +107,8 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
     m_shutdown_cond.notify_all();
     return;
   }
+
+  int64_t memory_used = Global::memory_tracker->balance();
 
   if (memory_used > Global::memory_limit) {
     m_current_interval = 500;

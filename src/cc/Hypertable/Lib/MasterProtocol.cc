@@ -94,10 +94,12 @@ namespace Hypertable {
 
   CommBuf *
   MasterProtocol::create_register_server_request(const String &location,
+                                                 uint16_t listen_port,
                                                  StatsSystem &system_stats) {
     CommHeader header(COMMAND_REGISTER_SERVER);
-    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location) + system_stats.encoded_length());
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location) + 2 + system_stats.encoded_length());
     cbuf->append_vstr(location);
+    cbuf->append_i16(listen_port);
     system_stats.encode(cbuf->get_data_ptr_address());
     return cbuf;
   }
