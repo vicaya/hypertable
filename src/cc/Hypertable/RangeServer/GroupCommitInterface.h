@@ -72,21 +72,21 @@ namespace Hypertable {
 
   class RangeUpdateList {
   public:
-    RangeUpdateList() : starting_update_count(0), last_request(0), split_buf_reset_ptr(0),
-                        latest_split_revision(TIMESTAMP_MIN), range_blocked(false) { }
+    RangeUpdateList() : starting_update_count(0), last_request(0), transfer_buf_reset_ptr(0),
+                        latest_transfer_revision(TIMESTAMP_MIN), range_blocked(false) { }
     void reset_updates(UpdateRequest *request) {
       if (request == last_request) {
         if (starting_update_count < updates.size())
           updates.resize(starting_update_count);
-        if (split_buf_reset_ptr)
-          split_buf.ptr = split_buf_reset_ptr;
+        if (transfer_buf_reset_ptr)
+          transfer_buf.ptr = transfer_buf_reset_ptr;
       }
     }
     void add_update(UpdateRequest *request, RangeUpdate &update) {
       if (request != last_request) {
         starting_update_count = updates.size();
         last_request = request;
-        split_buf_reset_ptr = split_buf.empty() ? 0 : split_buf.ptr;
+        transfer_buf_reset_ptr = transfer_buf.empty() ? 0 : transfer_buf.ptr;
       }
       if (update.len)
         updates.push_back(update);
@@ -95,10 +95,10 @@ namespace Hypertable {
     std::vector<RangeUpdate> updates;
     size_t starting_update_count;
     UpdateRequest *last_request;
-    DynamicBuffer split_buf;
-    uint8_t *split_buf_reset_ptr;
-    int64_t latest_split_revision;
-    CommitLogPtr splitlog;
+    DynamicBuffer transfer_buf;
+    uint8_t *transfer_buf_reset_ptr;
+    int64_t latest_transfer_revision;
+    CommitLogPtr transfer_log;
     bool range_blocked;
   };
 
@@ -107,7 +107,7 @@ namespace Hypertable {
     TableUpdate() : flags(0), commit_interval(0), total_count(0),
                     total_buffer_size(0), wait_for_metadata_recovery(false),
                     wait_for_system_recovery(false),
-                    split_added(0), total_added(0), error(0) {}
+                    transfer_count(0), total_added(0), error(0) {}
     TableIdentifier id;
     std::vector<UpdateRequest *> requests;
     uint32_t flags;
@@ -121,7 +121,7 @@ namespace Hypertable {
     DynamicBuffer go_buf;
     bool wait_for_metadata_recovery;
     bool wait_for_system_recovery;
-    uint32_t split_added;
+    uint32_t transfer_count;
     uint32_t total_added;
     int error;
     String error_msg;

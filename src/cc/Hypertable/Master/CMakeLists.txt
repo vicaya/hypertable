@@ -37,6 +37,7 @@ RequestHandlerGetSchema.cc
 RequestHandlerMoveRange.cc
 RequestHandlerStatus.cc
 RequestHandlerRegisterServer.cc
+RequestHandlerRelinquishAcknowledge.cc
 RequestHandlerClose.cc
 RequestHandlerShutdown.cc
 ResponseCallbackGetSchema.cc

@@ -1,5 +1,6 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.17 *
+ * Copyright (C) 2009 Hypertable, Inc.
+ *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
@@ -35,6 +36,7 @@ extern "C" {
 #include "Common/FailureInducer.h"
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
+#include "Common/StringExt.h"
 
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/CommitLogReader.h"
@@ -61,7 +63,8 @@ Range::Range(MasterClientPtr &master_client,
     m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
     m_split_off_high(false), m_added_inserts(0), m_range_set(range_set), m_state(*state),
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
-    m_maintenance_generation(0), m_load_metrics(identifier->id, range->end_row) {
+    m_relinquish(false), m_maintenance_generation(0),
+    m_load_metrics(identifier->id, range->end_row) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -71,9 +74,6 @@ Range::Range(MasterClientPtr &master_client,
 
   m_start_row = range->start_row;
   m_end_row = range->end_row;
-
-  // set the range id
-  m_start_end_id.set(m_start_row.c_str(), m_end_row.c_str());
 
   /**
    * Determine split side
@@ -426,6 +426,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
   mdata->table_id = m_identifier.id;
   mdata->is_metadata = m_identifier.is_metadata();
   mdata->is_system = m_identifier.is_system();
+  mdata->relinquish = m_relinquish;
   mdata->schema_generation = m_identifier.generation;
 
   // record starting maintenance generation
@@ -437,7 +438,6 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->bytes_scanned = m_bytes_scanned;
     mdata->bytes_returned = m_bytes_returned;
     mdata->state = m_state.state;
-    mdata->range_id = m_start_end_id;
   }
 
   for (size_t i=0; i<ag_vector.size(); i++) {
@@ -487,6 +487,206 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
 
   return mdata;
 }
+
+
+void Range::relinquish() {
+  RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
+
+  try {
+    switch (m_state.state) {
+    case (RangeState::STEADY):
+      relinquish_install_log();
+    case (RangeState::RELINQUISH_LOG_INSTALLED):
+      relinquish_compact_and_finish();
+    }
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::CANCELLED || cancel_maintenance())
+      return;
+    throw;
+  }
+
+  {
+    ScopedLock lock(m_mutex);
+    m_capacity_exceeded_throttle = false;
+    m_maintenance_generation++;
+  }
+
+  HT_INFO("Relinquish Complete.");
+}
+
+
+void Range::relinquish_install_log() {
+  char md5DigestStr[33];
+  String logname;
+  time_t now = 0;
+  AccessGroupVector  ag_vector(0);
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+  }
+
+  if (cancel_maintenance())
+    HT_THROW(Error::CANCELLED, "");
+
+  /**
+   * Create transfer log
+   */
+  md5_trunc_modified_base64(m_end_row.c_str(), md5DigestStr);
+  md5DigestStr[16] = 0;
+
+  try {
+    
+    do {
+      if (now != 0)
+        poll(0, 0, 1200);
+      now = time(0);
+      m_state.set_transfer_log(Global::log_dir + "/" + m_identifier.id + "/" + md5DigestStr + "-" + (int)now);
+    }
+    while (Global::log_dfs->exists(m_state.transfer_log));
+
+    Global::log_dfs->mkdirs(m_state.transfer_log);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << "Problem creating transfer log directory '" 
+                 << m_state.transfer_log << "' - " << e << HT_END;
+    HT_ABORT;
+  }
+
+  /**
+   * Write RelinquishStart MetaLog entry
+   */
+  m_state.state = RangeState::RELINQUISH_LOG_INSTALLED;
+  for (int i=0; true; i++) {
+    try {
+      /**  TBD **/
+      //Global::range_log->log_relinquish_start(m_identifier, RangeSpec(m_start_row.c_str(), m_end_row.c_str()), m_state);
+      break;
+    }
+    catch (Exception &e) {
+      if (i<3) {
+        HT_WARNF("%s - %s", Error::get_text(e.code()), e.what());
+        poll(0, 0, 5000);
+        continue;
+      }
+      HT_ERRORF("Problem writing RelinquishStart meta log entry for %s",
+                m_name.c_str());
+      HT_FATAL_OUT << e << HT_END;
+    }
+  }
+
+  /**
+   * Create and install the transfer log
+   */
+  {
+    Barrier::ScopedActivator block_updates(m_update_barrier);
+    ScopedLock lock(m_mutex);
+    m_transfer_log = new CommitLog(Global::dfs, m_state.transfer_log);
+    for (size_t i=0; i<ag_vector.size(); i++)
+      ag_vector[i]->stage_compaction();
+  }
+
+}
+
+
+void Range::relinquish_compact_and_finish() {
+  RangeSpec range;
+  AccessGroupVector ag_vector(0);
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+  }
+
+  if (cancel_maintenance())
+    HT_THROW(Error::CANCELLED, "");
+
+  /**
+   * Perform major compactions
+   */
+  for (size_t i=0; i<ag_vector.size(); i++)
+    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR);
+
+  range.start_row = m_start_row.c_str();
+  range.end_row = m_end_row.c_str();
+
+  // update the latest generation, this should probably be protected
+  {
+    ScopedLock lock(m_schema_mutex);
+    m_identifier.generation = m_schema->get_generation();
+  }
+
+  m_dropped = true;
+
+  // Remove range from the system
+  {
+    Barrier::ScopedActivator block_updates(m_update_barrier);
+    Barrier::ScopedActivator block_scans(m_scan_barrier);
+
+    if (!m_range_set->remove(m_end_row)) {
+      HT_ERROR_OUT << "Problem removing range " << m_name << HT_END;
+      HT_ABORT;
+    }
+  }
+
+  // Record "move" in sys/RS_METRICS
+  if (Global::rs_metrics_table) {
+    TableMutatorPtr mutator = Global::rs_metrics_table->create_mutator();
+    KeySpec key;
+    String row = Location::get() + ":" + m_identifier.id;
+    key.row = row.c_str();
+    key.row_len = row.length();
+    key.column_family = "range_move";
+    key.column_qualifier = m_end_row.c_str();
+    key.column_qualifier_len = m_end_row.length();
+    try {
+      mutator->set(key, 0, 0);
+      mutator->flush();
+    }
+    catch (Exception &e) {
+      HT_ERROR_OUT << "Problem updating sys/RS_METRICS - " << e << HT_END;
+    }
+  }
+
+  HT_INFOF("Reporting relinquished range %s[%s..%s] to Master",
+           m_identifier.id, range.start_row, range.end_row);
+
+  m_master_client->move_range(&m_identifier, range,
+                              m_state.transfer_log,
+                              m_state.soft_limit, false);
+
+  /**
+   * Write RelinquishDone MetaLog entry
+   */
+  for (int i=0; true; i++) {
+    try {
+      // TBD
+      //Global::range_log->log_relinquish_done(m_identifier, RangeSpec(m_start_row.c_str(), m_end_row.c_str()), m_state);
+      break;
+    }
+    catch (Exception &e) {
+      if (i<2) {
+        HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
+        poll(0, 0, 5000);
+        continue;
+      }
+      HT_ERRORF("Problem writing RelinquishDone meta log entry for %s",
+                m_name.c_str());
+      HT_FATAL_OUT << e << HT_END;
+    }
+  }
+
+  // Acknowledge write of the RelinquishDone RSML entry to the master
+  try {
+    m_master_client->relinquish_acknowledge(&m_identifier, range);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << "Master::relinquish_acknowledge() error - " << e << HT_END;
+  }
+
+}
+
 
 
 void Range::split() {
@@ -609,7 +809,7 @@ void Range::split_install_log() {
    */
   md5_trunc_modified_base64(m_state.split_point, md5DigestStr);
   md5DigestStr[16] = 0;
-  m_state.set_transfer_log(Global::log_dir + "/" + md5DigestStr);
+  m_state.set_transfer_log(Global::log_dir + "/" + m_identifier.id + "/" + md5DigestStr);
 
   // Create transfer log dir
   try {
@@ -619,17 +819,6 @@ void Range::split_install_log() {
   catch (Exception &e) {
     HT_ERROR_OUT << "Problem creating log directory '%s' - " << e << HT_END;
     HT_ABORT;
-  }
-
-  /**
-   * Create and install the split log
-   */
-  {
-    Barrier::ScopedActivator block_updates(m_update_barrier);
-    ScopedLock lock(m_mutex);
-    for (size_t i=0; i<ag_vector.size(); i++)
-      ag_vector[i]->stage_compaction();
-    m_split_log = new CommitLog(Global::dfs, m_state.transfer_log);
   }
 
   if (m_split_off_high)
@@ -653,10 +842,21 @@ void Range::split_install_log() {
         poll(0, 0, 5000);
         continue;
       }
-      HT_ERRORF("Problem writing SPLIT_LOG_INSTALLED meta log entry for %s "
+      HT_ERRORF("Problem writing SplitStart meta log entry for %s "
                 "split-point='%s'", m_name.c_str(), m_state.split_point);
       HT_FATAL_OUT << e << HT_END;
     }
+  }
+
+  /**
+   * Create and install the transfer log
+   */
+  {
+    Barrier::ScopedActivator block_updates(m_update_barrier);
+    ScopedLock lock(m_mutex);
+    for (size_t i=0; i<ag_vector.size(); i++)
+      ag_vector[i]->stage_compaction();
+    m_transfer_log = new CommitLog(Global::dfs, m_state.transfer_log);
   }
 
   HT_MAYBE_FAIL("split-1");
@@ -776,9 +976,6 @@ void Range::split_compact_and_shrink() {
       else
         m_start_row = m_state.split_point;
 
-      // set the range id
-      m_start_end_id.set(m_start_row.c_str(), m_end_row.c_str());
-
       m_name = String(m_identifier.id) + "[" + m_start_row + ".." + m_end_row
         + "]";
       m_split_row = "";
@@ -786,16 +983,16 @@ void Range::split_compact_and_shrink() {
         ag_vector[i]->shrink(split_row, m_split_off_high);
 
       // Close and uninstall split log
-      if ((error = m_split_log->close()) != Error::OK) {
+      if ((error = m_transfer_log->close()) != Error::OK) {
         HT_ERRORF("Problem closing split log '%s' - %s",
-                  m_split_log->get_log_dir().c_str(), Error::get_text(error));
+                  m_transfer_log->get_log_dir().c_str(), Error::get_text(error));
       }
-      m_split_log = 0;
+      m_transfer_log = 0;
     }
   }
 
   /**
-   * Write SPLIT_SHRUNK MetaLog entry
+   * Write SplitShrunk MetaLog entry
    */
   m_state.state = RangeState::SPLIT_SHRUNK;
   if (m_split_off_high) {
@@ -832,7 +1029,7 @@ void Range::split_compact_and_shrink() {
         poll(0, 0, 5000);
         continue;
       }
-      HT_ERRORF("Problem writing SPLIT_SHRUNK meta log entry for %s "
+      HT_ERRORF("Problem writing SplitShrunk meta log entry for %s "
                 "split-point='%s'", m_name.c_str(), m_state.split_point);
       HT_FATAL_OUT << e << HT_END;
     }
@@ -890,7 +1087,7 @@ void Range::split_notify_master() {
   m_state.soft_limit = soft_limit;
 
   /**
-   * Write SPLIT_DONE MetaLog entry
+   * Write SplitDone MetaLog entry
    */
   for (int i=0; true; i++) {
     try {
@@ -904,10 +1101,18 @@ void Range::split_notify_master() {
         poll(0, 0, 5000);
         continue;
       }
-      HT_ERRORF("Problem writing SPLIT_DONE meta log entry for %s "
+      HT_ERRORF("Problem writing SplitDone meta log entry for %s "
                 "split-point='%s'", m_name.c_str(), m_state.split_point);
       HT_FATAL_OUT << e << HT_END;
     }
+  }
+
+  // Acknowledge write of the SplitDone RSML entry to the master
+  try {
+    m_master_client->relinquish_acknowledge(&m_identifier, range);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << "Master::relinquish_acknowledge() error - " << e << HT_END;
   }
 
   m_state.clear();
@@ -1007,20 +1212,29 @@ void Range::purge_memory(MaintenanceFlag::Map &subtask_map) {
  */
 void Range::recovery_finalize() {
 
-  if (m_state.state == RangeState::SPLIT_LOG_INSTALLED) {
+  if (m_state.state == RangeState::SPLIT_LOG_INSTALLED ||
+      m_state.state == RangeState::RELINQUISH_LOG_INSTALLED) {
     CommitLogReaderPtr commit_log_reader =
         new CommitLogReader(Global::dfs, m_state.transfer_log);
+
     replay_transfer_log(commit_log_reader.get());
+
     commit_log_reader = 0;
+
+    m_transfer_log = new CommitLog(Global::dfs, m_state.transfer_log);
 
     // re-initiate compaction
     for (size_t i=0; i<m_access_group_vector.size(); i++)
       m_access_group_vector[i]->stage_compaction();
 
-    m_split_log = new CommitLog(Global::dfs, m_state.transfer_log);
-    m_split_row = m_state.split_point;
-    HT_INFOF("Restored range state to SPLIT_LOG_INSTALLED (split point='%s' "
-             "split log='%s')", m_state.split_point, m_state.transfer_log);
+    if (m_state.state == RangeState::SPLIT_LOG_INSTALLED) {
+      HT_INFOF("Restored range state to SPLIT_LOG_INSTALLED (split point='%s' "
+               "xfer log='%s')", m_state.split_point, m_state.transfer_log);
+      m_split_row = m_state.split_point;
+    }
+    else
+      HT_INFOF("Restored range state to RELINQUISH_LOG_INSTALLED (xfer log='%s')",
+               m_state.transfer_log);
   }
 
   for (size_t i=0; i<m_access_group_vector.size(); i++)

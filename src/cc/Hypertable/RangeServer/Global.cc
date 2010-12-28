@@ -53,7 +53,7 @@ namespace Hypertable {
   ScannerMap             Global::scanner_map;
   FileBlockCache        *Global::block_cache = 0;
   TablePtr               Global::metadata_table = 0;
-  TablePtr               Global::rs_stats_table = 0;
+  TablePtr               Global::rs_metrics_table = 0;
   int64_t                Global::range_metadata_split_size = 0;
   MemoryTracker         *Global::memory_tracker = 0;
   int64_t                Global::log_prune_threshold_min = 0;

@@ -87,23 +87,37 @@ namespace {
 
 
 bool
-MaintenancePrioritizer::schedule_inprogress_splits(RangeStatsVector &range_data,
+MaintenancePrioritizer::schedule_inprogress_operations(RangeStatsVector &range_data,
             MemoryState &memory_state, int32_t &priority, String &trace_str) {
   AccessGroup::MaintenanceData *ag_data;
   AccessGroup::CellStoreMaintenanceData *cs_data;
+  bool in_progress;
 
   for (size_t i=0; i<range_data.size(); i++) {
 
     if (range_data[i]->busy)
       continue;
 
-    if (range_data[i]->state == RangeState::SPLIT_LOG_INSTALLED ||
+    in_progress = false;
+    if (range_data[i]->state == RangeState::RELINQUISH_LOG_INSTALLED ||
+        range_data[i]->relinquish) {
+      HT_INFOF("Adding maintenance for range %s because mid-relinquish(%d)",
+               range_data[i]->range->get_name().c_str(), range_data[i]->state);
+      range_data[i]->maintenance_flags |= MaintenanceFlag::RELINQUISH;
+      in_progress = true;
+    }
+    else if (range_data[i]->state == RangeState::SPLIT_LOG_INSTALLED ||
         range_data[i]->state == RangeState::SPLIT_SHRUNK) {
       HT_INFOF("Adding maintenance for range %s because mid-split(%d)",
                range_data[i]->range->get_name().c_str(), range_data[i]->state);
       range_data[i]->maintenance_flags |= MaintenanceFlag::SPLIT;
+      in_progress = true;
+    }
+
+    if (in_progress) {
       range_data[i]->priority = priority++;
-      if (range_data[i]->state == RangeState::SPLIT_LOG_INSTALLED) {
+      if (range_data[i]->state == RangeState::RELINQUISH_LOG_INSTALLED ||
+          range_data[i]->state == RangeState::SPLIT_LOG_INSTALLED) {
 	for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
           memory_state.decrement_needed( ag_data->mem_allocated );
 	  for (cs_data=ag_data->csdata; cs_data; cs_data=cs_data->next)

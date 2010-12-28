@@ -108,7 +108,7 @@ MaintenancePrioritizerLowMemory::prioritize(RangeStatsVector &range_data,
 /**
  * Memory freeing algorithm:
  *
- * 1. schedule in-progress splits
+ * 1. schedule in-progress relinquish and/or split operations
  * 2. schedule needed splits
  * 3. schedule needed compactions
  */
@@ -117,7 +117,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_all(RangeStatsVector &range_d
             CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
 	    int32_t &priority, String &trace_str) {
 
-  if (!schedule_inprogress_splits(range_data, memory_state, priority, trace_str))
+  if (!schedule_inprogress_operations(range_data, memory_state, priority, trace_str))
     return;
 
   if (!schedule_splits(range_data, memory_state, priority, trace_str))

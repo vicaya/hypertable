@@ -40,6 +40,7 @@
 #include "RequestHandlerGetSchema.h"
 #include "RequestHandlerStatus.h"
 #include "RequestHandlerRegisterServer.h"
+#include "RequestHandlerRelinquishAcknowledge.h"
 #include "RequestHandlerMoveRange.h"
 #include "RequestHandlerShutdown.h"
 #include "RequestHandlerCreateNamespace.h"
@@ -106,6 +107,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case MasterProtocol::COMMAND_MOVE_RANGE:
         hp = new RequestHandlerMoveRange(m_comm, m_master.get(), event);
+        break;
+      case MasterProtocol::COMMAND_RELINQUISH_ACKNOWLEDGE:
+        hp = new RequestHandlerRelinquishAcknowledge(m_comm, m_master.get(), event);
         break;
       case MasterProtocol::COMMAND_CLOSE:
         hp = new RequestHandlerClose(m_comm, m_master.get(), event);

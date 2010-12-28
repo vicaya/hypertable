@@ -78,7 +78,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_comm(conn_mgr->get_comm()), m_conn_manager(conn_mgr), m_app_queue(app_queue),
     m_hyperspace(hyperspace), m_timer_handler(0),
     m_group_commit_timer_handler(0), m_query_cache(0), m_last_revision(TIMESTAMP_MIN),
-    m_loadavg_accum(0.0), m_page_in_accum(0), m_page_out_accum(0), m_metric_samples(0)
+    m_loadavg_accum(0.0), m_page_in_accum(0), m_page_out_accum(0), m_metric_samples(0),
+    m_pending_metrics_updates(0)
 {
 
   uint16_t port;
@@ -287,7 +288,7 @@ void RangeServer::shutdown() {
 
   Global::maintenance_queue = 0;
   Global::metadata_table = 0;
-  Global::rs_stats_table = 0;
+  Global::rs_metrics_table = 0;
   Global::hyperspace = 0;
 
   if (Global::log_dfs != Global::dfs)
@@ -843,7 +844,11 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
                + table->generation);
     }
 
-    range->increment_scan_counter();
+    if (!range->increment_scan_counter())
+      HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND,
+                "Range %s[%s..%s] dropped or relinquished",
+                table->id, range_spec->start_row, range_spec->end_row);
+      
     decrement_needed = true;
 
     // Check to see if range jus shrunk
@@ -1108,6 +1113,26 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
           Global::metadata_table = new Table(m_props, m_conn_manager,
                                              Global::hyperspace, m_namemap,
                                              TableIdentifier::METADATA_NAME);
+      }
+
+      /**
+       * Queue "range_start_row" update for sys/RS_METRICS table
+       */
+      {
+        ScopedLock lock(m_mutex);
+        Cell cell;
+
+        if (m_pending_metrics_updates == 0)
+          m_pending_metrics_updates = new CellsBuilder();
+        
+        String row = Location::get() + ":" + table->id;
+        cell.row_key = row.c_str();
+        cell.column_family = "range_start_row";
+        cell.column_qualifier = range_spec->end_row;
+        cell.value = (const uint8_t *)range_spec->start_row;
+        cell.value_len = strlen(range_spec->start_row)+1;
+        
+        m_pending_metrics_updates->add(cell);
       }
 
       schema = table_info->get_schema();
@@ -1486,11 +1511,11 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
   int error = Error::OK;
   bool wait_for_maintenance;
   int64_t latest_range_revision;
-  SplitPredicate split_predicate;
-  bool split_pending;
+  RangeTransferInfo transfer_info;
+  bool transfer_pending;
   DynamicBuffer *cur_bufp;
-  DynamicBuffer *split_bufp = 0;
-  CommitLogPtr splitlog;
+  DynamicBuffer *transfer_bufp = 0;
+  CommitLogPtr transfer_log;
   DynamicBuffer root_buf;
   RangeUpdate range_update;
   uint32_t misses = 0;
@@ -1648,7 +1673,15 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
          *  (block if maintenance in progress) 
          */
         if (!rulist->range_blocked) {
-          rulist->range->increment_update_counter();
+          if (!rulist->range->increment_update_counter()) {
+            send_back.error = error;
+            send_back.offset = mod - request->buffer.base;
+            send_back.count++;
+            key.next(); // skip key
+            key.next(); // skip value;
+            mod = key.ptr;
+            continue;
+          }
           rulist->range_blocked = true;
         }
 
@@ -1662,18 +1695,18 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
           continue;
         }
 
-        /** Fetch range split information **/
-        split_pending = rulist->range->get_split_info(split_predicate, splitlog,
-                                                      &latest_range_revision, wait_for_maintenance);
+        /** Fetch range transfer information **/
+        transfer_pending = rulist->range->get_transfer_info(transfer_info, transfer_log,
+                                                            &latest_range_revision, wait_for_maintenance);
         if (wait_for_maintenance)
           table_update->wait_ranges.insert(rulist->range.get());
 
-        if (rulist->splitlog.get() == 0)
-          rulist->splitlog = splitlog;
+        if (rulist->transfer_log.get() == 0)
+          rulist->transfer_log = transfer_log;
 
-        assert(rulist->splitlog.get() == splitlog.get());
+        assert(rulist->transfer_log.get() == transfer_log.get());
 
-        bool in_split_off_region = false;
+        bool in_transferring_region = false;
 
         // Check for clock skew
         {
@@ -1706,18 +1739,18 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
           }
         }
 
-        if (split_pending) {
-          split_bufp = &rulist->split_buf;
-          if (split_bufp->empty()) {
-            split_bufp->reserve(table_update->id.encoded_length());
-            table_update->id.encode(&split_bufp->ptr);
-            split_bufp->set_mark();
+        if (transfer_pending) {
+          transfer_bufp = &rulist->transfer_buf;
+          if (transfer_bufp->empty()) {
+            transfer_bufp->reserve(table_update->id.encoded_length());
+            table_update->id.encode(&transfer_bufp->ptr);
+            transfer_bufp->set_mark();
           }
-          rulist->split_buf_reset_ptr = rulist->split_buf.ptr;
+          rulist->transfer_buf_reset_ptr = rulist->transfer_buf.ptr;
         }
         else {
-          split_bufp = 0;
-          rulist->split_buf_reset_ptr = 0;
+          transfer_bufp = 0;
+          rulist->transfer_buf_reset_ptr = 0;
         }
 
         if (rulist->range->is_root()) {
@@ -1737,30 +1770,30 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
         range_update.bufp = cur_bufp;
         range_update.offset = cur_bufp->fill();
 
-        while (mod < mod_end && (end_row == ""
-                                 || (strcmp(row, end_row.c_str()) <= 0))) {
+        while (mod < mod_end && 
+               (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
 
-          if (split_pending) {
+          if (transfer_pending) {
 
-            if (split_predicate.split_off(row)) {
-              if (!in_split_off_region) {
+            if (transfer_info.transferring(row)) {
+              if (!in_transferring_region) {
                 range_update.len = cur_bufp->fill() - range_update.offset;
                 rulist->add_update(request, range_update);
-                cur_bufp = split_bufp;
+                cur_bufp = transfer_bufp;
                 range_update.bufp = cur_bufp;
                 range_update.offset = cur_bufp->fill();
-                in_split_off_region = true;
+                in_transferring_region = true;
               }
-              table_update->split_added++;
+              table_update->transfer_count++;
             }
             else {
-              if (in_split_off_region) {
+              if (in_transferring_region) {
                 range_update.len = cur_bufp->fill() - range_update.offset;
                 rulist->add_update(request, range_update);
                 cur_bufp = &table_update->go_buf;
                 range_update.bufp = cur_bufp;
                 range_update.offset = cur_bufp->fill();
-                in_split_off_region = false;
+                in_transferring_region = false;
               }
             }
           }
@@ -1806,10 +1839,10 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
           range_update.len = cur_bufp->fill() - range_update.offset;
           rulist->add_update(request, range_update);
 
-          // if there were split-off updates, record the latest revision
-          if (split_pending && rulist->split_buf_reset_ptr < rulist->split_buf.ptr) {
-            if (rulist->latest_split_revision < m_last_revision)
-              rulist->latest_split_revision = m_last_revision;
+          // if there were transferring updates, record the latest revision
+          if (transfer_pending && rulist->transfer_buf_reset_ptr < rulist->transfer_buf.ptr) {
+            if (rulist->latest_transfer_revision < m_last_revision)
+              rulist->latest_transfer_revision = m_last_revision;
           }
         }
         else {
@@ -1830,7 +1863,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
         range_update.bufp = 0;
       }
         
-      splitlog = 0;
+      transfer_log = 0;
 
       if (send_back.count > 0) {
         send_back.len = (mod - request->buffer.base) - send_back.offset;
@@ -1840,15 +1873,15 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
 
     }
 
-    // Iterate through all of the ranges, committing any split-off updates
-    uint32_t committed_split_data = 0;
+    // Iterate through all of the ranges, committing any transferring updates
+    uint32_t committed_transfer_data = 0;
     for (hash_map<Range *, RangeUpdateList *>::iterator iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
-      if ((*iter).second->split_buf.ptr > (*iter).second->split_buf.mark) {
-        committed_split_data += (*iter).second->split_buf.ptr - (*iter).second->split_buf.mark;
-        if ((error = (*iter).second->splitlog->write((*iter).second->split_buf, (*iter).second->latest_split_revision)) != Error::OK) {
+      if ((*iter).second->transfer_buf.ptr > (*iter).second->transfer_buf.mark) {
+        committed_transfer_data += (*iter).second->transfer_buf.ptr - (*iter).second->transfer_buf.mark;
+        if ((error = (*iter).second->transfer_log->write((*iter).second->transfer_buf, (*iter).second->latest_transfer_revision)) != Error::OK) {
           table_update->error = error;
-          table_update->error_msg = format("Problem writing %d bytes to split log",
-                                           (int)(*iter).second->split_buf.fill());
+          table_update->error_msg = format("Problem writing %d bytes to transfer log",
+                                           (int)(*iter).second->transfer_buf.fill());
           HT_ERRORF("%s - %s", table_update->error_msg.c_str(), Error::get_text(error));
           break;
         }
@@ -1856,11 +1889,11 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
     }
 
     if (table_update->error != Error::OK)
-      HT_WARNF("Table update for %s aborted, up to %u bytes of commits written to split logs",
-               table_update->id.id, committed_split_data);
+      HT_WARNF("Table update for %s aborted, up to %u bytes of commits written to transfer logs",
+               table_update->id.id, committed_transfer_data);
     else
-      HT_DEBUGF("Added %d (%d split off) updates to '%s'", 
-                table_update->total_added, table_update->split_added,
+      HT_DEBUGF("Added %d (%d transferring) updates to '%s'", 
+                table_update->total_added, table_update->transfer_count,
                 table_update->id.id);
     if (!table_update->id.is_metadata())
       total_added += table_update->total_added;
@@ -2260,9 +2293,9 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   TableMutatorPtr mutator;
   if (now > m_next_metrics_update) {
     ScopedLock lock(m_mutex);
-    if (!Global::rs_stats_table) {
+    if (!Global::rs_metrics_table) {
       try {
-        Global::rs_stats_table = new Table(m_props, m_conn_manager,
+        Global::rs_metrics_table = new Table(m_props, m_conn_manager,
                                            Global::hyperspace, m_namemap,
                                            "sys/RS_METRICS");
       }
@@ -2271,8 +2304,26 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
                   Error::get_text(e.code()), e.what());
       }
     }
-    if (Global::rs_stats_table)
-      mutator = Global::rs_stats_table->create_mutator();
+    if (Global::rs_metrics_table) {
+      mutator = Global::rs_metrics_table->create_mutator();
+      /**
+       * Add pending updates
+       */
+      if (m_pending_metrics_updates) {
+        KeySpec key;
+        Cells &cells = m_pending_metrics_updates->get();
+        for (size_t i=0; i<cells.size(); i++) {
+          key.row = cells[i].row_key;
+          key.row_len = strlen(cells[i].row_key);
+          key.column_family = cells[i].column_family;
+          key.column_qualifier = cells[i].column_qualifier;
+          key.column_qualifier_len = strlen(cells[i].column_qualifier);
+          mutator->set(key, cells[i].value, cells[i].value_len);
+        }
+        delete m_pending_metrics_updates;
+        m_pending_metrics_updates = 0;
+      }
+    }
   }
 
   /**
@@ -2354,7 +2405,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   /**
    * If created a mutator above, write data to sys/RS_METRICS
    */
-  if (mutator && m_metric_samples > 0) {
+  if (mutator) {
     String value = format("1:%.6f,%.6f,%.6f", m_loadavg_accum / (double)m_metric_samples,
                           (double)m_page_in_accum / (double)m_metric_samples,
                           (double)m_page_out_accum / (double)m_metric_samples);
@@ -2365,8 +2416,13 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     key.column_family = "server";
     key.column_qualifier = 0;
     key.column_qualifier_len = 0;
-    mutator->set(key, (uint8_t *)value.c_str(), value.length()+1);
-    mutator->flush();
+    try {
+      mutator->set(key, (uint8_t *)value.c_str(), value.length()+1);
+      mutator->flush();
+    }
+    catch (Exception &e) {
+      HT_ERROR_OUT << "Problem updating sys/RS_METRICS - " << e << HT_END;
+    }
     m_next_metrics_update += Global::metrics_interval;
     m_loadavg_accum = 0.0;
     m_page_in_accum = 0;
@@ -2684,6 +2740,37 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
     if (!table_info->remove_range(range_spec, range))
       HT_THROW(Error::RANGESERVER_RANGE_NOT_FOUND,
                format("%s[%s..%s]", table->id, range_spec->start_row, range_spec->end_row));
+
+    cb->response_ok();
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    int error = 0;
+    if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
+  }
+
+}
+
+
+void
+RangeServer::relinquish_range(ResponseCallback *cb, const TableIdentifier *table,
+                        const RangeSpec *range_spec) {
+  TableInfoPtr table_info;
+  RangePtr range;
+
+  HT_INFO_OUT << "relinquish_range\n"<< *table << *range_spec << HT_END;
+
+  try {
+
+    m_live_map->get(table->id, table_info);
+
+    /** Remove the range **/
+    if (!table_info->get_range(range_spec, range))
+      HT_THROW(Error::RANGESERVER_RANGE_NOT_FOUND,
+               format("%s[%s..%s]", table->id, range_spec->start_row, range_spec->end_row));
+
+    range->schedule_relinquish();
 
     cb->response_ok();
   }

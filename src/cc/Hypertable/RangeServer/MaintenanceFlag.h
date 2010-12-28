@@ -36,7 +36,8 @@ namespace Hypertable {
       COMPACT_GC                = 0x0205,
       MEMORY_PURGE              = 0x0400,
       MEMORY_PURGE_SHADOW_CACHE = 0x0401,
-      MEMORY_PURGE_CELLSTORE    = 0x0402
+      MEMORY_PURGE_CELLSTORE    = 0x0402,
+      RELINQUISH                = 0x0800
     };
 
     inline bool minor_compaction(int flags) {

@@ -118,7 +118,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
 
 
 /**
- * 1. schedule in-progress splits
+ * 1. schedule in-progress relinquish or split operations
  * 2. schedule splits
  * 3. schedule compactions for log cleanup purposes
  */
@@ -128,9 +128,9 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &range_data
               int32_t &priority, String &trace_str) {
 
   /**
-   * 1. Schedule in-progress splits
+   * 1. Schedule in-progress relinquish and/or split operations
    */
-  schedule_inprogress_splits(range_data, memory_state, priority, trace_str);
+  schedule_inprogress_operations(range_data, memory_state, priority, trace_str);
 
   /**
    * 2. Schedule splits

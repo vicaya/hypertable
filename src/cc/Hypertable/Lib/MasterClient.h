@@ -111,6 +111,11 @@ namespace Hypertable {
                     const String &log_dir, uint64_t soft_limit,
                     bool split, Timer *timer=0);
 
+    void relinquish_acknowledge(TableIdentifier *table, RangeSpec &range,
+                                DispatchHandler *handler, Timer *timer = 0);
+    void relinquish_acknowledge(TableIdentifier *table, RangeSpec &range,
+                                Timer *timer=0);
+
     void drop_table(const String &table_name, bool if_exists,
                     DispatchHandler *handler, Timer *timer=0);
     void drop_table(const String &table_name, bool if_exists, Timer *timer=0);

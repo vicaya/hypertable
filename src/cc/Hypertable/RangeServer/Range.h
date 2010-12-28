@@ -44,7 +44,7 @@
 #include "Metadata.h"
 #include "RangeMaintenanceGuard.h"
 #include "RangeSet.h"
-#include "SplitPredicate.h"
+#include "RangeTransferInfo.h"
 
 namespace Hypertable {
 
@@ -77,7 +77,6 @@ namespace Hypertable {
       int64_t  purgeable_index_memory;
       int64_t  compact_memory;
       uint32_t schema_generation;
-      RangeIdentifier range_id;
       int32_t  priority;
       int16_t  state;
       int16_t  maintenance_flags;
@@ -96,6 +95,7 @@ namespace Hypertable {
       bool     busy;
       bool     is_metadata;
       bool     is_system;
+      bool     relinquish;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
@@ -138,14 +138,6 @@ namespace Hypertable {
     String end_row() {
       return m_end_row;
     }
-    /**
-     * Returns a Range id which is contains the first 8 bytes each of the md5 hashed
-     * start row and end row
-     */
-    RangeIdentifier get_start_end_id() {
-      ScopedLock lock(m_mutex);
-      return m_start_end_id;
-    }
 
     int64_t get_scan_revision();
 
@@ -161,9 +153,13 @@ namespace Hypertable {
 
     void split();
 
+    void relinquish();
+
     void compact(MaintenanceFlag::Map &subtask_map);
 
     void purge_memory(MaintenanceFlag::Map &subtask_map);
+
+    void schedule_relinquish() { m_relinquish = true; }
 
     void recovery_initialize() {
       ScopedLock lock(m_mutex);
@@ -173,45 +169,61 @@ namespace Hypertable {
 
     void recovery_finalize();
 
-    void increment_update_counter() {
+    bool increment_update_counter() {
+      if (m_dropped)
+        return false;
       m_update_barrier.enter();
+      if (m_dropped) {
+        m_update_barrier.exit();
+        return false;
+      }
+      return true;
     }
     void decrement_update_counter() {
       m_update_barrier.exit();
     }
 
-    void increment_scan_counter() {
+    bool increment_scan_counter() {
+      if (m_dropped)
+        return false;
       m_scan_barrier.enter();
+      if (m_dropped) {
+        m_scan_barrier.exit();
+        return false;
+      }
+      return true;
     }
     void decrement_scan_counter() {
       m_scan_barrier.exit();
     }
 
     /**
-     * @param predicate
+     * @param transfer_info
      * @param split_log
      * @param latest_revisionp
      * @param wait_for_maintenance true if this range has exceeded its capacity and
      *        future requests to this range need to be throttled till split/compaction reduces
      *        range size
-     * @return
+     * @return true if transfer log installed
      */
-    bool get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log,
-                        int64_t *latest_revisionp, bool &wait_for_maintenance) {
-      bool retval;
+    bool get_transfer_info(RangeTransferInfo &transfer_info, CommitLogPtr &transfer_log,
+                           int64_t *latest_revisionp, bool &wait_for_maintenance) {
+      bool retval = false;
       ScopedLock lock(m_mutex);
 
       wait_for_maintenance = false;
       *latest_revisionp = m_latest_revision;
-      if (m_split_log) {
-        predicate.load(m_split_row, m_split_off_high);
-        split_log = m_split_log;
+
+      if (m_transfer_log) {
+        transfer_log = m_transfer_log;
         retval = true;
       }
-      else {
-        predicate.clear();
-        retval = false;
-      }
+
+      if (m_split_row.length())
+        transfer_info.set_split(m_split_row, m_split_off_high);
+      else
+        transfer_info.clear();
+
       if (m_capacity_exceeded_throttle == true)
         wait_for_maintenance = true;
 
@@ -241,10 +253,12 @@ namespace Hypertable {
     bool is_root() { return m_is_root; }
 
     void drop() {
+      Barrier::ScopedActivator block_updates(m_update_barrier);
+      Barrier::ScopedActivator block_scans(m_scan_barrier);
       ScopedLock lock(m_mutex);
+      m_dropped = true;
       for (size_t i=0; i<m_access_group_vector.size(); i++)
         m_access_group_vector[i]->drop();
-      m_dropped = true;
     }
 
     String get_name() {
@@ -263,6 +277,9 @@ namespace Hypertable {
     bool extract_csid_from_path(String &path, uint32_t *csidp);
 
     bool cancel_maintenance();
+
+    void relinquish_install_log();
+    void relinquish_compact_and_finish();
 
     void split_install_log();
     void split_compact_and_shrink();
@@ -288,7 +305,6 @@ namespace Hypertable {
     String           m_start_row;
     String           m_end_row;
     String           m_name;
-    RangeIdentifier  m_start_end_id;
     AccessGroupMap     m_access_group_map;
     AccessGroupVector  m_access_group_vector;
     std::vector<AccessGroup *>       m_column_family_vector;
@@ -296,7 +312,7 @@ namespace Hypertable {
     int64_t          m_revision;
     int64_t          m_latest_revision;
     String           m_split_row;
-    CommitLogPtr     m_split_log;
+    CommitLogPtr     m_transfer_log;
     bool             m_split_off_high;
     Barrier          m_update_barrier;
     Barrier          m_scan_barrier;
@@ -308,6 +324,7 @@ namespace Hypertable {
     int32_t          m_error;
     bool             m_dropped;
     bool             m_capacity_exceeded_throttle;
+    bool             m_relinquish;
     int64_t          m_maintenance_generation;
     LoadMetricsRange m_load_metrics;
   };

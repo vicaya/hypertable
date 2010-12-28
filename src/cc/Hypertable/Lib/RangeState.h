@@ -31,7 +31,7 @@ namespace Hypertable {
    */
   class RangeState {
   public:
-    enum StateType { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
+    enum StateType { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK, RELINQUISH_LOG_INSTALLED };
     RangeState() : state(STEADY), soft_limit(0), transfer_log(0),
                    split_point(0), old_boundary_row(0) { }
 

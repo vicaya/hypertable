@@ -62,9 +62,9 @@ namespace Hypertable {
     int64_t m_cellstore_minimum_size;
     RSStatsPtr m_server_stats;
 
-    bool schedule_inprogress_splits(RangeStatsVector &range_data,
-                                    MemoryState &memory_state,
-                                    int32_t &priority, String &trace_str);
+    bool schedule_inprogress_operations(RangeStatsVector &range_data,
+                                        MemoryState &memory_state,
+                                        int32_t &priority, String &trace_str);
 
     bool schedule_splits(RangeStatsVector &range_data,
                          MemoryState &memory_state,

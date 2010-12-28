@@ -297,7 +297,31 @@ MasterClient::move_range(TableIdentifier *table, RangeSpec &range,
 
   if (!sync_handler.wait_for_reply(event_ptr))
     HT_THROWF(MasterProtocol::response_code(event_ptr),
-              "Master 'report split' error %s[%s..%s]",
+              "Master 'move_range' error %s[%s..%s]",
+              table->id, range.start_row, range.end_row);
+
+}
+
+void
+MasterClient::relinquish_acknowledge(TableIdentifier *table, RangeSpec &range,
+                                     DispatchHandler *handler, Timer *timer) {
+  CommBufPtr cbp(MasterProtocol::create_relinquish_acknowledge_request(table, range));
+  send_message(cbp, handler, timer);
+}
+
+
+void
+MasterClient::relinquish_acknowledge(TableIdentifier *table, RangeSpec &range,
+                                     Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(MasterProtocol::create_relinquish_acknowledge_request(table, range));
+
+  send_message(cbp, &sync_handler, timer);
+
+  if (!sync_handler.wait_for_reply(event_ptr))
+    HT_THROWF(MasterProtocol::response_code(event_ptr),
+              "Master 'relinquish_acknowledge' error %s[%s..%s]",
               table->id, range.start_row, range.end_row);
 
 }

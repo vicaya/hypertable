@@ -93,7 +93,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   /**
    * Create DFS Client connection
    */
-  DfsBroker::Client *dfs_client = new DfsBroker::Client(conn_mgr, props);
+  m_dfs_client = new DfsBroker::Client(conn_mgr, props);  
 
   int dfs_timeout;
   if (props->has("DfsBroker.Timeout"))
@@ -101,11 +101,10 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   else
     dfs_timeout = props->get_i32("Hypertable.Request.Timeout");
 
-  if (!dfs_client->wait_for_connection(dfs_timeout)) {
+  if (!((DfsBroker::Client *)m_dfs_client)->wait_for_connection(dfs_timeout)) {
     HT_ERROR("Unable to connect to DFS Broker, exiting...");
     exit(1);
   }
-  m_dfs_client = dfs_client;
 
   m_rangeserver_port = props->get_i16("Hypertable.RangeServer.Port");
 
@@ -894,6 +893,14 @@ Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
 
   cb->response_ok();
 }
+
+
+void Master::relinquish_acknowledge(ResponseCallback *cb, const TableIdentifier &table,
+                                    const RangeSpec &range) {
+  // TBD
+  cb->response_ok();
+}
+
 
 void
 Master::rename_table(ResponseCallback *cb, const char *old_name, const char *new_name) {

@@ -31,6 +31,7 @@
 #include "MaintenanceScheduler.h"
 #include "MaintenanceTaskCompaction.h"
 #include "MaintenanceTaskMemoryPurge.h"
+#include "MaintenanceTaskRelinquish.h"
 #include "MaintenanceTaskSplit.h"
 
 using namespace Hypertable;
@@ -200,6 +201,10 @@ void MaintenanceScheduler::schedule() {
         RangePtr range(range_data[i]->range);
         Global::maintenance_queue->add(new MaintenanceTaskSplit(schedule_time, range));
       }
+      else if (range_data[i]->state == RangeState::RELINQUISH_LOG_INSTALLED) {
+        RangePtr range(range_data[i]->range);
+        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(schedule_time, range));
+      }
     }
     m_initialized = true;
   }
@@ -218,6 +223,10 @@ void MaintenanceScheduler::schedule() {
       if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::SPLIT) {
         RangePtr range(range_data_prioritized[i]->range);
         Global::maintenance_queue->add(new MaintenanceTaskSplit(schedule_time, range));
+      }
+      else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::RELINQUISH) {
+        RangePtr range(range_data_prioritized[i]->range);
+        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(schedule_time, range));
       }
       else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::COMPACT) {
 	MaintenanceTaskCompaction *task;

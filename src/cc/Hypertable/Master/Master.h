@@ -83,6 +83,8 @@ namespace Hypertable {
     void move_range(ResponseCallback *cb, const TableIdentifier &table,
                     const RangeSpec &range, const char *transfer_log_dir,
                     uint64_t soft_limit, bool split);
+    void relinquish_acknowledge(ResponseCallback *cb, const TableIdentifier &table,
+                                const RangeSpec &range);
     void rename_table(ResponseCallback *cb, const char *old_name, const char *new_name);
     void drop_table(ResponseCallback *cb, const char *table_name,
                     bool if_exists);

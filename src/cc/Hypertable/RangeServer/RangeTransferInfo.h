@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,40 +19,37 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_SPLIT_PREDICATE_H
-#define HYPERTABLE_SPLIT_PREDICATE_H
+#ifndef HYPERTABLE_RANGE_TRANSFER_INFO_H
+#define HYPERTABLE_RANGE_TRANSFER_INFO_H
 
 namespace Hypertable {
 
   /**
    */
-  class SplitPredicate {
+  class RangeTransferInfo {
   public:
-    SplitPredicate() : m_split_pending(false) { }
+    RangeTransferInfo() { }
 
-    void load(const String &split_row, bool split_off_high) {
-      m_split_row_str = split_row;
-      m_split_row = m_split_row_str.c_str();
+    void set_split(const String &split_row, bool split_off_high) {
+      m_split_row = split_row;
       m_split_off_high = split_off_high;
-      m_split_pending = true;
     }
 
-    bool split_off(const char *row) {
-      int cmp = strcmp(row, m_split_row);
+    bool transferring(const char *row) {
+      if (m_split_row.length() == 0)
+        return true;
+      int cmp = strcmp(row, m_split_row.c_str());
       return ((cmp <= 0 && !m_split_off_high) || (cmp > 0 && m_split_off_high));
     }
 
-    void clear() { m_split_pending = false; }
-
-    bool split_pending() { return m_split_pending; }
+    void clear() { m_split_row = ""; }
 
   private:
-    String m_split_row_str;
-    const char *m_split_row;
+    String m_split_row;
     bool m_split_off_high;
-    bool m_split_pending;
   };
+
 
 }
 
-#endif // HYPERTABLE_SPLIT_PREDICATE_H
+#endif // HYPERTABLE_RANGE_TRANSFER_INFO_H

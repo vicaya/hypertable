@@ -123,6 +123,17 @@ namespace Hypertable {
   }
 
   CommBuf *
+  MasterProtocol::create_relinquish_acknowledge_request(const TableIdentifier *table,
+                                                        const RangeSpec &range) {
+    CommHeader header(COMMAND_RELINQUISH_ACKNOWLEDGE);
+    CommBuf *cbuf = new CommBuf(header, table->encoded_length()
+                                + range.encoded_length());
+    table->encode(cbuf->get_data_ptr_address());
+    range.encode(cbuf->get_data_ptr_address());
+    return cbuf;
+  }
+
+  CommBuf *
   MasterProtocol::create_drop_table_request(const String &table_name,
                                             bool if_exists) {
     CommHeader header(COMMAND_DROP_TABLE);

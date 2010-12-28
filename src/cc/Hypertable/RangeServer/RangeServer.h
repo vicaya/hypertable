@@ -37,6 +37,7 @@
 
 #include "Hyperspace/Session.h"
 
+#include "Hypertable/Lib/Cells.h"
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Types.h"
@@ -101,6 +102,9 @@ namespace Hypertable {
 
     void drop_range(ResponseCallback *, const TableIdentifier *,
                     const RangeSpec *);
+
+    void relinquish_range(ResponseCallback *, const TableIdentifier *,
+                          const RangeSpec *);
 
     void close(ResponseCallback *cb);
 
@@ -190,6 +194,7 @@ namespace Hypertable {
     uint64_t               m_page_in_accum;
     uint64_t               m_page_out_accum;
     size_t                 m_metric_samples;
+    CellsBuilder          *m_pending_metrics_updates;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

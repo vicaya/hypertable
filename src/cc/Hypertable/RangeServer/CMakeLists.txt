@@ -69,6 +69,7 @@ MaintenanceQueue.cc
 MaintenanceScheduler.cc
 MaintenanceTaskCompaction.cc
 MaintenanceTaskMemoryPurge.cc
+MaintenanceTaskRelinquish.cc
 MaintenanceTaskSplit.cc
 MergeScanner.cc
 MetadataNormal.cc
@@ -89,6 +90,7 @@ RequestHandlerFetchScanblock.cc
 RequestHandlerDropTable.cc
 RequestHandlerLoadRange.cc
 RequestHandlerUpdateSchema.cc
+RequestHandlerRelinquishRange.cc
 RequestHandlerReplayBegin.cc
 RequestHandlerReplayLoadRange.cc
 RequestHandlerReplayUpdate.cc
