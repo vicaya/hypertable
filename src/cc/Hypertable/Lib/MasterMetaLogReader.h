@@ -55,11 +55,16 @@ public:
   virtual MetaLogEntry *read();
 
   const ServerStates &load_server_states(bool *recover, bool force = false);
+  MetaLogEntryPtr &get_balance_started() {return m_balance_started;}
+  void set_balance_started(MetaLogEntry *ep) {
+    m_balance_started = ep;
+  }
 
 private:
   ServerStates m_server_states;
   MetaLogEntries m_log_entries;
   bool m_recover;
+  MetaLogEntryPtr m_balance_started;
 };
 
 typedef intrusive_ptr<MasterMetaLogReader> MasterMetaLogReaderPtr;

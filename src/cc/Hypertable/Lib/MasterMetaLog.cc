@@ -103,6 +103,10 @@ MasterMetaLog::recover(const String &path) {
       foreach(const ServerStateInfo *state, server_states)
         foreach (const MetaLogEntryPtr &e, state->transactions)
           entries.push_back(e);
+
+      MetaLogEntryPtr balance = reader->get_balance_started();
+      if (balance)
+        entries.push_back(balance);
       std::sort(entries.begin(), entries.end(), OrderByTimestamp());
       foreach(MetaLogEntryPtr &e, entries)
         serialize_entry(e.get(), buf);

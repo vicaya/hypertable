@@ -1,61 +1,72 @@
-testdir=/mmltest000044726
+testdir=/mmltest000079644
 Log entries:
-{MmlRecover: timestamp='2010-12-28 01:14:43.645133000'}
-{ServerJoined: timestamp='2010-12-28 01:14:43.645172000' location='rs8'}
-{ServerJoined: timestamp='2010-12-28 01:14:43.645184000' location='rs1'}
-{ServerJoined: timestamp='2010-12-28 01:14:43.645195000' location='rs7'}
-{ServerJoined: timestamp='2010-12-28 01:14:43.645207000' location='rs3'}
-{ServerJoined: timestamp='2010-12-28 01:14:43.645217000' location='rs2'}
-{ServerJoined: timestamp='2010-12-28 01:14:43.645228000' location='rs6'}
-{ServerJoined: timestamp='2010-12-28 01:14:43.645239000' location='rs4'}
-{ServerJoined: timestamp='2010-12-28 01:14:43.645250000' location='rs5'}
-{RangeMoveStarted: timestamp='2010-12-28 01:14:43.645264000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='A' end='B'}' transfer_log='/logs/1' soft_limit=1234 location='rs3'}
-{ServerLeft: timestamp='2010-12-28 01:14:43.645293000' location='rs3'}
-{RangeMoveStarted: timestamp='2010-12-28 01:14:43.645306000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='B' end='C'}' transfer_log='/logs/2' soft_limit=2345 location='rs6'}
-{RangeMoveStarted: timestamp='2010-12-28 01:14:43.645351000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='C' end='D'}' transfer_log='/logs/3' soft_limit=3456 location='rs7'}
-{ServerLeft: timestamp='2010-12-28 01:14:43.645365000' location='rs1'}
-{RangeMoveLoaded: timestamp='2010-12-28 01:14:43.645377000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='B' end='C'}' location='rs6'}
-{RangeMoveAcknowledged: timestamp='2010-12-28 01:14:43.645391000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='B' end='C'}' location='rs6'}
-{ServerLeft: timestamp='2010-12-28 01:14:43.645404000' location='rs5'}
-{ServerRemoved: timestamp='2010-12-28 01:14:43.645417000' location='rs5'}
+{MmlRecover: timestamp='2010-12-28 21:20:47.982658000'}
+{ServerJoined: timestamp='2010-12-28 21:20:47.982704000' location='rs8'}
+{ServerJoined: timestamp='2010-12-28 21:20:47.982714000' location='rs1'}
+{ServerJoined: timestamp='2010-12-28 21:20:47.982724000' location='rs7'}
+{ServerJoined: timestamp='2010-12-28 21:20:47.982734000' location='rs3'}
+{ServerJoined: timestamp='2010-12-28 21:20:47.982743000' location='rs2'}
+{ServerJoined: timestamp='2010-12-28 21:20:47.982753000' location='rs6'}
+{ServerJoined: timestamp='2010-12-28 21:20:47.982762000' location='rs4'}
+{ServerJoined: timestamp='2010-12-28 21:20:47.982771000' location='rs5'}
+{BalanceStarted: timestamp='2010-12-28 21:20:47.982780000'}
+{RangeMoveStarted: timestamp='2010-12-28 21:20:47.982792000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='A' end='B'}' transfer_log='/logs/1' soft_limit=1234 location='rs3'}
+{ServerLeft: timestamp='2010-12-28 21:20:47.982817000' location='rs3'}
+{RangeMoveStarted: timestamp='2010-12-28 21:20:48.060823000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='B' end='C'}' transfer_log='/logs/2' soft_limit=2345 location='rs6'}
+{RangeMoveStarted: timestamp='2010-12-28 21:20:48.060907000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='C' end='D'}' transfer_log='/logs/3' soft_limit=3456 location='rs7'}
+{ServerLeft: timestamp='2010-12-28 21:20:48.060921000' location='rs1'}
+{RangeMoveLoaded: timestamp='2010-12-28 21:20:48.060943000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='B' end='C'}' location='rs6'}
+{RangeMoveAcknowledged: timestamp='2010-12-28 21:20:48.060957000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='B' end='C'}' location='rs6'}
+{ServerLeft: timestamp='2010-12-28 21:20:48.060969000' location='rs5'}
+{ServerRemoved: timestamp='2010-12-28 21:20:48.060979000' location='rs5'}
+{ServerJoined: timestamp='2010-12-28 21:20:48.060989000' location='rs11'}
+{RangeMoveStarted: timestamp='2010-12-28 21:20:48.061000000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='E' end='F'}' transfer_log='/logs/4' soft_limit=4567 location='rs11'}
+{BalanceDone: timestamp='2010-12-28 21:20:48.061026000'}
+{BalanceStarted: timestamp='2010-12-28 21:20:48.061039000'}
 Range states:
 Found recover entry
 {ServerStateInfo: location=rs1
   transactions=[
-    {ServerJoined: timestamp='2010-12-28 01:14:43.646501000' location='rs1'}
-    {ServerLeft: timestamp='2010-12-28 01:14:43.646516000' location='rs1'}
+    {ServerJoined: timestamp='2010-12-28 21:20:48.086046000' location='rs1'}
+    {ServerLeft: timestamp='2010-12-28 21:20:48.086053000' location='rs1'}
+  ]
+}
+{ServerStateInfo: location=rs11
+  transactions=[
+    {ServerJoined: timestamp='2010-12-28 21:20:48.086058000' location='rs11'}
+    {RangeMoveStarted: timestamp='2010-12-28 21:20:48.086063000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='E' end='F'}' transfer_log='/logs/4' soft_limit=4567 location='rs11'}
   ]
 }
 {ServerStateInfo: location=rs2
   transactions=[
-    {ServerJoined: timestamp='2010-12-28 01:14:43.646523000' location='rs2'}
+    {ServerJoined: timestamp='2010-12-28 21:20:48.086071000' location='rs2'}
   ]
 }
 {ServerStateInfo: location=rs3
   transactions=[
-    {ServerJoined: timestamp='2010-12-28 01:14:43.646529000' location='rs3'}
-    {RangeMoveStarted: timestamp='2010-12-28 01:14:43.646533000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='A' end='B'}' transfer_log='/logs/1' soft_limit=1234 location='rs3'}
-    {ServerLeft: timestamp='2010-12-28 01:14:43.646539000' location='rs3'}
+    {ServerJoined: timestamp='2010-12-28 21:20:48.086101000' location='rs3'}
+    {RangeMoveStarted: timestamp='2010-12-28 21:20:48.086109000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='A' end='B'}' transfer_log='/logs/1' soft_limit=1234 location='rs3'}
+    {ServerLeft: timestamp='2010-12-28 21:20:48.086115000' location='rs3'}
   ]
 }
 {ServerStateInfo: location=rs4
   transactions=[
-    {ServerJoined: timestamp='2010-12-28 01:14:43.646544000' location='rs4'}
+    {ServerJoined: timestamp='2010-12-28 21:20:48.086120000' location='rs4'}
   ]
 }
 {ServerStateInfo: location=rs6
   transactions=[
-    {ServerJoined: timestamp='2010-12-28 01:14:43.646549000' location='rs6'}
+    {ServerJoined: timestamp='2010-12-28 21:20:48.086125000' location='rs6'}
   ]
 }
 {ServerStateInfo: location=rs7
   transactions=[
-    {ServerJoined: timestamp='2010-12-28 01:14:43.646554000' location='rs7'}
-    {RangeMoveStarted: timestamp='2010-12-28 01:14:43.646559000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='C' end='D'}' transfer_log='/logs/3' soft_limit=3456 location='rs7'}
+    {ServerJoined: timestamp='2010-12-28 21:20:48.086130000' location='rs7'}
+    {RangeMoveStarted: timestamp='2010-12-28 21:20:48.086134000' table={TableIdentifier: id='1' generation=0} range={RangeSpec: start='C' end='D'}' transfer_log='/logs/3' soft_limit=3456 location='rs7'}
   ]
 }
 {ServerStateInfo: location=rs8
   transactions=[
-    {ServerJoined: timestamp='2010-12-28 01:14:43.646572000' location='rs8'}
+    {ServerJoined: timestamp='2010-12-28 21:20:48.086171000' location='rs8'}
   ]
 }

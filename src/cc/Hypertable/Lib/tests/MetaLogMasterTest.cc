@@ -66,6 +66,7 @@ write_test(Filesystem *fs, const String &fname) {
   metalog->log_server_joined("rs4");
   metalog->log_server_joined("rs5");
 
+  metalog->log_balance_started();
   RangeSpec r1("A", "B");
   metalog->log_range_move_started(table, r1, "/logs/1", 1234, "rs3");
   metalog->log_server_left("rs3");
@@ -84,6 +85,11 @@ write_test(Filesystem *fs, const String &fname) {
   metalog->log_server_left("rs5");
   metalog->log_server_removed("rs5");
 
+  metalog->log_server_joined("rs11");
+  RangeSpec r4("E", "F");
+  metalog->log_range_move_started(table, r4, "/logs/4", 4567, "rs11");
+  metalog->log_balance_done();
+  metalog->log_balance_started();
 }
 
 void
@@ -119,29 +125,24 @@ write_more(Filesystem *fs, const String &fname) {
   TableIdentifier table("1");
 
   metalog->log_server_joined("rs9");
-  metalog->log_server_joined("rs11");
   metalog->log_server_joined("rs12");
   metalog->log_server_joined("rs10");
 
   RangeSpec r1("E", "F");
-  metalog->log_range_move_started(table, r1, "/logs/4", 4567, "rs11");
   metalog->log_server_left("rs7");
 
   RangeSpec r2("F", "G");
   metalog->log_range_move_started(table, r2, "/logs/5", 5678, "rs4");
 
   RangeSpec r3("G", "H");
-  metalog->log_range_move_started(table, r3, "/logs/6", 6789, "rs7");
-  metalog->log_range_move_loaded(table, r3, "rs7");
-
-  metalog->log_range_move_loaded(table, r1, "rs11");
-
+  metalog->log_range_move_started(table, r3, "/logs/6", 6789, "rs2");
+  metalog->log_range_move_loaded(table, r3, "rs2");
 
   metalog->log_range_move_acknowledged(table, r1, "rs11");
 
   metalog->log_server_left("rs10");
 
-  metalog->log_range_move_acknowledged(table, r3, "rs7");
+  metalog->log_range_move_loaded(table, r1, "rs11");
 
 }
 
@@ -158,6 +159,7 @@ write_more_again(Filesystem *fs, const String &fname) {
 
   TableIdentifier table("1");
 
+  metalog->log_balance_done();
   metalog->log_server_joined("rs15");
   metalog->log_server_joined("rs14");
   metalog->log_server_joined("rs16");
@@ -177,6 +179,8 @@ write_more_again(Filesystem *fs, const String &fname) {
 
   metalog->log_server_removed("rs11");
 
+  RangeSpec r4("G", "H");
+  metalog->log_range_move_acknowledged(table, r4, "rs2");
 }
 
 void

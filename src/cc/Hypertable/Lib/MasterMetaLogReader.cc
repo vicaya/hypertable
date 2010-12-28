@@ -137,23 +137,49 @@ void load_entry(Reader &rd, SsiSet &ssi_set, RangeMoveLoaded *ep) {
   ServerStateInfo si(ep->location);
   SsiSet::iterator it = ssi_set.find(&si);
   RangeMoveStarted *started;
+  RangeMoveAcknowledged *acknowledged;
   bool found_started = false;
+  bool found_acknowledged = false;
 
   if (it != ssi_set.end() && !(*it)->transactions.empty()) {
     for (std::list<MetaLogEntryPtr>::iterator txiter = (*it)->transactions.begin();
          txiter != (*it)->transactions.end(); ++txiter) {
       if ((*txiter)->get_type() == MASTER_RANGE_MOVE_STARTED) {
         started = dynamic_cast<RangeMoveStarted *>((*txiter).get());
-        if (started->table == ep->table && started->range == ep->range) {
-          // do nothing here we will drop them in the move acknowledged step
+        if (started->table == ep->table && started->range == ep->range)
           found_started = true;
-        }
+      }
+      else if ((*txiter)->get_type() == MASTER_RANGE_MOVE_ACKNOWLEDGED) {
+        acknowledged = dynamic_cast<RangeMoveAcknowledged*>((*txiter).get());
+        if (acknowledged->table == ep->table && acknowledged->range == ep->range)
+          found_acknowledged = true;
       }
     }
   }
   // store move loaded txn
   if (found_started) {
-    (*it)->transactions.push_back(ep);
+    if (!found_acknowledged)
+      (*it)->transactions.push_back(ep);
+    else {
+      // range loaded and acknowledged, purge txns
+      for (std::list<MetaLogEntryPtr>::iterator txiter = (*it)->transactions.begin();
+          txiter != (*it)->transactions.end(); ++txiter) {
+        if ((*txiter)->get_type() == MASTER_RANGE_MOVE_STARTED) {
+          started = dynamic_cast<RangeMoveStarted *>((*txiter).get());
+          if (started->table == ep->table && started->range == ep->range) {
+            // drop these entries since the range was successfully loaded and acknowledged
+            (*it)->transactions.erase(txiter);
+          }
+        }
+        else if ((*txiter)->get_type() == MASTER_RANGE_MOVE_ACKNOWLEDGED) {
+          acknowledged = dynamic_cast<RangeMoveAcknowledged*>((*txiter).get());
+          if (acknowledged->table == ep->table && acknowledged->range == ep->range) {
+            // drop these entries because range was sucessfully loaded and acknowledged
+            (*it)->transactions.erase(txiter);
+          }
+        }
+      }
+    }
   }
   else {
     HT_ERROR_OUT <<"No matching RangeMoveStarted for RangeMoveLoaded "<< ep
@@ -179,31 +205,44 @@ void load_entry(Reader &rd, SsiSet &ssi_set, RangeMoveAcknowledged *ep) {
          txiter != (*it)->transactions.end(); ++txiter) {
       if ((*txiter)->get_type() == MASTER_RANGE_MOVE_STARTED) {
         started = dynamic_cast<RangeMoveStarted*>((*txiter).get());
-        if (started->table == ep->table && started->range == ep->range) {
-          // drop these entries because range was sucessfully loaded
-          (*it)->transactions.erase(txiter);
+        if (started->table == ep->table && started->range == ep->range)
           found_started = true;
-        }
       }
       else if ((*txiter)->get_type() == MASTER_RANGE_MOVE_LOADED) {
         loaded = dynamic_cast<RangeMoveLoaded*>((*txiter).get());
-        if (loaded->table == ep->table && loaded->range == ep->range) {
-          // drop these entries because range was sucessfully loaded
-          (*it)->transactions.erase(txiter);
+        if (loaded->table == ep->table && loaded->range == ep->range)
           found_loaded = true;
-        }
       }
     }
   }
 
-  if (found_started && found_loaded)
+  if (found_started) {
+    if (!found_loaded)
+      (*it)->transactions.push_back(ep);
+    else {
+      // range loaded and acknowledged, purge txns
+      for (std::list<MetaLogEntryPtr>::iterator txiter = (*it)->transactions.begin();
+          txiter != (*it)->transactions.end(); ++txiter) {
+        if ((*txiter)->get_type() == MASTER_RANGE_MOVE_STARTED) {
+          started = dynamic_cast<RangeMoveStarted *>((*txiter).get());
+          if (started->table == ep->table && started->range == ep->range) {
+            // drop these entries since the range was successfully loaded and acknowledged
+            (*it)->transactions.erase(txiter);
+          }
+        }
+        else if ((*txiter)->get_type() == MASTER_RANGE_MOVE_LOADED) {
+          loaded = dynamic_cast<RangeMoveLoaded*>((*txiter).get());
+          if (loaded->table == ep->table && loaded->range == ep->range) {
+            // drop these entries because range was sucessfully loaded and acknowledged
+            (*it)->transactions.erase(txiter);
+          }
+        }
+      }
+    }
     return;
+  }
   else {
-    if (!found_started)
-      HT_ERROR_OUT << "No matching RangeMoveStarted for RangeMoveAcknowledged"<< ep
-                   << " at "<< rd.pos() <<'/' << rd.size() <<" in "<< rd.path() << HT_END;
-    else
-      HT_ERROR_OUT << "No matching RangeMoveLoaded for RangeMoveAcknowledged"<< ep
+    HT_ERROR_OUT << "No matching RangeMoveStarted for RangeMoveAcknowledged"<< ep
                    << " at "<< rd.pos() <<'/' << rd.size() <<" in "<< rd.path() << HT_END;
 
     if (rd.skips_errors())
@@ -218,9 +257,19 @@ void load_entry(Reader &rd, SsiSet &ssi_set, MmlRecover *ep) {
 }
 
 void load_entry(Reader &rd, SsiSet &ssi_set, BalanceStarted *ep) {
+  rd.set_balance_started(ep);
   return;
 }
 void load_entry(Reader &rd, SsiSet &ssi_set, BalanceDone *ep) {
+  if (!(rd.get_balance_started())) {
+    HT_ERROR_OUT << "No matching BalanceStarted for BalanceDone"<< ep
+                << " at "<< rd.pos() <<'/' << rd.size() <<" in "<< rd.path() << HT_END;
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
+  }
+  rd.set_balance_started((MetaLogEntry *)0);
   return;
 }
 
@@ -232,7 +281,7 @@ void load_entry(Reader &rd, SsiSet &ssi_set, BalanceDone *ep) {
 namespace Hypertable {
 
 MasterMetaLogReader::MasterMetaLogReader(Filesystem *fs, const String &path)
-    : Parent(fs, path), m_recover(false) {
+    : Parent(fs, path), m_recover(false), m_balance_started(0) {
   uint8_t buf[MML_HEADER_SIZE];
 
   if (fd() == -1)
@@ -317,7 +366,6 @@ MasterMetaLogReader::load_server_states(bool *recover, bool force) {
     m_log_entries.push_back(p);
   }
   std::copy(ssi_set.begin(), ssi_set.end(), back_inserter(m_server_states));
-
   *recover = m_recover;
   return m_server_states;
 }

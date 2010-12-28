@@ -99,6 +99,18 @@ public:
     write(entry.get());
   }
 
+  void
+  log_balance_started() {
+    MetaLogEntryPtr entry(MetaLogEntryFactory::new_master_balance_started());
+    write(entry.get());
+  }
+
+  void
+  log_balance_done() {
+    MetaLogEntryPtr entry(MetaLogEntryFactory::new_master_balance_done());
+    write(entry.get());
+  }
+
 private:
   void write_header();
 };
