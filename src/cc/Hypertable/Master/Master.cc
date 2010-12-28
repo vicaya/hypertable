@@ -117,13 +117,11 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   /* Read Last Table ID */
   {
     DynamicBuffer valbuf(0);
-    HandleCallbackPtr null_handle_callback;
     int ival;
     uint32_t lock_status;
     uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
 
-    m_master_file_handle = m_hyperspace_ptr->open(m_toplevel_dir + "/master", oflags,
-                                                  null_handle_callback);
+    m_master_file_handle = m_hyperspace_ptr->open(m_toplevel_dir + "/master", oflags);
 
     m_hyperspace_ptr->try_lock(m_master_file_handle, LOCK_MODE_EXCLUSIVE,
                                &lock_status, &m_master_file_sequencer);
@@ -271,7 +269,6 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
 bool Master::table_exists(const String &name, String &id) {
   bool is_namespace;
   uint64_t handle = 0;
-  HandleCallbackPtr null_handle_callback;
 
   HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace_ptr, &handle);
 
@@ -285,7 +282,7 @@ bool Master::table_exists(const String &name, String &id) {
 
   try {
     if (m_hyperspace_ptr->exists(tablefile)) {
-      handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ, null_handle_callback);
+      handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ);
       if (m_hyperspace_ptr->attr_exists(handle, "x"))
         return true;
     }
@@ -320,8 +317,6 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
   LockSequencer lock_sequencer;
   int saved_error = Error::OK;
 
-  HandleCallbackPtr null_handle_callback;
-
   HT_INFOF("Alter table: %s", tablename);
 
   wait_for_root_metadata_server();
@@ -346,8 +341,7 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
      *  Open & Lock Hyperspace file exclusively
      */
     handle = m_hyperspace_ptr->open(tablefile,
-        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE,
-        null_handle_callback);
+          OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE);
 
     /**
      *  Read existing schema and table id
@@ -505,7 +499,6 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
   String errmsg;
   DynamicBuffer schemabuf(0);
   uint64_t handle;
-  HandleCallbackPtr null_handle_callback;
 
   HT_INFOF("Get schema: %s", tablename);
 
@@ -525,8 +518,7 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
     /**
      * Open table file
      */
-    handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ,
-                                    null_handle_callback);
+    handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ);
 
     /**
      * Get schema attribute
@@ -692,9 +684,8 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       if (exists) {
         DynamicBuffer dbuf;
         try {
-          HandleCallbackPtr null_callback;
           uint64_t handle = m_hyperspace_ptr->open(m_toplevel_dir + "/root",
-              OPEN_FLAG_READ, null_callback);
+                                                   OPEN_FLAG_READ);
           m_hyperspace_ptr->attr_get(handle, "Location", dbuf);
           m_hyperspace_ptr->close(handle);
         }
@@ -932,7 +923,6 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
   String err_msg;
   String table_id;
   DynamicBuffer value_buf(0);
-  HandleCallbackPtr null_handle_callback;
   String table_name_str = table_name;
 
   HT_INFOF("Entering drop_table for %s", table_name);
@@ -1125,7 +1115,6 @@ Master::create_table(const char *tablename, const char *schemastr) {
   string table_basedir;
   string agdir;
   Schema *schema = 0;
-  HandleCallbackPtr null_handle_callback;
   uint64_t handle = 0;
   String table_name = tablename;
   String table_id;
@@ -1166,7 +1155,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
    */
   String tablefile = m_toplevel_dir + "/tables/" + table_id;
   int oflags = OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE;
-  handle = m_hyperspace_ptr->open(tablefile, oflags, null_handle_callback);
+  handle = m_hyperspace_ptr->open(tablefile, oflags);
 
   /**
    * Write schema attribute
@@ -1267,7 +1256,6 @@ Master::create_table(const char *tablename, const char *schemastr) {
 
 bool Master::initialize() {
   uint64_t handle;
-  HandleCallbackPtr null_handle_callback;
 
   try {
 
@@ -1286,14 +1274,14 @@ bool Master::initialize() {
 
     // Create /hypertable/master if necessary
     handle = m_hyperspace_ptr->open( m_toplevel_dir + "/master",
-        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
+        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
     m_hyperspace_ptr->close(handle);
 
     /**
      *  Create /hypertable/root
      */
     handle = m_hyperspace_ptr->open(m_toplevel_dir + "/root",
-        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
+        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
     m_hyperspace_ptr->close(handle);
 
     HT_INFO("Successfully Initialized Hypertable.");

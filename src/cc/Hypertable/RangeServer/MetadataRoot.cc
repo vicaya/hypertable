@@ -33,14 +33,13 @@ using namespace Hyperspace;
 
 
 MetadataRoot::MetadataRoot(SchemaPtr &schema) : m_next(0) {
-  HandleCallbackPtr null_callback;
 
   foreach(const Schema::AccessGroup *ag, schema->get_access_groups())
     m_agnames.push_back(ag->name);
 
   try {
     m_handle = Global::hyperspace->open(Global::toplevel_dir + "/root",
-                                        OPEN_FLAG_READ, null_callback);
+                                        OPEN_FLAG_READ);
   }
   catch (Exception &e) {
     HT_ERRORF("Problem opening Hyperspace root file '%s/root' - %s - "

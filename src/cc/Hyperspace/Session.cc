@@ -169,6 +169,12 @@ Session::open(const std::string &name, uint32_t flags,
   return open(handle_state, cbuf_ptr, timer);
 }
 
+uint64_t
+Session::open(const std::string &name, uint32_t flags, Timer *timer) {
+  HandleCallbackPtr null_handle_callback;
+  return open(name, flags, null_handle_callback, timer);
+}
+
 
 uint64_t
 Session::create(const std::string &name, uint32_t flags,

@@ -131,9 +131,6 @@ bool Client::exists_namespace(const String &name, Namespace *base) {
 
   String namespace_file = m_toplevel_dir + "/tables/" + id;
 
-  DynamicBuffer value_buf(0);
-  Hyperspace::HandleCallbackPtr null_handle_callback;
-
   try {
     return m_hyperspace->exists(namespace_file);
   }

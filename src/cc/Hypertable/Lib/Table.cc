@@ -74,7 +74,6 @@ void Table::initialize() {
   String tablefile;
   DynamicBuffer value_buf(0);
   uint64_t handle;
-  HandleCallbackPtr null_handle_callback;
   String errmsg;
   String table_id;
 
@@ -108,8 +107,7 @@ void Table::initialize() {
    * Open table file
    */
   try {
-    handle = m_hyperspace->open(tablefile, OPEN_FLAG_READ,
-                                null_handle_callback);
+    handle = m_hyperspace->open(tablefile, OPEN_FLAG_READ);
   }
   catch (Exception &e) {
     if (e.code() == Error::HYPERSPACE_BAD_PATHNAME)

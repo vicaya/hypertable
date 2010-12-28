@@ -197,6 +197,17 @@ namespace Hyperspace {
     uint64_t open(const std::string &name, uint32_t flags,
                   HandleCallbackPtr &callback, Timer *timer = 0);
 
+    /** Opens a file.  The open mode is determined by the bits in the
+     * flags argument.  No callback is registered for this handle and
+     * no events are reported on this handle.
+     *
+     * @param name pathname of file to open
+     * @param flags OR'ed together set of open flags (see \ref OpenFlags)
+     * @param timer maximum wait timer
+     * @return opened file handle
+     */
+    uint64_t open(const std::string &name, uint32_t flags, Timer *timer = 0);
+
     /** Creates a file.  This method is basically the same as the #open method
      * except that it implicitly sets the OPEN_FLAG_CREATE and OPEN_FLAG_EXCL
      * open flags and supplies a set of initial attributes to be set when the

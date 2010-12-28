@@ -43,12 +43,10 @@ namespace Hypertable {
   void TableInfo::load(Hyperspace::SessionPtr &hyperspace) {
     String table_file = m_toplevel_dir + "/tables/" + m_table.id;
     DynamicBuffer valbuf(0);
-    HandleCallbackPtr null_handle_callback;
     uint64_t handle;
 
     HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, hyperspace, &handle);
-    handle = hyperspace->open(table_file.c_str(), OPEN_FLAG_READ,
-                                  null_handle_callback);
+    handle = hyperspace->open(table_file.c_str(), OPEN_FLAG_READ);
 
     hyperspace->attr_get(handle, "schema", valbuf);
 

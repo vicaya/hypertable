@@ -325,10 +325,8 @@ void RangeServer::initialize(PropertiesPtr &props) {
   uint32_t lock_status;
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE
       | OPEN_FLAG_CREATE | OPEN_FLAG_LOCK;
-  HandleCallbackPtr null_callback;
 
-  m_existence_file_handle = m_hyperspace->open(top_dir.c_str(), oflags,
-                                               null_callback);
+  m_existence_file_handle = m_hyperspace->open(top_dir.c_str(), oflags);
 
   while (true) {
     lock_status = 0;
@@ -1237,13 +1235,12 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     }
     else {  //root
       uint64_t handle;
-      HandleCallbackPtr null_callback;
       uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
 
       HT_INFO("Loading root METADATA range");
 
       try {
-        handle = m_hyperspace->open(Global::toplevel_dir + "/root", oflags, null_callback);
+        handle = m_hyperspace->open(Global::toplevel_dir + "/root", oflags);
 	location = Location::get();
         m_hyperspace->attr_set(handle, "Location", location.c_str(),
                                location.length());
@@ -2747,15 +2744,13 @@ void RangeServer::close(ResponseCallback *cb) {
 
 void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation) {
   DynamicBuffer valbuf;
-  HandleCallbackPtr null_handle_callback;
   uint64_t handle;
   SchemaPtr schema = table_info->get_schema();
 
   if (schema.get() == 0 || schema->get_generation() < generation) {
     String tablefile = Global::toplevel_dir + "/tables/" + table_info->identifier().id;
 
-    handle = m_hyperspace->open(tablefile.c_str(), OPEN_FLAG_READ,
-                                null_handle_callback);
+    handle = m_hyperspace->open(tablefile.c_str(), OPEN_FLAG_READ);
 
     m_hyperspace->attr_get(handle, "schema", valbuf);
 

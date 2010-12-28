@@ -147,7 +147,6 @@ void RangeLocator::hyperspace_reconnected()
  */
 void RangeLocator::initialize() {
   DynamicBuffer valbuf(0);
-  HandleCallbackPtr null_handle_callback;
   uint64_t handle = 0;
   Timer timer(m_timeout_ms, true);
 
@@ -164,8 +163,7 @@ void RangeLocator::initialize() {
     String metadata_file = m_toplevel_dir + "/tables/" + TableIdentifier::METADATA_ID;
 
     try {
-      handle = m_hyperspace->open(metadata_file, OPEN_FLAG_READ,
-                                  null_handle_callback);
+      handle = m_hyperspace->open(metadata_file, OPEN_FLAG_READ);
       break;
     }
     catch (Exception &e) {
