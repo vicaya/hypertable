@@ -30,12 +30,16 @@
 namespace Hypertable { namespace MetaLogEntryFactory {
 
 enum MasterMetaLogEntryType {
-  MASTER_SERVER_JOINED  = 101,
-  MASTER_SERVER_LEFT    = 102,
-  MASTER_SERVER_REMOVED = 103,
-  MASTER_RANGE_ASSIGNED = 104,
-  MASTER_RANGE_LOADED   = 105,
-  MASTER_LOG_RECOVER    = 106
+  MASTER_SERVER_JOINED              = 101,
+  MASTER_SERVER_LEFT                = 102,
+  MASTER_SERVER_REMOVED             = 103,
+  MASTER_RANGE_MOVE_STARTED         = 104,
+  MASTER_RANGE_MOVE_LOADED          = 105,
+  MASTER_RANGE_MOVE_ACKNOWLEDGED    = 106,
+  MASTER_RANGE_MOVE_RESTARTED       = 107,
+  MASTER_LOG_RECOVER                = 108,
+  MASTER_BALANCE_STARTED            = 109,
+  MASTER_BALANCE_DONE               = 110
 };
 
 MetaLogEntry *new_master_server_joined(const String &loc);
@@ -45,13 +49,22 @@ MetaLogEntry *new_master_server_left(const String &loc);
 MetaLogEntry *new_master_server_removed(const String &loc);
 
 MetaLogEntry *
-new_master_range_assigned(const TableIdentifier &tid, const RangeSpec &rspec,
-                          const String &log, uint64_t sl,
-                          const String &loc);
+new_master_range_move_started(const TableIdentifier &tid, const RangeSpec &rspec,
+                              const String &log, uint64_t sl, const String &loc);
+MetaLogEntry *
+new_master_range_move_restarted(const TableIdentifier &tid, const RangeSpec &rspec,
+                                const String &log, uint64_t sl, const String &loc);
+
+MetaLogEntry * new_master_range_move_loaded(const TableIdentifier &tid, const RangeSpec &rspec,
+                                            const String &loc);
 
 MetaLogEntry *
-new_master_range_loaded(const TableIdentifier &tid, const RangeSpec &rspec,
-                        const String &loc);
+new_master_range_move_acknowledged(const TableIdentifier &tid, const RangeSpec &rspec,
+                                   const String &loc);
+
+MetaLogEntry *new_master_balance_started();
+
+MetaLogEntry *new_master_balance_done();
 
 MetaLogEntry *
 new_from_payload(MasterMetaLogEntryType, int64_t timestamp,

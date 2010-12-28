@@ -68,16 +68,16 @@ public:
   String location;
 };
 
-class RangeAssigned : public MetaLogEntry {
+class RangeMoveStarted: public MetaLogEntry {
 public:
-  RangeAssigned() {}
-  RangeAssigned(const TableIdentifier &tid, const RangeSpec &rspec,
-                const String &log, uint64_t sl, const String &loc) 
+  RangeMoveStarted() {}
+  RangeMoveStarted(const TableIdentifier &tid, const RangeSpec &rspec,
+                  const String &log, uint64_t sl, const String &loc)
     : table(tid), range(rspec), transfer_log(log), soft_limit(sl), location(loc) { }
 
   virtual void write(DynamicBuffer &buf);
   virtual const uint8_t *read(StaticBuffer &buf);
-  virtual int get_type() const { return MetaLogEntryFactory::MASTER_RANGE_ASSIGNED; }
+  virtual int get_type() const { return MetaLogEntryFactory::MASTER_RANGE_MOVE_STARTED; }
 
   TableIdentifierManaged table;
   RangeSpecManaged range;
@@ -86,16 +86,49 @@ public:
   String location;
 };
 
-class RangeLoaded : public MetaLogEntry {
+class RangeMoveRestarted: public MetaLogEntry {
 public:
-  RangeLoaded() {}
-  RangeLoaded(const TableIdentifier &tid, const RangeSpec &rspec,
-              const String &loc)
+  RangeMoveRestarted() {}
+  RangeMoveRestarted(const TableIdentifier &tid, const RangeSpec &rspec,
+                  const String &log, uint64_t sl, const String &loc)
+    : table(tid), range(rspec), transfer_log(log), soft_limit(sl), location(loc) { }
+
+  virtual void write(DynamicBuffer &buf);
+  virtual const uint8_t *read(StaticBuffer &buf);
+  virtual int get_type() const { return MetaLogEntryFactory::MASTER_RANGE_MOVE_RESTARTED; }
+
+  TableIdentifierManaged table;
+  RangeSpecManaged range;
+  String transfer_log;
+  uint64_t soft_limit;
+  String location;
+};
+
+class RangeMoveLoaded : public MetaLogEntry {
+public:
+  RangeMoveLoaded() {}
+  RangeMoveLoaded(const TableIdentifier &tid, const RangeSpec &rspec,
+                  const String &loc)
     : table(tid), range(rspec), location(loc) { }
 
   virtual void write(DynamicBuffer &buf);
   virtual const uint8_t *read(StaticBuffer &buf);
-  virtual int get_type() const { return MetaLogEntryFactory::MASTER_RANGE_LOADED; }
+  virtual int get_type() const { return MetaLogEntryFactory::MASTER_RANGE_MOVE_LOADED; }
+
+  TableIdentifierManaged table;
+  RangeSpecManaged range;
+  String location;
+};
+
+class RangeMoveAcknowledged: public MetaLogEntry {
+public:
+  RangeMoveAcknowledged() {}
+  RangeMoveAcknowledged(const TableIdentifier &tid, const RangeSpec &rspec,
+                        const String &loc) : table(tid), range(rspec), location(loc) { }
+
+  virtual void write(DynamicBuffer &buf);
+  virtual const uint8_t *read(StaticBuffer &buf);
+  virtual int get_type() const { return MetaLogEntryFactory::MASTER_RANGE_MOVE_ACKNOWLEDGED; }
 
   TableIdentifierManaged table;
   RangeSpecManaged range;
@@ -108,6 +141,21 @@ public:
   virtual const uint8_t *read(StaticBuffer &) { return 0; }
   virtual int get_type() const { return MetaLogEntryFactory::MASTER_LOG_RECOVER; }
 };
+
+class BalanceStarted : public MetaLogEntry {
+public:
+  virtual void write(DynamicBuffer &) { return; }
+  virtual const uint8_t *read(StaticBuffer &) { return 0; }
+  virtual int get_type() const { return MetaLogEntryFactory::MASTER_BALANCE_STARTED; }
+};
+
+class BalanceDone: public MetaLogEntry {
+public:
+  virtual void write(DynamicBuffer &) { return; }
+  virtual const uint8_t *read(StaticBuffer &) { return 0; }
+  virtual int get_type() const { return MetaLogEntryFactory::MASTER_BALANCE_DONE; }
+};
+
 
 
 }} // namespace Hypertable::MasterTxn

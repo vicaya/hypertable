@@ -39,17 +39,37 @@ MetaLogEntry *new_master_server_removed(const String &loc) {
 }
 
 MetaLogEntry *
-new_master_range_assigned(const TableIdentifier &tid, const RangeSpec &rspec,
-                          const String &log, uint64_t sl,
-                          const String &loc) {
-  return new RangeAssigned(tid, rspec, log, sl, loc);
+new_master_range_move_started(const TableIdentifier &tid, const RangeSpec &rspec,
+                              const String &log, uint64_t sl, const String &loc) {
+  return new RangeMoveStarted(tid, rspec, log, sl, loc);
 }
 
 MetaLogEntry *
-new_master_range_loaded(const TableIdentifier &tid, const RangeSpec &rspec,
-                        const String &loc) {
-  return new RangeLoaded(tid, rspec, loc);
+new_master_range_move_restarted(const TableIdentifier &tid, const RangeSpec &rspec,
+                                const String &log, uint64_t sl, const String &loc) {
+  return new RangeMoveRestarted(tid, rspec, log, sl, loc);
 }
+
+MetaLogEntry *
+new_master_range_move_loaded(const TableIdentifier &tid, const RangeSpec &rspec,
+                        const String &loc) {
+  return new RangeMoveLoaded(tid, rspec, loc);
+}
+
+MetaLogEntry *
+new_master_range_move_acknowledged(const TableIdentifier &tid, const RangeSpec &rspec,
+                                  const String &loc) {
+  return new RangeMoveAcknowledged(tid, rspec, loc);
+}
+
+MetaLogEntry *new_master_balance_started() {
+  return new BalanceStarted();
+}
+
+MetaLogEntry *new_master_balance_done() {
+  return new BalanceDone();
+}
+
 
 MetaLogEntry *
 new_from_payload(MasterMetaLogEntryType t, int64_t timestamp,
@@ -57,12 +77,18 @@ new_from_payload(MasterMetaLogEntryType t, int64_t timestamp,
   MetaLogEntry *p = 0;
 
   switch (t) {
-    case MASTER_SERVER_JOINED:  p = new ServerJoined();     break;
-    case MASTER_SERVER_LEFT:    p = new ServerLeft();       break;
-    case MASTER_SERVER_REMOVED: p = new ServerRemoved();    break;
-    case MASTER_RANGE_ASSIGNED: p = new RangeAssigned();    break;
-    case MASTER_RANGE_LOADED:   p = new RangeLoaded();      break;
-    case MASTER_LOG_RECOVER:    p = new MmlRecover();       break;
+    case MASTER_SERVER_JOINED:            p = new ServerJoined();         break;
+    case MASTER_SERVER_LEFT:              p = new ServerLeft();           break;
+    case MASTER_SERVER_REMOVED:           p = new ServerRemoved();        break;
+    case MASTER_RANGE_MOVE_STARTED :      p = new RangeMoveStarted();     break;
+
+    case MASTER_RANGE_MOVE_LOADED :       p = new RangeMoveLoaded();      break;
+    case MASTER_RANGE_MOVE_ACKNOWLEDGED : p = new RangeMoveAcknowledged();break;
+    case MASTER_RANGE_MOVE_RESTARTED :    p = new RangeMoveRestarted();   break;
+    case MASTER_LOG_RECOVER:              p = new MmlRecover();           break;
+    case MASTER_BALANCE_STARTED:          p = new BalanceStarted();       break;
+    case MASTER_BALANCE_DONE:             p = new BalanceDone();          break;
+
     default: HT_THROWF(Error::METALOG_ENTRY_BAD_TYPE, "unknown type (%d)", t);
   }
   p->timestamp = timestamp;

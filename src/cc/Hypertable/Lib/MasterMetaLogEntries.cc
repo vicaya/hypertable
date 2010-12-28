@@ -78,7 +78,7 @@ ServerRemoved::read(StaticBuffer &in) {
 }
 
 void
-RangeAssigned::write(DynamicBuffer &buf) {
+RangeMoveStarted::write(DynamicBuffer &buf) {
   buf.ensure(table.encoded_length() +
              range.encoded_length() +
              Serialization::encoded_length_vstr(transfer_log) +
@@ -92,13 +92,13 @@ RangeAssigned::write(DynamicBuffer &buf) {
 }
 
 const uint8_t *
-RangeAssigned::read(StaticBuffer &in) {
+RangeMoveStarted::read(StaticBuffer &in) {
   TableIdentifier tmp_table;
   RangeSpec tmp_range;
   buffer = in;
   const uint8_t *p = buffer.base;
   size_t remain = buffer.size;
-  HT_TRY("decoding range assigned",
+  HT_TRY("decoding range move started",
          tmp_table.decode(&p, &remain);
          tmp_range.decode(&p, &remain);
          transfer_log = Serialization::decode_vstr(&p, &remain);
@@ -110,7 +110,39 @@ RangeAssigned::read(StaticBuffer &in) {
 }
 
 void
-RangeLoaded::write(DynamicBuffer &buf) {
+RangeMoveRestarted::write(DynamicBuffer &buf) {
+  buf.ensure(table.encoded_length() +
+             range.encoded_length() +
+             Serialization::encoded_length_vstr(transfer_log) +
+             8 +
+             Serialization::encoded_length_vstr(location));
+  table.encode(&buf.ptr);
+  range.encode(&buf.ptr);
+  Serialization::encode_vstr(&buf.ptr, transfer_log);
+  Serialization::encode_i64(&buf.ptr, soft_limit);
+  Serialization::encode_vstr(&buf.ptr, location);
+}
+
+const uint8_t *
+RangeMoveRestarted::read(StaticBuffer &in) {
+  TableIdentifier tmp_table;
+  RangeSpec tmp_range;
+  buffer = in;
+  const uint8_t *p = buffer.base;
+  size_t remain = buffer.size;
+  HT_TRY("decoding range move restarted",
+         tmp_table.decode(&p, &remain);
+         tmp_range.decode(&p, &remain);
+         transfer_log = Serialization::decode_vstr(&p, &remain);
+         soft_limit = Serialization::decode_i64(&p, &remain);
+         location = Serialization::decode_vstr(&p, &remain));
+  table = tmp_table;
+  range = tmp_range;
+  return p;
+}
+
+void
+RangeMoveLoaded::write(DynamicBuffer &buf) {
   buf.ensure(table.encoded_length() + range.encoded_length() +
              Serialization::encoded_length_vstr(location));
   table.encode(&buf.ptr);
@@ -119,13 +151,13 @@ RangeLoaded::write(DynamicBuffer &buf) {
 }
 
 const uint8_t *
-RangeLoaded::read(StaticBuffer &in) {
+RangeMoveLoaded::read(StaticBuffer &in) {
   TableIdentifier tmp_table;
   RangeSpec tmp_range;
   buffer = in;
   const uint8_t *p = buffer.base;
   size_t remain = buffer.size;
-  HT_TRY("decoding range loaded",
+  HT_TRY("decoding range move loaded",
          tmp_table.decode(&p, &remain);
          tmp_range.decode(&p, &remain);
          location = Serialization::decode_vstr(&p, &remain));
@@ -134,4 +166,27 @@ RangeLoaded::read(StaticBuffer &in) {
   return p;
 }
 
+void
+RangeMoveAcknowledged::write(DynamicBuffer &buf) {
+  buf.ensure(table.encoded_length() + range.encoded_length() +
+             Serialization::encoded_length_vstr(location));
+  table.encode(&buf.ptr);
+  range.encode(&buf.ptr);
+  Serialization::encode_vstr(&buf.ptr, location);
+}
 
+const uint8_t *
+RangeMoveAcknowledged::read(StaticBuffer &in) {
+  TableIdentifier tmp_table;
+  RangeSpec tmp_range;
+  buffer = in;
+  const uint8_t *p = buffer.base;
+  size_t remain = buffer.size;
+  HT_TRY("decoding range move acknowledged",
+         tmp_table.decode(&p, &remain);
+         tmp_range.decode(&p, &remain);
+         location = Serialization::decode_vstr(&p, &remain));
+  table = tmp_table;
+  range = tmp_range;
+  return p;
+}

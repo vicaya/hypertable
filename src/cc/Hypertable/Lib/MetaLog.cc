@@ -77,21 +77,40 @@ operator<<(std::ostream &out, const MetaLogEntry *ep) {
       out << "{ServerRemoved: timestamp='" << hires_ts_date
           << "' location='" << ((MasterTxn::ServerRemoved *)ep)->location << "'}";
     } break;
-    case MASTER_RANGE_ASSIGNED: {
-      MasterTxn::RangeAssigned *sp = (MasterTxn::RangeAssigned *)ep;
-      out << "{RangeAssigned: timestamp='" << hires_ts_date
+    case MASTER_RANGE_MOVE_STARTED: {
+      MasterTxn::RangeMoveStarted *sp = (MasterTxn::RangeMoveStarted *)ep;
+      out << "{RangeMoveStarted: timestamp='" << hires_ts_date
           <<"' table="<< sp->table <<" range="<< sp->range
           <<"' transfer_log='" << sp->transfer_log << "' soft_limit="
           << sp->soft_limit << " location='" << sp->location << "'}";
     } break;
-    case MASTER_RANGE_LOADED: {
-      MasterTxn::RangeLoaded *sp = (MasterTxn::RangeLoaded *)ep;
-      out << "{RangeLoaded: timestamp='" << hires_ts_date
+    case MASTER_RANGE_MOVE_RESTARTED: {
+      MasterTxn::RangeMoveRestarted *sp = (MasterTxn::RangeMoveRestarted *)ep;
+      out << "{RangeMoveRestarted: timestamp='" << hires_ts_date
+          <<"' table="<< sp->table <<" range="<< sp->range
+          <<"' transfer_log='" << sp->transfer_log << "' soft_limit="
+          << sp->soft_limit << " location='" << sp->location << "'}";
+    } break;
+    case MASTER_RANGE_MOVE_LOADED: {
+      MasterTxn::RangeMoveLoaded *sp = (MasterTxn::RangeMoveLoaded *)ep;
+      out << "{RangeMoveLoaded: timestamp='" << hires_ts_date
+          <<"' table="<< sp->table <<" range="<< sp->range
+          <<"' location='" << sp->location << "'}";
+    } break;
+    case MASTER_RANGE_MOVE_ACKNOWLEDGED: {
+      MasterTxn::RangeMoveAcknowledged *sp = (MasterTxn::RangeMoveAcknowledged *)ep;
+      out << "{RangeMoveAcknowledged: timestamp='" << hires_ts_date
           <<"' table="<< sp->table <<" range="<< sp->range
           <<"' location='" << sp->location << "'}";
     } break;
     case MASTER_LOG_RECOVER: {
       out << "{MmlRecover: timestamp='" << hires_ts_date << "'}";
+    } break;
+    case MASTER_BALANCE_STARTED: {
+      out << "{BalanceStarted: timestamp='" << hires_ts_date << "'}";
+    } break;
+     case MASTER_BALANCE_DONE: {
+      out << "{BalanceDone: timestamp='" << hires_ts_date << "'}";
     } break;
     default: out <<"{UnknownEntry("<< ep->get_type() <<")}";
   }

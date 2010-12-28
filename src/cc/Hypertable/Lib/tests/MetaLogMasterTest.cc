@@ -67,18 +67,19 @@ write_test(Filesystem *fs, const String &fname) {
   metalog->log_server_joined("rs5");
 
   RangeSpec r1("A", "B");
-  metalog->log_range_assigned(table, r1, "/logs/1", 1234, "rs3");
+  metalog->log_range_move_started(table, r1, "/logs/1", 1234, "rs3");
   metalog->log_server_left("rs3");
 
   RangeSpec r2("B", "C");
-  metalog->log_range_assigned(table, r2, "/logs/2", 2345, "rs6");
+  metalog->log_range_move_started(table, r2, "/logs/2", 2345, "rs6");
 
   RangeSpec r3("C", "D");
-  metalog->log_range_assigned(table, r3, "/logs/3", 3456, "rs7");
+  metalog->log_range_move_started(table, r3, "/logs/3", 3456, "rs7");
 
   metalog->log_server_left("rs1");
 
-  metalog->log_range_loaded(table, r2, "rs6");
+  metalog->log_range_move_loaded(table, r2, "rs6");
+  metalog->log_range_move_acknowledged(table, r2, "rs6");
 
   metalog->log_server_left("rs5");
   metalog->log_server_removed("rs5");
@@ -123,19 +124,24 @@ write_more(Filesystem *fs, const String &fname) {
   metalog->log_server_joined("rs10");
 
   RangeSpec r1("E", "F");
-  metalog->log_range_assigned(table, r1, "/logs/4", 4567, "rs11");
+  metalog->log_range_move_started(table, r1, "/logs/4", 4567, "rs11");
   metalog->log_server_left("rs7");
 
   RangeSpec r2("F", "G");
-  metalog->log_range_assigned(table, r2, "/logs/5", 5678, "rs4");
+  metalog->log_range_move_started(table, r2, "/logs/5", 5678, "rs4");
 
   RangeSpec r3("G", "H");
-  metalog->log_range_assigned(table, r3, "/logs/6", 6789, "rs7");
-  metalog->log_range_loaded(table, r3, "rs7");
+  metalog->log_range_move_started(table, r3, "/logs/6", 6789, "rs7");
+  metalog->log_range_move_loaded(table, r3, "rs7");
 
-  metalog->log_range_loaded(table, r1, "rs11");
+  metalog->log_range_move_loaded(table, r1, "rs11");
+
+
+  metalog->log_range_move_acknowledged(table, r1, "rs11");
 
   metalog->log_server_left("rs10");
+
+  metalog->log_range_move_acknowledged(table, r3, "rs7");
 
 }
 
@@ -158,15 +164,16 @@ write_more_again(Filesystem *fs, const String &fname) {
   metalog->log_server_joined("rs13");
 
   RangeSpec r1("H", "I");
-  metalog->log_range_assigned(table, r1, "/logs/7", 7891, "rs16");
+  metalog->log_range_move_started(table, r1, "/logs/7", 7891, "rs16");
   metalog->log_server_left("rs11");
 
   RangeSpec r2("I", "J");
-  metalog->log_range_assigned(table, r2, "/logs/8", 8912, "rs13");
+  metalog->log_range_move_started(table, r2, "/logs/8", 8912, "rs13");
 
   RangeSpec r3("J", "K");
-  metalog->log_range_assigned(table, r3, "/logs/9", 9123, "rs1");
-  metalog->log_range_loaded(table, r2, "rs13");
+  metalog->log_range_move_started(table, r3, "/logs/9", 9123, "rs1");
+  metalog->log_range_move_loaded(table, r2, "rs13");
+  metalog->log_range_move_acknowledged(table, r2, "rs13");
 
   metalog->log_server_removed("rs11");
 

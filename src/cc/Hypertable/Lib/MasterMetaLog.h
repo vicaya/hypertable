@@ -66,18 +66,35 @@ public:
   }
 
   void
-  log_range_assigned(const TableIdentifier &table, const RangeSpec &range,
-                     const String &transfer_log, uint64_t soft_limit,
-                     const String &location) {
-    MetaLogEntryPtr entry(MetaLogEntryFactory::new_master_range_assigned(
+  log_range_move_started(const TableIdentifier &table, const RangeSpec &range,
+                         const String &transfer_log, uint64_t soft_limit,
+                         const String &location) {
+    MetaLogEntryPtr entry(MetaLogEntryFactory::new_master_range_move_started(
                           table, range, transfer_log, soft_limit, location));
     write(entry.get());
   }
 
   void
-  log_range_loaded(const TableIdentifier &table, const RangeSpec &range,
-                   const String &location) {
-    MetaLogEntryPtr entry(MetaLogEntryFactory::new_master_range_loaded(
+  log_range_move_restarted(const TableIdentifier &table, const RangeSpec &range,
+                           const String &transfer_log, uint64_t soft_limit,
+                           const String &location) {
+    MetaLogEntryPtr entry(MetaLogEntryFactory::new_master_range_move_restarted(
+                          table, range, transfer_log, soft_limit, location));
+    write(entry.get());
+  }
+
+  void
+  log_range_move_loaded(const TableIdentifier &table, const RangeSpec &range,
+                        const String &location) {
+    MetaLogEntryPtr entry(MetaLogEntryFactory::new_master_range_move_loaded(
+                          table, range, location));
+    write(entry.get());
+  }
+
+  void
+  log_range_move_acknowledged(const TableIdentifier &table, const RangeSpec &range,
+                              const String &location) {
+    MetaLogEntryPtr entry(MetaLogEntryFactory::new_master_range_move_acknowledged(
                           table, range, location));
     write(entry.get());
   }

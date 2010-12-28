@@ -101,12 +101,12 @@ void load_entry(Reader &rd, SsiSet &ssi_set, ServerRemoved *ep) {
 }
 
 
-void load_entry(Reader &rd, SsiSet &ssi_set, RangeAssigned *ep) {
+void load_entry(Reader &rd, SsiSet &ssi_set, RangeMoveStarted *ep) {
   ServerStateInfo si(ep->location);
   SsiSet::iterator it = ssi_set.find(&si);
 
   if (it == ssi_set.end()) {
-    HT_ERROR_OUT <<"Unexpected RangeAssigned "<< ep << " at "<< rd.pos() <<'/'
+    HT_ERROR_OUT <<"Unexpected RangeMoveStarted"<< ep << " at "<< rd.pos() <<'/'
                  << rd.size() <<" in "<< rd.path() << HT_END;
 
     if (rd.skips_errors())
@@ -117,37 +117,114 @@ void load_entry(Reader &rd, SsiSet &ssi_set, RangeAssigned *ep) {
   (*it)->transactions.push_back(ep);
 }
 
-void load_entry(Reader &rd, SsiSet &ssi_set, RangeLoaded *ep) {
+void load_entry(Reader &rd, SsiSet &ssi_set, RangeMoveRestarted *ep) {
   ServerStateInfo si(ep->location);
   SsiSet::iterator it = ssi_set.find(&si);
-  RangeAssigned *assigned;
+
+  if (it == ssi_set.end()) {
+    HT_ERROR_OUT <<"Unexpected RangeMoveRestarted"<< ep << " at "<< rd.pos() <<'/'
+                 << rd.size() <<" in "<< rd.path() << HT_END;
+
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
+  }
+  (*it)->transactions.push_back(ep);
+}
+
+void load_entry(Reader &rd, SsiSet &ssi_set, RangeMoveLoaded *ep) {
+  ServerStateInfo si(ep->location);
+  SsiSet::iterator it = ssi_set.find(&si);
+  RangeMoveStarted *started;
+  bool found_started = false;
 
   if (it != ssi_set.end() && !(*it)->transactions.empty()) {
     for (std::list<MetaLogEntryPtr>::iterator txiter = (*it)->transactions.begin();
          txiter != (*it)->transactions.end(); ++txiter) {
-      if ((*txiter)->get_type() == MASTER_RANGE_ASSIGNED) {
-        assigned = dynamic_cast<RangeAssigned *>((*txiter).get());
-        if (assigned->table == ep->table && assigned->range == ep->range) {
+      if ((*txiter)->get_type() == MASTER_RANGE_MOVE_STARTED) {
+        started = dynamic_cast<RangeMoveStarted *>((*txiter).get());
+        if (started->table == ep->table && started->range == ep->range) {
+          // do nothing here we will drop them in the move acknowledged step
+          found_started = true;
+        }
+      }
+    }
+  }
+  // store move loaded txn
+  if (found_started) {
+    (*it)->transactions.push_back(ep);
+  }
+  else {
+    HT_ERROR_OUT <<"No matching RangeMoveStarted for RangeMoveLoaded "<< ep
+                 << " at "<< rd.pos() <<'/' << rd.size() <<" in "<< rd.path() << HT_END;
+
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
+  }
+}
+
+void load_entry(Reader &rd, SsiSet &ssi_set, RangeMoveAcknowledged *ep) {
+  ServerStateInfo si(ep->location);
+  SsiSet::iterator it = ssi_set.find(&si);
+  RangeMoveStarted *started;
+  RangeMoveLoaded *loaded;
+  bool found_started, found_loaded;
+  found_started = found_loaded = false;
+
+  if (it != ssi_set.end() && !(*it)->transactions.empty()) {
+    for (std::list<MetaLogEntryPtr>::iterator txiter = (*it)->transactions.begin();
+         txiter != (*it)->transactions.end(); ++txiter) {
+      if ((*txiter)->get_type() == MASTER_RANGE_MOVE_STARTED) {
+        started = dynamic_cast<RangeMoveStarted*>((*txiter).get());
+        if (started->table == ep->table && started->range == ep->range) {
           // drop these entries because range was sucessfully loaded
           (*it)->transactions.erase(txiter);
-          return;
+          found_started = true;
+        }
+      }
+      else if ((*txiter)->get_type() == MASTER_RANGE_MOVE_LOADED) {
+        loaded = dynamic_cast<RangeMoveLoaded*>((*txiter).get());
+        if (loaded->table == ep->table && loaded->range == ep->range) {
+          // drop these entries because range was sucessfully loaded
+          (*it)->transactions.erase(txiter);
+          found_loaded = true;
         }
       }
     }
   }
 
-  HT_ERROR_OUT <<"No matching RangeAssigned for RangeLoaded "<< ep << " at "<< rd.pos() <<'/'
-               << rd.size() <<" in "<< rd.path() << HT_END;
-
-  if (rd.skips_errors())
+  if (found_started && found_loaded)
     return;
+  else {
+    if (!found_started)
+      HT_ERROR_OUT << "No matching RangeMoveStarted for RangeMoveAcknowledged"<< ep
+                   << " at "<< rd.pos() <<'/' << rd.size() <<" in "<< rd.path() << HT_END;
+    else
+      HT_ERROR_OUT << "No matching RangeMoveLoaded for RangeMoveAcknowledged"<< ep
+                   << " at "<< rd.pos() <<'/' << rd.size() <<" in "<< rd.path() << HT_END;
 
-  HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
+  }
 }
 
 void load_entry(Reader &rd, SsiSet &ssi_set, MmlRecover *ep) {
   return;
 }
+
+void load_entry(Reader &rd, SsiSet &ssi_set, BalanceStarted *ep) {
+  return;
+}
+void load_entry(Reader &rd, SsiSet &ssi_set, BalanceDone *ep) {
+  return;
+}
+
+
 
 
 } // local namespace
@@ -219,14 +296,22 @@ MasterMetaLogReader::load_server_states(bool *recover, bool force) {
       load_entry(*this, ssi_set, (ServerLeft *)p);          break;
     case MASTER_SERVER_REMOVED:
       load_entry(*this, ssi_set, (ServerRemoved *)p);       break;
-    case MASTER_RANGE_ASSIGNED:
-      load_entry(*this, ssi_set, (RangeAssigned *)p);       break;
-    case MASTER_RANGE_LOADED:
-      load_entry(*this, ssi_set, (RangeLoaded *)p);         break;
+    case MASTER_RANGE_MOVE_STARTED:
+      load_entry(*this, ssi_set, (RangeMoveStarted*)p);       break;
+    case MASTER_RANGE_MOVE_RESTARTED:
+      load_entry(*this, ssi_set, (RangeMoveRestarted*)p);       break;
+    case MASTER_RANGE_MOVE_LOADED:
+      load_entry(*this, ssi_set, (RangeMoveLoaded *)p);         break;
+    case MASTER_RANGE_MOVE_ACKNOWLEDGED:
+      load_entry(*this, ssi_set, (RangeMoveAcknowledged*)p);         break;
     case MASTER_LOG_RECOVER:
       load_entry(*this, ssi_set, (MmlRecover *)p);
       m_recover = true;                                     break;
-    default:
+     case MASTER_BALANCE_STARTED:
+      load_entry(*this, ssi_set, (BalanceStarted *)p);      break;
+     case MASTER_BALANCE_DONE:
+      load_entry(*this, ssi_set, (BalanceDone *)p);         break;
+     default:
       HT_FATALF("Bad code: unhandled entry type: %d", p->get_type());
     }
     m_log_entries.push_back(p);
