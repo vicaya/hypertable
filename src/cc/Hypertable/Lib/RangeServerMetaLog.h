@@ -80,23 +80,16 @@ public:
   }
 
   void
-  log_move_start(const TableIdentifier &table, const RangeSpec &range,
-                 const RangeState &state) {
-    MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_move_start(
+  log_relinquish_start(const TableIdentifier &table, const RangeSpec &range,
+                       const RangeState &state) {
+    MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_relinquish_start(
                           table, range, state));
     write(entry.get());
   }
 
   void
-  log_move_prepared(const TableIdentifier &table, const RangeSpec &range) {
-    MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_move_prepared(
-                          table, range));
-    write(entry.get());
-  }
-
-  void
-  log_move_done(const TableIdentifier &table, const RangeSpec &range) {
-    MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_move_done(table, range));
+  log_relinquish_done(const TableIdentifier &table, const RangeSpec &range) {
+    MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_relinquish_done(table, range));
     write(entry.get());
   }
 

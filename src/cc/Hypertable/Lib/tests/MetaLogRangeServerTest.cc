@@ -113,11 +113,11 @@ write_test(Filesystem *fs, const String &fname) {
   st.old_boundary_row = "z"; // split off high
   metalog->log_split_start(table, r2high, st);
 
-  // 4. start range move
+  // 4. start range relinquish
   st.clear();
   st.soft_limit = 40*M;
   metalog->log_range_loaded(table, RangeSpec("s", "v"), st);
-  metalog->log_move_start(table, RangeSpec("s", "v"), st);
+  metalog->log_relinquish_start(table, RangeSpec("s", "v"), st);
 
 }
 
@@ -154,10 +154,10 @@ write_more(Filesystem *fs, const String &fname) {
   TableIdentifier table("1");
   RangeState s;
 
-  // finish range move
+  // finish range relinquish
   s.clear();
   s.soft_limit = 40*M;
-  ml->log_move_done(table, RangeSpec("s", "v"));
+  ml->log_relinquish_done(table, RangeSpec("s", "v"));
 
   s.clear();
   s.soft_limit = 40*M;

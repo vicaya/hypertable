@@ -70,31 +70,22 @@ public:
   virtual int get_type() const { return MetaLogEntryFactory::RS_SPLIT_DONE; }
 };
 
-class MoveStart : public MetaLogEntryRangeCommon {
+class RelinquishStart : public MetaLogEntryRangeCommon {
 public:
-  MoveStart() {}
-  MoveStart(const TableIdentifier &t, const RangeSpec &r,
-            const RangeState &s) : MetaLogEntryRangeCommon(t, r, s) {}
+  RelinquishStart() {}
+  RelinquishStart(const TableIdentifier &t, const RangeSpec &r,
+                  const RangeState &s) : MetaLogEntryRangeCommon(t, r, s) {}
 
-  virtual int get_type() const { return MetaLogEntryFactory::RS_MOVE_START; }
+  virtual int get_type() const { return MetaLogEntryFactory::RS_RELINQUISH_START; }
 };
 
-class MovePrepared : public MetaLogEntryRangeBase {
+class RelinquishDone : public MetaLogEntryRangeBase {
 public:
-  MovePrepared() {}
-  MovePrepared(const TableIdentifier &t, const RangeSpec &r)
+  RelinquishDone() {}
+  RelinquishDone(const TableIdentifier &t, const RangeSpec &r)
       : MetaLogEntryRangeBase(t, r) {}
 
-  virtual int get_type() const { return MetaLogEntryFactory::RS_MOVE_PREPARED; }
-};
-
-class MoveDone : public MetaLogEntryRangeBase {
-public:
-  MoveDone() {}
-  MoveDone(const TableIdentifier &t, const RangeSpec &r)
-      : MetaLogEntryRangeBase(t, r) {}
-
-  virtual int get_type() const { return MetaLogEntryFactory::RS_MOVE_DONE; }
+  virtual int get_type() const { return MetaLogEntryFactory::RS_RELINQUISH_DONE; }
 };
 
 class DropTable : public MetaLogEntryRangeBase {

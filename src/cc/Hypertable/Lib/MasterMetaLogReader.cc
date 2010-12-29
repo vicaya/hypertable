@@ -162,22 +162,29 @@ void load_entry(Reader &rd, SsiSet &ssi_set, RangeMoveLoaded *ep) {
       (*it)->transactions.push_back(ep);
     else {
       // range loaded and acknowledged, purge txns
+      std::list<MetaLogEntryPtr>::iterator deliter;
       for (std::list<MetaLogEntryPtr>::iterator txiter = (*it)->transactions.begin();
-          txiter != (*it)->transactions.end(); ++txiter) {
+          txiter != (*it)->transactions.end();) {
         if ((*txiter)->get_type() == MASTER_RANGE_MOVE_STARTED) {
           started = dynamic_cast<RangeMoveStarted *>((*txiter).get());
+          deliter = txiter;
+          ++txiter;
           if (started->table == ep->table && started->range == ep->range) {
             // drop these entries since the range was successfully loaded and acknowledged
-            (*it)->transactions.erase(txiter);
+            (*it)->transactions.erase(deliter);
           }
         }
         else if ((*txiter)->get_type() == MASTER_RANGE_MOVE_ACKNOWLEDGED) {
           acknowledged = dynamic_cast<RangeMoveAcknowledged*>((*txiter).get());
+          deliter = txiter;
+          ++txiter;
           if (acknowledged->table == ep->table && acknowledged->range == ep->range) {
             // drop these entries because range was sucessfully loaded and acknowledged
-            (*it)->transactions.erase(txiter);
+            (*it)->transactions.erase(deliter);
           }
         }
+        else
+          ++txiter;
       }
     }
   }
@@ -221,22 +228,27 @@ void load_entry(Reader &rd, SsiSet &ssi_set, RangeMoveAcknowledged *ep) {
       (*it)->transactions.push_back(ep);
     else {
       // range loaded and acknowledged, purge txns
+      std::list<MetaLogEntryPtr>::iterator deliter;
       for (std::list<MetaLogEntryPtr>::iterator txiter = (*it)->transactions.begin();
-          txiter != (*it)->transactions.end(); ++txiter) {
+          txiter != (*it)->transactions.end();) {
         if ((*txiter)->get_type() == MASTER_RANGE_MOVE_STARTED) {
           started = dynamic_cast<RangeMoveStarted *>((*txiter).get());
-          if (started->table == ep->table && started->range == ep->range) {
-            // drop these entries since the range was successfully loaded and acknowledged
-            (*it)->transactions.erase(txiter);
-          }
+          deliter = txiter;
+          ++txiter;
+          // drop these entries since the range was successfully loaded and acknowledged
+          if (started->table == ep->table && started->range == ep->range)
+            (*it)->transactions.erase(deliter);
         }
         else if ((*txiter)->get_type() == MASTER_RANGE_MOVE_LOADED) {
           loaded = dynamic_cast<RangeMoveLoaded*>((*txiter).get());
-          if (loaded->table == ep->table && loaded->range == ep->range) {
-            // drop these entries because range was sucessfully loaded and acknowledged
-            (*it)->transactions.erase(txiter);
-          }
+          deliter = txiter;
+          ++txiter;
+          // drop these entries because range was sucessfully loaded and acknowledged
+          if (loaded->table == ep->table && loaded->range == ep->range)
+            (*it)->transactions.erase(deliter);
         }
+        else
+          ++txiter;
       }
     }
     return;

@@ -52,12 +52,12 @@ operator<<(std::ostream &out, const MetaLogEntry *ep) {
       R_CAST_AND_OUTPUT(RangeLoaded, ep, out)
           <<" state="<< sp->range_state <<'}';
     } break;
-    case RS_MOVE_START: {
-      R_CAST_AND_OUTPUT(MoveStart, ep, out)
+    case RS_RELINQUISH_START: {
+      R_CAST_AND_OUTPUT(RelinquishStart, ep, out)
           <<" state="<< sp->range_state <<'}';
     } break;
-    case RS_MOVE_DONE: {
-      R_CAST_AND_OUTPUT(MoveDone, ep, out) <<'}';
+    case RS_RELINQUISH_DONE: {
+      R_CAST_AND_OUTPUT(RelinquishDone, ep, out) <<'}';
     } break;
     case RS_DROP_TABLE: {
       R_CAST_AND_OUTPUT(DropTable, ep, out) <<'}';

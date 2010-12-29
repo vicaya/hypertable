@@ -51,19 +51,14 @@ new_rs_range_loaded(const TableIdentifier &table, const RangeSpec &range,
 }
 
 MetaLogEntry *
-new_rs_move_start(const TableIdentifier &table, const RangeSpec &range,
-                  const RangeState &state) {
-  return new MoveStart(table, range, state);
+new_rs_relinquish_start(const TableIdentifier &table, const RangeSpec &old,
+                        const RangeState &state) {
+  return new RelinquishStart(table, old, state);
 }
 
 MetaLogEntry *
-new_rs_move_prepared(const TableIdentifier &table, const RangeSpec &range) {
-  return new MovePrepared(table, range);
-}
-
-MetaLogEntry *
-new_rs_move_done(const TableIdentifier &table, const RangeSpec &range) {
-  return new MoveDone(table, range);
+new_rs_relinquish_done(const TableIdentifier &table, const RangeSpec &old) {
+  return new RelinquishDone(table, old);
 }
 
 MetaLogEntry *
@@ -78,15 +73,14 @@ new_from_payload(RangeServerMetaLogEntryType t, int64_t timestamp,
   MetaLogEntry *p = 0;
 
   switch (t) {
-    case RS_SPLIT_START:   p = new SplitStart();        break;
-    case RS_SPLIT_SHRUNK:  p = new SplitShrunk();       break;
-    case RS_SPLIT_DONE:    p = new SplitDone();         break;
-    case RS_RANGE_LOADED:  p = new RangeLoaded();       break;
-    case RS_MOVE_START:    p = new MoveStart();         break;
-    case RS_MOVE_PREPARED: p = new MovePrepared();      break;
-    case RS_MOVE_DONE:     p = new MoveDone();          break;
-    case RS_DROP_TABLE:    p = new DropTable();         break;
-    case RS_LOG_RECOVER:   p = new RsmlRecover();       break;
+    case RS_SPLIT_START:         p = new SplitStart();        break;
+    case RS_SPLIT_SHRUNK:        p = new SplitShrunk();       break;
+    case RS_SPLIT_DONE:          p = new SplitDone();         break;
+    case RS_RANGE_LOADED:        p = new RangeLoaded();       break;
+    case RS_RELINQUISH_START:    p = new RelinquishStart();   break;
+    case RS_RELINQUISH_DONE:     p = new RelinquishDone();    break;
+    case RS_DROP_TABLE:          p = new DropTable();         break;
+    case RS_LOG_RECOVER:         p = new RsmlRecover();       break;
     default: HT_THROWF(Error::METALOG_ENTRY_BAD_TYPE, "unknown type (%d)", t);
   }
   p->timestamp = timestamp;

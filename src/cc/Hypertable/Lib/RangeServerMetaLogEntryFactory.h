@@ -34,9 +34,9 @@ enum RangeServerMetaLogEntryType {
   RS_SPLIT_SHRUNK       = 2,
   RS_SPLIT_DONE         = 3,
   RS_RANGE_LOADED       = 4,
-  RS_MOVE_START         = 5,
+  RS_RELINQUISH_START   = 5,
   RS_MOVE_PREPARED      = 6,
-  RS_MOVE_DONE          = 7,
+  RS_RELINQUISH_DONE    = 7,
   RS_DROP_TABLE         = 8,
   RS_LOG_RECOVER        = 9
 };
@@ -56,16 +56,12 @@ new_rs_split_done(const TableIdentifier &, const RangeSpec &old,
 MetaLogEntry *
 new_rs_range_loaded(const TableIdentifier &, const RangeSpec &,
                     const RangeState &);
+MetaLogEntry *
+new_rs_relinquish_start(const TableIdentifier &, const RangeSpec &old,
+                        const RangeState &);
 
 MetaLogEntry *
-new_rs_move_start(const TableIdentifier &, const RangeSpec &,
-                  const RangeState &);
-
-MetaLogEntry *
-new_rs_move_prepared(const TableIdentifier &, const RangeSpec &);
-
-MetaLogEntry *
-new_rs_move_done(const TableIdentifier &, const RangeSpec &);
+new_rs_relinquish_done(const TableIdentifier &, const RangeSpec &old);
 
 MetaLogEntry *
 new_rs_drop_table(const TableIdentifier &);

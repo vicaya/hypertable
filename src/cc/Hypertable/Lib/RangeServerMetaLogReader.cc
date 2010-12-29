@@ -162,17 +162,18 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
   (*it)->range_state.timestamp = ep->timestamp;
   MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_range_loaded(ep->table, ep->range,
       (*it)->range_state));
+  entry->timestamp = ep->timestamp;
   (*it)->transactions.push_back(entry.get());
 }
 
 
-void load_entry(Reader &rd, RsiSet &rsi_set, MoveStart *ep) {
+void load_entry(Reader &rd, RsiSet &rsi_set, RelinquishStart *ep) {
   // TODO
   RangeStateInfo ri(ep->table, ep->range);
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end()) {
-    HT_ERROR_OUT <<"Unexpected MoveStart" << ep << " at "<< rd.pos() <<'/'
+    HT_ERROR_OUT <<"Unexpected RelinquishStart" << ep << " at "<< rd.pos() <<'/'
                  << rd.size() <<" in "<< rd.path() << HT_END;
 
     if (rd.skips_errors())
@@ -184,19 +185,15 @@ void load_entry(Reader &rd, RsiSet &rsi_set, MoveStart *ep) {
   (*it)->range_state = ep->range_state;
 }
 
-void load_entry(Reader &rd, RsiSet &rsi_set, MovePrepared *ep) {
-  // Not needed
-}
-
-void load_entry(Reader &rd, RsiSet &rsi_set, MoveDone *ep) {
+void load_entry(Reader &rd, RsiSet &rsi_set, RelinquishDone *ep) {
   // TODO
   RangeStateInfo ri(ep->table, ep->range);
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end() ||
       (*it)->transactions.size() < 2 ||
-      (*it)->transactions[1]->get_type() != RS_MOVE_START) {
-    HT_ERROR_OUT <<"Unexpected MoveDone"<< ep << " at "<< rd.pos() <<'/'
+      (*it)->transactions[1]->get_type() != RS_RELINQUISH_START) {
+    HT_ERROR_OUT <<"Unexpected RelinquishDone"<< ep << " at "<< rd.pos() <<'/'
                  << rd.size() <<" in "<<  rd.path() << HT_END;
 
     if (it != rsi_set.end())
@@ -305,12 +302,10 @@ RangeServerMetaLogReader::load_range_states(bool *recover, bool force) {
       load_entry(*this, rsi_set, (SplitDone *)p);       break;
     case RS_SPLIT_SHRUNK:
       load_entry(*this, rsi_set, (SplitShrunk *)p);     break;
-    case RS_MOVE_START:
-      load_entry(*this, rsi_set, (MoveStart *)p);       break;
-    case RS_MOVE_PREPARED:
-      load_entry(*this, rsi_set, (MovePrepared *)p);    break;
-    case RS_MOVE_DONE:
-      load_entry(*this, rsi_set, (MoveDone *)p);        break;
+    case RS_RELINQUISH_START:
+      load_entry(*this, rsi_set, (RelinquishStart *)p);       break;
+    case RS_RELINQUISH_DONE:
+      load_entry(*this, rsi_set, (RelinquishDone *)p);        break;
     case RS_DROP_TABLE:
       load_entry(*this, rsi_set, (DropTable *)p);       break;
     case RS_LOG_RECOVER:
