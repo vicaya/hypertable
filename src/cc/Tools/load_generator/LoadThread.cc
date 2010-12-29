@@ -40,7 +40,7 @@ void LoadThread::operator()() {
     HT_FATAL_OUT << e << HT_END;
   }
 
-  while (!m_state.finished) {
+  while (!m_state.finished || !m_state.requests.empty()) {
     while (m_state.requests.empty() && !m_state.finished)
       m_state.cond.wait(lock);
     if (!m_state.requests.empty()) {
