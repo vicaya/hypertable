@@ -129,13 +129,9 @@ namespace Hypertable {
 
     /**
      * Returns the end row of the range.
-     *
-     * NOTE: There is no lock protection for m_end_row because it never changes.
-     *       If this ever changes, then it should be lock protected and the end_row
-     *       value in LoadMetricsRange should be changed to a String instead of
-     *       a const char *
      */
     String end_row() {
+      ScopedLock lock(m_mutex);
       return m_end_row;
     }
 

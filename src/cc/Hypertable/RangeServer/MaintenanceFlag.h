@@ -40,6 +40,10 @@ namespace Hypertable {
       RELINQUISH                = 0x0800
     };
 
+    inline bool split(int flags) {
+      return (flags & SPLIT) == SPLIT;
+    }
+
     inline bool minor_compaction(int flags) {
       return (flags & COMPACT_MINOR) == COMPACT_MINOR;
     }

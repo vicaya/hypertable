@@ -23,6 +23,7 @@
 #define HYPERTABLE_LOADMETRICSRANGE_H
 
 #include "Common/DynamicBuffer.h"
+#include "Common/Mutex.h"
 #include "Common/String.h"
 
 #include "Hypertable/Lib/TableMutator.h"
@@ -31,7 +32,14 @@ namespace Hypertable {
 
   class LoadMetricsRange {
   public:
-    LoadMetricsRange(const String &table_id, const String &end_row);
+    LoadMetricsRange(const String &table_id, const String &start_row, const String &end_row);
+
+    void change_rows(const String &start_row, const String &end_row) {
+      ScopedLock lock(m_mutex);
+      m_new_start_row = start_row;
+      m_new_end_row = end_row;
+      m_new_rows = true;
+    }
 
     void compute_and_store(TableMutator *mutator, time_t now,
                            uint64_t disk_used, uint64_t memory_used,
@@ -40,9 +48,17 @@ namespace Hypertable {
                            uint64_t bytes_read, uint64_t bytes_written);
 
   private:
+
+    void initialize(const String &table_id, const String &start_row, const String &end_row);
+
+    Mutex m_mutex;
     DynamicBuffer m_buffer;
     const char *m_table_id;
+    const char *m_start_row;
     const char *m_end_row;
+    String m_new_start_row;
+    String m_new_end_row;
+    bool m_new_rows;
     time_t m_timestamp;
     uint64_t m_scans;
     uint64_t m_updates;

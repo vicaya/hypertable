@@ -2406,7 +2406,9 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
    * If created a mutator above, write data to sys/RS_METRICS
    */
   if (mutator) {
-    String value = format("1:%.6f,%.6f,%.6f", m_loadavg_accum / (double)m_metric_samples,
+    time_t rounded_time = (now+(Global::metrics_interval/2)) - ((now+(Global::metrics_interval/2))%Global::metrics_interval);
+    String value = format("1:%ld,%.6f,%.2f,%.2f", rounded_time,
+                          m_loadavg_accum / (double)m_metric_samples,
                           (double)m_page_in_accum / (double)m_metric_samples,
                           (double)m_page_out_accum / (double)m_metric_samples);
     String location = Location::get();

@@ -314,9 +314,6 @@ uint64_t AccessGroup::disk_usage() {
   if (m_immutable_cache)
     mu += m_immutable_cache->memory_used();
   usage = du + (uint64_t)(m_compression_ratio * (float)mu);
-  if (usage < 0)
-    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << usage
-                << HT_END;
   return usage;
 }
 
@@ -339,8 +336,6 @@ void AccessGroup::space_usage(int64_t *memp, int64_t *diskp) {
     *memp += m_immutable_cache->memory_used();
   *diskp = (m_in_memory) ? 0 : m_disk_usage;
   *diskp += (int64_t)(m_compression_ratio * (float)*memp);
-  if (*diskp < 0)
-    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << *diskp << HT_END;
 }
 
 
@@ -397,12 +392,9 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
   mdata->compression_ratio = (m_compression_ratio == 0.0) ? 1.0 : m_compression_ratio;
   mdata->cell_count = mdata->cached_items + mdata->immutable_items;
 
+  mdata->disk_used = m_disk_usage;
   int64_t du = m_in_memory ? 0 : m_disk_usage;
-  mdata->disk_used = du;
   mdata->disk_estimate = du + (int64_t)(m_compression_ratio * (float)mu);
-  if (mdata->disk_estimate < 0)
-    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << mdata->disk_estimate
-                << HT_END;
   mdata->outstanding_scanners = m_outstanding_scanner_count;
   mdata->in_memory = m_in_memory;
   mdata->deletes = m_cell_cache->get_delete_count();
@@ -463,9 +455,6 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore, uint32_t id) {
     return;
 
   m_disk_usage += cellstore->disk_usage();
-  if (m_disk_usage < 0)
-    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << m_disk_usage
-                << HT_END;
 
   m_compression_ratio = cellstore->compression_ratio();
 
@@ -548,7 +537,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
     }
     else if (MaintenanceFlag::major_compaction(maintenance_flags)) {
       if ((!m_immutable_cache || m_immutable_cache->empty()) &&
-          m_stores.size() <= (size_t)1)
+          m_stores.size() <= (size_t)1 &&
+          !MaintenanceFlag::split(maintenance_flags))
         break;
       tableidx = 0;
       HT_INFOF("Starting Major Compaction of %s(%s)",
@@ -663,11 +653,13 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       scanner->forward();
     }
 
-    if (tableidx == 0 && mscanner) {
-      CellStoreTrailerV4 *trailer = dynamic_cast<CellStoreTrailerV4 *>(cellstore->get_trailer());
-      if (trailer)
-        trailer->flags |= CellStoreTrailerV4::MAJOR_COMPACTION;
-    }
+    CellStoreTrailerV4 *trailer = dynamic_cast<CellStoreTrailerV4 *>(cellstore->get_trailer());
+
+    if (tableidx == 0 && mscanner)
+      trailer->flags |= CellStoreTrailerV4::MAJOR_COMPACTION;
+
+    if (maintenance_flags & MaintenanceFlag::SPLIT)
+      trailer->flags |= CellStoreTrailerV4::SPLIT;
 
     cellstore->finalize(&m_identifier);
 
@@ -747,9 +739,6 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         m_disk_usage += (uint64_t)disk_usage;
         m_compression_ratio += m_stores[i].cs->compression_ratio() * disk_usage;
       }
-      if (m_disk_usage < 0)
-        HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << m_disk_usage
-                    << HT_END;
       if (m_disk_usage != 0)
         m_compression_ratio /= m_disk_usage;
       else
@@ -849,14 +838,9 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
     /**
      * Shrink the CellStores
      */
-    m_disk_usage = 0;
     for (size_t i=0; i<m_stores.size(); i++) {
       String filename = m_stores[i].cs->get_filename();
       new_cell_store = CellStoreFactory::open(filename, m_start_row.c_str(), m_end_row.c_str());
-      m_disk_usage += new_cell_store->disk_usage();
-      if (m_disk_usage < 0)
-        HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << " file=" << filename
-                    << "=" << m_disk_usage << HT_END;
       new_stores.push_back( new_cell_store );
     }
 
@@ -896,7 +880,6 @@ void AccessGroup::stage_compaction() {
   m_immutable_cache = m_cell_cache;
   m_immutable_cache->freeze();
   m_garbage_tracker.add_delete_count( m_immutable_cache->get_delete_count() );
-  HT_INFOF("Adding %d deletes", m_immutable_cache->get_delete_count());
   m_garbage_tracker.accumulate_data( m_immutable_cache->memory_used() );
   m_cell_cache = new CellCache();
   m_earliest_cached_revision_saved = m_earliest_cached_revision;

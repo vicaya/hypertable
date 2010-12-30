@@ -64,7 +64,7 @@ Range::Range(MasterClientPtr &master_client,
     m_split_off_high(false), m_added_inserts(0), m_range_set(range_set), m_state(*state),
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
     m_relinquish(false), m_maintenance_generation(0),
-    m_load_metrics(identifier->id, range->end_row) {
+    m_load_metrics(identifier->id, range->start_row, range->end_row) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -883,7 +883,7 @@ void Range::split_compact_and_shrink() {
    * Perform major compactions
    */
   for (size_t i=0; i<ag_vector.size(); i++)
-    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MAJOR);
+    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MAJOR|MaintenanceFlag::SPLIT);
 
   try {
     String files;
@@ -976,8 +976,9 @@ void Range::split_compact_and_shrink() {
       else
         m_start_row = m_state.split_point;
 
-      m_name = String(m_identifier.id) + "[" + m_start_row + ".." + m_end_row
-        + "]";
+      m_load_metrics.change_rows(m_start_row, m_end_row);
+
+      m_name = String(m_identifier.id)+"["+m_start_row+".."+m_end_row+"]";
       m_split_row = "";
       for (size_t i=0; i<ag_vector.size(); i++)
         ag_vector[i]->shrink(split_row, m_split_off_high);

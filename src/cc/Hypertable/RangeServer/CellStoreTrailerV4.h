@@ -68,7 +68,10 @@ namespace Hypertable {
     uint8_t   bloom_filter_hash_count;
     uint16_t  version;
 
-    enum Flags { INDEX_64BIT=0x00000001, MAJOR_COMPACTION=0x00000002 };
+    enum Flags { INDEX_64BIT = 1,
+                 MAJOR_COMPACTION = 2,
+                 SPLIT = 4
+    };
 
     boost::any get(const String& prop) {
       if     (prop == "version")                return version;

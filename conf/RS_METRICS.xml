@@ -2,7 +2,7 @@
   <AccessGroup name="server">
     <ColumnFamily>
       <Name>server</Name>
-      <MaxVersions>168</MaxVersions>
+      <MaxVersions>336</MaxVersions>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="range">
