@@ -39,6 +39,15 @@ set_tests() {
   done
 }
 
+save_failure_state() {
+  echo "USE sys; SELECT * FROM METADATA RETURN_DELETES DISPLAY_TIMESTAMPS;" | $HT_HOME/bin/ht shell --batch >& metadata.dump
+  tar czvf fs-backup.tgz $HT_HOME/fs/local
+  ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
+  mkdir $ARCHIVE_DIR
+  mv metadata.dump fs-backup.tgz core.* select* dump.tsv rangeserver.output.* error* $ARCHIVE_DIR
+  echo "Failure state saved to directory $ARCHIVE_DIR"
+}
+
 # Runs an individual test
 run_test() {
   local TEST_ID=$1
@@ -48,6 +57,9 @@ run_test() {
     $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
                                        --clear
   fi
+
+  # Wait a few seconds before killing the RangeServer
+  sleep 5
 
   stop_range_server
 
@@ -77,20 +89,25 @@ run_test() {
   fgrep ERROR error.$TEST_ID
 
   if [ $? == 0 ] ; then
+      save_failure_state
       kill -9 `cat $PIDFILE`
       exit 1
   fi
 
   if [ -e core.* ] ; then
-      echo "core file generated, moved to /tmp"
-      mv core.* /tmp
+      echo "ERROR: core file generated"
+      save_failure_state
       kill -9 `cat $PIDFILE`
       exit 1
   fi
 
+  /bin/rm -f select-a.$TEST_ID select-b.$TEST_ID
+
   echo "USE '/'; SELECT * FROM LoadTest INTO FILE 'select-a.$TEST_ID';" | $HT_HOME/bin/ht shell --batch
 
-  $HT_HOME/bin/ht shell --batch < $SCRIPT_DIR/dump-table.hql > dump.tsv
+  /bin/rm -f dump.tsv 
+
+  echo "USE '/'; DUMP TABLE LoadTest INTO FILE 'dump.tsv';" | $HT_HOME/bin/ht shell --batch
 
   echo "USE '/'; DROP TABLE IF EXISTS LoadTest; CREATE TABLE LoadTest ( Field );" | $HT_HOME/bin/ht shell --batch
 
@@ -102,6 +119,7 @@ run_test() {
   if [ $? != 0 ] ; then
     echo "Test $TEST_ID FAILED." >> report.txt
     echo "Test $TEST_ID FAILED." >> errors.txt
+    save_failure_state
     #exec 1>&-
     #sleep 86400
   else
@@ -127,12 +145,6 @@ env | grep '^TEST_[0-9]=' || set_tests 0 1 2 3 4 5 6 7 8 9
 [ "$TEST_7" ] && run_test 7 "--induce-failure=metadata-load-range-3:exit:2"
 [ "$TEST_8" ] && run_test 8 "--induce-failure=metadata-load-range-4:exit:2"
 [ "$TEST_9" ] && run_test 9 "--induce-failure=metadata-load-range-5:exit:2"
-
-if [ -e errors.txt ] && [ "$TEST_4" ] ; then
-    ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
-    mkdir $ARCHIVE_DIR
-    mv core.* select.* dump.tsv rangeserver.output.* errors.txt $ARCHIVE_DIR
-fi
 
 kill %1
 if [ -f $PIDFILE ]; then

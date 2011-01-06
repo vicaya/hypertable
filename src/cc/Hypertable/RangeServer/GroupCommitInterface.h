@@ -72,21 +72,20 @@ namespace Hypertable {
 
   class RangeUpdateList {
   public:
-    RangeUpdateList() : starting_update_count(0), last_request(0), transfer_buf_reset_ptr(0),
+    RangeUpdateList() : starting_update_count(0), last_request(0), transfer_buf_reset_offset(0),
                         latest_transfer_revision(TIMESTAMP_MIN), range_blocked(false) { }
     void reset_updates(UpdateRequest *request) {
       if (request == last_request) {
         if (starting_update_count < updates.size())
           updates.resize(starting_update_count);
-        if (transfer_buf_reset_ptr)
-          transfer_buf.ptr = transfer_buf_reset_ptr;
+        transfer_buf.ptr = transfer_buf.base + transfer_buf_reset_offset;
       }
     }
     void add_update(UpdateRequest *request, RangeUpdate &update) {
       if (request != last_request) {
         starting_update_count = updates.size();
         last_request = request;
-        transfer_buf_reset_ptr = transfer_buf.empty() ? 0 : transfer_buf.ptr;
+        transfer_buf_reset_offset = transfer_buf.empty() ? 0 : transfer_buf.fill();
       }
       if (update.len)
         updates.push_back(update);
@@ -96,7 +95,7 @@ namespace Hypertable {
     size_t starting_update_count;
     UpdateRequest *last_request;
     DynamicBuffer transfer_buf;
-    uint8_t *transfer_buf_reset_ptr;
+    uint32_t transfer_buf_reset_offset;
     int64_t latest_transfer_revision;
     CommitLogPtr transfer_log;
     bool range_blocked;

@@ -230,7 +230,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
                    "Error inflating cell store block - magic string mismatch");
       }
       catch (Exception &e) {
-        HT_ERROR_OUT <<"Error reading cell store ("
+        HT_ERROR_OUT <<"Error reading cell store (fd=" << m_fd << " file="
                      << m_cellstore->get_filename() <<") : "
                      << e << HT_END;
         HT_ERROR_OUT << "pread(fd=" << m_fd << ", zlen="

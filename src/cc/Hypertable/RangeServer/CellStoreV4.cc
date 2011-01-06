@@ -711,8 +711,8 @@ CellStoreV4::open(const String &fname, const String &start_row,
   if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
         m_trailer.var_index_offset < m_file_length))
     HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
-              "Bad index offsets in CellStore trailer fix=%lld, var=%lld, "
-              "length=%llu, file='%s'", (Lld)m_trailer.fix_index_offset,
+              "Bad index offsets in CellStore trailer fd=%u fix=%lld, var=%lld, "
+              "length=%llu, file='%s'", (unsigned)m_fd, (Lld)m_trailer.fix_index_offset,
            (Lld)m_trailer.var_index_offset, (Llu)m_file_length, fname.c_str());
 
 }

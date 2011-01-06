@@ -52,7 +52,6 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
   m_zcodec = m_cellstore->create_block_compression_codec();
   m_key_decompressor = m_cellstore->create_key_decompressor();
 
-
   uint16_t csversion = boost::any_cast<uint16_t>(cellstore->get_trailer()->get("version"));
   if (csversion >= 4)
     m_oflags = Filesystem::OPEN_FLAG_DIRECTIO;
@@ -283,7 +282,7 @@ bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead(bool 
                  "Error inflating cell store block - magic string mismatch");
     }
     catch (Exception &e) {
-      HT_ERROR_OUT <<"Error reading cell store ("
+      HT_ERROR_OUT <<"Error reading cell store ( fd=" << m_fd << " file="
                    << m_cellstore->get_filename() <<") block: "
                    << e << HT_END;
       HT_THROW2(e.code(), e, e.what());

@@ -30,6 +30,8 @@ using namespace Hypertable;
  */
 MaintenanceTaskRelinquish::MaintenanceTaskRelinquish(boost::xtime &stime, RangePtr &range)
   : MaintenanceTask(stime, range, String("RELINQUISH ") + range->get_name()) {
+  set_retry_delay(0);
+  set_retry(true);
 }
 
 

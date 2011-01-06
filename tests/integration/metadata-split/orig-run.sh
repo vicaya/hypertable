@@ -53,7 +53,9 @@ fi
 
 echo "USE '/'; SELECT * FROM LoadTest INTO FILE 'select-a.0';" | $HT_HOME/bin/ht shell --batch
 
-$HT_HOME/bin/ht shell --batch < $SCRIPT_DIR/dump-table.hql > dump.tsv
+/bin/rm -f dump.tsv
+
+echo "USE '/'; DUMP TABLE LoadTest INTO FILE 'dump.tsv';" | $HT_HOME/bin/ht shell --batch
 
 kill -9 `cat $PIDFILE`
 

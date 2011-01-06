@@ -75,7 +75,8 @@ void BlockCompressionHeader::decode(const uint8_t **bufp, size_t *remainp) {
   header_checksum = decode_i16(&ptr, &remaining);
 
   if (header_checksum_computed != header_checksum)
-    HT_THROW(Error::BLOCK_COMPRESSOR_BAD_HEADER, "Header checksum mismatch");
+    HT_THROWF(Error::BLOCK_COMPRESSOR_BAD_HEADER, "Header checksum mismatch at %p: %u (computed) != %u (stored)",
+              *bufp, (unsigned)header_checksum_computed, (unsigned)header_checksum);
 
   memcpy(m_magic, *bufp, 10);
   (*bufp) += 10;

@@ -415,7 +415,6 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
     m_stores[i].cs->get_index_memory_stats( &(*tailp)->index_stats );
     mdata->block_index_memory += ((*tailp)->index_stats).block_index_memory;
     mdata->bloom_filter_memory += ((*tailp)->index_stats).bloom_filter_memory;
-    mdata->shadow_cache_memory += (*tailp)->shadow_cache_size;
 
     mdata->bloom_filter_accesses += m_stores[i].bloom_filter_accesses;
     mdata->bloom_filter_maybes += m_stores[i].bloom_filter_maybes;
@@ -434,6 +433,8 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
     }
     (*tailp)->maintenance_flags = 0;
     (*tailp)->next = 0;
+
+    mdata->shadow_cache_memory += (*tailp)->shadow_cache_size;
   }
 
   mdata->gc_needed = m_garbage_tracker.check_needed(mdata->deletes, mdata->mem_used,
@@ -855,7 +856,7 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
     m_cell_cache = old_cell_cache;
     m_earliest_cached_revision = m_earliest_cached_revision_saved;
     m_earliest_cached_revision_saved = TIMESTAMP_MAX;
-    HT_THROW2(e.code(), e, "shrink failed");
+    throw;
   }
 }
 

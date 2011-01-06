@@ -194,6 +194,8 @@ int CommitLog::link_log(CommitLogBase *log_base) {
   HT_INFOF("clgc Linking log %s into fragment %d; link_rev=%lld latest_rev=%lld",
            log_dir.c_str(), m_cur_fragment_num, (Lld)link_revision, (Lld)m_latest_revision);
 
+  HT_ASSERT(link_revision > 0);
+
   if (link_revision > m_latest_revision)
     m_latest_revision = link_revision;
 

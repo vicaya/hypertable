@@ -1522,8 +1522,8 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
   int64_t last_revision;
   RangePtr range;
   bool user_log_needs_syncing = false;
-  uint8_t *go_buf_reset_ptr = 0;
-  uint8_t *root_buf_reset_ptr = 0;
+  uint32_t go_buf_reset_offset = 0;
+  uint32_t root_buf_reset_offset = 0;
   size_t starting_range_update_count;
   uint32_t total_updates = 0;
   uint32_t total_added = 0;
@@ -1587,8 +1587,8 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
       mod_end = request->buffer.base + request->buffer.size;
       mod = request->buffer.base;
 
-      go_buf_reset_ptr = table_update->go_buf.ptr;
-      root_buf_reset_ptr = root_buf.empty() ? 0 : root_buf.ptr;
+      go_buf_reset_offset = table_update->go_buf.fill();
+      root_buf_reset_offset = root_buf.fill();
 
       memset(&send_back, 0, sizeof(send_back));
 
@@ -1746,11 +1746,11 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
             table_update->id.encode(&transfer_bufp->ptr);
             transfer_bufp->set_mark();
           }
-          rulist->transfer_buf_reset_ptr = rulist->transfer_buf.ptr;
+          rulist->transfer_buf_reset_offset = rulist->transfer_buf.fill();
         }
         else {
           transfer_bufp = 0;
-          rulist->transfer_buf_reset_ptr = 0;
+          rulist->transfer_buf_reset_offset = 0;
         }
 
         if (rulist->range->is_root()) {
@@ -1758,7 +1758,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
             root_buf.reserve(table_update->id.encoded_length());
             table_update->id.encode(&root_buf.ptr);
             root_buf.set_mark();
-            root_buf_reset_ptr = root_buf.ptr;
+            root_buf_reset_offset = root_buf.fill();
           }
           cur_bufp = &root_buf;
         }
@@ -1840,7 +1840,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
           rulist->add_update(request, range_update);
 
           // if there were transferring updates, record the latest revision
-          if (transfer_pending && rulist->transfer_buf_reset_ptr < rulist->transfer_buf.ptr) {
+          if (transfer_pending && rulist->transfer_buf_reset_offset < rulist->transfer_buf.fill()) {
             if (rulist->latest_transfer_revision < m_last_revision)
               rulist->latest_transfer_revision = m_last_revision;
           }
@@ -1854,9 +1854,9 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
           for (hash_map<Range *, RangeUpdateList *>::iterator iter = table_update->range_map.begin();
                iter != table_update->range_map.end(); ++iter)
             (*iter).second->reset_updates(request);
-          table_update->go_buf.ptr = go_buf_reset_ptr;
-          if (root_buf_reset_ptr)
-            root_buf.ptr = root_buf_reset_ptr;
+          table_update->go_buf.ptr = table_update->go_buf.base + go_buf_reset_offset;
+          if (root_buf_reset_offset)
+            root_buf.ptr = root_buf.base + root_buf_reset_offset;
           send_back.count = 0;
           mod = mod_end;
         }
@@ -2116,6 +2116,11 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
 
   HT_INFO_OUT << "drop table " << table->id << HT_END;
 
+  if (table->is_system()) {
+    cb->error(Error::NOT_ALLOWED, "system tables cannot be dropped");
+    return;
+  }
+
   if (!m_replay_finished)
     wait_for_recovery_finish();
 
@@ -2124,47 +2129,64 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
 
     m_dropped_table_id_cache->insert(table->id);
 
-    // create METADATA table mutator for clearing 'Location' columns
-    mutator = Global::metadata_table->create_mutator();
-
-    // initialize key structure
-    memset(&key, 0, sizeof(key));
-    key.column_family = "Location";
-
-    try {
-
-      // For each range in dropped table, Set the 'drop' bit and clear
-      // the 'Location' column of the corresponding METADATA entry
-      if (m_live_map->remove(table->id, table_info)) {
-        metadata_prefix = String("") + table->id + ":";
-        table_info->get_range_vector(range_vector);
-        for (size_t i=0; i<range_vector.size(); i++) {
-          range_vector[i]->drop();
-          metadata_key = metadata_prefix + range_vector[i]->end_row();
-          key.row = metadata_key.c_str();
-          key.row_len = metadata_key.length();
-          mutator->set(key, "!", 1);
-        }
-      }
-      else {
-        HT_ERRORF("drop_table '%s' - table not found", table->id);
-      }
-      mutator->flush();
-    }
-    catch (Hypertable::Exception &e) {
-      HT_ERROR_OUT << "Problem clearing 'Location' columns of METADATA - " << e << HT_END;
-      cb->error(e.code(), "Problem clearing 'Location' columns of METADATA");
+    if (!m_live_map->remove(table->id, table_info)) {
+      HT_ERRORF("drop_table '%s' - table not found", table->id);
+      cb->error(Error::TABLE_NOT_FOUND, table->id);
       return;
     }
 
   }
 
+  /*
+   * Set "drop" bit on all ranges
+   */
+  table_info->get_range_vector(range_vector);
+  for (size_t i=0; i<range_vector.size(); i++)
+    range_vector[i]->drop();
+
+  /**
+   *  Wait for maintenance to complete on the ranges
+   */
   for (size_t i=0; i<range_vector.size(); i++)
     range_vector[i]->wait_for_maintenance_to_complete();
 
-  // write range transaction entry
-  if (Global::range_log)
-    Global::range_log->log_drop_table(*table);
+  /**
+   *  Write a DROP TABLE entry into the meta log
+   */
+  {
+    ScopedLock lock(m_drop_table_mutex);
+    if (Global::range_log)
+      Global::range_log->log_drop_table(*table);
+  }
+
+  /**
+   * TBD: All of the following logic should be carried out int the Master
+   */
+
+  // create METADATA table mutator for clearing 'Location' columns
+  mutator = Global::metadata_table->create_mutator();
+
+  // initialize key structure
+  memset(&key, 0, sizeof(key));
+  key.column_family = "Location";
+
+  try {
+    // For each range in dropped table, Set the 'drop' bit and clear
+    // the 'Location' column of the corresponding METADATA entry
+    metadata_prefix = String("") + table->id + ":";
+    for (size_t i=0; i<range_vector.size(); i++) {
+      metadata_key = metadata_prefix + range_vector[i]->end_row();
+      key.row = metadata_key.c_str();
+      key.row_len = metadata_key.length();
+      mutator->set(key, "!", 1);
+    }
+    mutator->flush();
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << "Problem clearing 'Location' columns of METADATA - " << e << HT_END;
+    cb->error(e.code(), "Problem clearing 'Location' columns of METADATA");
+    return;
+  }
 
   HT_INFOF("Successfully dropped table '%s'", table->id);
 
@@ -2339,7 +2361,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
       HT_ERROR_OUT << "Range statistics object found without table ID" << HT_END;
       continue;
     }
-
+    
     if (table_stat.table_id == "")
       table_stat.table_id = range_data[ii]->table_id;
     else if (strcmp(table_stat.table_id.c_str(), range_data[ii]->table_id)) {
