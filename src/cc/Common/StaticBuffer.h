@@ -47,7 +47,7 @@ namespace Hypertable {
     }
 
     ~StaticBuffer() {
-      if (own)
+      if (own && base)
         delete [] base;
     }
 
@@ -107,7 +107,7 @@ namespace Hypertable {
     }
 
     void set(uint8_t *data, uint32_t len, bool take_ownership=true) {
-      if (own)
+      if (own && base)
         delete [] base;
       base = data;
       size = len;
@@ -115,7 +115,7 @@ namespace Hypertable {
     }
 
     void free() {
-      if (own)
+      if (own && base)
         delete [] base;
       base = 0;
       size = 0;

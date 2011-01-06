@@ -200,7 +200,7 @@ void DefaultPolicy::init_options() {
     ("Kfs.Broker.Reactors", i32(), "Number of Kfs broker reactor threads")
     ("Kfs.MetaServer.Name", str(), "Hostname of Kosmos meta server")
     ("Kfs.MetaServer.Port", i16(), "Port number for Kosmos meta server")
-    ("DfsBroker.Local.DirectIO", boo()->default_value(true),
+    ("DfsBroker.Local.DirectIO", boo()->default_value(false),
         "Read and write files using direct i/o")
     ("DfsBroker.Local.Port", i16()->default_value(38030),
         "Port number on which to listen (read by LocalBroker only)")
