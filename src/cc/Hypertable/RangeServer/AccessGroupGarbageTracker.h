@@ -52,11 +52,10 @@ namespace Hypertable {
      * given additional deletes and additional accumulated data
      *
      * @param additional_deletes additional deletes to use in calculation
-     * @param additional_data additional data to use in calculation
      * @param cached_data accumulated cell cache data used in TTL garbage estimate
      * @param now current seconds since epoch (avoids call to time())
      */
-    bool check_needed(uint32_t additional_deletes, int64_t additional_data, int64_t cached_data, time_t now=0);
+    bool check_needed(uint32_t additional_deletes, int64_t cached_data, time_t now);
 
     /**
      * Sets the garbage statistics measured from a merge scan over
@@ -90,6 +89,8 @@ namespace Hypertable {
     int64_t m_minimum_data_target;
     int64_t m_min_ttl;
     int64_t m_max_ttl;
+    int64_t m_last_cache_size;
+    bool m_in_memory;
     bool m_have_max_versions;
     bool m_need_collection;
   };

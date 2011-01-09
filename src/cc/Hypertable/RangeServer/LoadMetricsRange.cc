@@ -98,7 +98,6 @@ void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
   key.column_family = "range";
   try {
     mutator->set(key, (uint8_t *)value.c_str(), value.length()+1);
-    mutator->flush();
   }
   catch (Exception &e) {
     HT_ERROR_OUT << "Problem updating sys/RS_METRICS - " << e << HT_END;

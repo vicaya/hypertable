@@ -9,7 +9,7 @@ SCRIPT_DIR=`dirname $0`
 . $HT_HOME/bin/ht-env.sh
 
 cleanup_and_abort() {
-    echo $1
+    echo $1 >> errors.log
     kill %1
     if [ -f $PIDFILE ]; then
       kill -9 `cat $PIDFILE`
@@ -26,7 +26,7 @@ stop_range_server() {
     sleep 3
 
     if $HT_HOME/bin/ht serverup --silent rangeserver; then
-      echo "Can't stop range server, exiting"
+      echo "Can't stop range server, exiting..." >> errors.log
       ps -ef | grep Hypertable.RangeServer
       exit 1
     fi
@@ -44,8 +44,11 @@ save_failure_state() {
   tar czvf fs-backup.tgz $HT_HOME/fs/local
   ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
   mkdir $ARCHIVE_DIR
-  mv metadata.dump fs-backup.tgz core.* select* dump.tsv rangeserver.output.* error* $ARCHIVE_DIR
+  mv metadata.dump fs-backup.tgz core.* select* dump.tsv rangeserver.output.* error* failed* $ARCHIVE_DIR
+  cp $HT_HOME/log/Hypertable.Master.log $ARCHIVE_DIR
   echo "Failure state saved to directory $ARCHIVE_DIR"
+  exec 1>&-
+  sleep 86400
 }
 
 # Runs an individual test
@@ -53,13 +56,12 @@ run_test() {
   local TEST_ID=$1
   shift;
 
+  touch running.$TEST_ID
+
   if [ -z "$SKIP_START_SERVERS" ]; then
     $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
                                        --clear
   fi
-
-  # Wait a few seconds before killing the RangeServer
-  sleep 5
 
   stop_range_server
 
@@ -89,14 +91,14 @@ run_test() {
   fgrep ERROR error.$TEST_ID
 
   if [ $? == 0 ] ; then
-      save_failure_state
+      touch failed.$TEST_ID
       kill -9 `cat $PIDFILE`
       exit 1
   fi
 
   if [ -e core.* ] ; then
       echo "ERROR: core file generated"
-      save_failure_state
+      touch failed.$TEST_ID
       kill -9 `cat $PIDFILE`
       exit 1
   fi
@@ -119,19 +121,20 @@ run_test() {
   if [ $? != 0 ] ; then
     echo "Test $TEST_ID FAILED." >> report.txt
     echo "Test $TEST_ID FAILED." >> errors.txt
-    save_failure_state
-    #exec 1>&-
-    #sleep 86400
+    touch failed.$TEST_ID
   else
     echo "Test $TEST_ID PASSED." >> report.txt
   fi
+
+  /bin/rm -f running.$TEST_ID
 }
 
-if [ "$TEST_0" ] || [ "$TEST_1" ] ; then
-    rm -f errors.txt
+if [ "$TEST_0" ] ; then
+  if [ -e running* ] || [ -e failed* ] ; then
+    save_failure_state
+  fi
+  /bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* report.txt
 fi
-
-rm -f report.txt
 
 env | grep '^TEST_[0-9]=' || set_tests 0 1 2 3 4 5 6 7 8 9
 
@@ -145,6 +148,14 @@ env | grep '^TEST_[0-9]=' || set_tests 0 1 2 3 4 5 6 7 8 9
 [ "$TEST_7" ] && run_test 7 "--induce-failure=metadata-load-range-3:exit:2"
 [ "$TEST_8" ] && run_test 8 "--induce-failure=metadata-load-range-4:exit:2"
 [ "$TEST_9" ] && run_test 9 "--induce-failure=metadata-load-range-5:exit:2"
+
+if [ "$TEST_9" ] ; then
+  if [ -e running* ] || [ -e failed* ]; then
+    save_failure_state
+  fi
+  /bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* failed*
+fi
+
 
 kill %1
 if [ -f $PIDFILE ]; then

@@ -36,4 +36,8 @@ echo ""
 echo "!!!! CRASH ($@) !!!!"
 echo ""
 
-$HT_HOME/bin/ht Hypertable.RangeServer --pidfile=$PIDFILE --verbose
+$HT_HOME/bin/ht Hypertable.RangeServer --pidfile=$PIDFILE --verbose \
+    --Hypertable.RangeServer.Range.SplitSize=25K \
+    --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
+    --Hypertable.RangeServer.Range.MetadataSplitSize=6K \
+    --Hypertable.RangeServer.Maintenance.Interval=100

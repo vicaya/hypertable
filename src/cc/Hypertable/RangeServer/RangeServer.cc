@@ -1998,14 +1998,6 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
         }
         rangep->add_cells_written(count);
       }
-
-      if ((*iter).second->range->need_maintenance() &&
-          !Global::maintenance_queue->is_scheduled((*iter).second->range.get())) {
-        ScopedLock lock(m_mutex);
-        m_maintenance_scheduler->need_scheduling();
-        if (m_timer_handler)
-          m_timer_handler->schedule_maintenance();
-      }
     }
   }
 
@@ -2045,8 +2037,25 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
    */
 
   foreach (TableUpdate *table_update, updates) {
+
+    /**
+     * If any of the newly updated ranges needs maintenance,
+     * schedule immediately
+     */
+    for (hash_map<Range *, RangeUpdateList *>::iterator iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
+      if ((*iter).first->need_maintenance() &&
+          !Global::maintenance_queue->is_scheduled((*iter).first)) {
+        ScopedLock lock(m_mutex);
+        m_maintenance_scheduler->need_scheduling();
+        if (m_timer_handler)
+          m_timer_handler->schedule_maintenance();
+        break;
+      }
+    }
+
     foreach(Range *rangep, table_update->wait_ranges)
       rangep->wait_for_maintenance_to_complete();
+
     foreach (UpdateRequest *request, table_update->requests) {
       ResponseCallbackUpdate cb(m_comm, request->event);
 

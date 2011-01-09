@@ -34,7 +34,8 @@ using namespace Config;
 
 AccessGroupGarbageTracker::AccessGroupGarbageTracker()
   : m_elapsed_target(0), m_minimum_elapsed_target(0), m_delete_count(0),
-    m_expirable_accumulated(0), m_data_accumulated(0), m_min_ttl(0), m_max_ttl(0),
+    m_expirable_accumulated(0), m_data_accumulated(0), m_min_ttl(0),
+    m_max_ttl(0), m_last_cache_size(-1), m_in_memory(false),
     m_have_max_versions(false), m_need_collection(false) {
   m_minimum_data_target = properties->get_i64("Hypertable.RangeServer.Range.SplitSize") / 10;
   m_data_target = m_minimum_data_target;
@@ -47,6 +48,7 @@ void AccessGroupGarbageTracker::set_schema(SchemaPtr &schema, Schema::AccessGrou
   if (!m_schema || schema->get_generation() >= m_schema->get_generation()) {
     m_have_max_versions = false;
     m_min_ttl = m_max_ttl = 0;
+    m_in_memory = ag->in_memory;
     foreach(Schema::ColumnFamily *cf, ag->columns) {
       if (cf->max_versions > 0)
         m_have_max_versions = true;
@@ -73,6 +75,7 @@ void AccessGroupGarbageTracker::clear(time_t now) {
   m_data_accumulated = 0;
   m_expirable_accumulated = 0;
   m_last_clear_time = (now == 0) ? time(0) : now;
+  m_last_cache_size = -1;
 }
 
 
@@ -89,15 +92,20 @@ bool AccessGroupGarbageTracker::check_needed(int64_t cached_data, time_t now) {
 
 
 bool AccessGroupGarbageTracker::check_needed(uint32_t additional_deletes,
-                                             int64_t additional_data,
                                              int64_t cached_data,
                                              time_t now) {
-  if (now == 0)
-    now = time(0);
-  if (((m_have_max_versions || (m_delete_count+additional_deletes) > 0) &&
-       (m_data_accumulated+additional_data) >= m_data_target) ||
-      ((m_expirable_accumulated+cached_data) >= m_minimum_data_target &&
-       m_min_ttl > 0 && (now-m_last_clear_time) >= m_elapsed_target))
+  int64_t additional_data = cached_data;
+  if (m_in_memory) {
+    if (m_last_cache_size == -1)
+      m_last_cache_size = cached_data;
+    additional_data = cached_data - m_last_cache_size;
+  }
+  if (((m_have_max_versions || (m_delete_count+additional_deletes) > 0)
+       && additional_data > 0
+       && (m_data_accumulated+additional_data) >= m_data_target) ||
+      ((m_expirable_accumulated+cached_data) >= m_minimum_data_target 
+       && m_min_ttl > 0 
+       && (now-m_last_clear_time) >= m_elapsed_target))
     return true;
   return false;
 }

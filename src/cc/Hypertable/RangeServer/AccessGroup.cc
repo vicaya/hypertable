@@ -437,8 +437,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
     mdata->shadow_cache_memory += (*tailp)->shadow_cache_size;
   }
 
-  mdata->gc_needed = m_garbage_tracker.check_needed(mdata->deletes, mdata->mem_used,
-                                                    mdata->mem_used, now);
+  mdata->gc_needed = m_garbage_tracker.check_needed(mdata->deletes, mdata->mem_used, now);
 
   mdata->maintenance_flags = 0;
 
@@ -500,9 +499,12 @@ void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output
   Key key;
 
   mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
-  for (size_t i=0; i<m_stores.size(); i++) {
-    HT_ASSERT(m_stores[i].cs);
-    mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+
+  if (!m_in_memory) {
+    for (size_t i=0; i<m_stores.size(); i++) {
+      HT_ASSERT(m_stores[i].cs);
+      mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+    }
   }
 
   while (mscanner->get(key, value))
@@ -683,6 +685,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
         m_garbage_tracker.clear();
       }
+      else if (m_in_memory)
+        m_garbage_tracker.clear();
 
       m_latest_stored_revision = boost::any_cast<int64_t>
         (cellstore->get_trailer()->get("revision"));
