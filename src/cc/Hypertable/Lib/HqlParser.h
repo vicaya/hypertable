@@ -93,6 +93,7 @@ namespace Hypertable {
       COMMAND_CREATE_NAMESPACE,
       COMMAND_DROP_NAMESPACE,
       COMMAND_RENAME_TABLE,
+      COMMAND_WAIT_FOR_MAINTENANCE,
       COMMAND_MAX
     };
 
@@ -1497,7 +1498,8 @@ namespace Hypertable {
             "from", "FROM", "From", "start_time", "START_TIME", "Start_Time",
             "Start_time", "end_time", "END_TIME", "End_Time", "End_time",
             "into", "INTO", "Into", "table", "TABLE", "Table", "NAMESPACE", "Namespace",
-            "cells", "CELLS", "value", "VALUE", "regexp", "REGEXP";
+            "cells", "CELLS", "value", "VALUE", "regexp", "REGEXP", "wait", "WAIT"
+            "for", "FOR", "maintenance", "MAINTENANCE";
 
           /**
            * OPERATORS
@@ -1649,6 +1651,9 @@ namespace Hypertable {
           Token SINGLE_CELL_FORMAT = as_lower_d["single_cell_format"];
           Token BUCKETS      = as_lower_d["buckets"];
           Token REPLICATION  = as_lower_d["replication"];
+          Token WAIT         = as_lower_d["wait"];
+          Token FOR          = as_lower_d["for"];
+          Token MAINTENANCE  = as_lower_d["maintenance"];
 
           /**
            * Start grammar definition
@@ -1720,6 +1725,7 @@ namespace Hypertable {
             | replay_commit_statement[set_command(self.state,
                 COMMAND_REPLAY_COMMIT)]
             | exists_table_statement[set_command(self.state, COMMAND_EXISTS_TABLE)]
+            | wait_for_maintenance_statement[set_command(self.state, COMMAND_WAIT_FOR_MAINTENANCE)]
             ;
 
           drop_range_statement
@@ -1740,6 +1746,10 @@ namespace Hypertable {
 
           close_statement
             = CLOSE
+            ;
+
+          wait_for_maintenance_statement
+            = WAIT >> FOR >> MAINTENANCE
             ;
 
           shutdown_statement
@@ -2329,7 +2339,7 @@ namespace Hypertable {
           close_statement, shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement,
           replay_commit_statement, cell_interval, cell_predicate,
-          cell_spec;
+          cell_spec, wait_for_maintenance_statement;
       };
 
       ParserState &state;

@@ -49,6 +49,7 @@ namespace Hypertable {
     "update schema",
     "commit log sync",
     "close",
+    "wait for maintenance",
     (const char *)0
   };
 
@@ -153,6 +154,13 @@ namespace Hypertable {
 
   CommBuf *RangeServerProtocol::create_request_close() {
     CommHeader header(COMMAND_CLOSE);
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
+    CommBuf *cbuf = new CommBuf(header);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_wait_for_maintenance() {
+    CommHeader header(COMMAND_WAIT_FOR_MAINTENANCE);
     header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header);
     return cbuf;

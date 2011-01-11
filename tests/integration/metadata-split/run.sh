@@ -9,8 +9,8 @@ SCRIPT_DIR=`dirname $0`
 . $HT_HOME/bin/ht-env.sh
 
 cleanup_and_abort() {
-    echo $1 >> errors.log
     kill %1
+    sleep 10
     if [ -f $PIDFILE ]; then
       kill -9 `cat $PIDFILE`
       rm -f $PIDFILE
@@ -26,7 +26,7 @@ stop_range_server() {
     sleep 3
 
     if $HT_HOME/bin/ht serverup --silent rangeserver; then
-      echo "Can't stop range server, exiting..." >> errors.log
+      echo "Can't stop range server, exiting..."
       ps -ef | grep Hypertable.RangeServer
       exit 1
     fi
@@ -44,11 +44,16 @@ save_failure_state() {
   tar czvf fs-backup.tgz $HT_HOME/fs/local
   ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
   mkdir $ARCHIVE_DIR
-  mv metadata.dump fs-backup.tgz core.* select* dump.tsv rangeserver.output.* error* failed* $ARCHIVE_DIR
+  mv metadata.dump fs-backup.tgz core.* select* dump.tsv rangeserver.output* error* failed* running* $ARCHIVE_DIR
   cp $HT_HOME/log/Hypertable.Master.log $ARCHIVE_DIR
+  if [ -e Testing/Temporary/LastTest.log.tmp ] ; then
+    mv Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR
+  elif [ -e ../../../Testing/Temporary/LastTest.log.tmp ] ; then
+    mv ../../../Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR
+  fi
   echo "Failure state saved to directory $ARCHIVE_DIR"
-  exec 1>&-
-  sleep 86400
+  #exec 1>&-
+  #sleep 86400
 }
 
 # Runs an individual test
@@ -75,32 +80,37 @@ run_test() {
       # try again
       $HT_SHELL --batch < $SCRIPT_DIR/create-table.hql
       if [ $? != 0 ] ; then
-          cleanup_and_abort "Unable to create table 'LoadTest', exiting ..."
+          echo "Error creating table 'LoadTest', shell returned %?"
+          save_failure_state
+          cleanup_and_abort
       fi
   fi
 
-  $HT_HOME/bin/ht ht_load_generator update --spec-file=$SCRIPT_DIR/data.spec --max-bytes=500K
+  $HT_HOME/bin/ht ht_load_generator update --spec-file=$SCRIPT_DIR/data.spec --max-bytes=300K \
+      --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K
+
   if [ $? != 0 ] ; then
-      cleanup_and_abort "Problem loading table 'LoadTest', exiting ..."
+      echo "Error loading table 'LoadTest', shell returned $?"
+      save_failure_state
+      cleanup_and_abort 
   fi
 
-  sleep 5
+  sleep 1
+  echo "wait for maintenance;" | $HT_HOME/bin/ht ht_rsclient --batch  
 
   fgrep ERROR rangeserver.output.$TEST_ID | fgrep -v FailureInducer | fgrep -v skew > error.$TEST_ID
 
-  fgrep ERROR error.$TEST_ID
-
-  if [ $? == 0 ] ; then
+  if [ -s error.$TEST_ID ] ; then
       touch failed.$TEST_ID
-      kill -9 `cat $PIDFILE`
-      exit 1
+      save_failure_state
+      cleanup_and_abort 
   fi
 
   if [ -e core.* ] ; then
       echo "ERROR: core file generated"
       touch failed.$TEST_ID
-      kill -9 `cat $PIDFILE`
-      exit 1
+      save_failure_state
+      cleanup_and_abort 
   fi
 
   /bin/rm -f select-a.$TEST_ID select-b.$TEST_ID
@@ -128,13 +138,6 @@ run_test() {
 
   /bin/rm -f running.$TEST_ID
 }
-
-if [ "$TEST_0" ] ; then
-  if [ -e running* ] || [ -e failed* ] ; then
-    save_failure_state
-  fi
-  /bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* report.txt
-fi
 
 env | grep '^TEST_[0-9]=' || set_tests 0 1 2 3 4 5 6 7 8 9
 

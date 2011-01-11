@@ -108,6 +108,13 @@ namespace Hypertable {
 
     void close(ResponseCallback *cb);
 
+    /**
+     * Blocks while the maintenance queue is non-empty
+     *
+     * @param cb Response callback
+     */
+    void wait_for_maintenance(ResponseCallback *cb);
+
     // Other methods
     void group_commit();
     void do_maintenance();

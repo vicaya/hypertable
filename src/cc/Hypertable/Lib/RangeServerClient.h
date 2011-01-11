@@ -393,6 +393,13 @@ namespace Hypertable {
      */
     void close(const CommAddress &addr);
 
+    /** Issues a "wait_for_maintenance" request.  This call blocks until it receives a
+     * response from the server or times out.
+     *
+     * @param addr address of RangeServer
+     */
+    void wait_for_maintenance(const CommAddress &addr);
+
     /** Issues a "shutdown" request.  This call blocks until it receives a
      * response from the server or times out.
      *

@@ -6,12 +6,38 @@ SCRIPT_DIR=`dirname $0`
 
 ulimit -n 1024
 
+save_failure_state() {
+  tar czvf fs-backup.tgz $HT_HOME/fs/local
+  ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
+  mkdir $ARCHIVE_DIR
+  mv metadata.dump fs-backup.tgz core.* select* dump.tsv rangeserver.output* error* failed* running* $ARCHIVE_DIR
+  cp $HT_HOME/log/Hypertable.Master.log $ARCHIVE_DIR
+  if [ -e Testing/Temporary/LastTest.log.tmp ] ; then
+    mv Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR
+  elif [ -e ../../../Testing/Temporary/LastTest.log.tmp ] ; then
+    mv ../../../Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR
+  fi
+  echo "Failure state saved to directory $ARCHIVE_DIR"
+  #exec 1>&-
+  #sleep 86400
+}
+
+if [ -e running* ] || [ -e failed* ] ; then
+  save_failure_state
+  kill -9 `cat $PIDFILE`
+  exit 1
+fi
+
+# clear state
+/bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* report.txt
+
 $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
-    --Hypertable.RangeServer.Range.SplitSize=20K \
-    --Hypertable.RangeServer.Range.MetadataSplitSize=2K \
+    --Hypertable.RangeServer.Range.SplitSize=25K \
+    --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
+    --Hypertable.RangeServer.Range.MetadataSplitSize=6K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
     --Hypertable.RangeServer.Maintenance.Interval=100 > rangeserver.output &
 
@@ -19,7 +45,8 @@ sleep 2
 
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 
-$HT_HOME/bin/ht ht_load_generator update --spec-file=$SCRIPT_DIR/data.spec --max-bytes=500K
+$HT_HOME/bin/ht ht_load_generator update --spec-file=$SCRIPT_DIR/data.spec --max-bytes=300K \
+    --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=100K
 
 sleep 5
 
@@ -27,26 +54,27 @@ kill -9 `cat $PIDFILE`
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
-    --Hypertable.RangeServer.Range.SplitSize=20K \
-    --Hypertable.RangeServer.Range.MetadataSplitSize=2K \
+    --Hypertable.RangeServer.Range.SplitSize=25K \
+    --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
+    --Hypertable.RangeServer.Range.MetadataSplitSize=6K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
     --Hypertable.RangeServer.Maintenance.Interval=100 >> rangeserver.output &
 
-$HT_HOME/bin/ht ht_load_generator update --spec-file=$SCRIPT_DIR/data.spec --max-bytes=500K
+$HT_HOME/bin/ht ht_load_generator update --spec-file=$SCRIPT_DIR/data.spec --max-bytes=300K
 
-fgrep ERROR rangeserver.output
 fgrep ERROR rangeserver.output | fgrep -v " skew " > error.0
+cat error.0
 
-fgrep ERROR error.0
-
-if [ $? == 0 ] ; then
+if [ -s error.0 ] ; then
+    echo "USE sys; SELECT * FROM METADATA RETURN_DELETES DISPLAY_TIMESTAMPS;" | $HT_HOME/bin/ht shell --batch >& metadata.dump
+    save_failure_state
     kill -9 `cat $PIDFILE`
     exit 1
 fi
 
 if [ -e core.* ] ; then
-    echo "core file generated, moved to /tmp"
-    mv core.* /tmp
+    echo "USE sys; SELECT * FROM METADATA RETURN_DELETES DISPLAY_TIMESTAMPS;" | $HT_HOME/bin/ht shell --batch >& metadata.dump
+    save_failure_state
     kill -9 `cat $PIDFILE`
     exit 1
 fi

@@ -51,7 +51,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_compression_ratio(1.0), m_earliest_cached_revision(TIMESTAMP_MAX),
     m_earliest_cached_revision_saved(TIMESTAMP_MAX),
     m_latest_stored_revision(TIMESTAMP_MIN), m_collisions(0),
-    m_file_tracker(identifier, schema, range, ag->name), m_is_root(false), m_drop(false),
+    m_file_tracker(identifier, schema, range, ag->name), m_is_root(false),
     m_recovering(false) {
 
   m_table_name = m_identifier.id;
@@ -90,34 +90,6 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
       m_cellstore_props->get<BloomFilterMode>("bloom-filter-mode");
 }
 
-
-AccessGroup::~AccessGroup() {
-  if (m_drop) {
-    if (m_identifier.is_metadata()) {
-      HT_ERROR("~AccessGroup has drop bit set, but table is METADATA");
-      return;
-    }
-    String metadata_key = format("%s:%s", m_identifier.id, m_end_row.c_str());
-    TableMutatorPtr mutator;
-    KeySpec key;
-
-    try {
-      mutator = Global::metadata_table->create_mutator();
-
-      key.row = metadata_key.c_str();
-      key.row_len = metadata_key.length();
-      key.column_family = "Files";
-      key.column_qualifier = m_name.c_str();
-      key.column_qualifier_len = m_name.length();
-      mutator->set(key, (uint8_t *)"!", 1);
-      mutator->flush();
-    }
-    catch (Hypertable::Exception &e) {
-      HT_ERRORF("Problem updating 'File' column of METADATA (%s) - %s",
-                metadata_key.c_str(), Error::get_text(e.code()));
-    }
-  }
-}
 
 /**
  * Currently supports only adding and deleting column families

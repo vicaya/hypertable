@@ -144,7 +144,7 @@ namespace Hypertable {
 
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema,
                 Schema::AccessGroup *ag, const RangeSpec *range);
-    virtual ~AccessGroup();
+
     virtual void add(const Key &key, const ByteString value);
 
     virtual const char *get_split_row();
@@ -205,8 +205,6 @@ namespace Hypertable {
       return m_cell_cache->size();
     }
 
-    void drop() { m_drop = true; }
-
     void get_file_list(String &file_list, bool include_blocked) {
       m_file_tracker.get_file_list(file_list, include_blocked);
     }
@@ -251,7 +249,6 @@ namespace Hypertable {
     String               m_file_basename;
     bool                 m_is_root;
     bool                 m_in_memory;
-    bool                 m_drop;
     bool                 m_recovering;
     bool                 m_bloom_filter_disabled;
 

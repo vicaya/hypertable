@@ -399,6 +399,18 @@ void RangeServerClient::close(const CommAddress &addr) {
              + Protocol::string_format_message(event));
 }
 
+void RangeServerClient::wait_for_maintenance(const CommAddress &addr) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event;
+  CommBufPtr cbp(RangeServerProtocol::create_request_wait_for_maintenance());
+  send_message(addr, cbp, &sync_handler, m_default_timeout_ms);
+
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
+             String("RangeServer wait_for_maintenance() failure : ")
+             + Protocol::string_format_message(event));
+}
+
 
 void RangeServerClient::shutdown(const CommAddress &addr) {
   CommBufPtr cbp(RangeServerProtocol::create_request_shutdown());

@@ -54,6 +54,7 @@ extern "C" {
 #include "RequestHandlerDropRange.h"
 #include "RequestHandlerClose.h"
 #include "RequestHandlerCommitLogSync.h"
+#include "RequestHandlerWaitForMaintenance.h"
 
 #include "ConnectionHandler.h"
 #include "EventHandlerMasterConnection.h"
@@ -166,6 +167,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         m_shutdown = true;
         handler = new RequestHandlerClose(m_comm, m_range_server_ptr.get(),
                                              event);
+        break;
+      case RangeServerProtocol::COMMAND_WAIT_FOR_MAINTENANCE:
+        handler = new RequestHandlerWaitForMaintenance(m_comm, m_range_server_ptr.get(), event);
         break;
       case RangeServerProtocol::COMMAND_SHUTDOWN:
         HT_INFO("Received shutdown command");

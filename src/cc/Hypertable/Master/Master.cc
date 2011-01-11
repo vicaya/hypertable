@@ -819,7 +819,6 @@ Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
                    uint64_t soft_limit, bool split) {
   RangeServerClient rsc(m_conn_manager_ptr->get_comm());
   QualifiedRangeSpec fqr_spec(table, range);
-  bool server_pinned = false;
   String location;
   CommAddress addr;
 
@@ -841,7 +840,6 @@ Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
       addr = (*smiter).second->addr;
       HT_INFOF("Re-attempting to assign newly reported range %s[%s:%s] to %s",
                table.id, range.start_row, range.end_row, location.c_str());
-      server_pinned = true;
     }
     else {
       if (m_server_map_iter == m_server_map.end())
@@ -852,9 +850,9 @@ Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
       HT_INFOF("Assigning newly reported range %s[%s:%s] to %s",
                table.id, range.start_row, range.end_row, location.c_str());
       ++m_server_map_iter;
+      m_range_to_location_map[fqr_spec] = location;
     }
   }
-
 
   try {
     RangeState range_state;
@@ -864,29 +862,17 @@ Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
              range.start_row, range.end_row);
   }
   catch (Exception &e) {
-    if (e.code() == Error::RANGESERVER_RANGE_ALREADY_LOADED) {
-      HT_ERROR_OUT << e << HT_END;
-      {
-	ScopedLock lock(m_mutex);
-	m_range_to_location_map.erase(fqr_spec);
-      }
-      cb->response_ok();
-    }
-    else {
+    if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED) {
       HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
                 "%s - %s", table.id, range.start_row, range.end_row,
                 location.c_str(), Error::get_text(e.code()));
-      {
-	ScopedLock lock(m_mutex);
-	if (!server_pinned)
-	  m_range_to_location_map[fqr_spec] = location;
-      }
       cb->error(e.code(), e.what());
+      return;
     }
-    return;
   }
 
-  if (server_pinned) {
+  // Successful load - remove range_to_location entry
+  {
     ScopedLock lock(m_mutex);
     m_range_to_location_map.erase(fqr_spec);
   }
@@ -1010,14 +996,21 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 	}
 
         if (!sync_handler.wait_for_completion()) {
+          int badi = -1;
           std::vector<DispatchHandlerDropTable::ErrorResult> errors;
           sync_handler.get_errors(errors);
           for (size_t i=0; i<errors.size(); i++) {
-            HT_WARNF("drop table error - %s - %s", errors[i].msg.c_str(),
-                     Error::get_text(errors[i].error));
+            if (errors[i].error != Error::TABLE_NOT_FOUND) {
+              if (badi == -1)
+                badi = i;
+              HT_WARNF("drop table error - %s - %s", errors[i].msg.c_str(),
+                       Error::get_text(errors[i].error));
+            }
           }
-          cb->error(errors[0].error, errors[0].msg);
-          return;
+          if (badi != -1) {
+            cb->error(errors[badi].error, errors[badi].msg);
+            return;
+          }
         }
       }
 
@@ -1121,7 +1114,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
   String finalschema = "";
   string table_basedir;
   string agdir;
-  Schema *schema = 0;
+  SchemaPtr schema;
   uint64_t handle = 0;
   String table_name = tablename;
   String table_id;
@@ -1233,25 +1226,27 @@ Master::create_table(const char *tablename, const char *schemastr) {
       soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
     }
 
-    try {
-      RangeState range_state;
-      range_state.soft_limit = soft_limit;
-      rsc.load_range(addr, table, range, 0, range_state);
-    }
-    catch (Exception &e) {
-      String err_msg = format("Problem issuing 'load range' command for "
-          "%s[..%s] at server %s - %s", table.id, range.end_row,
-          location.c_str(), Error::get_text(e.code()));
-      if (schema != 0)
-        delete schema;
-      HT_THROW2(e.code(), e, err_msg);
+    while (true) {
+      try {
+        RangeState range_state;
+        range_state.soft_limit = soft_limit;
+        rsc.load_range(addr, table, range, 0, range_state);
+      }
+      catch (Exception &e) {
+        if (e.code() == Error::RANGESERVER_RANGE_ALREADY_LOADED)
+          break;
+        HT_WARNF("Problem issuing 'load range' command for %s[..%s] at "
+                 "server %s - %s, retrying in 3000ms ...", table.id,
+                 range.end_row, location.c_str(), Error::get_text(e.code()));
+        poll(0, 0, 3000);
+        continue;
+      }
+      break;
     }
   }
 
   m_hyperspace_ptr->attr_set(handle, "x", "", 0);
 
-
-  delete schema;
   if (m_verbose)
     HT_INFOF("Successfully created table '%s' ID=%s", tablename, table_id.c_str());
 

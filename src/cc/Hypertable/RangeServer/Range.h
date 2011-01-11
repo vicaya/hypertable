@@ -253,8 +253,6 @@ namespace Hypertable {
       Barrier::ScopedActivator block_scans(m_scan_barrier);
       ScopedLock lock(m_mutex);
       m_dropped = true;
-      for (size_t i=0; i<m_access_group_vector.size(); i++)
-        m_access_group_vector[i]->drop();
     }
 
     String get_name() {

@@ -2121,7 +2121,6 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   String metadata_prefix;
   String metadata_key;
   TableMutatorPtr mutator;
-  KeySpec key;
 
   HT_INFO_OUT << "drop table " << table->id << HT_END;
 
@@ -2139,7 +2138,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
     m_dropped_table_id_cache->insert(table->id);
 
     if (!m_live_map->remove(table->id, table_info)) {
-      HT_ERRORF("drop_table '%s' - table not found", table->id);
+      HT_WARNF("drop_table '%s' - table not found", table->id);
       cb->error(Error::TABLE_NOT_FOUND, table->id);
       return;
     }
@@ -2168,26 +2167,31 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
       Global::range_log->log_drop_table(*table);
   }
 
-  /**
-   * TBD: All of the following logic should be carried out int the Master
-   */
+  SchemaPtr schema = table_info->get_schema();
+  Schema::AccessGroups &ags = schema->get_access_groups();
 
   // create METADATA table mutator for clearing 'Location' columns
   mutator = Global::metadata_table->create_mutator();
 
-  // initialize key structure
-  memset(&key, 0, sizeof(key));
-  key.column_family = "Location";
+  KeySpec key;
 
   try {
     // For each range in dropped table, Set the 'drop' bit and clear
     // the 'Location' column of the corresponding METADATA entry
     metadata_prefix = String("") + table->id + ":";
     for (size_t i=0; i<range_vector.size(); i++) {
+      // Mark Location column
       metadata_key = metadata_prefix + range_vector[i]->end_row();
       key.row = metadata_key.c_str();
       key.row_len = metadata_key.length();
+      key.column_family = "Location";
       mutator->set(key, "!", 1);
+      for (size_t j=0; j<ags.size(); j++) {
+        key.column_family = "Files";
+        key.column_qualifier = ags[j]->name.c_str();
+        key.column_qualifier_len = ags[j]->name.length();
+        mutator->set(key, (uint8_t *)"!", 1);
+      }
     }
     mutator->flush();
   }
@@ -2859,6 +2863,15 @@ void RangeServer::close(ResponseCallback *cb) {
 
   cb->response_ok();
 
+}
+
+void RangeServer::wait_for_maintenance(ResponseCallback *cb) {
+  boost::xtime expire_time;
+  HT_INFO("wait_for_maintenance");
+  cb->get_event()->expiration_time(expire_time);
+  if (!Global::maintenance_queue->wait_for_empty(expire_time))
+    cb->error(Error::REQUEST_TIMEOUT, "");
+  cb->response_ok();
 }
 
 

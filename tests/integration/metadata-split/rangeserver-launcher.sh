@@ -23,7 +23,6 @@ if [ -f $PIDFILE ]; then
 fi
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
-    --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
     --Hypertable.RangeServer.Range.SplitSize=25K \
     --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
     --Hypertable.RangeServer.Range.MetadataSplitSize=6K \

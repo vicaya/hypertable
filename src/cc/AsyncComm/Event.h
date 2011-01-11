@@ -25,6 +25,8 @@
 #include <iostream>
 #include <time.h>
 
+#include <boost/thread/xtime.hpp>
+
 #include "Common/InetAddr.h"
 #include "Common/String.h"
 #include "Common/ReferenceCount.h"
@@ -123,6 +125,11 @@ namespace Hypertable {
 	}
 	strcpy((char *)proxy, p.c_str());
       }
+    }
+
+    void expiration_time(boost::xtime &expire_time) {
+      boost::xtime_get(&expire_time, boost::TIME_UTC);
+      expire_time.sec += header.timeout_ms/1000;
     }
 
     /** Type of event.  Can take one of values CONNECTION_ESTABLISHED,

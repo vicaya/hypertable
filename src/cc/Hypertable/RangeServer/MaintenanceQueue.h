@@ -266,6 +266,15 @@ namespace Hypertable {
 	m_state.empty_cond.wait(lock);
     }
 
+    bool wait_for_empty(boost::xtime &expire_time) {
+      ScopedLock lock(m_state.mutex);
+      while (!m_state.queue.empty() || !m_state.in_progress.empty()) {
+	if (!m_state.empty_cond.timed_wait(lock, expire_time))
+          return false;
+      }
+      return true;
+    }
+
   };
 
   typedef boost::intrusive_ptr<MaintenanceQueue> MaintenanceQueuePtr;
