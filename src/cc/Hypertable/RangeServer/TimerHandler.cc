@@ -28,8 +28,12 @@
 
 #include <algorithm>
 
+#include "Common/Time.h"
+
 #include "RequestHandlerDoMaintenance.h"
 #include "TimerHandler.h"
+
+#include "Hypertable/Lib/KeySpec.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -39,6 +43,7 @@ using namespace Hypertable::Config;
  */
 TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
   : m_comm(comm), m_range_server(range_server),
+    m_last_low_memory_maintenance(TIMESTAMP_NULL),
     m_urgent_maintenance_scheduled(false), m_app_queue_paused(false),
     m_maintenance_outstanding(false) {
   int error;
@@ -100,6 +105,7 @@ void TimerHandler::complete_maintenance_notify() {
 void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
   ScopedLock lock(m_mutex);
   int error;
+  bool do_maintenance = !m_maintenance_outstanding;
 
   if (m_shutdown) {
     HT_INFO("TimerHandler shutting down.");
@@ -111,11 +117,11 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
   int64_t memory_used = Global::memory_tracker->balance();
 
   if (memory_used > Global::memory_limit) {
-    m_current_interval = 500;
     if (!m_app_queue_paused) {
       HT_INFO("Pausing application queue due to low memory condition");
       m_app_queue_paused = true;
       m_app_queue->stop();
+      m_current_interval = 500;
     }
   }
   else {
@@ -123,16 +129,26 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
       HT_INFO("Restarting application queue");
       m_app_queue->start();
       m_app_queue_paused = false;
+      m_last_low_memory_maintenance = TIMESTAMP_NULL;
+      m_current_interval = m_timer_interval;
     }
-    if (m_current_interval < m_timer_interval)
-      m_current_interval = std::min(m_current_interval*2, m_timer_interval);
+  }
+
+  if (m_app_queue_paused) {
+    int64_t now = get_ts64();
+    if (m_last_low_memory_maintenance != TIMESTAMP_NULL) {
+      if ((now-m_last_low_memory_maintenance) < (m_timer_interval*1000000LL))
+        do_maintenance = false;
+    }
+    if (do_maintenance)
+      m_last_low_memory_maintenance = now;
   }
 
   try {
 
     if (event_ptr->type == Hypertable::Event::TIMER) {
 
-      if (!m_maintenance_outstanding) {
+      if (do_maintenance) {
         m_app_queue->add( new RequestHandlerDoMaintenance(m_comm, m_range_server) );
         m_maintenance_outstanding = true;
       }

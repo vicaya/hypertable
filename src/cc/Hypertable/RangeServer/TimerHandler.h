@@ -50,6 +50,7 @@ namespace Hypertable {
     ApplicationQueuePtr m_app_queue;
     int32_t       m_timer_interval;
     int32_t       m_current_interval;
+    int64_t       m_last_low_memory_maintenance;
     bool          m_urgent_maintenance_scheduled;
     bool          m_app_queue_paused;
     boost::xtime  m_last_maintenance;
