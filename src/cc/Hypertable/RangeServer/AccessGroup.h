@@ -43,6 +43,7 @@
 #include "AccessGroupGarbageTracker.h"
 #include "CellCache.h"
 #include "CellStore.h"
+#include "CellStoreTrailerV4.h"
 #include "LiveFileTracker.h"
 #include "MaintenanceFlag.h"
 
@@ -116,10 +117,13 @@ namespace Hypertable {
       bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0) { }
       void init_from_trailer() {
         try {
-          cell_count = boost::any_cast<int64_t>(cs->get_trailer()->get("total_entries"));
+           int divisor = (boost::any_cast<uint32_t>(cs->get_trailer()->get("flags")) & CellStoreTrailerV4::SPLIT) ? 2 : 1;
+          cell_count = boost::any_cast<int64_t>(cs->get_trailer()->get("total_entries"))
+                       / divisor;
           timestamp_min = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_min"));
           timestamp_max = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_max"));
-          expirable_data = boost::any_cast<int64_t>(cs->get_trailer()->get("expirable_data"));
+          expirable_data = boost::any_cast<int64_t>(cs->get_trailer()->get("expirable_data"))
+                           / divisor ;
         }
         catch (std::exception &e) {
           cell_count = 0;

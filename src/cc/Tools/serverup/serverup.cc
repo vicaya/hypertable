@@ -164,6 +164,8 @@ namespace {
   }
 
   void check_rangeserver(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
+    HT_DEBUG_OUT <<"Checking rangeserver at "<< get_str("rs-host")
+                 <<':'<< get_i16("rs-port") << HT_END;
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
 
     wait_for_connection("range server", conn_mgr, addr, wait_ms, wait_ms);

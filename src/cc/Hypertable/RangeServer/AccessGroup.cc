@@ -255,10 +255,12 @@ AccessGroup::get_split_rows(std::vector<String> &split_rows,
                             bool include_cache) {
   ScopedLock lock(m_mutex);
   const char *row;
+
   for (size_t i=0; i<m_stores.size(); i++) {
     row = m_stores[i].cs->get_split_row();
-    if (row)
+    if (row) {
       split_rows.push_back(row);
+    }
   }
   if (include_cache) {
     if (m_immutable_cache &&
@@ -599,8 +601,9 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         for (size_t i=tableidx; i<m_stores.size(); i++) {
           HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
-          max_num_entries += boost::any_cast<int64_t>
-              (m_stores[i].cs->get_trailer()->get("total_entries"));
+          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV4::SPLIT) ? 2: 1;
+          max_num_entries += (boost::any_cast<int64_t>
+              (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
       }
       else {
@@ -953,7 +956,7 @@ void AccessGroup::range_dir_initialize() {
            m_table_name.c_str(), m_start_row.c_str(),
            m_end_row.c_str(), m_name.c_str(), (int)getpid(), (unsigned)m_next_cs_id);
   */
-  
+
 }
 
 void AccessGroup::dump_keys(std::ofstream &out) {

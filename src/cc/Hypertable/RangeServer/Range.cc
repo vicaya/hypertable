@@ -373,8 +373,9 @@ bool Range::need_maintenance() {
         disk_total >= (int64_t)Global::range_metadata_split_size)
       needed = true;
   }
-  else if (disk_total >= Global::range_split_size)
+  else if (disk_total >= Global::range_split_size) {
     needed = true;
+  }
   return needed;
 }
 
@@ -444,7 +445,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->shadow_cache_memory += (*tailp)->shadow_cache_memory;
     mdata->cell_count += (*tailp)->cell_count;
   }
-  
+
   if (ag_vector.size() > 0)
     mdata->compression_ratio /= ag_vector.size();
 
@@ -518,7 +519,7 @@ void Range::relinquish_install_log() {
   md5DigestStr[16] = 0;
 
   try {
-    
+
     do {
       if (now != 0)
         poll(0, 0, 1200);
@@ -530,7 +531,7 @@ void Range::relinquish_install_log() {
     Global::log_dfs->mkdirs(m_state.transfer_log);
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << "Problem creating transfer log directory '" 
+    HT_ERROR_OUT << "Problem creating transfer log directory '"
                  << m_state.transfer_log << "' - " << e << HT_END;
     HT_ABORT;
   }
@@ -731,20 +732,18 @@ void Range::split_install_log() {
    * If we didn't get at least one row from each Access Group, then try again
    * the hard way (scans CellCache for middle row)
    */
+
   if (split_rows.size() < ag_vector.size()) {
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->get_split_rows(split_rows, true);
   }
   sort(split_rows.begin(), split_rows.end());
 
-  /**
-  cout << flush;
-  cout << "thelma Dumping split rows for " << m_name << "\n";
-  for (size_t i=0; i<split_rows.size(); i++)
-    cout << "thelma Range::get_split_row [" << i << "] = " << split_rows[i]
-         << "\n";
-  cout << flush;
-  */
+  //HT_INFO_OUT << "thelma Dumping split rows for range " << m_name << HT_END;
+  //for (size_t i=0; i<split_rows.size(); i++)
+  //  HT_INFO_OUT << "thelma Range::get_split_row [" << i << "] = " << split_rows[i]
+  //              << HT_END;
+  //HT_INFO_OUT << "thelma Done calculating split rows for range " << m_name << HT_END;
 
   /**
    * If we still didn't get a good split row, try again the *really* hard way
