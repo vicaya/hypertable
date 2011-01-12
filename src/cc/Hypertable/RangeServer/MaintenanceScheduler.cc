@@ -130,18 +130,23 @@ void MaintenanceScheduler::schedule() {
 
         if (ag_data->earliest_cached_revision != TIMESTAMP_MAX) {
           if (range_data[i]->range->is_root()) {
-            revision_root = ag_data->earliest_cached_revision;
+            if (revision_root == TIMESTAMP_MIN || 
+                ag_data->earliest_cached_revision < revision_root)
+              revision_root = ag_data->earliest_cached_revision;
           }
           else if (range_data[i]->is_metadata) {
-            if (ag_data->earliest_cached_revision < revision_metadata)
+            if (revision_metadata == TIMESTAMP_MIN ||
+                ag_data->earliest_cached_revision < revision_metadata)
               revision_metadata = ag_data->earliest_cached_revision;
           }
           else if (range_data[i]->is_system) {
-            if (ag_data->earliest_cached_revision < revision_system)
+            if (revision_system == TIMESTAMP_MIN ||
+                ag_data->earliest_cached_revision < revision_system)
               revision_system = ag_data->earliest_cached_revision;
           }
           else {
-            if (ag_data->earliest_cached_revision < revision_user)
+            if (revision_user == TIMESTAMP_MIN ||
+                ag_data->earliest_cached_revision < revision_user)
               revision_user = ag_data->earliest_cached_revision;
           }
         }
