@@ -90,7 +90,7 @@ DROP TABLE IF EXISTS Pages_clone;
 CREATE TABLE Pages_clone LIKE Pages;
 SHOW CREATE TABLE Pages_clone;
 
-CREATE TABLE Pages_clone (
+CREATE TABLE 'Pages_clone' (
   'refer_url',
   'http_code',
   timestamp,
@@ -2222,7 +2222,7 @@ ACCESS GROUP bar_group ( bar )
 
 show create table render_bug;
 
-CREATE TABLE render_bug (
+CREATE TABLE 'render_bug' (
   foo,
   bar,
   ACCESS GROUP 'foo_group' (foo),

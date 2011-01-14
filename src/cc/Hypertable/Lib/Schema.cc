@@ -669,7 +669,11 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
   if (m_group_commit_interval > 0)
     output += format("GROUP_COMMIT_INTERVAL=\"%u\" ", m_group_commit_interval);
 
-  output += table_name + " (\n";
+  if (hql_needs_quotes(table_name.c_str()))
+    output += "'" + table_name + "'";
+  else
+    output += table_name;
+  output += " (\n";
 
   foreach(const ColumnFamily *cf, m_column_families) {
     // don't display deleted cfs
