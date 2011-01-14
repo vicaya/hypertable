@@ -281,7 +281,7 @@ void DefaultPolicy::init_options() {
      i32()->default_value(20), "Perform major compaction when garbage accounts "
      "for this percentage of the data")
     ("Hypertable.RangeServer.MemoryLimit", i64(), "RangeServer memory limit")
-    ("Hypertable.RangeServer.MemoryLimit.Percentage", i32()->default_value(60),
+    ("Hypertable.RangeServer.MemoryLimit.Percentage", i32()->default_value(50),
      "RangeServer memory limit specified as percentage of physical RAM")
     ("Hypertable.RangeServer.LowMemoryLimit.Percentage", i32()->default_value(10),
      "Amount of memory to free in low memory condition as percentage of RangeServer memory limit")
