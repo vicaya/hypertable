@@ -89,10 +89,10 @@ if [ -e $HYPERTABLE_HOME/run/last-dfs ] ; then
         dfs_conflict_error $LAST_DFS $DFS
         exit 1
     fi
+else
+    # record last DFS
+    echo $DFS > $HYPERTABLE_HOME/run/last-dfs
 fi
-
-# record last DFS
-echo $DFS > $HYPERTABLE_HOME/run/last-dfs
 
 set_start_vars DfsBroker.$DFS
 check_pidfile $pidfile && exit 0
