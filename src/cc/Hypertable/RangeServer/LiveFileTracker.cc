@@ -23,6 +23,7 @@
 
 #include "Hypertable/Lib/Key.h"
 
+#include "Global.h"
 #include "LiveFileTracker.h"
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
@@ -39,6 +40,18 @@ LiveFileTracker::LiveFileTracker(const TableIdentifier *identifier,
 
   m_is_root = (m_identifier.is_metadata() && *range->start_row == 0
                && !strcmp(range->end_row, Key::END_ROOT_ROW));
+
+  m_file_basename = Global::toplevel_dir + "/tables/";
+
+}
+
+void LiveFileTracker::update_live(const String &add, std::vector<String> &deletes) {
+  ScopedLock lock(m_mutex);
+  for (size_t i=0; i<deletes.size(); i++)
+    m_live.erase(strip_basename(deletes[i]));
+  if (add != "")
+    m_live.insert(strip_basename(add));
+  m_need_update = true;
 }
 
 
@@ -80,6 +93,7 @@ void LiveFileTracker::update_files_column() {
     return;
 
   String file_list;
+  String printable_list;
   String end_row;
   int retry_count = 0;
 
@@ -90,13 +104,16 @@ void LiveFileTracker::update_files_column() {
 
   m_mutex.lock();
 
-  foreach(const String &file, m_live)
+  foreach(const String &file, m_live) {
     file_list += file + ";\n";
+    printable_list += file + "; ";
+  }
 
   m_blocked.clear();
   foreach(const FileRefCountMap::value_type &v, m_referenced) {
     if (m_live.count(v.first) == 0) {
       file_list += format("#%s;\n", v.first.c_str());
+      printable_list += String("#") + v.first + "; ";
       m_blocked.insert(v.first);
     }
   }
@@ -155,4 +172,8 @@ void LiveFileTracker::get_file_list(String &file_list, bool include_blocked) {
 
 }
 
-
+String LiveFileTracker::strip_basename(const String &fname) {
+  size_t basename_len = m_file_basename.length();
+  HT_ASSERT(!strncmp(fname.c_str(), m_file_basename.c_str(), basename_len));
+  return fname.substr(basename_len);
+}

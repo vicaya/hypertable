@@ -268,8 +268,6 @@ namespace Hypertable {
 
     void load_cell_stores(Metadata *metadata);
 
-    bool extract_csid_from_path(String &path, uint32_t *csidp);
-
     bool cancel_maintenance();
 
     void relinquish_install_log();

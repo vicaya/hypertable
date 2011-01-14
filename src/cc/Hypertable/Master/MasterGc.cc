@@ -190,7 +190,6 @@ struct GcWorker {
   void
   reap(CountMap &files_map) {
     size_t nf = 0, nf_done = 0, nd = 0, nd_done = 0;
-    CountMap dirs_map; // reap empty range directories as well
 
     foreach (const CountMap::value_type &v, files_map) {
       if (!v.second) {
@@ -206,28 +205,6 @@ struct GcWorker {
           }
         }
         ++nf;
-      }
-      char *p = (char*)strrchr(v.first, '/');
-
-      if (p) {
-        string dir_name(v.first, p - v.first);
-        insert_file(dirs_map, dir_name.c_str(), v.second);
-      }
-    }
-    foreach (const CountMap::value_type &v, dirs_map) {
-      if (!v.second) {
-        HT_DEBUGF("MasterGc: removing directory %s", v.first);
-
-        if (!m_dryrun) {
-          try {
-            m_fs->rmdir(m_tables_dir + v.first);
-            ++nd_done;
-          }
-          catch (Exception &e) {
-            HT_ERRORF("%s", e.what());
-          }
-        }
-        ++nd;
       }
     }
 

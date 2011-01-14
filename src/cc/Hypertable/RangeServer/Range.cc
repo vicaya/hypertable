@@ -224,7 +224,6 @@ void Range::update_schema(SchemaPtr &schema) {
 void Range::load_cell_stores(Metadata *metadata) {
   AccessGroup *ag;
   CellStorePtr cellstore;
-  uint32_t csid;
   const char *base, *ptr, *end;
   std::vector<String> csvec;
   String ag_name;
@@ -278,12 +277,6 @@ void Range::load_cell_stores(Metadata *metadata) {
 
       HT_INFOF("Loading CellStore %s", csvec[i].c_str());
 
-      if (!extract_csid_from_path(csvec[i], &csid)) {
-        HT_THROWF(Error::RANGESERVER_BAD_CELLSTORE_FILENAME,
-                  "Unable to extract cell store ID from path '%s'",
-                  csvec[i].c_str());
-      }
-
       cellstore = CellStoreFactory::open(file_basename + csvec[i], m_start_row.c_str(), m_end_row.c_str());
 
       int64_t revision = boost::any_cast<int64_t>
@@ -291,7 +284,7 @@ void Range::load_cell_stores(Metadata *metadata) {
       if (revision > m_latest_revision)
         m_latest_revision = revision;
 
-      ag->add_cell_store(cellstore, csid);
+      ag->add_cell_store(cellstore);
     }
 
     /** this causes startup deadlock (and is not needed) ..
@@ -301,18 +294,6 @@ void Range::load_cell_stores(Metadata *metadata) {
 
   }
 
-}
-
-
-bool Range::extract_csid_from_path(String &path, uint32_t *csidp) {
-  const char *base;
-
-  if ((base = strrchr(path.c_str(), '/')) == 0 || strncmp(base, "/cs", 3))
-    *csidp = 0;
-  else
-    *csidp = atoi(base+3);
-
-  return true;
 }
 
 

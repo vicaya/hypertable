@@ -175,7 +175,7 @@ namespace Hypertable {
     uint64_t disk_usage();
     uint64_t memory_usage();
     void space_usage(int64_t *memp, int64_t *diskp);
-    void add_cell_store(CellStorePtr &cellstore, uint32_t id);
+    void add_cell_store(CellStorePtr &cellstore);
 
     void compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp);
 
@@ -217,8 +217,10 @@ namespace Hypertable {
     void dump_keys(std::ofstream &out);
 
   private:
-    String strip_file_basename(const String &fname);
+
     void merge_caches();
+
+    void range_dir_initialize();
 
     Mutex                m_mutex;
     Mutex                m_outstanding_scanner_mutex;
@@ -229,6 +231,7 @@ namespace Hypertable {
     String               m_name;
     String               m_full_name;
     String               m_table_name;
+    String               m_range_dir;
     String               m_start_row;
     String               m_end_row;
     String               m_range_name;
@@ -246,7 +249,6 @@ namespace Hypertable {
     uint64_t             m_collisions;
     LiveFileTracker      m_file_tracker;
     AccessGroupGarbageTracker m_garbage_tracker;
-    String               m_file_basename;
     bool                 m_is_root;
     bool                 m_in_memory;
     bool                 m_recovering;

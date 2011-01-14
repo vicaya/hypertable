@@ -31,7 +31,7 @@ fi
 # clear state
 /bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* report.txt
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker
+$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker --Hypertable.Master.Gc.Interval=30000
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \

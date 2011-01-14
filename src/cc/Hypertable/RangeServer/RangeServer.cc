@@ -74,12 +74,12 @@ using namespace Hypertable::Property;
 RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     ApplicationQueuePtr &app_queue, Hyperspace::SessionPtr &hyperspace)
   : m_root_replay_finished(false), m_metadata_replay_finished(false),
-    m_replay_finished(false), m_props(props), m_verbose(false),
-    m_comm(conn_mgr->get_comm()), m_conn_manager(conn_mgr), m_app_queue(app_queue),
-    m_hyperspace(hyperspace), m_timer_handler(0),
-    m_group_commit_timer_handler(0), m_query_cache(0), m_last_revision(TIMESTAMP_MIN),
-    m_loadavg_accum(0.0), m_page_in_accum(0), m_page_out_accum(0), m_metric_samples(0),
-    m_pending_metrics_updates(0)
+    m_system_replay_finished(false), m_replay_finished(false), m_props(props),
+    m_verbose(false), m_comm(conn_mgr->get_comm()), m_conn_manager(conn_mgr),
+    m_app_queue(app_queue), m_hyperspace(hyperspace), m_timer_handler(0),
+    m_group_commit_timer_handler(0), m_query_cache(0),
+    m_last_revision(TIMESTAMP_MIN), m_loadavg_accum(0.0), m_page_in_accum(0),
+    m_page_out_accum(0), m_metric_samples(0), m_pending_metrics_updates(0)
 {
 
   uint16_t port;
@@ -1058,6 +1058,9 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       return;
     }
 
+    if (!m_replay_finished)
+      wait_for_recovery_finish(table, range_spec);
+
     {
       ScopedLock lock(m_drop_table_mutex);
 
@@ -1073,9 +1076,6 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       }
 
       HT_MAYBE_FAIL_X("load-range-1", !table->is_system());
-
-      if (!m_replay_finished)
-        wait_for_recovery_finish(table, range_spec);
 
       /** Get TableInfo, create if doesn't exist **/
       {
@@ -1096,13 +1096,15 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       /**
        * Make sure this range is not already loaded
        */
-      if (table_info->get_range(range_spec, range)) {
+      if (table_info->has_range(range_spec)) {
         HT_INFOF("Range %s[%s..%s] already loaded",
                  table->id, range_spec->start_row,
                  range_spec->end_row);
         cb->error(Error::RANGESERVER_RANGE_ALREADY_LOADED, "");
         return;
       }
+
+      table_info->stage_range(range_spec);
 
       /**
        * Lazily create sys/METADATA table pointer
@@ -1170,15 +1172,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       if (m_dropped_table_id_cache->contains(table->id)) {
         HT_WARNF("Table %s has been dropped", table->id);
         cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
-        return;
-      }
-
-      /** Check again to see if range already loaded **/
-      if (table_info->has_range(range_spec)) {
-        HT_INFOF("Range %s[%s..%s] already loaded",
-                 table->id, range_spec->start_row,
-                 range_spec->end_row);
-        cb->error(Error::RANGESERVER_RANGE_ALREADY_LOADED, "");
+        table_info->unstage_range(range_spec);
         return;
       }
 
@@ -1290,13 +1284,14 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       if (m_dropped_table_id_cache->contains(table->id)) {
         HT_WARNF("Table %s has been dropped", table->id);
         cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
+        table_info->unstage_range(range_spec);
         return;
       }
 
       if (Global::range_log)
         Global::range_log->log_range_loaded(*table, *range_spec, *range_state);
 
-      table_info->add_range(range);
+      table_info->add_staged_range(range);
     }
 
     HT_MAYBE_FAIL_X("metadata-load-range-5", table->is_metadata());
@@ -1309,6 +1304,8 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
   }
   catch (Hypertable::Exception &e) {
+    if (table_info)
+      table_info->unstage_range(range_spec);
     HT_ERROR_OUT << e << HT_END;
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));

@@ -854,20 +854,27 @@ Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
     }
   }
 
-  try {
-    RangeState range_state;
-    range_state.soft_limit = soft_limit;
-    rsc.load_range(addr, table, range, transfer_log_dir, range_state);
-    HT_INFOF("move_range for %s[%s:%s] successful.", table.id,
-             range.start_row, range.end_row);
-  }
-  catch (Exception &e) {
-    if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED) {
-      HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
-                "%s - %s", table.id, range.start_row, range.end_row,
-                location.c_str(), Error::get_text(e.code()));
-      cb->error(e.code(), e.what());
-      return;
+  cb->response_ok();
+
+  while (true) {
+    try {
+      RangeState range_state;
+      range_state.soft_limit = soft_limit;
+      rsc.load_range(addr, table, range, transfer_log_dir, range_state);
+      HT_INFOF("move_range for %s[%s:%s] successful.", table.id,
+               range.start_row, range.end_row);
+      break;
+    }
+    catch (Exception &e) {
+      if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED &&
+          e.code() != Error::RANGESERVER_TABLE_DROPPED) {
+        HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
+                  "%s - %s, will retry in 3000 ms ...", table.id, range.start_row, range.end_row,
+                  location.c_str(), Error::get_text(e.code()));
+        poll(0, 0, 3000);
+      }
+      else
+        break;
     }
   }
 
@@ -877,7 +884,6 @@ Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
     m_range_to_location_map.erase(fqr_spec);
   }
 
-  cb->response_ok();
 }
 
 
@@ -965,7 +971,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
       while (scanner_ptr->next(cell)) {
 	location_str = String((const char *)cell.value, cell.value_len);
 	boost::trim(location_str);
-	if (connections.find(location_str) == connections.end()) {
+	if (location_str != "!" && connections.find(location_str) == connections.end()) {
 	  ScopedLock lock(m_mutex);
 	  if ((smiter = m_server_map.find(location_str)) == m_server_map.end()) {
 	    /** Drop failed clean up & return **/

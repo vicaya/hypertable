@@ -107,6 +107,27 @@ namespace Hypertable {
     bool remove_range(const RangeSpec *range_spec, RangePtr &range);
 
     /**
+     * Stages a range for being added
+     *
+     * @param range_spec range specification of range to remove
+     */
+    void stage_range(const RangeSpec *range_spec);
+
+    /**
+     * Unstages a previously staged range
+     *
+     * @param range_spec range specification of range to remove
+     */
+    void unstage_range(const RangeSpec *range_spec);
+
+    /**
+     * Adds a range that was previously staged
+     *
+     * @param range smart pointer to range object
+     */
+    void add_staged_range(RangePtr &range);
+
+    /**
      * Adds a range
      *
      * @param range smart pointer to range object

@@ -65,7 +65,7 @@ run_test() {
 
   if [ -z "$SKIP_START_SERVERS" ]; then
     $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
-                                       --clear
+                                       --clear --Hypertable.Master.Gc.Interval=30000
   fi
 
   stop_range_server

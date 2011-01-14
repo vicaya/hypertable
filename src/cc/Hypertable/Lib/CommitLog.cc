@@ -254,38 +254,48 @@ int CommitLog::purge(int64_t revision) {
   CommitLogFileInfo file_info;
   String fname;
 
-  HT_INFO_OUT << "Purging commit log fragments with latest revision older than " << revision
+  HT_DEBUG_OUT << "Purging commit log fragments with latest revision older than " << revision
               << HT_END;
-  try {
 
-    while (!m_fragment_queue.empty()) {
-      file_info = m_fragment_queue.front();
-      if (file_info.revision < revision) {
-        fname = file_info.log_dir + file_info.num;
+  while (!m_fragment_queue.empty()) {
+    file_info = m_fragment_queue.front();
+    if (file_info.revision < revision) {
+
+      fname = file_info.log_dir + file_info.num;
+
+      try {
         m_fs->remove(fname);
-        m_fragment_queue.pop_front();
-        HT_INFOF("clgc Removed log fragment file='%s' revision=%lld", fname.c_str(),
-                 (Lld)file_info.revision);
-        if (file_info.purge_log_dir) {
-          HT_INFOF("Removing commit log directory %s", file_info.log_dir.c_str());
+      }
+      catch (Exception &e) {
+        HT_WARNF("Problem removing log fragment '%s' (%s - %s)",
+                 fname.c_str(), Error::get_text(e.code()), e.what());
+      }
+
+      m_fragment_queue.pop_front();
+
+      HT_DEBUGF("clgc Removed log fragment file='%s' revision=%lld", fname.c_str(),
+               (Lld)file_info.revision);
+
+      if (file_info.purge_log_dir) {
+        HT_INFOF("Removing commit log directory %s", file_info.log_dir.c_str());
+        try {
           m_fs->rmdir(file_info.log_dir);
         }
-      }
-      else {
-
-        HT_INFOF("clgc LOG FRAGMENT PURGE breaking because %lld >= %lld",
-                 (Lld)file_info.revision, (Lld)revision);
-
-        break;
+        catch (Exception &e) {
+          HT_WARNF("Problem removing log directory '%s' (%s - %s)",
+                   file_info.log_dir.c_str(), Error::get_text(e.code()), e.what());
+        }
       }
     }
+    else {
 
+      HT_DEBUGF("clgc LOG FRAGMENT PURGE breaking because %lld >= %lld",
+               (Lld)file_info.revision, (Lld)revision);
+
+      break;
+    }
   }
-  catch (Hypertable::Exception &e) {
-    HT_ERROR_OUT << "Problem purging log fragment fname = " << fname.c_str() << "-" << e.what()
-                 << HT_END;
-    return e.code();
-  }
+
 
   return Error::OK;
 }

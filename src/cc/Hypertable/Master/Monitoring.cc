@@ -135,12 +135,12 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
       continue;
     }
 
-    (*iter).second->fetch_error = stats[i].fetch_error;
-    (*iter).second->fetch_error_msg = stats[i].fetch_error_msg;
-    (*iter).second->fetch_timestamp = stats[i].fetch_timestamp;
-
-    if (stats[i].fetch_error != 0)
+    if (stats[i].fetch_error != 0) {
+      (*iter).second->fetch_error = stats[i].fetch_error;
+      (*iter).second->fetch_error_msg = stats[i].fetch_error_msg;
+      (*iter).second->fetch_timestamp = stats[i].fetch_timestamp;
       continue;
+    }
 
     if ((*iter).second->stats) {
 
@@ -211,6 +211,9 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     update_rangeserver_rrd(rrd_file, rrd_data);
 
     (*iter).second->stats = stats[i].stats;
+    (*iter).second->fetch_error = stats[i].fetch_error;
+    (*iter).second->fetch_error_msg = stats[i].fetch_error_msg;
+    (*iter).second->fetch_timestamp = stats[i].fetch_timestamp;
 
   }
 
