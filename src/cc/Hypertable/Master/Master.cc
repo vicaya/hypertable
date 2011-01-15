@@ -359,7 +359,6 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
 
   HT_INFOF("Alter table: %s", tablename);
 
-
   wait_for_root_metadata_server();
 
   try {
@@ -535,7 +534,6 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
   DynamicBuffer schemabuf(0);
 
   HT_INFOF("Get schema: %s", tablename);
-
 
   wait_for_root_metadata_server();
 
