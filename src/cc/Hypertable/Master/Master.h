@@ -114,11 +114,11 @@ namespace Hypertable {
     void do_monitoring();
 
     Mutex        m_mutex;
-    PropertiesPtr m_props_ptr;
-    ConnectionManagerPtr m_conn_manager_ptr;
-    ApplicationQueuePtr m_app_queue_ptr;
+    PropertiesPtr m_props;
+    ConnectionManagerPtr m_conn_manager;
+    ApplicationQueuePtr m_app_queue;
     bool m_verbose;
-    Hyperspace::SessionPtr m_hyperspace_ptr;
+    Hyperspace::SessionPtr m_hyperspace;
     Filesystem *m_dfs_client;
     uint16_t m_rangeserver_port;
     uint32_t m_next_server_id;
@@ -127,8 +127,8 @@ namespace Hypertable {
     uint64_t m_servers_dir_handle;
     uint64_t m_namespace_dir_handle;
     LockSequencer m_master_file_sequencer;
-    HandleCallbackPtr m_servers_dir_callback_ptr;
-    TablePtr m_metadata_table_ptr;
+    HandleCallbackPtr m_servers_dir_callback;
+    TablePtr m_metadata_table;
     uint64_t m_max_range_bytes;
 
     /** temporary vairables **/

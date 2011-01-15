@@ -64,8 +64,8 @@ namespace Hypertable {
 
 Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
                ApplicationQueuePtr &app_queue)
-  : m_props_ptr(props), m_conn_manager_ptr(conn_mgr),
-    m_app_queue_ptr(app_queue), m_verbose(false), m_dfs_client(0),
+  : m_props(props), m_conn_manager(conn_mgr),
+    m_app_queue(app_queue), m_verbose(false), m_dfs_client(0),
     m_next_server_id(1), m_initialized(false), m_root_server_connected(false), m_get_stats_outstanding(false) {
 
   m_server_map_iter = m_server_map.begin();
@@ -74,15 +74,15 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
   m_toplevel_dir = String("/") + m_toplevel_dir;
 
-  m_hyperspace_ptr = new Hyperspace::Session(conn_mgr->get_comm(), props);
-  m_hyperspace_ptr->add_callback(&m_hyperspace_session_handler);
+  m_hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props);
+  m_hyperspace->add_callback(&m_hyperspace_session_handler);
   uint32_t timeout = props->get_i32("Hyperspace.Timeout");
 
-  if (!m_hyperspace_ptr->wait_for_connection(timeout)) {
+  if (!m_hyperspace->wait_for_connection(timeout)) {
     HT_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
-  m_namemap = new NameIdMapper(m_hyperspace_ptr, m_toplevel_dir);
+  m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
 
   m_verbose = props->get_bool("Hypertable.Verbose");
   uint16_t port = props->get_i16("Hypertable.Master.Port");
@@ -93,7 +93,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   /**
    * Create DFS Client connection
    */
-  m_dfs_client = new DfsBroker::Client(conn_mgr, props);  
+  m_dfs_client = new DfsBroker::Client(conn_mgr, props);
 
   int dfs_timeout;
   if (props->has("DfsBroker.Timeout"))
@@ -120,9 +120,9 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     uint32_t lock_status;
     uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
 
-    m_master_file_handle = m_hyperspace_ptr->open(m_toplevel_dir + "/master", oflags);
+    m_master_file_handle = m_hyperspace->open(m_toplevel_dir + "/master", oflags);
 
-    m_hyperspace_ptr->try_lock(m_master_file_handle, LOCK_MODE_EXCLUSIVE,
+    m_hyperspace->try_lock(m_master_file_handle, LOCK_MODE_EXCLUSIVE,
                                &lock_status, &m_master_file_sequencer);
 
     if (lock_status != LOCK_STATUS_GRANTED) {
@@ -133,16 +133,16 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     // Write master location in 'address' attribute, format is IP:port
     InetAddr addr(System::net_info().primary_addr, port);
     String addr_s = addr.format();
-    m_hyperspace_ptr->attr_set(m_master_file_handle, "address",
+    m_hyperspace->attr_set(m_master_file_handle, "address",
                                addr_s.c_str(), addr_s.length());
 
     try {
-      m_hyperspace_ptr->attr_get(m_master_file_handle, "next_server_id", valbuf);
+      m_hyperspace->attr_get(m_master_file_handle, "next_server_id", valbuf);
       ival = atoi((const char *)valbuf.base);
     }
     catch (Exception &e) {
       if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND) {
-        m_hyperspace_ptr->attr_set(m_master_file_handle, "next_server_id", "1", 2);
+        m_hyperspace->attr_set(m_master_file_handle, "next_server_id", "1", 2);
         ival = 1;
       }
       else
@@ -156,7 +156,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
    */
   scan_servers_directory();
 
-  master_gc_start(props, m_threads, m_metadata_table_ptr, m_dfs_client);
+  master_gc_start(props, m_threads, m_metadata_table, m_dfs_client);
 
 
 }
@@ -225,12 +225,12 @@ void Master::server_left(const String &location) {
   }
 
   if (was_connected)
-    m_conn_manager_ptr->get_comm()->close_socket(connection);
+    m_conn_manager->get_comm()->close_socket(connection);
 
   // delete Hyperspace file
   HT_INFOF("RangeServer lost it's lock on file %s, deleting ...", hsfname.c_str());
   try {
-    m_hyperspace_ptr->unlink(hsfname);
+    m_hyperspace->unlink(hsfname);
   }
   catch (Exception &e) {
     HT_WARN_OUT "Problem closing file '" << hsfname << "' - " << e << HT_END;
@@ -267,9 +267,6 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
 
 bool Master::table_exists(const String &name, String &id) {
   bool is_namespace;
-  uint64_t handle = 0;
-
-  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace_ptr, &handle);
 
   id = "";
 
@@ -280,9 +277,11 @@ bool Master::table_exists(const String &name, String &id) {
   String tablefile = m_toplevel_dir + "/tables/" + id;
 
   try {
-    if (m_hyperspace_ptr->exists(tablefile)) {
-      handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ);
-      if (m_hyperspace_ptr->attr_exists(handle, "x"))
+    uint64_t handle = 0;
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
+    if (m_hyperspace->exists(tablefile)) {
+      handle = m_hyperspace->open(tablefile, OPEN_FLAG_READ);
+      if (m_hyperspace->attr_exists(handle, "x"))
         return true;
     }
   }
@@ -312,15 +311,17 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
   SchemaPtr updated_schema;
   SchemaPtr schema;
   DynamicBuffer value_buf(0);
-  uint64_t handle = 0;
   LockSequencer lock_sequencer;
   int saved_error = Error::OK;
 
   HT_INFOF("Alter table: %s", tablename);
 
+
   wait_for_root_metadata_server();
 
   try {
+    uint64_t handle = 0;
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
     String tablefile;
 
     if (!table_exists(tablename, table_id))
@@ -339,14 +340,14 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
     /**
      *  Open & Lock Hyperspace file exclusively
      */
-    handle = m_hyperspace_ptr->open(tablefile,
+    handle = m_hyperspace->open(tablefile,
           OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE);
 
     /**
      *  Read existing schema and table id
      */
 
-    m_hyperspace_ptr->attr_get(handle, "schema", value_buf);
+    m_hyperspace->attr_get(handle, "schema", value_buf);
     schema = Schema::new_instance((char *)value_buf.base,
         strlen((char *)value_buf.base), true);
     value_buf.clear();
@@ -393,7 +394,7 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
       ri.end = end_row;
       scan_spec.row_intervals.push_back(ri);
 
-      scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
+      scanner_ptr = m_metadata_table->create_scanner(scan_spec);
 
       while (scanner_ptr->next(cell)) {
 	location_str = String((const char *)cell.value, cell.value_len);
@@ -414,13 +415,12 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
 
       if (saved_error != Error::OK) {
 	cb->error(saved_error, err_msg);
-	m_hyperspace_ptr->close(handle);
 	return;
       }
 
       if (!connections.empty()) {
         DispatchHandlerUpdateSchema sync_handler(table,
-            finalschema.c_str(), m_conn_manager_ptr->get_comm(), 5000);
+            finalschema.c_str(), m_conn_manager->get_comm(), 5000);
         RangeServerStatePtr state_ptr;
 
 	// Issue ALTER TABLE commands to RangeServers
@@ -463,25 +463,17 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
       }
 
       /**
-       * Store updated Schema in Hyperspace, close handle & release lock
+       * Store updated Schema in Hyperspace and release lock
        */
       HT_INFO_OUT <<"schema:\n"<< finalschema << HT_END;
-      m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
+      m_hyperspace->attr_set(handle, "schema", finalschema.c_str(),
                                  finalschema.length());
-      /**
-       * Alter succeeded so clean up!
-       */
-      m_hyperspace_ptr->close(handle);
 
       HT_INFOF("ALTER TABLE '%s' id=%s success",
                tablename, table_id.c_str());
     }
   }
   catch (Exception &e) {
-    // clean up
-    if(handle != 0)
-      m_hyperspace_ptr->close(handle);
-
     HT_ERROR_OUT << e << HT_END;
     cb->error(e.code(), e.what());
     return;
@@ -497,13 +489,15 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
   String table_id;
   String errmsg;
   DynamicBuffer schemabuf(0);
-  uint64_t handle;
 
   HT_INFOF("Get schema: %s", tablename);
+
 
   wait_for_root_metadata_server();
 
   try {
+    uint64_t handle = 0;
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
     String tablefile;
 
 
@@ -517,14 +511,12 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
     /**
      * Open table file
      */
-    handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ);
+    handle = m_hyperspace->open(tablefile, OPEN_FLAG_READ);
 
     /**
      * Get schema attribute
      */
-    m_hyperspace_ptr->attr_get(handle, "schema", schemabuf);
-
-    m_hyperspace_ptr->close(handle);
+    m_hyperspace->attr_get(handle, "schema", schemabuf);
 
     cb->response((char *)schemabuf.base);
 
@@ -564,9 +556,9 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
     }
     char buf[16];
     sprintf(buf, "%u", m_next_server_id);
-    m_hyperspace_ptr->attr_set(m_master_file_handle, "next_server_id",
+    m_hyperspace->attr_set(m_master_file_handle, "next_server_id",
                                buf, strlen(buf)+1);
-    m_hyperspace_ptr->attr_set(m_servers_dir_handle, location,
+    m_hyperspace->attr_set(m_servers_dir_handle, location,
                                addr_str.c_str(), addr_str.length()+1);
   }
 
@@ -597,8 +589,8 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
         rs_state->addr.set_proxy(location);
       }
 
-      m_conn_manager_ptr->get_comm()->set_alias(connection, addr);
-      m_conn_manager_ptr->get_comm()->add_proxy(location, addr);
+      m_conn_manager->get_comm()->set_alias(connection, addr);
+      m_conn_manager->get_comm()->add_proxy(location, addr);
 
       rs_state->connection = connection;
       rs_state->connected = true;
@@ -629,7 +621,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
     if (!m_initialized) {
       TableIdentifier table;
       RangeSpec range;
-      RangeServerClient rsc(m_conn_manager_ptr->get_comm());
+      RangeServerClient rsc(m_conn_manager->get_comm());
 
       HT_INFO("Initializing METADATA");
 
@@ -671,8 +663,8 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       /**
        * Open METADATA table
        */
-      m_metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr,
-                                       m_hyperspace_ptr, m_namemap,
+      m_metadata_table = new Table(m_props, m_conn_manager,
+                                       m_hyperspace, m_namemap,
                                        TableIdentifier::METADATA_NAME);
 
       /**
@@ -683,10 +675,10 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       if (exists) {
         DynamicBuffer dbuf;
         try {
-          uint64_t handle = m_hyperspace_ptr->open(m_toplevel_dir + "/root",
+          uint64_t handle = m_hyperspace->open(m_toplevel_dir + "/root",
                                                    OPEN_FLAG_READ);
-          m_hyperspace_ptr->attr_get(handle, "Location", dbuf);
-          m_hyperspace_ptr->close(handle);
+          m_hyperspace->attr_get(handle, "Location", dbuf);
+          m_hyperspace->close(handle);
         }
         catch (Exception &e) {
           HT_FATALF("Unable to read '%s/root:Location' in hyperspace "
@@ -704,7 +696,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
         return;
       }
 
-      m_metadata_table_ptr->get_identifier(&table);
+      m_metadata_table->get_identifier(&table);
 
       /**
        * Load root METADATA range
@@ -731,7 +723,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       KeySpec key;
       String metadata_key_str;
 
-      mutator_ptr = m_metadata_table_ptr->create_mutator();
+      mutator_ptr = m_metadata_table->create_mutator();
 
       metadata_key_str = (String)TableIdentifier::METADATA_ID +":"+ Key::END_ROW_MARKER;
       key.row = metadata_key_str.c_str();
@@ -817,7 +809,7 @@ void
 Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
                    const RangeSpec &range, const char *transfer_log_dir,
                    uint64_t soft_limit, bool split) {
-  RangeServerClient rsc(m_conn_manager_ptr->get_comm());
+  RangeServerClient rsc(m_conn_manager->get_comm());
   QualifiedRangeSpec fqr_spec(table, range);
   String location;
   CommAddress addr;
@@ -966,7 +958,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
       ri.end = end_row;
       scan_spec.row_intervals.push_back(ri);
 
-      scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
+      scanner_ptr = m_metadata_table->create_scanner(scan_spec);
 
       while (scanner_ptr->next(cell)) {
 	location_str = String((const char *)cell.value, cell.value_len);
@@ -991,7 +983,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
       }
 
       if (!connections.empty()) {
-	DispatchHandlerDropTable sync_handler(table, m_conn_manager_ptr->get_comm());
+	DispatchHandlerDropTable sync_handler(table, m_conn_manager->get_comm());
         RangeServerStatePtr state_ptr;
 
 	// Issue DROP TABLE commands to RangeServers
@@ -1025,7 +1017,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
     m_namemap->drop_mapping(table_name);
 
     String table_file = m_toplevel_dir + "/tables/" + table_id;
-    m_hyperspace_ptr->unlink(table_file.c_str());
+    m_hyperspace->unlink(table_file.c_str());
 
     HT_INFOF("DROP TABLE '%s' id=%s success",
              table_name_str.c_str(), table_id.c_str());
@@ -1040,7 +1032,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 }
 
   void Master::close(ResponseCallback *cb) {
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm());
+    RangeServerClient rsc(m_conn_manager->get_comm());
     std::vector<CommAddress> addresses;
 
     HT_INFO("CLOSE");
@@ -1061,7 +1053,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
 
   void Master::shutdown(ResponseCallback *cb) {
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm());
+    RangeServerClient rsc(m_conn_manager->get_comm());
     std::vector<CommAddress> addresses;
 
     HT_INFO("SHUTDOWN");
@@ -1100,7 +1092,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
       return;
     }
 
-    m_hyperspace_ptr = 0;
+    m_hyperspace = 0;
 
     cb->response_ok();
 
@@ -1125,7 +1117,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
   String table_name = tablename;
   String table_id;
 
-  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace_ptr, &handle);
+  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
 
   /**
    * Strip leading '/'
@@ -1161,12 +1153,12 @@ Master::create_table(const char *tablename, const char *schemastr) {
    */
   String tablefile = m_toplevel_dir + "/tables/" + table_id;
   int oflags = OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE;
-  handle = m_hyperspace_ptr->open(tablefile, oflags);
+  handle = m_hyperspace->open(tablefile, oflags);
 
   /**
    * Write schema attribute
    */
-  m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
+  m_hyperspace->attr_set(handle, "schema", finalschema.c_str(),
                              finalschema.length());
 
   // TODO: log the 'COMPLETED CREATE TABLE fully_qual_name' in the Master METALOG here
@@ -1192,7 +1184,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
     CommAddress addr;
     String location;
 
-    mutator_ptr = m_metadata_table_ptr->create_mutator();
+    mutator_ptr = m_metadata_table->create_mutator();
 
     metadata_key_str = table_id + ":" + Key::END_ROW_MARKER;
     key.row = metadata_key_str.c_str();
@@ -1211,7 +1203,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
     TableIdentifierManaged table;
     RangeSpec range;
     uint64_t soft_limit;
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm());
+    RangeServerClient rsc(m_conn_manager->get_comm());
 
     table.set_id(table_id);
     table.generation = schema->get_generation();
@@ -1251,7 +1243,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
     }
   }
 
-  m_hyperspace_ptr->attr_set(handle, "x", "", 0);
+  m_hyperspace->attr_set(handle, "x", "", 0);
 
   if (m_verbose)
     HT_INFOF("Successfully created table '%s' ID=%s", tablename, table_id.c_str());
@@ -1263,34 +1255,34 @@ Master::create_table(const char *tablename, const char *schemastr) {
  */
 
 bool Master::initialize() {
-  uint64_t handle;
 
   try {
+    uint64_t handle = 0;
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
 
-    if (!m_hyperspace_ptr->exists(m_toplevel_dir))
-      m_hyperspace_ptr->mkdirs(m_toplevel_dir);
+    if (!m_hyperspace->exists(m_toplevel_dir))
+      m_hyperspace->mkdirs(m_toplevel_dir);
 
-    if (!m_hyperspace_ptr->exists(m_toplevel_dir + "/servers")) {
+    if (!m_hyperspace->exists(m_toplevel_dir + "/servers")) {
       if (!create_hyperspace_dir(m_toplevel_dir + "/servers"))
         return false;
     }
 
-    if (!m_hyperspace_ptr->exists(m_toplevel_dir + "/tables")) {
+    if (!m_hyperspace->exists(m_toplevel_dir + "/tables")) {
       if (!create_hyperspace_dir(m_toplevel_dir + "/tables"))
         return false;
     }
 
     // Create /hypertable/master if necessary
-    handle = m_hyperspace_ptr->open( m_toplevel_dir + "/master",
+    handle = m_hyperspace->open( m_toplevel_dir + "/master",
         OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
-    m_hyperspace_ptr->close(handle);
+    m_hyperspace->close(handle);
 
     /**
      *  Create /hypertable/root
      */
-    handle = m_hyperspace_ptr->open(m_toplevel_dir + "/root",
+    handle = m_hyperspace->open(m_toplevel_dir + "/root",
         OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
-    m_hyperspace_ptr->close(handle);
 
     HT_INFO("Successfully Initialized Hypertable.");
 
@@ -1316,7 +1308,7 @@ void Master::scan_servers_directory() {
   RangeServerStatePtr rs_state;
   uint32_t oflags;
   String hsfname;
-  uint64_t hyperspace_handle;
+  uint64_t handle;
   std::vector<String> names;
 
   try {
@@ -1324,17 +1316,17 @@ void Master::scan_servers_directory() {
     /**
      * Open /hyperspace/servers directory and scan for range servers
      */
-    m_servers_dir_callback_ptr =
-        new ServersDirectoryHandler(this, m_app_queue_ptr);
+    m_servers_dir_callback =
+        new ServersDirectoryHandler(this, m_app_queue);
 
-    m_servers_dir_handle = m_hyperspace_ptr->open(m_toplevel_dir + "/servers",
-        OPEN_FLAG_READ, m_servers_dir_callback_ptr);
+    m_servers_dir_handle = m_hyperspace->open(m_toplevel_dir + "/servers",
+        OPEN_FLAG_READ, m_servers_dir_callback);
 
-    m_hyperspace_ptr->attr_list(m_servers_dir_handle, names);
+    m_hyperspace->attr_list(m_servers_dir_handle, names);
     for (size_t i=0; i<names.size(); i++)
       HT_INFOF("Mapping: %s", names[i].c_str());
 
-    m_hyperspace_ptr->readdir(m_servers_dir_handle, listing);
+    m_hyperspace->readdir(m_servers_dir_handle, listing);
 
     oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
 
@@ -1347,22 +1339,22 @@ void Master::scan_servers_directory() {
       hsfname = m_toplevel_dir + "/servers/" + listing[i].name;
 
       lock_file_handler =
-          new ServerLockFileHandler(rs_state, this, m_app_queue_ptr);
+          new ServerLockFileHandler(rs_state, this, m_app_queue);
 
-      hyperspace_handle =
-          m_hyperspace_ptr->open(hsfname, oflags, lock_file_handler);
+      handle =
+          m_hyperspace->open(hsfname, oflags, lock_file_handler);
 
-      m_hyperspace_ptr->try_lock(hyperspace_handle,
+      m_hyperspace->try_lock(handle,
           LOCK_MODE_EXCLUSIVE, &lock_status, &lock_sequencer);
 
       if (lock_status == LOCK_STATUS_GRANTED) {
         HT_INFOF("Obtained lock on servers file %s, removing...",
                  hsfname.c_str());
-        m_hyperspace_ptr->close(hyperspace_handle);
-        m_hyperspace_ptr->unlink(hsfname);
+        m_hyperspace->close(handle);
+        m_hyperspace->unlink(hsfname);
       }
       else {
-        m_hyperspace_ptr->close(hyperspace_handle);
+        m_hyperspace->close(handle);
         m_server_map[rs_state->location] = rs_state;
       }
     }
@@ -1381,10 +1373,10 @@ bool Master::create_hyperspace_dir(const String &dir) {
 
   try {
 
-    if (m_hyperspace_ptr->exists(dir))
+    if (m_hyperspace->exists(dir))
       return true;
 
-    m_hyperspace_ptr->mkdir(dir);
+    m_hyperspace->mkdir(dir);
 
   }
   catch (Exception &e) {
@@ -1410,7 +1402,7 @@ bool Master::handle_disconnect(struct sockaddr_in addr, String &location) {
 }
 
 void Master::join() {
-  m_app_queue_ptr->join();
+  m_app_queue->join();
   m_threads.join_all();
 }
 
@@ -1458,9 +1450,9 @@ Master::create_namespace(const char *name, int flags) {
   hyperspace_tables_dir = m_toplevel_dir + "/tables/" + id;
 
   if (flags & NameIdMapper::CREATE_INTERMEDIATE)
-    m_hyperspace_ptr->mkdirs(hyperspace_tables_dir);
+    m_hyperspace->mkdirs(hyperspace_tables_dir);
   else
-    m_hyperspace_ptr->mkdir(hyperspace_tables_dir);
+    m_hyperspace->mkdir(hyperspace_tables_dir);
 
   HT_INFO_OUT << "Created namespace mapping " << ns << "<->" << id << HT_END;
 
@@ -1490,7 +1482,7 @@ Master::drop_namespace(ResponseCallback *cb, const char *name, bool if_exists) {
 
     m_namemap->drop_mapping(ns);
     hyperspace_tables_dir = m_toplevel_dir + "/tables/" + id;
-    m_hyperspace_ptr->unlink(hyperspace_tables_dir);
+    m_hyperspace->unlink(hyperspace_tables_dir);
   }
   catch (Exception &e){
     HT_ERROR_OUT << e << HT_END;
@@ -1534,7 +1526,7 @@ Master::drop_namespace(ResponseCallback *cb, const char *name, bool if_exists) {
   time_t timeout = m_maintenance_interval;
   if (timeout > 1000)
     timeout -= 1000;
-  DispatchHandlerGetStatistics sync_handler(m_conn_manager_ptr->get_comm(), timeout);
+  DispatchHandlerGetStatistics sync_handler(m_conn_manager->get_comm(), timeout);
 
   sync_handler.add(results);
 
