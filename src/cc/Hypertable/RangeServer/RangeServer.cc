@@ -262,40 +262,46 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
 void RangeServer::shutdown() {
 
-  // stop maintenance timer
-  m_timer_handler->shutdown();
+  try {
+
+    // stop maintenance timer
+    m_timer_handler->shutdown();
 #if defined(CLEAN_SHUTDOWN)
-  m_timer_handler->wait_for_shutdown();
+    m_timer_handler->wait_for_shutdown();
 #endif
 
-  m_group_commit_timer_handler->shutdown();
+    m_group_commit_timer_handler->shutdown();
 
-  // stop maintenance queue
-  Global::maintenance_queue->shutdown();
+    // stop maintenance queue
+    Global::maintenance_queue->shutdown();
 #if defined(CLEAN_SHUTDOWN)
-  Global::maintenance_queue->join();
+    Global::maintenance_queue->join();
 #endif
 
-  // delete global objects
-  delete Global::block_cache;
-  delete Global::user_log;
-  delete Global::system_log;
-  delete Global::metadata_log;
-  delete Global::root_log;
-  delete Global::range_log;
+    // delete global objects
+    delete Global::block_cache;
+    delete Global::user_log;
+    delete Global::system_log;
+    delete Global::metadata_log;
+    delete Global::root_log;
+    delete Global::range_log;
 
-  delete m_query_cache;
+    delete m_query_cache;
 
-  Global::maintenance_queue = 0;
-  Global::metadata_table = 0;
-  Global::rs_metrics_table = 0;
-  Global::hyperspace = 0;
+    Global::maintenance_queue = 0;
+    Global::metadata_table = 0;
+    Global::rs_metrics_table = 0;
+    Global::hyperspace = 0;
 
-  if (Global::log_dfs != Global::dfs)
-    delete Global::log_dfs;
-  delete Global::dfs;
+    if (Global::log_dfs != Global::dfs)
+      delete Global::log_dfs;
+    delete Global::dfs;
 
-  delete Global::protocol;
+    delete Global::protocol;
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+  }
 
 }
 
@@ -2845,22 +2851,28 @@ void RangeServer::close(ResponseCallback *cb) {
   for (size_t i=0; i<range_vec.size(); i++)
     range_vec[i]->increment_update_counter();
 
-  if (Global::range_log)
-    Global::range_log->close();
+  try {
 
-  if (Global::root_log)
-    Global::root_log->close();
+    if (Global::range_log)
+      Global::range_log->close();
 
-  if (Global::metadata_log)
-    Global::metadata_log->close();
+    if (Global::root_log)
+      Global::root_log->close();
 
-  if (Global::system_log)
-    Global::metadata_log->close();
+    if (Global::metadata_log)
+      Global::metadata_log->close();
 
-  if (Global::user_log)
-    Global::user_log->close();
+    if (Global::system_log)
+      Global::metadata_log->close();
 
-  cb->response_ok();
+    if (Global::user_log)
+      Global::user_log->close();
+
+    cb->response_ok();
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+  }
 
 }
 

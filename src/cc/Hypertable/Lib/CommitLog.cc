@@ -234,7 +234,7 @@ int CommitLog::close() {
   try {
     ScopedLock lock(m_mutex);
     if (m_fd > 0) {
-      m_fs->close(m_fd);
+      m_fs->close(m_fd, (DispatchHandler *)0);
       m_fd = -1;
     }
   }
