@@ -41,6 +41,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/StringExt.h"
+#include "Common/md5.h"
 
 #include "Hypertable/Lib/CompressorFactory.h"
 
@@ -116,6 +117,7 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
     assert(header->get_compression_type() == BlockCompressionCodec::NONE);
     String log_dir = (const char *)(infop->block_ptr + header->length());
     load_fragments(log_dir, true);
+    m_linked_logs.insert(md5_hash(log_dir.c_str()));
     if (header->get_revision() > m_latest_revision)
       m_latest_revision = header->get_revision();
     if (header->get_revision() > m_revision)

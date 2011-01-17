@@ -32,6 +32,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "md5.h"
 
@@ -380,6 +381,20 @@ void md5_hex(const void *input, size_t len, char output[33]) {
 
 void md5_string(const char *input, char output[33]) {
   md5_hex(input, strlen(input), output);
+}
+
+int64_t md5_hash(const char *input) {
+  md5_context ctx;
+  unsigned char digest[16];
+  int64_t hash;
+
+  md5_starts(&ctx);
+  md5_update(&ctx, (const unsigned char *)input, strlen(input));
+  md5_finish(&ctx, digest);
+
+  memcpy(&hash, digest, sizeof(int64_t));
+  return hash;
+  
 }
 
 void digest_to_trunc_modified_base64(const char digest[16], char output[17]) {

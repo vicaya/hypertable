@@ -118,6 +118,13 @@ void md5_hex(const void *input, size_t ilen, char output[33]);
 void md5_string(const char *input, char output[33]);
 
 /**
+ * \brief          Returns 64-bit hash checksum
+ *
+ * \param input    input string
+ */
+int64_t md5_hash(const char *input);
+
+/**
  * \brief          Get the modified base64 encoded string of the first 12 Bytes of the 16 Byte
  *                 MD5 code of a null terminated output
  *                 http://en.wikipedia.org/wiki/Base64#URL_applications

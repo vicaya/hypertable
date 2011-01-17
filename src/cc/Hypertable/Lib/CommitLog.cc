@@ -23,12 +23,13 @@
 #include <cassert>
 
 #include "Common/Checksum.h"
+#include "Common/Config.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/StringExt.h"
-#include "Common/Config.h"
+#include "Common/md5.h"
 
 #include "AsyncComm/Protocol.h"
 
@@ -185,6 +186,11 @@ int CommitLog::link_log(CommitLogBase *log_base) {
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
 
+  if (m_linked_logs.count(md5_hash(log_dir.c_str())) > 0) {
+    HT_WARNF("Skipping log %s because it is already linked in", log_dir.c_str());
+    return Error::OK;
+  }
+
   if (m_needs_roll) {
     ScopedLock lock(m_mutex);
     if ((error = roll()) != Error::OK)
@@ -224,6 +230,8 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     HT_ERRORF("Problem linking external log into commit log - %s", e.what());
     return e.code();
   }
+
+  m_linked_logs.insert(md5_hash(log_dir.c_str()));
 
   return Error::OK;
 }
@@ -267,8 +275,8 @@ int CommitLog::purge(int64_t revision) {
         m_fs->remove(fname);
       }
       catch (Exception &e) {
-        HT_WARNF("Problem removing log fragment '%s' (%s - %s)",
-                 fname.c_str(), Error::get_text(e.code()), e.what());
+        HT_ERRORF("Problem removing log fragment '%s' (%s - %s)",
+                  fname.c_str(), Error::get_text(e.code()), e.what());
       }
 
       m_fragment_queue.pop_front();
@@ -282,8 +290,8 @@ int CommitLog::purge(int64_t revision) {
           m_fs->rmdir(file_info.log_dir);
         }
         catch (Exception &e) {
-          HT_WARNF("Problem removing log directory '%s' (%s - %s)",
-                   file_info.log_dir.c_str(), Error::get_text(e.code()), e.what());
+          HT_ERRORF("Problem removing log directory '%s' (%s - %s)",
+                    file_info.log_dir.c_str(), Error::get_text(e.code()), e.what());
         }
       }
     }
