@@ -49,7 +49,10 @@ EventHandlerMasterConnection::EventHandlerMasterConnection(MasterClientPtr &mast
   ApplicationHandler(event), m_master(master), m_location_persisted(false) {
 
   Path data_dir = properties->get_str("Hypertable.DataDirectory");
-  m_location_file = (data_dir /= "/run/location").string();
+  data_dir /= "/run";
+  if (!FileUtils::exists(data_dir.string()))
+    FileUtils::mkdirs(data_dir.string());
+  m_location_file = (data_dir /= "/location").string();
 
   // Get location string
   {
