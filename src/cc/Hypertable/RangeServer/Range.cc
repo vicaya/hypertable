@@ -271,13 +271,25 @@ void Range::load_cell_stores(Metadata *metadata) {
 
     String file_basename = Global::toplevel_dir + "/tables/";
 
+    bool skip_not_found = Config::properties->get_bool("Hypertable.RangeServer.CellStore.SkipNotFound");
+
     for (size_t i=0; i<csvec.size(); i++) {
 
       files += csvec[i] + ";\n";
 
       HT_INFOF("Loading CellStore %s", csvec[i].c_str());
 
-      cellstore = CellStoreFactory::open(file_basename + csvec[i], m_start_row.c_str(), m_end_row.c_str());
+      try {
+        cellstore = CellStoreFactory::open(file_basename + csvec[i], m_start_row.c_str(), m_end_row.c_str());
+      }
+      catch (Exception &e) {
+        if (e.code() == Error::DFSBROKER_FILE_NOT_FOUND && skip_not_found) {
+          HT_WARNF("CellStore file '%s' not found, skipping", csvec[i].c_str());
+          continue;
+        }
+        HT_FATALF("Problem opening CellStore file '%s' - %s", csvec[i].c_str(),
+                  Error::get_text(e.code()));
+      }
 
       int64_t revision = boost::any_cast<int64_t>
         (cellstore->get_trailer()->get("revision"));

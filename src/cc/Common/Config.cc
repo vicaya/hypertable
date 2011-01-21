@@ -309,6 +309,8 @@ void DefaultPolicy::init_options() {
         str()->default_value("lzo"), "Default compressor for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultBloomFilter",
         str()->default_value("rows"), "Default bloom filter for cell stores")
+    ("Hypertable.RangeServer.CellStore.SkipNotFound",
+        boo()->default_value(false), "Skip over cell stores that are non-existent")
     ("Hypertable.RangeServer.CommitInterval", i32()->default_value(50),
      "Default minimum group commit interval in milliseconds")
     ("Hypertable.RangeServer.BlockCache.MinMemory", i64()->default_value(150*M),
