@@ -236,7 +236,6 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
   error = find(table, row_key, rane_loc_infop, timer, hard);
 
   if (error == Error::TABLE_NOT_FOUND) {
-    ScopedLock lock(m_mutex);
     clear_error_history();
     HT_THROWF(error, "Table '%s' is (being) dropped", table->id);
   }
@@ -257,7 +256,6 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
     // try again
     if ((error = find(table, row_key, rane_loc_infop, timer, true))
         == Error::TABLE_NOT_FOUND) {
-      ScopedLock lock(m_mutex);
       clear_error_history();
       HT_THROWF(error, "Table '%s' is (being) dropped", table->id);
     }
@@ -373,7 +371,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
                          rane_loc_infop, inclusive)) {
       String err_msg = format("Unable to find metadata for row '%s' row_key=%s",
                               meta_keys.start, row_key);
-      HT_ERRORF("%s", err_msg.c_str());
+      HT_INFOF("%s", err_msg.c_str());
       SAVE_ERR(Error::METADATA_NOT_FOUND, err_msg);
       return Error::METADATA_NOT_FOUND;
     }

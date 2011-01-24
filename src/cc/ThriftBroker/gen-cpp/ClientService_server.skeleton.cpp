@@ -42,14 +42,49 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("close_namespace\n");
   }
 
+  Future open_future(const int32_t queue_size) {
+    // Your implementation goes here
+    printf("open_future\n");
+  }
+
+  void get_future_result(Result& _return, const Future ff) {
+    // Your implementation goes here
+    printf("get_future_result\n");
+  }
+
+  void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) {
+    // Your implementation goes here
+    printf("get_future_result_as_arrays\n");
+  }
+
+  void get_future_result_serialized(ResultSerialized& _return, const Future ff) {
+    // Your implementation goes here
+    printf("get_future_result_serialized\n");
+  }
+
+  void close_future(const Future ff) {
+    // Your implementation goes here
+    printf("close_future\n");
+  }
+
   Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found) {
     // Your implementation goes here
     printf("open_scanner\n");
   }
 
+  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found) {
+    // Your implementation goes here
+    printf("open_scanner_async\n");
+  }
+
   void close_scanner(const Scanner scanner) {
     // Your implementation goes here
     printf("close_scanner\n");
+  }
+
+  void close_scanner_async(const ScannerAsync scanner) {
+    // Your implementation goes here
+    printf("close_scanner_async\n");
   }
 
   void next_cells(std::vector<Cell> & _return, const Scanner scanner) {

@@ -21,7 +21,34 @@ begin
     client.with_scanner(ns, "thrift_test", ScanSpec.new()) do |scanner|
       client.each_cell(scanner) { |cell| pp cell }
     end
-       
+    
+    puts "testing asynchronous api..."
+    # testing asynchronous scanner api
+    client.with_future() do |future|
+      color_scanner = client.open_scanner_async(ns, "FruitColor", future, ScanSpec.new(), true)
+      location_scanner = client.open_scanner_async(ns, "FruitLocation", future, ScanSpec.new(), true)
+      energy_scanner = client.open_scanner_async(ns, "FruitEnergy", future, ScanSpec.new(), true)
+      expected_cells=6
+      num_cells=0
+      while (true)
+        result = client.get_future_result(future)
+        if result.is_empty || result.is_error || !result.is_scan
+          break
+        end
+        result.cells.each do |cell|
+          pp cell
+          num_cells = num_cells+1
+        end
+      end
+      client.close_scanner_async(color_scanner)
+      client.close_scanner_async(location_scanner)
+      client.close_scanner_async(energy_scanner)
+      if num_cells != expected_cells
+        puts "Expected #{expected_cells} got {#num_cells}"
+        exit 1
+      end
+    end
+
     puts "testing mutator api..."
     client.with_mutator(ns, "thrift_test") do |mutator|
       key = Key.new

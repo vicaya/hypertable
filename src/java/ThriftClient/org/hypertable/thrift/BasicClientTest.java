@@ -118,6 +118,42 @@ public class BasicClientTest {
         client.close_scanner(scanner);
       }
 
+      // asynchronous scanner
+      long future=0;
+      long color_scanner=0;
+      long location_scanner=0;
+      long energy_scanner=0;
+      int expected_cells = 6;
+      int num_cells = 0;
+
+      try {
+        System.out.println("Asynchronous scan");
+        ScanSpec ss = new ScanSpec();
+        future = client.open_future(0);
+        color_scanner = client.open_scanner_async(ns, "FruitColor", future, ss, true);
+        location_scanner = client.open_scanner_async(ns, "FruitLocation", future, ss, true);
+        energy_scanner = client.open_scanner_async(ns, "FruitEnergy", future, ss, true);
+        Result result;
+        while (true) {
+          result = client.get_future_result(future);
+          if (result.is_empty || result.is_error || !result.is_scan)
+            break;
+          for(int ii=0; ii< result.cells.size(); ++ii) {
+            show(result.cells.toString());
+            num_cells++;
+          }
+        }
+      }
+      finally {
+        client.close_scanner_async(color_scanner);
+        client.close_scanner_async(location_scanner);
+        client.close_scanner_async(energy_scanner);
+        client.close_future(future);
+      }
+      if (num_cells != 6) {
+        System.out.println("Expected " + expected_cells + " cells got " + num_cells);
+        System.exit(1);
+      }
 
 
       // issue 497

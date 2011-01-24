@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,31 +19,33 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_INTERVALSCANNER_H
-#define HYPERTABLE_INTERVALSCANNER_H
+#ifndef HYPERTABLE_INTERVALSCANNERASYNC_H
+#define HYPERTABLE_INTERVALSCANNERASYNC_H
 
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
+#include "Common/StringExt.h"
 
-#include "AsyncComm/DispatchHandlerSynchronizer.h"
-
-#include "Cell.h"
+#include "ScanCells.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
 #include "ScanBlock.h"
 #include "Types.h"
+#include "TableScannerDispatchHandler.h"
 
 namespace Hypertable {
 
   class Table;
+  class TableScannerAsync;
 
-  class IntervalScanner : public ReferenceCount {
+  class IntervalScannerAsync : public ReferenceCount {
 
   public:
     /**
-     * Constructs a IntervalScanner object.
+     * Constructs a IntervalScannerAsync object.
      *
      * @param comm pointer to the Comm layer
+     * @param app_queue Application Queue pointer
      * @param table ponter to the table
      * @param range_locator smart pointer to range locator
      * @param scan_spec reference to scan specification object
@@ -51,28 +53,34 @@ namespace Hypertable {
      *        methods to execute before throwing an exception
      * @param retry_table_not_found whether to retry upon errors caused by
      *        drop/create tables with the same name
+     * @param current is this scanner the current scanner being used
+     * @param scanner pointer to table scanner
+     * @param id scanner id
      */
-    IntervalScanner(Comm *comm, Table *table, RangeLocatorPtr &range_locator,
-                    const ScanSpec &scan_spec, uint32_t timeout_ms,
-                    bool retry_table_not_found);
+    IntervalScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
+                         RangeLocatorPtr &range_locator,
+                         const ScanSpec &scan_spec, uint32_t timeout_ms,
+                         bool retry_table_not_found, bool current,
+                         TableScannerAsync *scanner, int id);
 
-    virtual ~IntervalScanner();
-
-    bool next(Cell &cell);
+    virtual ~IntervalScannerAsync();
 
     int32_t get_rows_seen() { return m_rows_seen; }
     void    set_rows_seen(int32_t n) { m_rows_seen = n; }
 
-    void find_range_and_start_scan(const char *row_key, Timer &timer, bool synchronous=false);
+    void abort();
+    bool retry(bool refresh, bool hard);
+    bool handle_result(EventPtr &event, ScanCellsPtr &cells, bool &show_results);
+    bool set_current(ScanCellsPtr &cells, bool &show_results);
 
     int64_t bytes_scanned() { return m_bytes_scanned; }
 
   private:
-    void init(const ScanSpec &, Timer &);
-
-    int fetch_create_scanner_result(Timer &timer);
-
-    void request_next_scanblock(CommAddress addr);
+    void do_readahead();
+    void init(const ScanSpec &);
+    void find_range_and_start_scan(const char *row_key, bool hard=false);
+    void load_result(EventPtr &event, ScanCellsPtr &cells);
+    void set_range_spec(DynamicBuffer &dbuf, RangeSpec &range);
 
     Comm               *m_comm;
     Table              *m_table;
@@ -83,16 +91,12 @@ namespace Hypertable {
     RangeServerClient   m_range_server;
     TableIdentifierManaged m_table_identifier;
     bool                m_eos;
-    ScanBlock           m_scanblock;
     String              m_cur_row;
     String              m_create_scanner_row;
     RangeLocationInfo   m_range_info;
     RangeLocationInfo   m_next_range_info;
-    bool                m_readahead;
     bool                m_fetch_outstanding;
-    bool                m_create_scanner_outstanding;
-    DispatchHandlerSynchronizer  m_create_scanner_handler;
-    DispatchHandlerSynchronizer  m_fetch_scanblock_handler;
+    bool                m_create_outstanding;
     EventPtr            m_event;
     String              m_start_row;
     String              m_end_row;
@@ -100,13 +104,19 @@ namespace Hypertable {
     int32_t             m_rows_seen;
     uint32_t            m_timeout_ms;
     bool                m_retry_table_not_found;
+    bool                m_current;
     int64_t             m_bytes_scanned;
-    typedef std::set<const char *, LtCstr> CstrRowSet;
-    CstrRowSet          m_rowset;
+    CstrSet             m_rowset;
+    TableScannerDispatchHandler m_handler;
+    TableScannerAsync  *m_scanner;
+    int                 m_id;
+    Timer               m_timer;
+    bool                m_cur_scanner_finished;
+    int                 m_cur_scanner_id;
   };
 
-  typedef intrusive_ptr<IntervalScanner> IntervalScannerPtr;
+  typedef intrusive_ptr<IntervalScannerAsync> IntervalScannerAsyncPtr;
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_INTERVALSCANNER_H
+#endif // HYPERTABLE_INTERVALSCANNERASYNC_H

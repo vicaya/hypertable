@@ -36,6 +36,7 @@
 #include "Hypertable/Lib/HqlInterpreter.h"
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/NamespaceListing.h"
+#include "Hypertable/Lib/Future.h"
 
 #include "Config.h"
 #include "SerializedCellsReader.h"
@@ -136,12 +137,28 @@ typedef Meta::list<ThriftBrokerPolicy, DefaultCommPolicy> Policies;
 
 typedef std::map<SharedMutatorMapKey, TableMutatorPtr> SharedMutatorMap;
 typedef hash_map< ::int64_t, TableScannerPtr> ScannerMap;
+typedef hash_map< ::int64_t, TableScannerAsyncPtr> ScannerAsyncMap;
+typedef hash_map< ::int64_t, ::int64_t> ReverseScannerAsyncMap;
 typedef hash_map< ::int64_t, TableMutatorPtr> MutatorMap;
 typedef hash_map< ::int64_t, NamespacePtr> NamespaceMap;
+typedef hash_map< ::int64_t, FuturePtr> FutureMap;
 typedef hash_map< ::int64_t, HqlInterpreterPtr> HqlInterpreterMap;
 typedef std::vector<ThriftGen::Cell> ThriftCells;
 typedef std::vector<CellAsArray> ThriftCellsAsArrays;
 
+::int64_t
+cell_str_to_num(const std::string &from, const char *label,
+                ::int64_t min_num = INT64_MIN, ::int64_t max_num = INT64_MAX) {
+  char *endp;
+
+  ::int64_t value = strtoll(from.data(), &endp, 0);
+
+  if (endp - from.data() != (int)from.size()
+      || value < min_num || value > max_num)
+    HT_THROWF(Error::BAD_KEY, "Error converting %s to %s", from.c_str(), label);
+
+  return value;
+}
 
 void
 convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
@@ -251,29 +268,6 @@ int32_t convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
   return amount;
 }
 
-void convert_cells(const ThriftCells &tcells, Hypertable::Cells &hcells) {
-  // shallow copy
-  foreach(const ThriftGen::Cell &tcell, tcells) {
-    Hypertable::Cell hcell;
-    convert_cell(tcell, hcell);
-    hcells.push_back(hcell);
-  }
-}
-
-::int64_t
-cell_str_to_num(const std::string &from, const char *label,
-                ::int64_t min_num = INT64_MIN, ::int64_t max_num = INT64_MAX) {
-  char *endp;
-
-  ::int64_t value = strtoll(from.data(), &endp, 0);
-
-  if (endp - from.data() != (int)from.size()
-      || value < min_num || value > max_num)
-    HT_THROWF(Error::BAD_KEY, "Error converting %s to %s", from.c_str(), label);
-
-  return value;
-}
-
 void convert_cell(const CellAsArray &tcell, Hypertable::Cell &hcell) {
   int len = tcell.size();
 
@@ -305,6 +299,52 @@ int32_t convert_cell(const Hypertable::Cell &hcell, CellAsArray &tcell) {
   amount += tcell[3].length();
   tcell[4] = format("%llu", (Llu)hcell.timestamp);
   amount += tcell[4].length();
+  return amount;
+}
+
+int32_t convert_cells(const Hypertable::Cells &hcells, ThriftCells &tcells) {
+  // deep copy
+  int32_t amount = sizeof(ThriftCells);
+  tcells.resize(hcells.size());
+  for(size_t ii=0; ii<hcells.size(); ++ii)
+    amount += convert_cell(hcells[ii], tcells[ii]);
+
+  return amount;
+}
+
+void convert_cells(const ThriftCells &tcells, Hypertable::Cells &hcells) {
+  // shallow copy
+  foreach(const ThriftGen::Cell &tcell, tcells) {
+    Hypertable::Cell hcell;
+    convert_cell(tcell, hcell);
+    hcells.push_back(hcell);
+  }
+}
+
+int32_t convert_cells(const Hypertable::Cells &hcells, ThriftCellsAsArrays &tcells) {
+  // deep copy
+  int32_t amount = sizeof(CellAsArray);
+  tcells.resize(hcells.size());
+  for(size_t ii=0; ii<hcells.size(); ++ii) {
+    amount += convert_cell(hcells[ii], tcells[ii]);
+  }
+ return amount;
+}
+
+int32_t convert_cells(Hypertable::Cells &hcells, CellsSerialized &tcells) {
+  // deep copy
+  int32_t amount = 0 ;
+  for(size_t ii=0; ii<hcells.size(); ++ii) {
+    amount += strlen(hcells[ii].row_key) + strlen(hcells[ii].column_family) +
+      strlen(hcells[ii].column_qualifier) + 8 + 8 + 4 + 1+ hcells[ii].value_len + 4;
+  }
+  SerializedCellsWriter writer(amount, true);
+  for(size_t ii=0; ii<hcells.size(); ++ii) {
+    writer.add(hcells[ii]);
+  }
+  writer.finalize(SerializedCellsFlag::EOS);
+  tcells = String((char *)writer.get_buffer(), writer.get_buffer_length());
+  amount = tcells.size();
   return amount;
 }
 
@@ -389,6 +429,8 @@ public:
     m_next_threshold = Config::get_i32("ThriftBroker.NextThreshold");
     m_client = new Hypertable::Client();
     m_next_namespace_id = 1;
+    m_next_future_id = 0;
+    m_future_queue_size = Config::get_i32("ThriftBroker.Future.QueueSize");
   }
 
   virtual void
@@ -461,6 +503,21 @@ public:
     } RETHROW()
   }
 
+  virtual ScannerAsync
+  open_scanner_async(const ThriftGen::Namespace ns, const String &table,
+                     const ThriftGen::Future ff,
+                     const ThriftGen::ScanSpec &ss, bool retry_table_not_found) {
+    LOG_API("namespace=" << ns << " table="<< table << " future=" << ff << " scan_spec="<< ss);
+
+    try {
+      ScannerAsync id = get_scanner_async_id(_open_scanner_async(ns, table, ff, ss,
+                                                                 retry_table_not_found).get());
+      LOG_API("scanner_async="<< id);
+      return id;
+    } RETHROW()
+  }
+
+
   virtual void close_namespace(const ThriftGen::Namespace ns) {
     LOG_API("namespace="<< ns);
 
@@ -476,6 +533,15 @@ public:
     try {
       remove_scanner(scanner);
       LOG_API("scanner="<< scanner <<" done");
+    } RETHROW()
+  }
+
+  virtual void close_scanner_async(const ScannerAsync scanner_async) {
+    LOG_API("scanner_async="<< scanner_async);
+
+    try {
+      remove_scanner_async(scanner_async);
+      LOG_API("scanner_async="<< scanner_async <<" done");
     } RETHROW()
   }
 
@@ -751,6 +817,91 @@ public:
     try {
       _offer_cell(ns, table, mutate_spec, cell);
       LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
+    } RETHROW()
+  }
+
+  virtual ThriftGen::Future open_future(int queue_size) {
+    try {
+      queue_size = (queue_size <= 0) ? m_future_queue_size : queue_size;
+      FuturePtr future_ptr = new Hypertable::Future(queue_size);
+      ThriftGen::Future id = get_future_id(&future_ptr);
+      LOG_API("Future id=" << id);
+      return id;
+    } RETHROW()
+  }
+
+  virtual void
+  get_future_result(ThriftGen::Result &tresult, ThriftGen::Future ff) {
+    LOG_API("future=" << ff);
+
+    try {
+      FuturePtr &future_ptr = get_future(ff);
+      ResultPtr hresult;
+      bool done = !(future_ptr->get(hresult));
+      if (done) {
+        tresult.is_empty = true;
+        tresult.id = 0;
+        LOG_API("future=" << ff << " is_empty="<< tresult.is_empty);
+      }
+      else {
+        tresult.is_empty = false;
+        _convert_result(hresult, tresult);
+        LOG_API("future=" << ff << " is_empty=" << tresult.is_empty << " id=" << tresult.id
+                <<" is_scan="<<tresult.is_scan << " is_error=" << tresult.is_error);
+      }
+    } RETHROW()
+  }
+
+  virtual void
+  get_future_result_as_arrays(ThriftGen::ResultAsArrays &tresult, ThriftGen::Future ff) {
+    LOG_API("future=" << ff);
+
+    try {
+      FuturePtr &future_ptr = get_future(ff);
+      ResultPtr hresult;
+      bool done = !(future_ptr->get(hresult));
+      if (done) {
+        tresult.is_empty = true;
+        tresult.id = 0;
+        LOG_API("future=" << ff << " done="<< done );
+      }
+      else {
+        tresult.is_empty = false;
+        _convert_result_as_arrays(hresult, tresult);
+        LOG_API("future=" << ff << " done=" << done << " id=" << tresult.id
+                <<" is_scan="<<tresult.is_scan << "is_error=" << tresult.is_error);
+      }
+    } RETHROW()
+  }
+
+  virtual void
+  get_future_result_serialized(ThriftGen::ResultSerialized &tresult, ThriftGen::Future ff) {
+    LOG_API("future=" << ff);
+
+    try {
+      FuturePtr &future_ptr = get_future(ff);
+      ResultPtr hresult;
+      bool done = !(future_ptr->get(hresult));
+      if (done) {
+        tresult.is_empty = true;
+        tresult.id = 0;
+        LOG_API("future=" << ff << " done="<< done );
+      }
+      else {
+        tresult.is_empty = false;
+        _convert_result_serialized(hresult, tresult);
+        LOG_API("future=" << ff << " done=" << done << " id=" << tresult.id
+                <<" is_scan="<<tresult.is_scan << "is_error=" << tresult.is_error);
+      }
+    } RETHROW()
+  }
+
+  virtual void close_future(const ThriftGen::Future ff) {
+    LOG_API("future="<< ff);
+
+    try {
+      remove_future_from_map(ff);
+      LOG_API("future="<< ff << " done");
     } RETHROW()
   }
 
@@ -1032,8 +1183,93 @@ public:
     RETHROW()
   }
 
-
   // helper methods
+  void _convert_result(const Hypertable::ResultPtr &hresult, ThriftGen::Result &tresult) {
+  Hypertable::Cells hcells;
+
+    if (hresult->is_scan()) {
+      tresult.is_scan = true;
+      tresult.id = get_scanner_async_id(hresult->get_scanner());
+      if (hresult->is_error()) {
+        tresult.is_error = true;
+        hresult->get_error(tresult.error, tresult.error_msg);
+        tresult.__isset.error = true;
+        tresult.__isset.error_msg = true;
+      }
+      else {
+        tresult.is_error = false;
+        tresult.__isset.cells = true;
+        hresult->get_cells(hcells);
+        convert_cells(hcells, tresult.cells);
+      }
+    }
+    else {
+      HT_THROW(Error::NOT_IMPLEMENTED, "Support for asynchronous mutators not yet implemented");
+    }
+  }
+
+  void _convert_result_as_arrays(const Hypertable::ResultPtr &hresult,
+      ThriftGen::ResultAsArrays &tresult) {
+  Hypertable::Cells hcells;
+
+    if (hresult->is_scan()) {
+      tresult.is_scan = true;
+      tresult.id = get_scanner_async_id(hresult->get_scanner());
+      if (hresult->is_error()) {
+        tresult.is_error = true;
+        hresult->get_error(tresult.error, tresult.error_msg);
+        tresult.__isset.error = true;
+        tresult.__isset.error_msg = true;
+      }
+      else {
+        tresult.is_error = false;
+        tresult.__isset.cells = true;
+        hresult->get_cells(hcells);
+        convert_cells(hcells, tresult.cells);
+      }
+    }
+    else {
+      HT_THROW(Error::NOT_IMPLEMENTED, "Support for asynchronous mutators not yet implemented");
+    }
+  }
+
+  void _convert_result_serialized(Hypertable::ResultPtr &hresult,
+                                  ThriftGen::ResultSerialized &tresult) {
+  Hypertable::Cells hcells;
+
+    if (hresult->is_scan()) {
+      tresult.is_scan = true;
+      tresult.id = get_scanner_async_id(hresult->get_scanner());
+      if (hresult->is_error()) {
+        tresult.is_error = true;
+        hresult->get_error(tresult.error, tresult.error_msg);
+        tresult.__isset.error = true;
+        tresult.__isset.error_msg = true;
+      }
+      else {
+        tresult.is_error = false;
+        tresult.__isset.cells = true;
+        hresult->get_cells(hcells);
+        convert_cells(hcells, tresult.cells);
+      }
+    }
+    else {
+      HT_THROW(Error::NOT_IMPLEMENTED, "Support for asynchronous mutators not yet implemented");
+    }
+  }
+
+  TableScannerAsyncPtr
+  _open_scanner_async(const ThriftGen::Namespace ns, const String &table,
+                      const ThriftGen::Future ff, const ThriftGen::ScanSpec &ss,
+                      bool retry_table_not_found) {
+    NamespacePtr namespace_ptr = get_namespace(ns);
+    TablePtr t = namespace_ptr->open_table(table);
+    FuturePtr &future_ptr = get_future(ff);
+
+    Hypertable::ScanSpec hss;
+    convert_scan_spec(ss, hss);
+    return t->create_scanner_async(future_ptr.get(), hss, 0, retry_table_not_found);
+  }
 
   TableScannerPtr
   _open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss,
@@ -1141,7 +1377,21 @@ public:
     get_mutator(mutator)->set_cells(cb.get());
   }
 
-  NamespacePtr get_namespace(::int64_t id) {
+  FuturePtr& get_future(::int64_t id) {
+    ScopedLock lock(m_future_mutex);
+    FutureMap::iterator it = m_future_map.find(id);
+
+    if (it != m_future_map.end())
+      return it->second;
+
+    HT_ERROR_OUT << "Bad future id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_FUTURE_ID,
+             format("Invalid future id: %lld", (Lld)id));
+
+  }
+
+
+  NamespacePtr& get_namespace(::int64_t id) {
     ScopedLock lock(m_namespace_mutex);
     NamespaceMap::iterator it = m_namespace_map.find(id);
 
@@ -1153,6 +1403,16 @@ public:
              format("Invalid namespace id: %lld", (Lld)id));
 
   }
+
+  // returned id is guaranteed to be unique and non-zero
+  ::int64_t get_future_id(FuturePtr *ff) {
+    ScopedLock lock(m_future_mutex);
+    ::int64_t id = m_next_future_id++;
+
+    m_future_map.insert(make_pair(id, *ff)); // no overwrite
+    return id;
+  }
+
 
   // returned id is guaranteed to be unique and non-zero
   ::int64_t get_namespace_id(NamespacePtr *ns) {
@@ -1168,6 +1428,34 @@ public:
     //}
     m_namespace_map.insert(make_pair(id, *ns)); // no overwrite
     return id;
+  }
+
+  ::int64_t get_scanner_async_id(TableScannerAsync *scanner) {
+    ScopedLock lock(m_scanner_async_mutex);
+    ::int64_t id = (::int64_t)scanner;
+
+    // if scanner is already in map then return id by reverse lookup
+    ReverseScannerAsyncMap::iterator it =
+        m_reverse_scanner_async_map.find((::int64_t)scanner);
+    if (it != m_reverse_scanner_async_map.end())
+      id = it->second;
+    else {
+      m_scanner_async_map.insert(make_pair(id, scanner)); // no overwrite
+      m_reverse_scanner_async_map.insert(make_pair((::int64_t)scanner, id));
+    }
+    return id;
+  }
+
+  TableScannerAsyncPtr get_scanner_async(::int64_t id) {
+    ScopedLock lock(m_scanner_async_mutex);
+    ScannerAsyncMap::iterator it = m_scanner_async_map.find(id);
+
+    if (it != m_scanner_async_map.end())
+      return it->second;
+
+    HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
+             format("Invalid scanner id: %lld", (Lld)id));
   }
 
   ::int64_t get_scanner_id(TableScanner *scanner) {
@@ -1195,6 +1483,23 @@ public:
 
     if (it != m_scanner_map.end()) {
       m_scanner_map.erase(it);
+      return;
+    }
+
+    HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
+             format("Invalid scanner id: %lld", (Lld)id));
+  }
+
+  void remove_scanner_async(::int64_t id) {
+    ScopedLock lock(m_scanner_async_mutex);
+    ScannerAsyncMap::iterator it = m_scanner_async_map.find(id);
+    ::int64_t scanner_async=0;
+
+    if (it != m_scanner_async_map.end()) {
+      scanner_async = (::int64_t)(it->second.get());
+      m_scanner_async_map.erase(it);
+      m_reverse_scanner_async_map.erase(scanner_async);
       return;
     }
 
@@ -1270,6 +1575,20 @@ public:
              format("Invalid mutator id: %lld", (Lld)id));
   }
 
+  void remove_future_from_map(::int64_t id) {
+    ScopedLock lock(m_future_mutex);
+    FutureMap::iterator it = m_future_map.find(id);
+
+    if (it != m_future_map.end()) {
+      m_future_map.erase(it);
+      return;
+    }
+
+    HT_ERROR_OUT << "Bad future id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_FUTURE_ID,
+             format("Invalid future id: %lld", (Lld)id));
+  }
+
   void remove_namespace_from_map(::int64_t id) {
     ScopedLock lock(m_namespace_mutex);
     NamespaceMap::iterator it = m_namespace_map.find(id);
@@ -1309,6 +1628,13 @@ private:
   ::int64_t        m_next_namespace_id;
   NamespaceMap     m_namespace_map;
   Mutex            m_namespace_mutex;
+  ScannerAsyncMap  m_scanner_async_map;
+  ReverseScannerAsyncMap m_reverse_scanner_async_map;
+  Mutex            m_scanner_async_mutex;
+  ::int64_t        m_next_future_id;
+  FutureMap        m_future_map;
+  Mutex            m_future_mutex;
+  ::int32_t        m_future_queue_size;
   SharedMutatorMap m_shared_mutator_map;
   ::int32_t        m_next_threshold;
   ClientPtr        m_client;

@@ -25,8 +25,15 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void create_table(Namespace ns, string table_name, string schema)'
   print '  Namespace open_namespace(string ns)'
   print '  void close_namespace(Namespace ns)'
+  print '  Future open_future(i32 queue_size)'
+  print '  Result get_future_result(Future ff)'
+  print '  ResultAsArrays get_future_result_as_arrays(Future ff)'
+  print '  ResultSerialized get_future_result_serialized(Future ff)'
+  print '  void close_future(Future ff)'
   print '  Scanner open_scanner(Namespace ns, string table_name, ScanSpec scan_spec, bool retry_table_not_found)'
+  print '  ScannerAsync open_scanner_async(Namespace ns, string table_name, Future future, ScanSpec scan_spec, bool retry_table_not_found)'
   print '  void close_scanner(Scanner scanner)'
+  print '  void close_scanner_async(ScannerAsync scanner)'
   print '   next_cells(Scanner scanner)'
   print '   next_cells_as_arrays(Scanner scanner)'
   print '  CellsSerialized next_cells_serialized(Scanner scanner)'
@@ -138,17 +145,59 @@ elif cmd == 'close_namespace':
     sys.exit(1)
   pp.pprint(client.close_namespace(eval(args[0]),))
 
+elif cmd == 'open_future':
+  if len(args) != 1:
+    print 'open_future requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.open_future(eval(args[0]),))
+
+elif cmd == 'get_future_result':
+  if len(args) != 1:
+    print 'get_future_result requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.get_future_result(eval(args[0]),))
+
+elif cmd == 'get_future_result_as_arrays':
+  if len(args) != 1:
+    print 'get_future_result_as_arrays requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.get_future_result_as_arrays(eval(args[0]),))
+
+elif cmd == 'get_future_result_serialized':
+  if len(args) != 1:
+    print 'get_future_result_serialized requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.get_future_result_serialized(eval(args[0]),))
+
+elif cmd == 'close_future':
+  if len(args) != 1:
+    print 'close_future requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.close_future(eval(args[0]),))
+
 elif cmd == 'open_scanner':
   if len(args) != 4:
     print 'open_scanner requires 4 args'
     sys.exit(1)
   pp.pprint(client.open_scanner(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
+elif cmd == 'open_scanner_async':
+  if len(args) != 5:
+    print 'open_scanner_async requires 5 args'
+    sys.exit(1)
+  pp.pprint(client.open_scanner_async(eval(args[0]),args[1],eval(args[2]),eval(args[3]),eval(args[4]),))
+
 elif cmd == 'close_scanner':
   if len(args) != 1:
     print 'close_scanner requires 1 args'
     sys.exit(1)
   pp.pprint(client.close_scanner(eval(args[0]),))
+
+elif cmd == 'close_scanner_async':
+  if len(args) != 1:
+    print 'close_scanner_async requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.close_scanner_async(eval(args[0]),))
 
 elif cmd == 'next_cells':
   if len(args) != 1:

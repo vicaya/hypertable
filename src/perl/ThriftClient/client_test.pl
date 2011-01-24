@@ -19,8 +19,8 @@ $client->set_cell($mutator, $cell);
 $client->flush_mutator($mutator);
 
 print "shared mutator examples\n";
-my $mutate_spec = new Hypertable::ThriftGen::MutateSpec({appname => "test-perl", 
-                                                         flush_interval => 1000, 
+my $mutate_spec = new Hypertable::ThriftGen::MutateSpec({appname => "test-perl",
+                                                         flush_interval => 1000,
                                                          flags => 0});
 $key = new Hypertable::ThriftGen::Key({row => 'perl-put-k1',
                                        column_family => 'col'});
@@ -48,9 +48,39 @@ while (scalar @$cells) {
   $cells = $client->next_cells($scanner);
 }
 
+print "asynchronous examples\n";
+my $future = $client->open_future();
+my $color_scanner = $client->open_scanner_async($namespace, "FruitColor", $future,
+    new Hypertable::ThriftGen::ScanSpec({revs => 1}));
+my $location_scanner = $client->open_scanner_async($namespace, "FruitLocation", $future,
+    new Hypertable::ThriftGen::ScanSpec({revs => 1}));
+my $energy_scanner = $client->open_scanner_async($namespace, "FruitEnergy", $future,
+    new Hypertable::ThriftGen::ScanSpec({revs => 1}));
+
+my $expected_cells = 6;
+my $num_cells=0;
+
+while (1) {
+  my $result = $client->get_future_result($future);
+  print Dumper($result);
+  last if ($result->{is_empty}==1 || $result->{is_error}==1 || $result->{is_scan}!=1);
+  my $cells = $result->{cells};
+  foreach my $cell (@$cells){
+    print Dumper($cell);
+    $num_cells++;
+  }
+}
+
+$client->close_scanner_async($color_scanner);
+$client->close_scanner_async($location_scanner);
+$client->close_scanner_async($energy_scanner);;
+$client->close_future($future);
+
+die "Expected $expected_cells cells got $num_cells." if ($num_cells != $expected_cells);
+
 print "regexp scanner example\n";
 $scanner = $client->open_scanner($namespace, "thrift_test",
-    new Hypertable::ThriftGen::ScanSpec({revs => 1, row_regexp=>"k", value_regexp=>"^v[24]", 
+    new Hypertable::ThriftGen::ScanSpec({revs => 1, row_regexp=>"k", value_regexp=>"^v[24]",
     columns=>["col"]}));
 
 my $cells = $client->next_cells($scanner);

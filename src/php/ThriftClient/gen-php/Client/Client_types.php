@@ -1120,6 +1120,659 @@ class Hypertable_ThriftGen_Cell {
 
 }
 
+class Hypertable_ThriftGen_Result {
+  static $_TSPEC;
+
+  public $is_empty = null;
+  public $id = null;
+  public $is_scan = null;
+  public $is_error = null;
+  public $error = null;
+  public $error_msg = null;
+  public $cells = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'is_empty',
+          'type' => TType::BOOL,
+          ),
+        2 => array(
+          'var' => 'id',
+          'type' => TType::I64,
+          ),
+        3 => array(
+          'var' => 'is_scan',
+          'type' => TType::BOOL,
+          ),
+        4 => array(
+          'var' => 'is_error',
+          'type' => TType::BOOL,
+          ),
+        5 => array(
+          'var' => 'error',
+          'type' => TType::I32,
+          ),
+        6 => array(
+          'var' => 'error_msg',
+          'type' => TType::STRING,
+          ),
+        7 => array(
+          'var' => 'cells',
+          'type' => TType::LST,
+          'etype' => TType::STRUCT,
+          'elem' => array(
+            'type' => TType::STRUCT,
+            'class' => 'Hypertable_ThriftGen_Cell',
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['is_empty'])) {
+        $this->is_empty = $vals['is_empty'];
+      }
+      if (isset($vals['id'])) {
+        $this->id = $vals['id'];
+      }
+      if (isset($vals['is_scan'])) {
+        $this->is_scan = $vals['is_scan'];
+      }
+      if (isset($vals['is_error'])) {
+        $this->is_error = $vals['is_error'];
+      }
+      if (isset($vals['error'])) {
+        $this->error = $vals['error'];
+      }
+      if (isset($vals['error_msg'])) {
+        $this->error_msg = $vals['error_msg'];
+      }
+      if (isset($vals['cells'])) {
+        $this->cells = $vals['cells'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'Result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->is_empty);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->id);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->is_scan);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->is_error);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 5:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->error);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 6:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->error_msg);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 7:
+          if ($ftype == TType::LST) {
+            $this->cells = array();
+            $_size21 = 0;
+            $_etype24 = 0;
+            $xfer += $input->readListBegin($_etype24, $_size21);
+            for ($_i25 = 0; $_i25 < $_size21; ++$_i25)
+            {
+              $elem26 = null;
+              $elem26 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem26->read($input);
+              $this->cells []= $elem26;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('Result');
+    if ($this->is_empty !== null) {
+      $xfer += $output->writeFieldBegin('is_empty', TType::BOOL, 1);
+      $xfer += $output->writeBool($this->is_empty);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->id !== null) {
+      $xfer += $output->writeFieldBegin('id', TType::I64, 2);
+      $xfer += $output->writeI64($this->id);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->is_scan !== null) {
+      $xfer += $output->writeFieldBegin('is_scan', TType::BOOL, 3);
+      $xfer += $output->writeBool($this->is_scan);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->is_error !== null) {
+      $xfer += $output->writeFieldBegin('is_error', TType::BOOL, 4);
+      $xfer += $output->writeBool($this->is_error);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->error !== null) {
+      $xfer += $output->writeFieldBegin('error', TType::I32, 5);
+      $xfer += $output->writeI32($this->error);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->error_msg !== null) {
+      $xfer += $output->writeFieldBegin('error_msg', TType::STRING, 6);
+      $xfer += $output->writeString($this->error_msg);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cells !== null) {
+      if (!is_array($this->cells)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cells', TType::LST, 7);
+      {
+        $output->writeListBegin(TType::STRUCT, count($this->cells));
+        {
+          foreach ($this->cells as $iter27)
+          {
+            $xfer += $iter27->write($output);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ResultAsArrays {
+  static $_TSPEC;
+
+  public $is_empty = null;
+  public $id = null;
+  public $is_scan = null;
+  public $is_error = null;
+  public $error = null;
+  public $error_msg = null;
+  public $cells = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'is_empty',
+          'type' => TType::BOOL,
+          ),
+        2 => array(
+          'var' => 'id',
+          'type' => TType::I64,
+          ),
+        3 => array(
+          'var' => 'is_scan',
+          'type' => TType::BOOL,
+          ),
+        4 => array(
+          'var' => 'is_error',
+          'type' => TType::BOOL,
+          ),
+        5 => array(
+          'var' => 'error',
+          'type' => TType::I32,
+          ),
+        6 => array(
+          'var' => 'error_msg',
+          'type' => TType::STRING,
+          ),
+        7 => array(
+          'var' => 'cells',
+          'type' => TType::LST,
+          'etype' => TType::LST,
+          'elem' => array(
+            'type' => TType::LST,
+            'etype' => TType::STRING,
+            'elem' => array(
+              'type' => TType::STRING,
+              ),
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['is_empty'])) {
+        $this->is_empty = $vals['is_empty'];
+      }
+      if (isset($vals['id'])) {
+        $this->id = $vals['id'];
+      }
+      if (isset($vals['is_scan'])) {
+        $this->is_scan = $vals['is_scan'];
+      }
+      if (isset($vals['is_error'])) {
+        $this->is_error = $vals['is_error'];
+      }
+      if (isset($vals['error'])) {
+        $this->error = $vals['error'];
+      }
+      if (isset($vals['error_msg'])) {
+        $this->error_msg = $vals['error_msg'];
+      }
+      if (isset($vals['cells'])) {
+        $this->cells = $vals['cells'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ResultAsArrays';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->is_empty);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->id);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->is_scan);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->is_error);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 5:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->error);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 6:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->error_msg);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 7:
+          if ($ftype == TType::LST) {
+            $this->cells = array();
+            $_size28 = 0;
+            $_etype31 = 0;
+            $xfer += $input->readListBegin($_etype31, $_size28);
+            for ($_i32 = 0; $_i32 < $_size28; ++$_i32)
+            {
+              $elem33 = null;
+              $elem33 = array();
+              $_size34 = 0;
+              $_etype37 = 0;
+              $xfer += $input->readListBegin($_etype37, $_size34);
+              for ($_i38 = 0; $_i38 < $_size34; ++$_i38)
+              {
+                $elem39 = null;
+                $xfer += $input->readString($elem39);
+                $elem33 []= $elem39;
+              }
+              $xfer += $input->readListEnd();
+              $this->cells []= $elem33;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ResultAsArrays');
+    if ($this->is_empty !== null) {
+      $xfer += $output->writeFieldBegin('is_empty', TType::BOOL, 1);
+      $xfer += $output->writeBool($this->is_empty);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->id !== null) {
+      $xfer += $output->writeFieldBegin('id', TType::I64, 2);
+      $xfer += $output->writeI64($this->id);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->is_scan !== null) {
+      $xfer += $output->writeFieldBegin('is_scan', TType::BOOL, 3);
+      $xfer += $output->writeBool($this->is_scan);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->is_error !== null) {
+      $xfer += $output->writeFieldBegin('is_error', TType::BOOL, 4);
+      $xfer += $output->writeBool($this->is_error);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->error !== null) {
+      $xfer += $output->writeFieldBegin('error', TType::I32, 5);
+      $xfer += $output->writeI32($this->error);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->error_msg !== null) {
+      $xfer += $output->writeFieldBegin('error_msg', TType::STRING, 6);
+      $xfer += $output->writeString($this->error_msg);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cells !== null) {
+      if (!is_array($this->cells)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cells', TType::LST, 7);
+      {
+        $output->writeListBegin(TType::LST, count($this->cells));
+        {
+          foreach ($this->cells as $iter40)
+          {
+            {
+              $output->writeListBegin(TType::STRING, count($iter40));
+              {
+                foreach ($iter40 as $iter41)
+                {
+                  $xfer += $output->writeString($iter41);
+                }
+              }
+              $output->writeListEnd();
+            }
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ResultSerialized {
+  static $_TSPEC;
+
+  public $is_empty = null;
+  public $id = null;
+  public $is_scan = null;
+  public $is_error = null;
+  public $error = null;
+  public $error_msg = null;
+  public $cells = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'is_empty',
+          'type' => TType::BOOL,
+          ),
+        2 => array(
+          'var' => 'id',
+          'type' => TType::I64,
+          ),
+        3 => array(
+          'var' => 'is_scan',
+          'type' => TType::BOOL,
+          ),
+        4 => array(
+          'var' => 'is_error',
+          'type' => TType::BOOL,
+          ),
+        5 => array(
+          'var' => 'error',
+          'type' => TType::I32,
+          ),
+        6 => array(
+          'var' => 'error_msg',
+          'type' => TType::STRING,
+          ),
+        7 => array(
+          'var' => 'cells',
+          'type' => TType::STRING,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['is_empty'])) {
+        $this->is_empty = $vals['is_empty'];
+      }
+      if (isset($vals['id'])) {
+        $this->id = $vals['id'];
+      }
+      if (isset($vals['is_scan'])) {
+        $this->is_scan = $vals['is_scan'];
+      }
+      if (isset($vals['is_error'])) {
+        $this->is_error = $vals['is_error'];
+      }
+      if (isset($vals['error'])) {
+        $this->error = $vals['error'];
+      }
+      if (isset($vals['error_msg'])) {
+        $this->error_msg = $vals['error_msg'];
+      }
+      if (isset($vals['cells'])) {
+        $this->cells = $vals['cells'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ResultSerialized';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->is_empty);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->id);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->is_scan);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->is_error);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 5:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->error);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 6:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->error_msg);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 7:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->cells);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ResultSerialized');
+    if ($this->is_empty !== null) {
+      $xfer += $output->writeFieldBegin('is_empty', TType::BOOL, 1);
+      $xfer += $output->writeBool($this->is_empty);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->id !== null) {
+      $xfer += $output->writeFieldBegin('id', TType::I64, 2);
+      $xfer += $output->writeI64($this->id);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->is_scan !== null) {
+      $xfer += $output->writeFieldBegin('is_scan', TType::BOOL, 3);
+      $xfer += $output->writeBool($this->is_scan);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->is_error !== null) {
+      $xfer += $output->writeFieldBegin('is_error', TType::BOOL, 4);
+      $xfer += $output->writeBool($this->is_error);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->error !== null) {
+      $xfer += $output->writeFieldBegin('error', TType::I32, 5);
+      $xfer += $output->writeI32($this->error);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->error_msg !== null) {
+      $xfer += $output->writeFieldBegin('error_msg', TType::STRING, 6);
+      $xfer += $output->writeString($this->error_msg);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cells !== null) {
+      $xfer += $output->writeFieldBegin('cells', TType::STRING, 7);
+      $xfer += $output->writeString($this->cells);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class Hypertable_ThriftGen_NamespaceListing {
   static $_TSPEC;
 
@@ -1614,15 +2267,15 @@ class Hypertable_ThriftGen_AccessGroup {
         case 7:
           if ($ftype == TType::LST) {
             $this->columns = array();
-            $_size21 = 0;
-            $_etype24 = 0;
-            $xfer += $input->readListBegin($_etype24, $_size21);
-            for ($_i25 = 0; $_i25 < $_size21; ++$_i25)
+            $_size42 = 0;
+            $_etype45 = 0;
+            $xfer += $input->readListBegin($_etype45, $_size42);
+            for ($_i46 = 0; $_i46 < $_size42; ++$_i46)
             {
-              $elem26 = null;
-              $elem26 = new Hypertable_ThriftGen_ColumnFamily();
-              $xfer += $elem26->read($input);
-              $this->columns []= $elem26;
+              $elem47 = null;
+              $elem47 = new Hypertable_ThriftGen_ColumnFamily();
+              $xfer += $elem47->read($input);
+              $this->columns []= $elem47;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -1680,9 +2333,9 @@ class Hypertable_ThriftGen_AccessGroup {
       {
         $output->writeListBegin(TType::STRUCT, count($this->columns));
         {
-          foreach ($this->columns as $iter27)
+          foreach ($this->columns as $iter48)
           {
-            $xfer += $iter27->write($output);
+            $xfer += $iter48->write($output);
           }
         }
         $output->writeListEnd();
@@ -1765,18 +2418,18 @@ class Hypertable_ThriftGen_Schema {
         case 1:
           if ($ftype == TType::MAP) {
             $this->access_groups = array();
-            $_size28 = 0;
-            $_ktype29 = 0;
-            $_vtype30 = 0;
-            $xfer += $input->readMapBegin($_ktype29, $_vtype30, $_size28);
-            for ($_i32 = 0; $_i32 < $_size28; ++$_i32)
+            $_size49 = 0;
+            $_ktype50 = 0;
+            $_vtype51 = 0;
+            $xfer += $input->readMapBegin($_ktype50, $_vtype51, $_size49);
+            for ($_i53 = 0; $_i53 < $_size49; ++$_i53)
             {
-              $key33 = '';
-              $val34 = new Hypertable_ThriftGen_AccessGroup();
-              $xfer += $input->readString($key33);
-              $val34 = new Hypertable_ThriftGen_AccessGroup();
-              $xfer += $val34->read($input);
-              $this->access_groups[$key33] = $val34;
+              $key54 = '';
+              $val55 = new Hypertable_ThriftGen_AccessGroup();
+              $xfer += $input->readString($key54);
+              $val55 = new Hypertable_ThriftGen_AccessGroup();
+              $xfer += $val55->read($input);
+              $this->access_groups[$key54] = $val55;
             }
             $xfer += $input->readMapEnd();
           } else {
@@ -1786,18 +2439,18 @@ class Hypertable_ThriftGen_Schema {
         case 2:
           if ($ftype == TType::MAP) {
             $this->column_families = array();
-            $_size35 = 0;
-            $_ktype36 = 0;
-            $_vtype37 = 0;
-            $xfer += $input->readMapBegin($_ktype36, $_vtype37, $_size35);
-            for ($_i39 = 0; $_i39 < $_size35; ++$_i39)
+            $_size56 = 0;
+            $_ktype57 = 0;
+            $_vtype58 = 0;
+            $xfer += $input->readMapBegin($_ktype57, $_vtype58, $_size56);
+            for ($_i60 = 0; $_i60 < $_size56; ++$_i60)
             {
-              $key40 = '';
-              $val41 = new Hypertable_ThriftGen_ColumnFamily();
-              $xfer += $input->readString($key40);
-              $val41 = new Hypertable_ThriftGen_ColumnFamily();
-              $xfer += $val41->read($input);
-              $this->column_families[$key40] = $val41;
+              $key61 = '';
+              $val62 = new Hypertable_ThriftGen_ColumnFamily();
+              $xfer += $input->readString($key61);
+              $val62 = new Hypertable_ThriftGen_ColumnFamily();
+              $xfer += $val62->read($input);
+              $this->column_families[$key61] = $val62;
             }
             $xfer += $input->readMapEnd();
           } else {
@@ -1825,10 +2478,10 @@ class Hypertable_ThriftGen_Schema {
       {
         $output->writeMapBegin(TType::STRING, TType::STRUCT, count($this->access_groups));
         {
-          foreach ($this->access_groups as $kiter42 => $viter43)
+          foreach ($this->access_groups as $kiter63 => $viter64)
           {
-            $xfer += $output->writeString($kiter42);
-            $xfer += $viter43->write($output);
+            $xfer += $output->writeString($kiter63);
+            $xfer += $viter64->write($output);
           }
         }
         $output->writeMapEnd();
@@ -1843,10 +2496,10 @@ class Hypertable_ThriftGen_Schema {
       {
         $output->writeMapBegin(TType::STRING, TType::STRUCT, count($this->column_families));
         {
-          foreach ($this->column_families as $kiter44 => $viter45)
+          foreach ($this->column_families as $kiter65 => $viter66)
           {
-            $xfer += $output->writeString($kiter44);
-            $xfer += $viter45->write($output);
+            $xfer += $output->writeString($kiter65);
+            $xfer += $viter66->write($output);
           }
         }
         $output->writeMapEnd();

@@ -742,14 +742,14 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
         case 7: // COLUMNS
           if (field.type == TType.LIST) {
             {
-              TList _list12 = iprot.readListBegin();
-              this.columns = new ArrayList<ColumnFamily>(_list12.size);
-              for (int _i13 = 0; _i13 < _list12.size; ++_i13)
+              TList _list24 = iprot.readListBegin();
+              this.columns = new ArrayList<ColumnFamily>(_list24.size);
+              for (int _i25 = 0; _i25 < _list24.size; ++_i25)
               {
-                ColumnFamily _elem14;
-                _elem14 = new ColumnFamily();
-                _elem14.read(iprot);
-                this.columns.add(_elem14);
+                ColumnFamily _elem26;
+                _elem26 = new ColumnFamily();
+                _elem26.read(iprot);
+                this.columns.add(_elem26);
               }
               iprot.readListEnd();
             }
@@ -813,9 +813,9 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
         oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.columns.size()));
-          for (ColumnFamily _iter15 : this.columns)
+          for (ColumnFamily _iter27 : this.columns)
           {
-            _iter15.write(oprot);
+            _iter27.write(oprot);
           }
           oprot.writeListEnd();
         }

@@ -25,6 +25,7 @@
 #include "ThriftBroker/Client.h"
 #include "ThriftBroker/gen-cpp/HqlService.h"
 #include "ThriftBroker/ThriftHelper.h"
+#include "ThriftBroker/SerializedCellsReader.h"
 
 namespace Hypertable { namespace ThriftGen {
 
@@ -42,13 +43,44 @@ struct BasicTest : HqlServiceIf {
     client->create_table(ns, table, schema);
   }
 
+  Future open_future(int queue_size = 0) {
+    return client->open_future(queue_size);
+  }
+
+  void get_future_result(Result& _result, const Future ff) {
+    return client->get_future_result(_result, ff);
+  }
+
+  void get_future_result_as_arrays(ResultAsArrays& _result, const Future ff) {
+    return client->get_future_result_as_arrays(_result, ff);
+  }
+
+  void get_future_result_serialized(ResultSerialized & _result, const Future ff) {
+    return client->get_future_result_serialized(_result, ff);
+  }
+
+  void close_future(const Future ff) {
+    client->close_future(ff);
+  }
+
   Scanner open_scanner(const Namespace ns, const std::string& table,
                        const ScanSpec& scan_spec, bool retry_table_not_found = true) {
     return client->open_scanner(ns, table, scan_spec, retry_table_not_found);
   }
 
+  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table,
+                                  const Future ff, const ScanSpec& scan_spec,
+                                  bool retry_table_not_found = true) {
+    return client->open_scanner_async(ns, table, ff, scan_spec, retry_table_not_found);
+  }
+
+
   void close_scanner(const Scanner scanner) {
     client->close_scanner(scanner);
+  }
+
+  void close_scanner_async(const ScannerAsync scanner_async) {
+    client->close_scanner_async(scanner_async);
   }
 
   void next_cells(std::vector<Cell> & _return, const Scanner scanner) {
@@ -268,6 +300,7 @@ struct BasicTest : HqlServiceIf {
       test_set();
       test_put();
       test_scan(out);
+      test_scan_async(out);
       test_rename();
     }
     catch (ClientException &e) {
@@ -395,6 +428,169 @@ struct BasicTest : HqlServiceIf {
     sleep(2);
   }
 
+  void test_scan_async(std::ostream &out) {
+    Namespace ns = open_namespace("test");
+    String insert;
+    int num_expected_results = 6;
+    int num_results = 0;
+    HqlResult hql_result;
+    hql_query(hql_result, ns, "create table FruitColor(data)");
+    hql_query(hql_result, ns, "create table FruitLocation(data)");
+    hql_query(hql_result, ns, "create table FruitEnergy(data)");
+    insert = (String) "insert into FruitColor values ('apple', 'data', 'red'), " +
+             "('kiwi', 'data', 'brown')";
+    hql_query(hql_result, ns, insert.c_str());
+    insert = (String) "insert into FruitLocation values ('apple', 'data', 'Western Asia'), " +
+             "('kiwi','data', 'Southern China')";
+    hql_query(hql_result, ns, insert.c_str());
+    insert = (String) "insert into FruitEnergy values ('apple', 'data', '2.18kJ/g'), " +
+             "('kiwi', 'data', '0.61Cal/g')";
+    hql_query(hql_result, ns, insert.c_str());
+
+    RowInterval ri_apple;
+    ri_apple.start_row = "apple";
+    ri_apple.__isset.start_row = true;
+    ri_apple.end_row= "apple";
+    ri_apple.__isset.end_row = true;
+
+    RowInterval ri_kiwi;
+    ri_kiwi.start_row = "kiwi";
+    ri_kiwi.__isset.start_row = true;
+    ri_kiwi.end_row = "kiwi";
+    ri_kiwi.__isset.end_row = true;
+
+    ScanSpec ss;
+    ss.row_intervals.push_back(ri_apple);
+    ss.row_intervals.push_back(ri_kiwi);
+    ss.__isset.row_intervals = true;
+
+    Future ff = open_future();
+    ScannerAsync color_scanner     = open_scanner_async(ns, "FruitColor", ff, ss);
+    ScannerAsync location_scanner  = open_scanner_async(ns, "FruitLocation", ff, ss);
+    ScannerAsync energy_scanner    = open_scanner_async(ns, "FruitEnergy", ff, ss);
+
+    Result result;
+    ResultSerialized result_serialized;
+    ResultAsArrays result_as_arrays;
+
+    while (true) {
+      if (num_results<2) {
+        get_future_result(result, ff);
+        if (result.is_empty)
+          break;
+        if (result.is_scan == false) {
+          out << "All results are expected to be from scans" << std::endl;
+          _exit(1);
+        }
+        if (result.is_error == true) {
+          out << "Got unexpected error from async scan " << result.error_msg << std::endl;
+          _exit(1);
+        }
+
+        if (result.id == color_scanner)
+          out << "Got result from FruitColor: ";
+        else if (result.id == location_scanner)
+          out << "Got result from FruitLocation: ";
+        else if (result.id == energy_scanner)
+          out << "Got result from FruitEnergy: ;";
+        else {
+          out << "Got result from unknown scanner id " << result.id
+            << " expecting one of " << color_scanner << ", " << location_scanner << ", "
+            << energy_scanner << std::endl;
+          _exit(1);
+        }
+        for (size_t ii=0; ii< result.cells.size(); ++ii) {
+          out << result.cells[ii] << std::endl;
+          num_results++;
+        }
+      }
+      else if (num_results < 4) {
+        get_future_result_as_arrays(result_as_arrays, ff);
+        if (result_as_arrays.is_empty)
+          break;
+        if (result_as_arrays.is_scan == false) {
+          out << "All results are expected to be from scans" << std::endl;
+          _exit(1);
+        }
+        if (result_as_arrays.is_error == true) {
+          out << "Got unexpected error from async scan " << result_as_arrays.error_msg
+              << std::endl;
+          _exit(1);
+        }
+
+        if (result_as_arrays.id == color_scanner)
+          out << "Got result_as_arrays from FruitColor: ";
+        else if (result_as_arrays.id == location_scanner)
+          out << "Got result_as_arrays from FruitLocation: ";
+        else if (result_as_arrays.id == energy_scanner)
+          out << "Got result_as_arrays from FruitEnergy: ;";
+        else {
+          out << "Got result_as_arrays from unknown scanner id " << result.id
+            << " expecting one of " << color_scanner << ", " << location_scanner << ", "
+            << energy_scanner << std::endl;
+          _exit(1);
+        }
+        for (size_t ii=0; ii < result_as_arrays.cells.size(); ++ii) {
+          out << "{" ;
+          for (size_t jj=0; jj < result_as_arrays.cells[ii].size(); ++jj) {
+            if (jj > 0)
+              out << ", ";
+            out << (result_as_arrays.cells[ii])[jj];
+          }
+          out << "}" << std::endl;
+          num_results++;
+        }
+      }
+      else {
+        get_future_result_serialized(result_serialized, ff);
+        if (result_serialized.is_empty)
+          break;
+        if (result_serialized.is_scan == false) {
+          out << "All results are expected to be from scans" << std::endl;
+          _exit(1);
+        }
+        if (result_serialized.is_error == true) {
+          out << "Got unexpected error from async scan " << result_serialized.error_msg
+              << std::endl;
+          _exit(1);
+        }
+
+        if (result_serialized.id == color_scanner)
+          out << "Got result_serialized from FruitColor: ";
+        else if (result_serialized.id == location_scanner)
+          out << "Got result_serialized from FruitLocation: ";
+        else if (result_serialized.id == energy_scanner)
+          out << "Got result_serialized from FruitEnergy: ;";
+        else {
+          out << "Got result_serialized from unknown scanner id " << result_serialized.id
+            << " expecting one of " << color_scanner << ", " << location_scanner << ", "
+            << energy_scanner << std::endl;
+          _exit(1);
+        }
+        SerializedCellsReader reader((void *)result_serialized.cells.c_str(),
+                                     (uint32_t)result_serialized.cells.length());
+        Hypertable::Cell hcell;
+        while(reader.next()) {
+          reader.get(hcell);
+          out << hcell << std::endl;
+          num_results++;
+        }
+      }
+    }
+
+    out << "Asynchronous scans finished" << std::endl;
+
+    close_scanner_async(color_scanner);
+    close_scanner_async(location_scanner);
+    close_scanner_async(energy_scanner);
+    close_future(ff);
+    close_namespace(ns);
+    if (num_results != num_expected_results) {
+      out << "Expected " << num_expected_results << " received " << num_results << std::endl;
+      _exit(1);
+    }
+
+  }
 };
 
 }} // namespace Hypertable::Thrift

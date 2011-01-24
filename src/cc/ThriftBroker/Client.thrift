@@ -26,6 +26,12 @@ namespace php   Hypertable_ThriftGen
 namespace py    hyperthrift.gen
 namespace rb    Hypertable.ThriftGen
 
+/** Opaque ID for a Future object 
+ *
+ */
+typedef i64 Future 
+
+
 /** Opaque ID for a Namespace 
  *
  */
@@ -37,6 +43,14 @@ typedef i64 Namespace
  * table dump.
  */
 typedef i64 Scanner
+
+/** Opaque ID for a asynchronous table scanner
+ *
+ * A scanner is recommended for returning large amount of data, say a full
+ * table dump.
+ */
+typedef i64 ScannerAsync
+
 
 /** Opaque ID for a table mutator
  *
@@ -284,6 +298,114 @@ typedef list<string> CellAsArray
  */
 typedef binary CellsSerialized
 
+/** Specifies a result object for asynchronous requests.
+ * TODO: add support for update results
+ *
+ * <dl>
+ *   <dt>is_empty</dt>
+ *   <dd>Indicates whether this object contains a result or not</dd>
+ * 
+ *   <dt>id</dt>
+ *   <dd>Scanner/mutator id for which these results pertain to</dd>
+ *   
+ *   <dt>is_scan</dt>
+ *   <dd>Indicates whether these are scan results or update results</dd>
+ *   
+ *   <dt>is_error</dt>
+ *   <dd>Indicates whether the async request was successful or not</dd>
+ *   
+ *   <dt>error</dt>
+ *   <dd>Error code</dd>
+ *
+ *   <dt>error_msg</dt>
+ *   <dd>Error message</dd>
+ * 
+ *   <dt>cells</dt>
+ *   <dd>Cells returned by asynchronous scanner</dd>
+ * </dl>
+ */
+struct Result {
+  1: required bool is_empty
+  2: required i64 id 
+  3: required bool is_scan
+  4: required bool is_error
+  5: optional i32 error
+  6: optional string error_msg
+  7: optional list<Cell> cells
+}
+
+/** Specifies a result object for asynchronous requests.
+ * TODO: add support for update results
+ *
+ * <dl>
+ *   <dt>is_empty</dt>
+ *   <dd>Indicates whether this object contains a result or not</dd>
+ * 
+ *   <dt>id</dt>
+ *   <dd>Scanner/mutator id for which these results pertain to</dd>
+ *   
+ *   <dt>is_scan</dt>
+ *   <dd>Indicates whether these are scan results or update results</dd>
+ *   
+ *   <dt>is_error</dt>
+ *   <dd>Indicates whether the async request was successful or not</dd>
+ *   
+ *   <dt>error</dt>
+ *   <dd>Error code</dd>
+ *
+ *   <dt>error_msg</dt>
+ *   <dd>Error message</dd>
+ * 
+ *   <dt>cells</dt>
+ *   <dd>Cells returned by asynchronous scanner</dd>
+ * </dl>
+ */
+struct ResultAsArrays {
+  1: required bool is_empty
+  2: required i64 id 
+  3: required bool is_scan
+  4: required bool is_error
+  5: optional i32 error
+  6: optional string error_msg
+  7: optional list<CellAsArray> cells
+}
+
+/** Specifies a serialized result object for asynchronous requests.
+ * TODO: add support for update results
+ *
+ * <dl>
+ *   <dt>is_empty</dt>
+ *   <dd>Indicates whether this object contains a result or not</dd>
+ * 
+ *   <dt>id</dt>
+ *   <dd>Scanner/mutator id for which these results pertain to</dd>
+ *   
+ *   <dt>is_scan</dt>
+ *   <dd>Indicates whether these are scan results or update results</dd>
+ *   
+ *   <dt>is_error</dt>
+ *   <dd>Indicates whether the async request was successful or not</dd>
+ *   
+ *   <dt>error</dt>
+ *   <dd>Error code</dd>
+ *
+ *   <dt>error_msg</dt>
+ *   <dd>Error message</dd>
+ * 
+ *   <dt>cells</dt>
+ *   <dd>Cells returned by asynchronous scanner</dd>
+ * </dl>
+ */
+struct ResultSerialized {
+  1: required bool is_empty
+  2: required i64 id 
+  3: required bool is_scan
+  4: required bool is_error
+  5: optional i32 error
+  6: optional string error_msg
+  7: optional CellsSerialized cells
+}
+
 /**
  * Defines an individual namespace listing 
  *
@@ -465,6 +587,42 @@ service ClientService {
    * @param ns - namespace
    */
   void close_namespace(1:Namespace ns) throws (1:ClientException e),
+  
+  /**
+   * Open a future object 
+   * @param queue_size - num of results the future object can enqueue without blocking threads  
+   */
+  Future open_future(1:i32 queue_size = 0)
+      throws (1:ClientException e),
+  
+  /**
+   * Fetch asynchronous results 
+   * @param ff - Future object which has the asynchronous results
+   * @return - result from async scanner/mutator
+   */
+  Result get_future_result(1:Future ff) throws (1:ClientException e),
+  
+  /**
+   * Fetch asynchronous results 
+   * @param ff - Future object which has the asynchronous results
+   * @return - result from async scanner/mutator
+   */
+  ResultAsArrays get_future_result_as_arrays(1:Future ff) throws (1:ClientException e),
+  
+  /**
+   * Fetch asynchronous results 
+   * @param ff - Future object which has the asynchronous results
+   * @return - result from async scanner/mutator
+   */
+  ResultSerialized get_future_result_serialized(1:Future ff) throws (1:ClientException e),
+
+  /**
+   * Close a future object 
+   * @param ff - the future object to be closed
+   */
+  void close_future(1:Future ff)
+      throws (1:ClientException e),
+
 
   /**
    * Open a table scanner
@@ -477,6 +635,20 @@ service ClientService {
   Scanner open_scanner(1:Namespace ns, 2:string table_name, 3:ScanSpec scan_spec,
                        4:bool retry_table_not_found = 0)
       throws (1:ClientException e),
+  
+  /**
+   * Open an asynchronous table scanner
+   * @param ns - namespace id 
+   * @param table_name - table name
+   * @param future - callback object
+   * @param scan_spec - scan specification
+   * @param retry_table_not_found - whether to retry upon errors caused by
+   *        drop/create tables with the same name
+   */
+  ScannerAsync open_scanner_async(1:Namespace ns, 2:string table_name, 3:Future future, 
+                                  4:ScanSpec scan_spec, 5:bool retry_table_not_found = 0)
+      throws (1:ClientException e),
+
 
   /**
    * Close a table scanner
@@ -484,6 +656,13 @@ service ClientService {
    * @param scanner - scanner id to close
    */
   void close_scanner(1:Scanner scanner) throws (1:ClientException e),
+  
+  /**
+   * Close a table scanner
+   *
+   * @param scanner - scanner id to close
+   */
+  void close_scanner_async(1:ScannerAsync scanner) throws (1:ClientException e),
 
   /**
    * Iterate over cells of a scanner

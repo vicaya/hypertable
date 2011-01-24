@@ -18,8 +18,15 @@ class ClientServiceIf {
   virtual void create_table(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
   virtual Namespace open_namespace(const std::string& ns) = 0;
   virtual void close_namespace(const Namespace ns) = 0;
+  virtual Future open_future(const int32_t queue_size) = 0;
+  virtual void get_future_result(Result& _return, const Future ff) = 0;
+  virtual void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) = 0;
+  virtual void get_future_result_serialized(ResultSerialized& _return, const Future ff) = 0;
+  virtual void close_future(const Future ff) = 0;
   virtual Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found) = 0;
+  virtual ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found) = 0;
   virtual void close_scanner(const Scanner scanner) = 0;
+  virtual void close_scanner_async(const ScannerAsync scanner) = 0;
   virtual void next_cells(std::vector<Cell> & _return, const Scanner scanner) = 0;
   virtual void next_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
   virtual void next_cells_serialized(CellsSerialized& _return, const Scanner scanner) = 0;
@@ -75,11 +82,34 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void close_namespace(const Namespace /* ns */) {
     return;
   }
+  Future open_future(const int32_t /* queue_size */) {
+    Future _return = 0;
+    return _return;
+  }
+  void get_future_result(Result& /* _return */, const Future /* ff */) {
+    return;
+  }
+  void get_future_result_as_arrays(ResultAsArrays& /* _return */, const Future /* ff */) {
+    return;
+  }
+  void get_future_result_serialized(ResultSerialized& /* _return */, const Future /* ff */) {
+    return;
+  }
+  void close_future(const Future /* ff */) {
+    return;
+  }
   Scanner open_scanner(const Namespace /* ns */, const std::string& /* table_name */, const ScanSpec& /* scan_spec */, const bool /* retry_table_not_found */) {
     Scanner _return = 0;
     return _return;
   }
+  ScannerAsync open_scanner_async(const Namespace /* ns */, const std::string& /* table_name */, const Future /* future */, const ScanSpec& /* scan_spec */, const bool /* retry_table_not_found */) {
+    ScannerAsync _return = 0;
+    return _return;
+  }
   void close_scanner(const Scanner /* scanner */) {
+    return;
+  }
+  void close_scanner_async(const ScannerAsync /* scanner */) {
     return;
   }
   void next_cells(std::vector<Cell> & /* _return */, const Scanner /* scanner */) {
@@ -614,6 +644,530 @@ class ClientService_close_namespace_presult {
 
 };
 
+typedef struct _ClientService_open_future_args__isset {
+  _ClientService_open_future_args__isset() : queue_size(false) {}
+  bool queue_size;
+} _ClientService_open_future_args__isset;
+
+class ClientService_open_future_args {
+ public:
+
+  ClientService_open_future_args() : queue_size(0) {
+  }
+
+  virtual ~ClientService_open_future_args() throw() {}
+
+  int32_t queue_size;
+
+  _ClientService_open_future_args__isset __isset;
+
+  bool operator == (const ClientService_open_future_args & rhs) const
+  {
+    if (!(queue_size == rhs.queue_size))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_open_future_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_open_future_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_open_future_pargs {
+ public:
+
+
+  virtual ~ClientService_open_future_pargs() throw() {}
+
+  const int32_t* queue_size;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_open_future_result__isset {
+  _ClientService_open_future_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_future_result__isset;
+
+class ClientService_open_future_result {
+ public:
+
+  ClientService_open_future_result() : success(0) {
+  }
+
+  virtual ~ClientService_open_future_result() throw() {}
+
+  Future success;
+  ClientException e;
+
+  _ClientService_open_future_result__isset __isset;
+
+  bool operator == (const ClientService_open_future_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_open_future_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_open_future_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_open_future_presult__isset {
+  _ClientService_open_future_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_future_presult__isset;
+
+class ClientService_open_future_presult {
+ public:
+
+
+  virtual ~ClientService_open_future_presult() throw() {}
+
+  Future* success;
+  ClientException e;
+
+  _ClientService_open_future_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_get_future_result_args__isset {
+  _ClientService_get_future_result_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_get_future_result_args__isset;
+
+class ClientService_get_future_result_args {
+ public:
+
+  ClientService_get_future_result_args() : ff(0) {
+  }
+
+  virtual ~ClientService_get_future_result_args() throw() {}
+
+  Future ff;
+
+  _ClientService_get_future_result_args__isset __isset;
+
+  bool operator == (const ClientService_get_future_result_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_future_result_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_future_result_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_get_future_result_pargs {
+ public:
+
+
+  virtual ~ClientService_get_future_result_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_get_future_result_result__isset {
+  _ClientService_get_future_result_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_future_result_result__isset;
+
+class ClientService_get_future_result_result {
+ public:
+
+  ClientService_get_future_result_result() {
+  }
+
+  virtual ~ClientService_get_future_result_result() throw() {}
+
+  Result success;
+  ClientException e;
+
+  _ClientService_get_future_result_result__isset __isset;
+
+  bool operator == (const ClientService_get_future_result_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_future_result_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_future_result_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_get_future_result_presult__isset {
+  _ClientService_get_future_result_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_future_result_presult__isset;
+
+class ClientService_get_future_result_presult {
+ public:
+
+
+  virtual ~ClientService_get_future_result_presult() throw() {}
+
+  Result* success;
+  ClientException e;
+
+  _ClientService_get_future_result_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_get_future_result_as_arrays_args__isset {
+  _ClientService_get_future_result_as_arrays_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_get_future_result_as_arrays_args__isset;
+
+class ClientService_get_future_result_as_arrays_args {
+ public:
+
+  ClientService_get_future_result_as_arrays_args() : ff(0) {
+  }
+
+  virtual ~ClientService_get_future_result_as_arrays_args() throw() {}
+
+  Future ff;
+
+  _ClientService_get_future_result_as_arrays_args__isset __isset;
+
+  bool operator == (const ClientService_get_future_result_as_arrays_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_future_result_as_arrays_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_future_result_as_arrays_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_get_future_result_as_arrays_pargs {
+ public:
+
+
+  virtual ~ClientService_get_future_result_as_arrays_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_get_future_result_as_arrays_result__isset {
+  _ClientService_get_future_result_as_arrays_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_future_result_as_arrays_result__isset;
+
+class ClientService_get_future_result_as_arrays_result {
+ public:
+
+  ClientService_get_future_result_as_arrays_result() {
+  }
+
+  virtual ~ClientService_get_future_result_as_arrays_result() throw() {}
+
+  ResultAsArrays success;
+  ClientException e;
+
+  _ClientService_get_future_result_as_arrays_result__isset __isset;
+
+  bool operator == (const ClientService_get_future_result_as_arrays_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_future_result_as_arrays_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_future_result_as_arrays_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_get_future_result_as_arrays_presult__isset {
+  _ClientService_get_future_result_as_arrays_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_future_result_as_arrays_presult__isset;
+
+class ClientService_get_future_result_as_arrays_presult {
+ public:
+
+
+  virtual ~ClientService_get_future_result_as_arrays_presult() throw() {}
+
+  ResultAsArrays* success;
+  ClientException e;
+
+  _ClientService_get_future_result_as_arrays_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_get_future_result_serialized_args__isset {
+  _ClientService_get_future_result_serialized_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_get_future_result_serialized_args__isset;
+
+class ClientService_get_future_result_serialized_args {
+ public:
+
+  ClientService_get_future_result_serialized_args() : ff(0) {
+  }
+
+  virtual ~ClientService_get_future_result_serialized_args() throw() {}
+
+  Future ff;
+
+  _ClientService_get_future_result_serialized_args__isset __isset;
+
+  bool operator == (const ClientService_get_future_result_serialized_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_future_result_serialized_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_future_result_serialized_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_get_future_result_serialized_pargs {
+ public:
+
+
+  virtual ~ClientService_get_future_result_serialized_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_get_future_result_serialized_result__isset {
+  _ClientService_get_future_result_serialized_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_future_result_serialized_result__isset;
+
+class ClientService_get_future_result_serialized_result {
+ public:
+
+  ClientService_get_future_result_serialized_result() {
+  }
+
+  virtual ~ClientService_get_future_result_serialized_result() throw() {}
+
+  ResultSerialized success;
+  ClientException e;
+
+  _ClientService_get_future_result_serialized_result__isset __isset;
+
+  bool operator == (const ClientService_get_future_result_serialized_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_future_result_serialized_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_future_result_serialized_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_get_future_result_serialized_presult__isset {
+  _ClientService_get_future_result_serialized_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_future_result_serialized_presult__isset;
+
+class ClientService_get_future_result_serialized_presult {
+ public:
+
+
+  virtual ~ClientService_get_future_result_serialized_presult() throw() {}
+
+  ResultSerialized* success;
+  ClientException e;
+
+  _ClientService_get_future_result_serialized_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_close_future_args__isset {
+  _ClientService_close_future_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_close_future_args__isset;
+
+class ClientService_close_future_args {
+ public:
+
+  ClientService_close_future_args() : ff(0) {
+  }
+
+  virtual ~ClientService_close_future_args() throw() {}
+
+  Future ff;
+
+  _ClientService_close_future_args__isset __isset;
+
+  bool operator == (const ClientService_close_future_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_close_future_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_close_future_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_close_future_pargs {
+ public:
+
+
+  virtual ~ClientService_close_future_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_close_future_result__isset {
+  _ClientService_close_future_result__isset() : e(false) {}
+  bool e;
+} _ClientService_close_future_result__isset;
+
+class ClientService_close_future_result {
+ public:
+
+  ClientService_close_future_result() {
+  }
+
+  virtual ~ClientService_close_future_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_close_future_result__isset __isset;
+
+  bool operator == (const ClientService_close_future_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_close_future_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_close_future_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_close_future_presult__isset {
+  _ClientService_close_future_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_close_future_presult__isset;
+
+class ClientService_close_future_presult {
+ public:
+
+
+  virtual ~ClientService_close_future_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_close_future_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_open_scanner_args__isset {
   _ClientService_open_scanner_args__isset() : ns(false), table_name(false), scan_spec(false), retry_table_not_found(false) {}
   bool ns;
@@ -735,6 +1289,132 @@ class ClientService_open_scanner_presult {
 
 };
 
+typedef struct _ClientService_open_scanner_async_args__isset {
+  _ClientService_open_scanner_async_args__isset() : ns(false), table_name(false), future(false), scan_spec(false), retry_table_not_found(false) {}
+  bool ns;
+  bool table_name;
+  bool future;
+  bool scan_spec;
+  bool retry_table_not_found;
+} _ClientService_open_scanner_async_args__isset;
+
+class ClientService_open_scanner_async_args {
+ public:
+
+  ClientService_open_scanner_async_args() : ns(0), table_name(""), future(0), retry_table_not_found(false) {
+  }
+
+  virtual ~ClientService_open_scanner_async_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  Future future;
+  ScanSpec scan_spec;
+  bool retry_table_not_found;
+
+  _ClientService_open_scanner_async_args__isset __isset;
+
+  bool operator == (const ClientService_open_scanner_async_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(future == rhs.future))
+      return false;
+    if (!(scan_spec == rhs.scan_spec))
+      return false;
+    if (!(retry_table_not_found == rhs.retry_table_not_found))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_open_scanner_async_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_open_scanner_async_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_open_scanner_async_pargs {
+ public:
+
+
+  virtual ~ClientService_open_scanner_async_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const Future* future;
+  const ScanSpec* scan_spec;
+  const bool* retry_table_not_found;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_open_scanner_async_result__isset {
+  _ClientService_open_scanner_async_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_scanner_async_result__isset;
+
+class ClientService_open_scanner_async_result {
+ public:
+
+  ClientService_open_scanner_async_result() : success(0) {
+  }
+
+  virtual ~ClientService_open_scanner_async_result() throw() {}
+
+  ScannerAsync success;
+  ClientException e;
+
+  _ClientService_open_scanner_async_result__isset __isset;
+
+  bool operator == (const ClientService_open_scanner_async_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_open_scanner_async_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_open_scanner_async_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_open_scanner_async_presult__isset {
+  _ClientService_open_scanner_async_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_scanner_async_presult__isset;
+
+class ClientService_open_scanner_async_presult {
+ public:
+
+
+  virtual ~ClientService_open_scanner_async_presult() throw() {}
+
+  ScannerAsync* success;
+  ClientException e;
+
+  _ClientService_open_scanner_async_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_close_scanner_args__isset {
   _ClientService_close_scanner_args__isset() : scanner(false) {}
   bool scanner;
@@ -830,6 +1510,106 @@ class ClientService_close_scanner_presult {
   ClientException e;
 
   _ClientService_close_scanner_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_close_scanner_async_args__isset {
+  _ClientService_close_scanner_async_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_close_scanner_async_args__isset;
+
+class ClientService_close_scanner_async_args {
+ public:
+
+  ClientService_close_scanner_async_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_close_scanner_async_args() throw() {}
+
+  ScannerAsync scanner;
+
+  _ClientService_close_scanner_async_args__isset __isset;
+
+  bool operator == (const ClientService_close_scanner_async_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_close_scanner_async_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_close_scanner_async_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_close_scanner_async_pargs {
+ public:
+
+
+  virtual ~ClientService_close_scanner_async_pargs() throw() {}
+
+  const ScannerAsync* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_close_scanner_async_result__isset {
+  _ClientService_close_scanner_async_result__isset() : e(false) {}
+  bool e;
+} _ClientService_close_scanner_async_result__isset;
+
+class ClientService_close_scanner_async_result {
+ public:
+
+  ClientService_close_scanner_async_result() {
+  }
+
+  virtual ~ClientService_close_scanner_async_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_close_scanner_async_result__isset __isset;
+
+  bool operator == (const ClientService_close_scanner_async_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_close_scanner_async_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_close_scanner_async_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_close_scanner_async_presult__isset {
+  _ClientService_close_scanner_async_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_close_scanner_async_presult__isset;
+
+class ClientService_close_scanner_async_presult {
+ public:
+
+
+  virtual ~ClientService_close_scanner_async_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_close_scanner_async_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -4938,12 +5718,33 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void close_namespace(const Namespace ns);
   void send_close_namespace(const Namespace ns);
   void recv_close_namespace();
+  Future open_future(const int32_t queue_size);
+  void send_open_future(const int32_t queue_size);
+  Future recv_open_future();
+  void get_future_result(Result& _return, const Future ff);
+  void send_get_future_result(const Future ff);
+  void recv_get_future_result(Result& _return);
+  void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff);
+  void send_get_future_result_as_arrays(const Future ff);
+  void recv_get_future_result_as_arrays(ResultAsArrays& _return);
+  void get_future_result_serialized(ResultSerialized& _return, const Future ff);
+  void send_get_future_result_serialized(const Future ff);
+  void recv_get_future_result_serialized(ResultSerialized& _return);
+  void close_future(const Future ff);
+  void send_close_future(const Future ff);
+  void recv_close_future();
   Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found);
   void send_open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found);
   Scanner recv_open_scanner();
+  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found);
+  void send_open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found);
+  ScannerAsync recv_open_scanner_async();
   void close_scanner(const Scanner scanner);
   void send_close_scanner(const Scanner scanner);
   void recv_close_scanner();
+  void close_scanner_async(const ScannerAsync scanner);
+  void send_close_scanner_async(const ScannerAsync scanner);
+  void recv_close_scanner_async();
   void next_cells(std::vector<Cell> & _return, const Scanner scanner);
   void send_next_cells(const Scanner scanner);
   void recv_next_cells(std::vector<Cell> & _return);
@@ -5072,8 +5873,15 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_create_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_open_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_close_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_open_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_get_future_result(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_get_future_result_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_get_future_result_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_close_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_open_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_open_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_close_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_close_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_next_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_next_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_next_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
@@ -5118,8 +5926,15 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["create_table"] = &ClientServiceProcessor::process_create_table;
     processMap_["open_namespace"] = &ClientServiceProcessor::process_open_namespace;
     processMap_["close_namespace"] = &ClientServiceProcessor::process_close_namespace;
+    processMap_["open_future"] = &ClientServiceProcessor::process_open_future;
+    processMap_["get_future_result"] = &ClientServiceProcessor::process_get_future_result;
+    processMap_["get_future_result_as_arrays"] = &ClientServiceProcessor::process_get_future_result_as_arrays;
+    processMap_["get_future_result_serialized"] = &ClientServiceProcessor::process_get_future_result_serialized;
+    processMap_["close_future"] = &ClientServiceProcessor::process_close_future;
     processMap_["open_scanner"] = &ClientServiceProcessor::process_open_scanner;
+    processMap_["open_scanner_async"] = &ClientServiceProcessor::process_open_scanner_async;
     processMap_["close_scanner"] = &ClientServiceProcessor::process_close_scanner;
+    processMap_["close_scanner_async"] = &ClientServiceProcessor::process_close_scanner_async;
     processMap_["next_cells"] = &ClientServiceProcessor::process_next_cells;
     processMap_["next_cells_as_arrays"] = &ClientServiceProcessor::process_next_cells_as_arrays;
     processMap_["next_cells_serialized"] = &ClientServiceProcessor::process_next_cells_serialized;
@@ -5207,6 +6022,60 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  Future open_future(const int32_t queue_size) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->open_future(queue_size);
+      } else {
+        ifaces_[i]->open_future(queue_size);
+      }
+    }
+  }
+
+  void get_future_result(Result& _return, const Future ff) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->get_future_result(_return, ff);
+        return;
+      } else {
+        ifaces_[i]->get_future_result(_return, ff);
+      }
+    }
+  }
+
+  void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->get_future_result_as_arrays(_return, ff);
+        return;
+      } else {
+        ifaces_[i]->get_future_result_as_arrays(_return, ff);
+      }
+    }
+  }
+
+  void get_future_result_serialized(ResultSerialized& _return, const Future ff) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->get_future_result_serialized(_return, ff);
+        return;
+      } else {
+        ifaces_[i]->get_future_result_serialized(_return, ff);
+      }
+    }
+  }
+
+  void close_future(const Future ff) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->close_future(ff);
+    }
+  }
+
   Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
@@ -5218,10 +6087,28 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found);
+      } else {
+        ifaces_[i]->open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found);
+      }
+    }
+  }
+
   void close_scanner(const Scanner scanner) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       ifaces_[i]->close_scanner(scanner);
+    }
+  }
+
+  void close_scanner_async(const ScannerAsync scanner) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->close_scanner_async(scanner);
     }
   }
 

@@ -168,7 +168,7 @@ void DefaultPolicy::init_options() {
         "Set system wide logging level (default: info)")
     ("Hypertable.DataDirectory", str()->default_value(default_data_dir),
         "Hypertable data directory root")
-    ("Hypertable.Client.Workers", i32()->default_value(2),
+    ("Hypertable.Client.Workers", i32()->default_value(20),
         "Number of client worker threads created")
     ("Hypertable.Client.RefreshSchema", boo()->default_value(true),
         "Refresh client version of schema automatically")
@@ -265,6 +265,8 @@ void DefaultPolicy::init_options() {
     ("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate",
      i64()->default_value(50*M), "Amount of updates (bytes) accumulated for "
         "all servers to trigger a scatter buffer flush")
+    ("Hypertable.Scanner.QueueSize",
+     i32()->default_value(5), "Size of Scanner ScanBlock queue")
     ("Hypertable.LocationCache.MaxEntries", i64()->default_value(1*M),
         "Size of range location cache in number of entries")
     ("Hypertable.Master.Host", str(),
@@ -375,6 +377,8 @@ void DefaultPolicy::init_options() {
         "for thrift broker")
     ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "
         "thrift broker")
+    ("ThriftBroker.Future.QueueSize", i32()->default_value(10), "Capacity "
+        "of result queue for Future objects")
     ("ThriftBroker.NextThreshold", i32()->default_value(128*K), "Total size  "
         "threshold for (size of cell data) for thrift broker next calls")
     ("ThriftBroker.API.Logging", boo()->default_value(false), "Enable or "

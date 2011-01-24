@@ -392,16 +392,16 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
         case 1: // ACCESS_GROUPS
           if (field.type == TType.MAP) {
             {
-              TMap _map16 = iprot.readMapBegin();
-              this.access_groups = new HashMap<String,AccessGroup>(2*_map16.size);
-              for (int _i17 = 0; _i17 < _map16.size; ++_i17)
+              TMap _map28 = iprot.readMapBegin();
+              this.access_groups = new HashMap<String,AccessGroup>(2*_map28.size);
+              for (int _i29 = 0; _i29 < _map28.size; ++_i29)
               {
-                String _key18;
-                AccessGroup _val19;
-                _key18 = iprot.readString();
-                _val19 = new AccessGroup();
-                _val19.read(iprot);
-                this.access_groups.put(_key18, _val19);
+                String _key30;
+                AccessGroup _val31;
+                _key30 = iprot.readString();
+                _val31 = new AccessGroup();
+                _val31.read(iprot);
+                this.access_groups.put(_key30, _val31);
               }
               iprot.readMapEnd();
             }
@@ -412,16 +412,16 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
         case 2: // COLUMN_FAMILIES
           if (field.type == TType.MAP) {
             {
-              TMap _map20 = iprot.readMapBegin();
-              this.column_families = new HashMap<String,ColumnFamily>(2*_map20.size);
-              for (int _i21 = 0; _i21 < _map20.size; ++_i21)
+              TMap _map32 = iprot.readMapBegin();
+              this.column_families = new HashMap<String,ColumnFamily>(2*_map32.size);
+              for (int _i33 = 0; _i33 < _map32.size; ++_i33)
               {
-                String _key22;
-                ColumnFamily _val23;
-                _key22 = iprot.readString();
-                _val23 = new ColumnFamily();
-                _val23.read(iprot);
-                this.column_families.put(_key22, _val23);
+                String _key34;
+                ColumnFamily _val35;
+                _key34 = iprot.readString();
+                _val35 = new ColumnFamily();
+                _val35.read(iprot);
+                this.column_families.put(_key34, _val35);
               }
               iprot.readMapEnd();
             }
@@ -449,10 +449,10 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
         oprot.writeFieldBegin(ACCESS_GROUPS_FIELD_DESC);
         {
           oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.access_groups.size()));
-          for (Map.Entry<String, AccessGroup> _iter24 : this.access_groups.entrySet())
+          for (Map.Entry<String, AccessGroup> _iter36 : this.access_groups.entrySet())
           {
-            oprot.writeString(_iter24.getKey());
-            _iter24.getValue().write(oprot);
+            oprot.writeString(_iter36.getKey());
+            _iter36.getValue().write(oprot);
           }
           oprot.writeMapEnd();
         }
@@ -464,10 +464,10 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
         oprot.writeFieldBegin(COLUMN_FAMILIES_FIELD_DESC);
         {
           oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.column_families.size()));
-          for (Map.Entry<String, ColumnFamily> _iter25 : this.column_families.entrySet())
+          for (Map.Entry<String, ColumnFamily> _iter37 : this.column_families.entrySet())
           {
-            oprot.writeString(_iter25.getKey());
-            _iter25.getValue().write(oprot);
+            oprot.writeString(_iter37.getKey());
+            _iter37.getValue().write(oprot);
           }
           oprot.writeMapEnd();
         }

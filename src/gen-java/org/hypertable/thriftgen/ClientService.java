@@ -76,6 +76,49 @@ public class ClientService {
     public void close_namespace(long ns) throws ClientException, TException;
 
     /**
+     * Open a future object
+     * @param queue_size - num of results the future object can enqueue without blocking threads
+     * 
+     * @param queue_size
+     */
+    public long open_future(int queue_size) throws ClientException, TException;
+
+    /**
+     * Fetch asynchronous results
+     * @param ff - Future object which has the asynchronous results
+     * @return - result from async scanner/mutator
+     * 
+     * @param ff
+     */
+    public Result get_future_result(long ff) throws ClientException, TException;
+
+    /**
+     * Fetch asynchronous results
+     * @param ff - Future object which has the asynchronous results
+     * @return - result from async scanner/mutator
+     * 
+     * @param ff
+     */
+    public ResultAsArrays get_future_result_as_arrays(long ff) throws ClientException, TException;
+
+    /**
+     * Fetch asynchronous results
+     * @param ff - Future object which has the asynchronous results
+     * @return - result from async scanner/mutator
+     * 
+     * @param ff
+     */
+    public ResultSerialized get_future_result_serialized(long ff) throws ClientException, TException;
+
+    /**
+     * Close a future object
+     * @param ff - the future object to be closed
+     * 
+     * @param ff
+     */
+    public void close_future(long ff) throws ClientException, TException;
+
+    /**
      * Open a table scanner
      * @param ns - namespace id
      * @param table_name - table name
@@ -91,6 +134,23 @@ public class ClientService {
     public long open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException;
 
     /**
+     * Open an asynchronous table scanner
+     * @param ns - namespace id
+     * @param table_name - table name
+     * @param future - callback object
+     * @param scan_spec - scan specification
+     * @param retry_table_not_found - whether to retry upon errors caused by
+     *        drop/create tables with the same name
+     * 
+     * @param ns
+     * @param table_name
+     * @param future
+     * @param scan_spec
+     * @param retry_table_not_found
+     */
+    public long open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException;
+
+    /**
      * Close a table scanner
      * 
      * @param scanner - scanner id to close
@@ -98,6 +158,15 @@ public class ClientService {
      * @param scanner
      */
     public void close_scanner(long scanner) throws ClientException, TException;
+
+    /**
+     * Close a table scanner
+     * 
+     * @param scanner - scanner id to close
+     * 
+     * @param scanner
+     */
+    public void close_scanner_async(long scanner) throws ClientException, TException;
 
     /**
      * Iterate over cells of a scanner
@@ -557,9 +626,23 @@ public class ClientService {
 
     public void close_namespace(long ns, AsyncMethodCallback<AsyncClient.close_namespace_call> resultHandler) throws TException;
 
+    public void open_future(int queue_size, AsyncMethodCallback<AsyncClient.open_future_call> resultHandler) throws TException;
+
+    public void get_future_result(long ff, AsyncMethodCallback<AsyncClient.get_future_result_call> resultHandler) throws TException;
+
+    public void get_future_result_as_arrays(long ff, AsyncMethodCallback<AsyncClient.get_future_result_as_arrays_call> resultHandler) throws TException;
+
+    public void get_future_result_serialized(long ff, AsyncMethodCallback<AsyncClient.get_future_result_serialized_call> resultHandler) throws TException;
+
+    public void close_future(long ff, AsyncMethodCallback<AsyncClient.close_future_call> resultHandler) throws TException;
+
     public void open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found, AsyncMethodCallback<AsyncClient.open_scanner_call> resultHandler) throws TException;
 
+    public void open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found, AsyncMethodCallback<AsyncClient.open_scanner_async_call> resultHandler) throws TException;
+
     public void close_scanner(long scanner, AsyncMethodCallback<AsyncClient.close_scanner_call> resultHandler) throws TException;
+
+    public void close_scanner_async(long scanner, AsyncMethodCallback<AsyncClient.close_scanner_async_call> resultHandler) throws TException;
 
     public void next_cells(long scanner, AsyncMethodCallback<AsyncClient.next_cells_call> resultHandler) throws TException;
 
@@ -823,6 +906,198 @@ public class ClientService {
       return;
     }
 
+    public long open_future(int queue_size) throws ClientException, TException
+    {
+      send_open_future(queue_size);
+      return recv_open_future();
+    }
+
+    public void send_open_future(int queue_size) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("open_future", TMessageType.CALL, ++seqid_));
+      open_future_args args = new open_future_args();
+      args.setQueue_size(queue_size);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public long recv_open_future() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "open_future failed: out of sequence response");
+      }
+      open_future_result result = new open_future_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "open_future failed: unknown result");
+    }
+
+    public Result get_future_result(long ff) throws ClientException, TException
+    {
+      send_get_future_result(ff);
+      return recv_get_future_result();
+    }
+
+    public void send_get_future_result(long ff) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("get_future_result", TMessageType.CALL, ++seqid_));
+      get_future_result_args args = new get_future_result_args();
+      args.setFf(ff);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public Result recv_get_future_result() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_future_result failed: out of sequence response");
+      }
+      get_future_result_result result = new get_future_result_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_future_result failed: unknown result");
+    }
+
+    public ResultAsArrays get_future_result_as_arrays(long ff) throws ClientException, TException
+    {
+      send_get_future_result_as_arrays(ff);
+      return recv_get_future_result_as_arrays();
+    }
+
+    public void send_get_future_result_as_arrays(long ff) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("get_future_result_as_arrays", TMessageType.CALL, ++seqid_));
+      get_future_result_as_arrays_args args = new get_future_result_as_arrays_args();
+      args.setFf(ff);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public ResultAsArrays recv_get_future_result_as_arrays() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_future_result_as_arrays failed: out of sequence response");
+      }
+      get_future_result_as_arrays_result result = new get_future_result_as_arrays_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_future_result_as_arrays failed: unknown result");
+    }
+
+    public ResultSerialized get_future_result_serialized(long ff) throws ClientException, TException
+    {
+      send_get_future_result_serialized(ff);
+      return recv_get_future_result_serialized();
+    }
+
+    public void send_get_future_result_serialized(long ff) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("get_future_result_serialized", TMessageType.CALL, ++seqid_));
+      get_future_result_serialized_args args = new get_future_result_serialized_args();
+      args.setFf(ff);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public ResultSerialized recv_get_future_result_serialized() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_future_result_serialized failed: out of sequence response");
+      }
+      get_future_result_serialized_result result = new get_future_result_serialized_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_future_result_serialized failed: unknown result");
+    }
+
+    public void close_future(long ff) throws ClientException, TException
+    {
+      send_close_future(ff);
+      recv_close_future();
+    }
+
+    public void send_close_future(long ff) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("close_future", TMessageType.CALL, ++seqid_));
+      close_future_args args = new close_future_args();
+      args.setFf(ff);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_close_future() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "close_future failed: out of sequence response");
+      }
+      close_future_result result = new close_future_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
     public long open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException
     {
       send_open_scanner(ns, table_name, scan_spec, retry_table_not_found);
@@ -865,6 +1140,49 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "open_scanner failed: unknown result");
     }
 
+    public long open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException
+    {
+      send_open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found);
+      return recv_open_scanner_async();
+    }
+
+    public void send_open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("open_scanner_async", TMessageType.CALL, ++seqid_));
+      open_scanner_async_args args = new open_scanner_async_args();
+      args.setNs(ns);
+      args.setTable_name(table_name);
+      args.setFuture(future);
+      args.setScan_spec(scan_spec);
+      args.setRetry_table_not_found(retry_table_not_found);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public long recv_open_scanner_async() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "open_scanner_async failed: out of sequence response");
+      }
+      open_scanner_async_result result = new open_scanner_async_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "open_scanner_async failed: unknown result");
+    }
+
     public void close_scanner(long scanner) throws ClientException, TException
     {
       send_close_scanner(scanner);
@@ -893,6 +1211,42 @@ public class ClientService {
         throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "close_scanner failed: out of sequence response");
       }
       close_scanner_result result = new close_scanner_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void close_scanner_async(long scanner) throws ClientException, TException
+    {
+      send_close_scanner_async(scanner);
+      recv_close_scanner_async();
+    }
+
+    public void send_close_scanner_async(long scanner) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("close_scanner_async", TMessageType.CALL, ++seqid_));
+      close_scanner_async_args args = new close_scanner_async_args();
+      args.setScanner(scanner);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_close_scanner_async() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "close_scanner_async failed: out of sequence response");
+      }
+      close_scanner_async_result result = new close_scanner_async_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
       if (result.e != null) {
@@ -2493,6 +2847,161 @@ public class ClientService {
       }
     }
 
+    public void open_future(int queue_size, AsyncMethodCallback<open_future_call> resultHandler) throws TException {
+      checkReady();
+      open_future_call method_call = new open_future_call(queue_size, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class open_future_call extends TAsyncMethodCall {
+      private int queue_size;
+      public open_future_call(int queue_size, AsyncMethodCallback<open_future_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.queue_size = queue_size;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("open_future", TMessageType.CALL, 0));
+        open_future_args args = new open_future_args();
+        args.setQueue_size(queue_size);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public long getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_open_future();
+      }
+    }
+
+    public void get_future_result(long ff, AsyncMethodCallback<get_future_result_call> resultHandler) throws TException {
+      checkReady();
+      get_future_result_call method_call = new get_future_result_call(ff, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_future_result_call extends TAsyncMethodCall {
+      private long ff;
+      public get_future_result_call(long ff, AsyncMethodCallback<get_future_result_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ff = ff;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_future_result", TMessageType.CALL, 0));
+        get_future_result_args args = new get_future_result_args();
+        args.setFf(ff);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public Result getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_future_result();
+      }
+    }
+
+    public void get_future_result_as_arrays(long ff, AsyncMethodCallback<get_future_result_as_arrays_call> resultHandler) throws TException {
+      checkReady();
+      get_future_result_as_arrays_call method_call = new get_future_result_as_arrays_call(ff, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_future_result_as_arrays_call extends TAsyncMethodCall {
+      private long ff;
+      public get_future_result_as_arrays_call(long ff, AsyncMethodCallback<get_future_result_as_arrays_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ff = ff;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_future_result_as_arrays", TMessageType.CALL, 0));
+        get_future_result_as_arrays_args args = new get_future_result_as_arrays_args();
+        args.setFf(ff);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ResultAsArrays getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_future_result_as_arrays();
+      }
+    }
+
+    public void get_future_result_serialized(long ff, AsyncMethodCallback<get_future_result_serialized_call> resultHandler) throws TException {
+      checkReady();
+      get_future_result_serialized_call method_call = new get_future_result_serialized_call(ff, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_future_result_serialized_call extends TAsyncMethodCall {
+      private long ff;
+      public get_future_result_serialized_call(long ff, AsyncMethodCallback<get_future_result_serialized_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ff = ff;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_future_result_serialized", TMessageType.CALL, 0));
+        get_future_result_serialized_args args = new get_future_result_serialized_args();
+        args.setFf(ff);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ResultSerialized getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_future_result_serialized();
+      }
+    }
+
+    public void close_future(long ff, AsyncMethodCallback<close_future_call> resultHandler) throws TException {
+      checkReady();
+      close_future_call method_call = new close_future_call(ff, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class close_future_call extends TAsyncMethodCall {
+      private long ff;
+      public close_future_call(long ff, AsyncMethodCallback<close_future_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ff = ff;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("close_future", TMessageType.CALL, 0));
+        close_future_args args = new close_future_args();
+        args.setFf(ff);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_close_future();
+      }
+    }
+
     public void open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found, AsyncMethodCallback<open_scanner_call> resultHandler) throws TException {
       checkReady();
       open_scanner_call method_call = new open_scanner_call(ns, table_name, scan_spec, retry_table_not_found, resultHandler, this, protocolFactory, transport);
@@ -2533,6 +3042,49 @@ public class ClientService {
       }
     }
 
+    public void open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found, AsyncMethodCallback<open_scanner_async_call> resultHandler) throws TException {
+      checkReady();
+      open_scanner_async_call method_call = new open_scanner_async_call(ns, table_name, future, scan_spec, retry_table_not_found, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class open_scanner_async_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private long future;
+      private ScanSpec scan_spec;
+      private boolean retry_table_not_found;
+      public open_scanner_async_call(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found, AsyncMethodCallback<open_scanner_async_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.future = future;
+        this.scan_spec = scan_spec;
+        this.retry_table_not_found = retry_table_not_found;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("open_scanner_async", TMessageType.CALL, 0));
+        open_scanner_async_args args = new open_scanner_async_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setFuture(future);
+        args.setScan_spec(scan_spec);
+        args.setRetry_table_not_found(retry_table_not_found);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public long getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_open_scanner_async();
+      }
+    }
+
     public void close_scanner(long scanner, AsyncMethodCallback<close_scanner_call> resultHandler) throws TException {
       checkReady();
       close_scanner_call method_call = new close_scanner_call(scanner, resultHandler, this, protocolFactory, transport);
@@ -2561,6 +3113,37 @@ public class ClientService {
         TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
         TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         (new Client(prot)).recv_close_scanner();
+      }
+    }
+
+    public void close_scanner_async(long scanner, AsyncMethodCallback<close_scanner_async_call> resultHandler) throws TException {
+      checkReady();
+      close_scanner_async_call method_call = new close_scanner_async_call(scanner, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class close_scanner_async_call extends TAsyncMethodCall {
+      private long scanner;
+      public close_scanner_async_call(long scanner, AsyncMethodCallback<close_scanner_async_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.scanner = scanner;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("close_scanner_async", TMessageType.CALL, 0));
+        close_scanner_async_args args = new close_scanner_async_args();
+        args.setScanner(scanner);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_close_scanner_async();
       }
     }
 
@@ -3869,8 +4452,15 @@ public class ClientService {
       processMap_.put("create_table", new create_table());
       processMap_.put("open_namespace", new open_namespace());
       processMap_.put("close_namespace", new close_namespace());
+      processMap_.put("open_future", new open_future());
+      processMap_.put("get_future_result", new get_future_result());
+      processMap_.put("get_future_result_as_arrays", new get_future_result_as_arrays());
+      processMap_.put("get_future_result_serialized", new get_future_result_serialized());
+      processMap_.put("close_future", new close_future());
       processMap_.put("open_scanner", new open_scanner());
+      processMap_.put("open_scanner_async", new open_scanner_async());
       processMap_.put("close_scanner", new close_scanner());
+      processMap_.put("close_scanner_async", new close_scanner_async());
       processMap_.put("next_cells", new next_cells());
       processMap_.put("next_cells_as_arrays", new next_cells_as_arrays());
       processMap_.put("next_cells_serialized", new next_cells_serialized());
@@ -4088,6 +4678,197 @@ public class ClientService {
 
     }
 
+    private class open_future implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        open_future_args args = new open_future_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("open_future", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        open_future_result result = new open_future_result();
+        try {
+          result.success = iface_.open_future(args.queue_size);
+          result.setSuccessIsSet(true);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing open_future", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing open_future");
+          oprot.writeMessageBegin(new TMessage("open_future", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("open_future", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class get_future_result implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        get_future_result_args args = new get_future_result_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_future_result", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        get_future_result_result result = new get_future_result_result();
+        try {
+          result.success = iface_.get_future_result(args.ff);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_future_result", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_future_result");
+          oprot.writeMessageBegin(new TMessage("get_future_result", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("get_future_result", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class get_future_result_as_arrays implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        get_future_result_as_arrays_args args = new get_future_result_as_arrays_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_future_result_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        get_future_result_as_arrays_result result = new get_future_result_as_arrays_result();
+        try {
+          result.success = iface_.get_future_result_as_arrays(args.ff);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_future_result_as_arrays", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_future_result_as_arrays");
+          oprot.writeMessageBegin(new TMessage("get_future_result_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("get_future_result_as_arrays", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class get_future_result_serialized implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        get_future_result_serialized_args args = new get_future_result_serialized_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_future_result_serialized", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        get_future_result_serialized_result result = new get_future_result_serialized_result();
+        try {
+          result.success = iface_.get_future_result_serialized(args.ff);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_future_result_serialized", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_future_result_serialized");
+          oprot.writeMessageBegin(new TMessage("get_future_result_serialized", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("get_future_result_serialized", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class close_future implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        close_future_args args = new close_future_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("close_future", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        close_future_result result = new close_future_result();
+        try {
+          iface_.close_future(args.ff);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing close_future", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing close_future");
+          oprot.writeMessageBegin(new TMessage("close_future", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("close_future", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
     private class open_scanner implements ProcessFunction {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
@@ -4127,6 +4908,45 @@ public class ClientService {
 
     }
 
+    private class open_scanner_async implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        open_scanner_async_args args = new open_scanner_async_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("open_scanner_async", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        open_scanner_async_result result = new open_scanner_async_result();
+        try {
+          result.success = iface_.open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec, args.retry_table_not_found);
+          result.setSuccessIsSet(true);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing open_scanner_async", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing open_scanner_async");
+          oprot.writeMessageBegin(new TMessage("open_scanner_async", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("open_scanner_async", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
     private class close_scanner implements ProcessFunction {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
@@ -4158,6 +4978,44 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new TMessage("close_scanner", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class close_scanner_async implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        close_scanner_async_args args = new close_scanner_async_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("close_scanner_async", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        close_scanner_async_result result = new close_scanner_async_result();
+        try {
+          iface_.close_scanner_async(args.scanner);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing close_scanner_async", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing close_scanner_async");
+          oprot.writeMessageBegin(new TMessage("close_scanner_async", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("close_scanner_async", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -8074,6 +8932,3163 @@ public class ClientService {
 
   }
 
+  public static class open_future_args implements TBase<open_future_args, open_future_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_future_args");
+
+    private static final TField QUEUE_SIZE_FIELD_DESC = new TField("queue_size", TType.I32, (short)1);
+
+    public int queue_size;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      QUEUE_SIZE((short)1, "queue_size");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // QUEUE_SIZE
+            return QUEUE_SIZE;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __QUEUE_SIZE_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.QUEUE_SIZE, new FieldMetaData("queue_size", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I32)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(open_future_args.class, metaDataMap);
+    }
+
+    public open_future_args() {
+      this.queue_size = 0;
+
+    }
+
+    public open_future_args(
+      int queue_size)
+    {
+      this();
+      this.queue_size = queue_size;
+      setQueue_sizeIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public open_future_args(open_future_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.queue_size = other.queue_size;
+    }
+
+    public open_future_args deepCopy() {
+      return new open_future_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.queue_size = 0;
+
+    }
+
+    public int getQueue_size() {
+      return this.queue_size;
+    }
+
+    public open_future_args setQueue_size(int queue_size) {
+      this.queue_size = queue_size;
+      setQueue_sizeIsSet(true);
+      return this;
+    }
+
+    public void unsetQueue_size() {
+      __isset_bit_vector.clear(__QUEUE_SIZE_ISSET_ID);
+    }
+
+    /** Returns true if field queue_size is set (has been asigned a value) and false otherwise */
+    public boolean isSetQueue_size() {
+      return __isset_bit_vector.get(__QUEUE_SIZE_ISSET_ID);
+    }
+
+    public void setQueue_sizeIsSet(boolean value) {
+      __isset_bit_vector.set(__QUEUE_SIZE_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case QUEUE_SIZE:
+        if (value == null) {
+          unsetQueue_size();
+        } else {
+          setQueue_size((Integer)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case QUEUE_SIZE:
+        return new Integer(getQueue_size());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case QUEUE_SIZE:
+        return isSetQueue_size();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof open_future_args)
+        return this.equals((open_future_args)that);
+      return false;
+    }
+
+    public boolean equals(open_future_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_queue_size = true;
+      boolean that_present_queue_size = true;
+      if (this_present_queue_size || that_present_queue_size) {
+        if (!(this_present_queue_size && that_present_queue_size))
+          return false;
+        if (this.queue_size != that.queue_size)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(open_future_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      open_future_args typedOther = (open_future_args)other;
+
+      lastComparison = Boolean.valueOf(isSetQueue_size()).compareTo(typedOther.isSetQueue_size());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetQueue_size()) {
+        lastComparison = TBaseHelper.compareTo(this.queue_size, typedOther.queue_size);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // QUEUE_SIZE
+            if (field.type == TType.I32) {
+              this.queue_size = iprot.readI32();
+              setQueue_sizeIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(QUEUE_SIZE_FIELD_DESC);
+      oprot.writeI32(this.queue_size);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("open_future_args(");
+      boolean first = true;
+
+      sb.append("queue_size:");
+      sb.append(this.queue_size);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class open_future_result implements TBase<open_future_result, open_future_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_future_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public long success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Future")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(open_future_result.class, metaDataMap);
+    }
+
+    public open_future_result() {
+    }
+
+    public open_future_result(
+      long success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public open_future_result(open_future_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public open_future_result deepCopy() {
+      return new open_future_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = 0;
+      this.e = null;
+    }
+
+    public long getSuccess() {
+      return this.success;
+    }
+
+    public open_future_result setSuccess(long success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public open_future_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Long)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return new Long(getSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof open_future_result)
+        return this.equals((open_future_result)that);
+      return false;
+    }
+
+    public boolean equals(open_future_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(open_future_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      open_future_result typedOther = (open_future_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I64) {
+              this.success = iprot.readI64();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeI64(this.success);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("open_future_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class get_future_result_args implements TBase<get_future_result_args, get_future_result_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_future_result_args");
+
+    private static final TField FF_FIELD_DESC = new TField("ff", TType.I64, (short)1);
+
+    public long ff;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      FF((short)1, "ff");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // FF
+            return FF;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __FF_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.FF, new FieldMetaData("ff", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Future")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(get_future_result_args.class, metaDataMap);
+    }
+
+    public get_future_result_args() {
+    }
+
+    public get_future_result_args(
+      long ff)
+    {
+      this();
+      this.ff = ff;
+      setFfIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_future_result_args(get_future_result_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ff = other.ff;
+    }
+
+    public get_future_result_args deepCopy() {
+      return new get_future_result_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setFfIsSet(false);
+      this.ff = 0;
+    }
+
+    public long getFf() {
+      return this.ff;
+    }
+
+    public get_future_result_args setFf(long ff) {
+      this.ff = ff;
+      setFfIsSet(true);
+      return this;
+    }
+
+    public void unsetFf() {
+      __isset_bit_vector.clear(__FF_ISSET_ID);
+    }
+
+    /** Returns true if field ff is set (has been asigned a value) and false otherwise */
+    public boolean isSetFf() {
+      return __isset_bit_vector.get(__FF_ISSET_ID);
+    }
+
+    public void setFfIsSet(boolean value) {
+      __isset_bit_vector.set(__FF_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case FF:
+        if (value == null) {
+          unsetFf();
+        } else {
+          setFf((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case FF:
+        return new Long(getFf());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case FF:
+        return isSetFf();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_future_result_args)
+        return this.equals((get_future_result_args)that);
+      return false;
+    }
+
+    public boolean equals(get_future_result_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ff = true;
+      boolean that_present_ff = true;
+      if (this_present_ff || that_present_ff) {
+        if (!(this_present_ff && that_present_ff))
+          return false;
+        if (this.ff != that.ff)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_future_result_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_future_result_args typedOther = (get_future_result_args)other;
+
+      lastComparison = Boolean.valueOf(isSetFf()).compareTo(typedOther.isSetFf());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFf()) {
+        lastComparison = TBaseHelper.compareTo(this.ff, typedOther.ff);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // FF
+            if (field.type == TType.I64) {
+              this.ff = iprot.readI64();
+              setFfIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(FF_FIELD_DESC);
+      oprot.writeI64(this.ff);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_future_result_args(");
+      boolean first = true;
+
+      sb.append("ff:");
+      sb.append(this.ff);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class get_future_result_result implements TBase<get_future_result_result, get_future_result_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_future_result_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public Result success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, Result.class)));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(get_future_result_result.class, metaDataMap);
+    }
+
+    public get_future_result_result() {
+    }
+
+    public get_future_result_result(
+      Result success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_future_result_result(get_future_result_result other) {
+      if (other.isSetSuccess()) {
+        this.success = new Result(other.success);
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public get_future_result_result deepCopy() {
+      return new get_future_result_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public Result getSuccess() {
+      return this.success;
+    }
+
+    public get_future_result_result setSuccess(Result success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public get_future_result_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Result)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_future_result_result)
+        return this.equals((get_future_result_result)that);
+      return false;
+    }
+
+    public boolean equals(get_future_result_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_future_result_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_future_result_result typedOther = (get_future_result_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRUCT) {
+              this.success = new Result();
+              this.success.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        this.success.write(oprot);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_future_result_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class get_future_result_as_arrays_args implements TBase<get_future_result_as_arrays_args, get_future_result_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_future_result_as_arrays_args");
+
+    private static final TField FF_FIELD_DESC = new TField("ff", TType.I64, (short)1);
+
+    public long ff;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      FF((short)1, "ff");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // FF
+            return FF;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __FF_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.FF, new FieldMetaData("ff", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Future")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(get_future_result_as_arrays_args.class, metaDataMap);
+    }
+
+    public get_future_result_as_arrays_args() {
+    }
+
+    public get_future_result_as_arrays_args(
+      long ff)
+    {
+      this();
+      this.ff = ff;
+      setFfIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_future_result_as_arrays_args(get_future_result_as_arrays_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ff = other.ff;
+    }
+
+    public get_future_result_as_arrays_args deepCopy() {
+      return new get_future_result_as_arrays_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setFfIsSet(false);
+      this.ff = 0;
+    }
+
+    public long getFf() {
+      return this.ff;
+    }
+
+    public get_future_result_as_arrays_args setFf(long ff) {
+      this.ff = ff;
+      setFfIsSet(true);
+      return this;
+    }
+
+    public void unsetFf() {
+      __isset_bit_vector.clear(__FF_ISSET_ID);
+    }
+
+    /** Returns true if field ff is set (has been asigned a value) and false otherwise */
+    public boolean isSetFf() {
+      return __isset_bit_vector.get(__FF_ISSET_ID);
+    }
+
+    public void setFfIsSet(boolean value) {
+      __isset_bit_vector.set(__FF_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case FF:
+        if (value == null) {
+          unsetFf();
+        } else {
+          setFf((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case FF:
+        return new Long(getFf());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case FF:
+        return isSetFf();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_future_result_as_arrays_args)
+        return this.equals((get_future_result_as_arrays_args)that);
+      return false;
+    }
+
+    public boolean equals(get_future_result_as_arrays_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ff = true;
+      boolean that_present_ff = true;
+      if (this_present_ff || that_present_ff) {
+        if (!(this_present_ff && that_present_ff))
+          return false;
+        if (this.ff != that.ff)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_future_result_as_arrays_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_future_result_as_arrays_args typedOther = (get_future_result_as_arrays_args)other;
+
+      lastComparison = Boolean.valueOf(isSetFf()).compareTo(typedOther.isSetFf());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFf()) {
+        lastComparison = TBaseHelper.compareTo(this.ff, typedOther.ff);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // FF
+            if (field.type == TType.I64) {
+              this.ff = iprot.readI64();
+              setFfIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(FF_FIELD_DESC);
+      oprot.writeI64(this.ff);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_future_result_as_arrays_args(");
+      boolean first = true;
+
+      sb.append("ff:");
+      sb.append(this.ff);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class get_future_result_as_arrays_result implements TBase<get_future_result_as_arrays_result, get_future_result_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_future_result_as_arrays_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ResultAsArrays success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ResultAsArrays.class)));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(get_future_result_as_arrays_result.class, metaDataMap);
+    }
+
+    public get_future_result_as_arrays_result() {
+    }
+
+    public get_future_result_as_arrays_result(
+      ResultAsArrays success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_future_result_as_arrays_result(get_future_result_as_arrays_result other) {
+      if (other.isSetSuccess()) {
+        this.success = new ResultAsArrays(other.success);
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public get_future_result_as_arrays_result deepCopy() {
+      return new get_future_result_as_arrays_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public ResultAsArrays getSuccess() {
+      return this.success;
+    }
+
+    public get_future_result_as_arrays_result setSuccess(ResultAsArrays success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public get_future_result_as_arrays_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((ResultAsArrays)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_future_result_as_arrays_result)
+        return this.equals((get_future_result_as_arrays_result)that);
+      return false;
+    }
+
+    public boolean equals(get_future_result_as_arrays_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_future_result_as_arrays_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_future_result_as_arrays_result typedOther = (get_future_result_as_arrays_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRUCT) {
+              this.success = new ResultAsArrays();
+              this.success.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        this.success.write(oprot);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_future_result_as_arrays_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class get_future_result_serialized_args implements TBase<get_future_result_serialized_args, get_future_result_serialized_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_future_result_serialized_args");
+
+    private static final TField FF_FIELD_DESC = new TField("ff", TType.I64, (short)1);
+
+    public long ff;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      FF((short)1, "ff");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // FF
+            return FF;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __FF_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.FF, new FieldMetaData("ff", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Future")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(get_future_result_serialized_args.class, metaDataMap);
+    }
+
+    public get_future_result_serialized_args() {
+    }
+
+    public get_future_result_serialized_args(
+      long ff)
+    {
+      this();
+      this.ff = ff;
+      setFfIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_future_result_serialized_args(get_future_result_serialized_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ff = other.ff;
+    }
+
+    public get_future_result_serialized_args deepCopy() {
+      return new get_future_result_serialized_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setFfIsSet(false);
+      this.ff = 0;
+    }
+
+    public long getFf() {
+      return this.ff;
+    }
+
+    public get_future_result_serialized_args setFf(long ff) {
+      this.ff = ff;
+      setFfIsSet(true);
+      return this;
+    }
+
+    public void unsetFf() {
+      __isset_bit_vector.clear(__FF_ISSET_ID);
+    }
+
+    /** Returns true if field ff is set (has been asigned a value) and false otherwise */
+    public boolean isSetFf() {
+      return __isset_bit_vector.get(__FF_ISSET_ID);
+    }
+
+    public void setFfIsSet(boolean value) {
+      __isset_bit_vector.set(__FF_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case FF:
+        if (value == null) {
+          unsetFf();
+        } else {
+          setFf((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case FF:
+        return new Long(getFf());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case FF:
+        return isSetFf();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_future_result_serialized_args)
+        return this.equals((get_future_result_serialized_args)that);
+      return false;
+    }
+
+    public boolean equals(get_future_result_serialized_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ff = true;
+      boolean that_present_ff = true;
+      if (this_present_ff || that_present_ff) {
+        if (!(this_present_ff && that_present_ff))
+          return false;
+        if (this.ff != that.ff)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_future_result_serialized_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_future_result_serialized_args typedOther = (get_future_result_serialized_args)other;
+
+      lastComparison = Boolean.valueOf(isSetFf()).compareTo(typedOther.isSetFf());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFf()) {
+        lastComparison = TBaseHelper.compareTo(this.ff, typedOther.ff);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // FF
+            if (field.type == TType.I64) {
+              this.ff = iprot.readI64();
+              setFfIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(FF_FIELD_DESC);
+      oprot.writeI64(this.ff);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_future_result_serialized_args(");
+      boolean first = true;
+
+      sb.append("ff:");
+      sb.append(this.ff);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class get_future_result_serialized_result implements TBase<get_future_result_serialized_result, get_future_result_serialized_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_future_result_serialized_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ResultSerialized success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ResultSerialized.class)));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(get_future_result_serialized_result.class, metaDataMap);
+    }
+
+    public get_future_result_serialized_result() {
+    }
+
+    public get_future_result_serialized_result(
+      ResultSerialized success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_future_result_serialized_result(get_future_result_serialized_result other) {
+      if (other.isSetSuccess()) {
+        this.success = new ResultSerialized(other.success);
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public get_future_result_serialized_result deepCopy() {
+      return new get_future_result_serialized_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public ResultSerialized getSuccess() {
+      return this.success;
+    }
+
+    public get_future_result_serialized_result setSuccess(ResultSerialized success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public get_future_result_serialized_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((ResultSerialized)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_future_result_serialized_result)
+        return this.equals((get_future_result_serialized_result)that);
+      return false;
+    }
+
+    public boolean equals(get_future_result_serialized_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_future_result_serialized_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_future_result_serialized_result typedOther = (get_future_result_serialized_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRUCT) {
+              this.success = new ResultSerialized();
+              this.success.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        this.success.write(oprot);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_future_result_serialized_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class close_future_args implements TBase<close_future_args, close_future_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_future_args");
+
+    private static final TField FF_FIELD_DESC = new TField("ff", TType.I64, (short)1);
+
+    public long ff;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      FF((short)1, "ff");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // FF
+            return FF;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __FF_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.FF, new FieldMetaData("ff", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Future")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(close_future_args.class, metaDataMap);
+    }
+
+    public close_future_args() {
+    }
+
+    public close_future_args(
+      long ff)
+    {
+      this();
+      this.ff = ff;
+      setFfIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public close_future_args(close_future_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ff = other.ff;
+    }
+
+    public close_future_args deepCopy() {
+      return new close_future_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setFfIsSet(false);
+      this.ff = 0;
+    }
+
+    public long getFf() {
+      return this.ff;
+    }
+
+    public close_future_args setFf(long ff) {
+      this.ff = ff;
+      setFfIsSet(true);
+      return this;
+    }
+
+    public void unsetFf() {
+      __isset_bit_vector.clear(__FF_ISSET_ID);
+    }
+
+    /** Returns true if field ff is set (has been asigned a value) and false otherwise */
+    public boolean isSetFf() {
+      return __isset_bit_vector.get(__FF_ISSET_ID);
+    }
+
+    public void setFfIsSet(boolean value) {
+      __isset_bit_vector.set(__FF_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case FF:
+        if (value == null) {
+          unsetFf();
+        } else {
+          setFf((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case FF:
+        return new Long(getFf());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case FF:
+        return isSetFf();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof close_future_args)
+        return this.equals((close_future_args)that);
+      return false;
+    }
+
+    public boolean equals(close_future_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ff = true;
+      boolean that_present_ff = true;
+      if (this_present_ff || that_present_ff) {
+        if (!(this_present_ff && that_present_ff))
+          return false;
+        if (this.ff != that.ff)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(close_future_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      close_future_args typedOther = (close_future_args)other;
+
+      lastComparison = Boolean.valueOf(isSetFf()).compareTo(typedOther.isSetFf());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFf()) {
+        lastComparison = TBaseHelper.compareTo(this.ff, typedOther.ff);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // FF
+            if (field.type == TType.I64) {
+              this.ff = iprot.readI64();
+              setFfIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(FF_FIELD_DESC);
+      oprot.writeI64(this.ff);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("close_future_args(");
+      boolean first = true;
+
+      sb.append("ff:");
+      sb.append(this.ff);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class close_future_result implements TBase<close_future_result, close_future_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_future_result");
+
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(close_future_result.class, metaDataMap);
+    }
+
+    public close_future_result() {
+    }
+
+    public close_future_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public close_future_result(close_future_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public close_future_result deepCopy() {
+      return new close_future_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public close_future_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof close_future_result)
+        return this.equals((close_future_result)that);
+      return false;
+    }
+
+    public boolean equals(close_future_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(close_future_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      close_future_result typedOther = (close_future_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("close_future_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
   public static class open_scanner_args implements TBase<open_scanner_args, open_scanner_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("open_scanner_args");
 
@@ -8987,6 +13002,1003 @@ public class ClientService {
 
   }
 
+  public static class open_scanner_async_args implements TBase<open_scanner_async_args, open_scanner_async_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_scanner_async_args");
+
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField FUTURE_FIELD_DESC = new TField("future", TType.I64, (short)3);
+    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)4);
+    private static final TField RETRY_TABLE_NOT_FOUND_FIELD_DESC = new TField("retry_table_not_found", TType.BOOL, (short)5);
+
+    public long ns;
+    public String table_name;
+    public long future;
+    public ScanSpec scan_spec;
+    public boolean retry_table_not_found;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      FUTURE((short)3, "future"),
+      SCAN_SPEC((short)4, "scan_spec"),
+      RETRY_TABLE_NOT_FOUND((short)5, "retry_table_not_found");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // FUTURE
+            return FUTURE;
+          case 4: // SCAN_SPEC
+            return SCAN_SPEC;
+          case 5: // RETRY_TABLE_NOT_FOUND
+            return RETRY_TABLE_NOT_FOUND;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private static final int __FUTURE_ISSET_ID = 1;
+    private static final int __RETRY_TABLE_NOT_FOUND_ISSET_ID = 2;
+    private BitSet __isset_bit_vector = new BitSet(3);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.FUTURE, new FieldMetaData("future", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Future")));
+      tmpMap.put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ScanSpec.class)));
+      tmpMap.put(_Fields.RETRY_TABLE_NOT_FOUND, new FieldMetaData("retry_table_not_found", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(open_scanner_async_args.class, metaDataMap);
+    }
+
+    public open_scanner_async_args() {
+      this.retry_table_not_found = false;
+
+    }
+
+    public open_scanner_async_args(
+      long ns,
+      String table_name,
+      long future,
+      ScanSpec scan_spec,
+      boolean retry_table_not_found)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
+      this.future = future;
+      setFutureIsSet(true);
+      this.scan_spec = scan_spec;
+      this.retry_table_not_found = retry_table_not_found;
+      setRetry_table_not_foundIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public open_scanner_async_args(open_scanner_async_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
+      }
+      this.future = other.future;
+      if (other.isSetScan_spec()) {
+        this.scan_spec = new ScanSpec(other.scan_spec);
+      }
+      this.retry_table_not_found = other.retry_table_not_found;
+    }
+
+    public open_scanner_async_args deepCopy() {
+      return new open_scanner_async_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      setFutureIsSet(false);
+      this.future = 0;
+      this.scan_spec = null;
+      this.retry_table_not_found = false;
+
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public open_scanner_async_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public open_scanner_async_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
+      if (!value) {
+        this.table_name = null;
+      }
+    }
+
+    public long getFuture() {
+      return this.future;
+    }
+
+    public open_scanner_async_args setFuture(long future) {
+      this.future = future;
+      setFutureIsSet(true);
+      return this;
+    }
+
+    public void unsetFuture() {
+      __isset_bit_vector.clear(__FUTURE_ISSET_ID);
+    }
+
+    /** Returns true if field future is set (has been asigned a value) and false otherwise */
+    public boolean isSetFuture() {
+      return __isset_bit_vector.get(__FUTURE_ISSET_ID);
+    }
+
+    public void setFutureIsSet(boolean value) {
+      __isset_bit_vector.set(__FUTURE_ISSET_ID, value);
+    }
+
+    public ScanSpec getScan_spec() {
+      return this.scan_spec;
+    }
+
+    public open_scanner_async_args setScan_spec(ScanSpec scan_spec) {
+      this.scan_spec = scan_spec;
+      return this;
+    }
+
+    public void unsetScan_spec() {
+      this.scan_spec = null;
+    }
+
+    /** Returns true if field scan_spec is set (has been asigned a value) and false otherwise */
+    public boolean isSetScan_spec() {
+      return this.scan_spec != null;
+    }
+
+    public void setScan_specIsSet(boolean value) {
+      if (!value) {
+        this.scan_spec = null;
+      }
+    }
+
+    public boolean isRetry_table_not_found() {
+      return this.retry_table_not_found;
+    }
+
+    public open_scanner_async_args setRetry_table_not_found(boolean retry_table_not_found) {
+      this.retry_table_not_found = retry_table_not_found;
+      setRetry_table_not_foundIsSet(true);
+      return this;
+    }
+
+    public void unsetRetry_table_not_found() {
+      __isset_bit_vector.clear(__RETRY_TABLE_NOT_FOUND_ISSET_ID);
+    }
+
+    /** Returns true if field retry_table_not_found is set (has been asigned a value) and false otherwise */
+    public boolean isSetRetry_table_not_found() {
+      return __isset_bit_vector.get(__RETRY_TABLE_NOT_FOUND_ISSET_ID);
+    }
+
+    public void setRetry_table_not_foundIsSet(boolean value) {
+      __isset_bit_vector.set(__RETRY_TABLE_NOT_FOUND_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
+        }
+        break;
+
+      case FUTURE:
+        if (value == null) {
+          unsetFuture();
+        } else {
+          setFuture((Long)value);
+        }
+        break;
+
+      case SCAN_SPEC:
+        if (value == null) {
+          unsetScan_spec();
+        } else {
+          setScan_spec((ScanSpec)value);
+        }
+        break;
+
+      case RETRY_TABLE_NOT_FOUND:
+        if (value == null) {
+          unsetRetry_table_not_found();
+        } else {
+          setRetry_table_not_found((Boolean)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
+
+      case FUTURE:
+        return new Long(getFuture());
+
+      case SCAN_SPEC:
+        return getScan_spec();
+
+      case RETRY_TABLE_NOT_FOUND:
+        return new Boolean(isRetry_table_not_found());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
+      case FUTURE:
+        return isSetFuture();
+      case SCAN_SPEC:
+        return isSetScan_spec();
+      case RETRY_TABLE_NOT_FOUND:
+        return isSetRetry_table_not_found();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof open_scanner_async_args)
+        return this.equals((open_scanner_async_args)that);
+      return false;
+    }
+
+    public boolean equals(open_scanner_async_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
+          return false;
+      }
+
+      boolean this_present_future = true;
+      boolean that_present_future = true;
+      if (this_present_future || that_present_future) {
+        if (!(this_present_future && that_present_future))
+          return false;
+        if (this.future != that.future)
+          return false;
+      }
+
+      boolean this_present_scan_spec = true && this.isSetScan_spec();
+      boolean that_present_scan_spec = true && that.isSetScan_spec();
+      if (this_present_scan_spec || that_present_scan_spec) {
+        if (!(this_present_scan_spec && that_present_scan_spec))
+          return false;
+        if (!this.scan_spec.equals(that.scan_spec))
+          return false;
+      }
+
+      boolean this_present_retry_table_not_found = true;
+      boolean that_present_retry_table_not_found = true;
+      if (this_present_retry_table_not_found || that_present_retry_table_not_found) {
+        if (!(this_present_retry_table_not_found && that_present_retry_table_not_found))
+          return false;
+        if (this.retry_table_not_found != that.retry_table_not_found)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(open_scanner_async_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      open_scanner_async_args typedOther = (open_scanner_async_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFuture()).compareTo(typedOther.isSetFuture());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFuture()) {
+        lastComparison = TBaseHelper.compareTo(this.future, typedOther.future);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetScan_spec()).compareTo(typedOther.isSetScan_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetScan_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetRetry_table_not_found()).compareTo(typedOther.isSetRetry_table_not_found());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetRetry_table_not_found()) {
+        lastComparison = TBaseHelper.compareTo(this.retry_table_not_found, typedOther.retry_table_not_found);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // FUTURE
+            if (field.type == TType.I64) {
+              this.future = iprot.readI64();
+              setFutureIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 4: // SCAN_SPEC
+            if (field.type == TType.STRUCT) {
+              this.scan_spec = new ScanSpec();
+              this.scan_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 5: // RETRY_TABLE_NOT_FOUND
+            if (field.type == TType.BOOL) {
+              this.retry_table_not_found = iprot.readBool();
+              setRetry_table_not_foundIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldBegin(FUTURE_FIELD_DESC);
+      oprot.writeI64(this.future);
+      oprot.writeFieldEnd();
+      if (this.scan_spec != null) {
+        oprot.writeFieldBegin(SCAN_SPEC_FIELD_DESC);
+        this.scan_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldBegin(RETRY_TABLE_NOT_FOUND_FIELD_DESC);
+      oprot.writeBool(this.retry_table_not_found);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("open_scanner_async_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table_name);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("future:");
+      sb.append(this.future);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("scan_spec:");
+      if (this.scan_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.scan_spec);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("retry_table_not_found:");
+      sb.append(this.retry_table_not_found);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class open_scanner_async_result implements TBase<open_scanner_async_result, open_scanner_async_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_scanner_async_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public long success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "ScannerAsync")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(open_scanner_async_result.class, metaDataMap);
+    }
+
+    public open_scanner_async_result() {
+    }
+
+    public open_scanner_async_result(
+      long success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public open_scanner_async_result(open_scanner_async_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public open_scanner_async_result deepCopy() {
+      return new open_scanner_async_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = 0;
+      this.e = null;
+    }
+
+    public long getSuccess() {
+      return this.success;
+    }
+
+    public open_scanner_async_result setSuccess(long success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public open_scanner_async_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Long)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return new Long(getSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof open_scanner_async_result)
+        return this.equals((open_scanner_async_result)that);
+      return false;
+    }
+
+    public boolean equals(open_scanner_async_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(open_scanner_async_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      open_scanner_async_result typedOther = (open_scanner_async_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I64) {
+              this.success = iprot.readI64();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeI64(this.success);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("open_scanner_async_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
   public static class close_scanner_args implements TBase<close_scanner_args, close_scanner_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("close_scanner_args");
 
@@ -9528,6 +14540,566 @@ public class ClientService {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("close_scanner_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class close_scanner_async_args implements TBase<close_scanner_async_args, close_scanner_async_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_scanner_async_args");
+
+    private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
+
+    public long scanner;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SCANNER((short)1, "scanner");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // SCANNER
+            return SCANNER;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SCANNER_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "ScannerAsync")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(close_scanner_async_args.class, metaDataMap);
+    }
+
+    public close_scanner_async_args() {
+    }
+
+    public close_scanner_async_args(
+      long scanner)
+    {
+      this();
+      this.scanner = scanner;
+      setScannerIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public close_scanner_async_args(close_scanner_async_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.scanner = other.scanner;
+    }
+
+    public close_scanner_async_args deepCopy() {
+      return new close_scanner_async_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setScannerIsSet(false);
+      this.scanner = 0;
+    }
+
+    public long getScanner() {
+      return this.scanner;
+    }
+
+    public close_scanner_async_args setScanner(long scanner) {
+      this.scanner = scanner;
+      setScannerIsSet(true);
+      return this;
+    }
+
+    public void unsetScanner() {
+      __isset_bit_vector.clear(__SCANNER_ISSET_ID);
+    }
+
+    /** Returns true if field scanner is set (has been asigned a value) and false otherwise */
+    public boolean isSetScanner() {
+      return __isset_bit_vector.get(__SCANNER_ISSET_ID);
+    }
+
+    public void setScannerIsSet(boolean value) {
+      __isset_bit_vector.set(__SCANNER_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SCANNER:
+        if (value == null) {
+          unsetScanner();
+        } else {
+          setScanner((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SCANNER:
+        return new Long(getScanner());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SCANNER:
+        return isSetScanner();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof close_scanner_async_args)
+        return this.equals((close_scanner_async_args)that);
+      return false;
+    }
+
+    public boolean equals(close_scanner_async_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_scanner = true;
+      boolean that_present_scanner = true;
+      if (this_present_scanner || that_present_scanner) {
+        if (!(this_present_scanner && that_present_scanner))
+          return false;
+        if (this.scanner != that.scanner)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(close_scanner_async_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      close_scanner_async_args typedOther = (close_scanner_async_args)other;
+
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetScanner()) {
+        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // SCANNER
+            if (field.type == TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(SCANNER_FIELD_DESC);
+      oprot.writeI64(this.scanner);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("close_scanner_async_args(");
+      boolean first = true;
+
+      sb.append("scanner:");
+      sb.append(this.scanner);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class close_scanner_async_result implements TBase<close_scanner_async_result, close_scanner_async_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_scanner_async_result");
+
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(close_scanner_async_result.class, metaDataMap);
+    }
+
+    public close_scanner_async_result() {
+    }
+
+    public close_scanner_async_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public close_scanner_async_result(close_scanner_async_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public close_scanner_async_result deepCopy() {
+      return new close_scanner_async_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public close_scanner_async_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof close_scanner_async_result)
+        return this.equals((close_scanner_async_result)that);
+      return false;
+    }
+
+    public boolean equals(close_scanner_async_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(close_scanner_async_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      close_scanner_async_result typedOther = (close_scanner_async_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("close_scanner_async_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -10146,14 +15718,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list26 = iprot.readListBegin();
-                this.success = new ArrayList<Cell>(_list26.size);
-                for (int _i27 = 0; _i27 < _list26.size; ++_i27)
+                TList _list38 = iprot.readListBegin();
+                this.success = new ArrayList<Cell>(_list38.size);
+                for (int _i39 = 0; _i39 < _list38.size; ++_i39)
                 {
-                  Cell _elem28;
-                  _elem28 = new Cell();
-                  _elem28.read(iprot);
-                  this.success.add(_elem28);
+                  Cell _elem40;
+                  _elem40 = new Cell();
+                  _elem40.read(iprot);
+                  this.success.add(_elem40);
                 }
                 iprot.readListEnd();
               }
@@ -10187,9 +15759,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (Cell _iter29 : this.success)
+          for (Cell _iter41 : this.success)
           {
-            _iter29.write(oprot);
+            _iter41.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -10832,23 +16404,23 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list30 = iprot.readListBegin();
-                this.success = new ArrayList<List<String>>(_list30.size);
-                for (int _i31 = 0; _i31 < _list30.size; ++_i31)
+                TList _list42 = iprot.readListBegin();
+                this.success = new ArrayList<List<String>>(_list42.size);
+                for (int _i43 = 0; _i43 < _list42.size; ++_i43)
                 {
-                  List<String> _elem32;
+                  List<String> _elem44;
                   {
-                    TList _list33 = iprot.readListBegin();
-                    _elem32 = new ArrayList<String>(_list33.size);
-                    for (int _i34 = 0; _i34 < _list33.size; ++_i34)
+                    TList _list45 = iprot.readListBegin();
+                    _elem44 = new ArrayList<String>(_list45.size);
+                    for (int _i46 = 0; _i46 < _list45.size; ++_i46)
                     {
-                      String _elem35;
-                      _elem35 = iprot.readString();
-                      _elem32.add(_elem35);
+                      String _elem47;
+                      _elem47 = iprot.readString();
+                      _elem44.add(_elem47);
                     }
                     iprot.readListEnd();
                   }
-                  this.success.add(_elem32);
+                  this.success.add(_elem44);
                 }
                 iprot.readListEnd();
               }
@@ -10882,13 +16454,13 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.success.size()));
-          for (List<String> _iter36 : this.success)
+          for (List<String> _iter48 : this.success)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter36.size()));
-              for (String _iter37 : _iter36)
+              oprot.writeListBegin(new TList(TType.STRING, _iter48.size()));
+              for (String _iter49 : _iter48)
               {
-                oprot.writeString(_iter37);
+                oprot.writeString(_iter49);
               }
               oprot.writeListEnd();
             }
@@ -12103,14 +17675,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list38 = iprot.readListBegin();
-                this.success = new ArrayList<Cell>(_list38.size);
-                for (int _i39 = 0; _i39 < _list38.size; ++_i39)
+                TList _list50 = iprot.readListBegin();
+                this.success = new ArrayList<Cell>(_list50.size);
+                for (int _i51 = 0; _i51 < _list50.size; ++_i51)
                 {
-                  Cell _elem40;
-                  _elem40 = new Cell();
-                  _elem40.read(iprot);
-                  this.success.add(_elem40);
+                  Cell _elem52;
+                  _elem52 = new Cell();
+                  _elem52.read(iprot);
+                  this.success.add(_elem52);
                 }
                 iprot.readListEnd();
               }
@@ -12144,9 +17716,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (Cell _iter41 : this.success)
+          for (Cell _iter53 : this.success)
           {
-            _iter41.write(oprot);
+            _iter53.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -12789,23 +18361,23 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list42 = iprot.readListBegin();
-                this.success = new ArrayList<List<String>>(_list42.size);
-                for (int _i43 = 0; _i43 < _list42.size; ++_i43)
+                TList _list54 = iprot.readListBegin();
+                this.success = new ArrayList<List<String>>(_list54.size);
+                for (int _i55 = 0; _i55 < _list54.size; ++_i55)
                 {
-                  List<String> _elem44;
+                  List<String> _elem56;
                   {
-                    TList _list45 = iprot.readListBegin();
-                    _elem44 = new ArrayList<String>(_list45.size);
-                    for (int _i46 = 0; _i46 < _list45.size; ++_i46)
+                    TList _list57 = iprot.readListBegin();
+                    _elem56 = new ArrayList<String>(_list57.size);
+                    for (int _i58 = 0; _i58 < _list57.size; ++_i58)
                     {
-                      String _elem47;
-                      _elem47 = iprot.readString();
-                      _elem44.add(_elem47);
+                      String _elem59;
+                      _elem59 = iprot.readString();
+                      _elem56.add(_elem59);
                     }
                     iprot.readListEnd();
                   }
-                  this.success.add(_elem44);
+                  this.success.add(_elem56);
                 }
                 iprot.readListEnd();
               }
@@ -12839,13 +18411,13 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.success.size()));
-          for (List<String> _iter48 : this.success)
+          for (List<String> _iter60 : this.success)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter48.size()));
-              for (String _iter49 : _iter48)
+              oprot.writeListBegin(new TList(TType.STRING, _iter60.size()));
+              for (String _iter61 : _iter60)
               {
-                oprot.writeString(_iter49);
+                oprot.writeString(_iter61);
               }
               oprot.writeListEnd();
             }
@@ -14327,14 +19899,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list50 = iprot.readListBegin();
-                this.success = new ArrayList<Cell>(_list50.size);
-                for (int _i51 = 0; _i51 < _list50.size; ++_i51)
+                TList _list62 = iprot.readListBegin();
+                this.success = new ArrayList<Cell>(_list62.size);
+                for (int _i63 = 0; _i63 < _list62.size; ++_i63)
                 {
-                  Cell _elem52;
-                  _elem52 = new Cell();
-                  _elem52.read(iprot);
-                  this.success.add(_elem52);
+                  Cell _elem64;
+                  _elem64 = new Cell();
+                  _elem64.read(iprot);
+                  this.success.add(_elem64);
                 }
                 iprot.readListEnd();
               }
@@ -14368,9 +19940,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (Cell _iter53 : this.success)
+          for (Cell _iter65 : this.success)
           {
-            _iter53.write(oprot);
+            _iter65.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -15191,23 +20763,23 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list54 = iprot.readListBegin();
-                this.success = new ArrayList<List<String>>(_list54.size);
-                for (int _i55 = 0; _i55 < _list54.size; ++_i55)
+                TList _list66 = iprot.readListBegin();
+                this.success = new ArrayList<List<String>>(_list66.size);
+                for (int _i67 = 0; _i67 < _list66.size; ++_i67)
                 {
-                  List<String> _elem56;
+                  List<String> _elem68;
                   {
-                    TList _list57 = iprot.readListBegin();
-                    _elem56 = new ArrayList<String>(_list57.size);
-                    for (int _i58 = 0; _i58 < _list57.size; ++_i58)
+                    TList _list69 = iprot.readListBegin();
+                    _elem68 = new ArrayList<String>(_list69.size);
+                    for (int _i70 = 0; _i70 < _list69.size; ++_i70)
                     {
-                      String _elem59;
-                      _elem59 = iprot.readString();
-                      _elem56.add(_elem59);
+                      String _elem71;
+                      _elem71 = iprot.readString();
+                      _elem68.add(_elem71);
                     }
                     iprot.readListEnd();
                   }
-                  this.success.add(_elem56);
+                  this.success.add(_elem68);
                 }
                 iprot.readListEnd();
               }
@@ -15241,13 +20813,13 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.success.size()));
-          for (List<String> _iter60 : this.success)
+          for (List<String> _iter72 : this.success)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter60.size()));
-              for (String _iter61 : _iter60)
+              oprot.writeListBegin(new TList(TType.STRING, _iter72.size()));
+              for (String _iter73 : _iter72)
               {
-                oprot.writeString(_iter61);
+                oprot.writeString(_iter73);
               }
               oprot.writeListEnd();
             }
@@ -17833,14 +23405,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list62 = iprot.readListBegin();
-                this.success = new ArrayList<Cell>(_list62.size);
-                for (int _i63 = 0; _i63 < _list62.size; ++_i63)
+                TList _list74 = iprot.readListBegin();
+                this.success = new ArrayList<Cell>(_list74.size);
+                for (int _i75 = 0; _i75 < _list74.size; ++_i75)
                 {
-                  Cell _elem64;
-                  _elem64 = new Cell();
-                  _elem64.read(iprot);
-                  this.success.add(_elem64);
+                  Cell _elem76;
+                  _elem76 = new Cell();
+                  _elem76.read(iprot);
+                  this.success.add(_elem76);
                 }
                 iprot.readListEnd();
               }
@@ -17874,9 +23446,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (Cell _iter65 : this.success)
+          for (Cell _iter77 : this.success)
           {
-            _iter65.write(oprot);
+            _iter77.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -18698,23 +24270,23 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list66 = iprot.readListBegin();
-                this.success = new ArrayList<List<String>>(_list66.size);
-                for (int _i67 = 0; _i67 < _list66.size; ++_i67)
+                TList _list78 = iprot.readListBegin();
+                this.success = new ArrayList<List<String>>(_list78.size);
+                for (int _i79 = 0; _i79 < _list78.size; ++_i79)
                 {
-                  List<String> _elem68;
+                  List<String> _elem80;
                   {
-                    TList _list69 = iprot.readListBegin();
-                    _elem68 = new ArrayList<String>(_list69.size);
-                    for (int _i70 = 0; _i70 < _list69.size; ++_i70)
+                    TList _list81 = iprot.readListBegin();
+                    _elem80 = new ArrayList<String>(_list81.size);
+                    for (int _i82 = 0; _i82 < _list81.size; ++_i82)
                     {
-                      String _elem71;
-                      _elem71 = iprot.readString();
-                      _elem68.add(_elem71);
+                      String _elem83;
+                      _elem83 = iprot.readString();
+                      _elem80.add(_elem83);
                     }
                     iprot.readListEnd();
                   }
-                  this.success.add(_elem68);
+                  this.success.add(_elem80);
                 }
                 iprot.readListEnd();
               }
@@ -18748,13 +24320,13 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.success.size()));
-          for (List<String> _iter72 : this.success)
+          for (List<String> _iter84 : this.success)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter72.size()));
-              for (String _iter73 : _iter72)
+              oprot.writeListBegin(new TList(TType.STRING, _iter84.size()));
+              for (String _iter85 : _iter84)
               {
-                oprot.writeString(_iter73);
+                oprot.writeString(_iter85);
               }
               oprot.writeListEnd();
             }
@@ -20861,14 +26433,14 @@ public class ClientService {
           case 4: // CELLS
             if (field.type == TType.LIST) {
               {
-                TList _list74 = iprot.readListBegin();
-                this.cells = new ArrayList<Cell>(_list74.size);
-                for (int _i75 = 0; _i75 < _list74.size; ++_i75)
+                TList _list86 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list86.size);
+                for (int _i87 = 0; _i87 < _list86.size; ++_i87)
                 {
-                  Cell _elem76;
-                  _elem76 = new Cell();
-                  _elem76.read(iprot);
-                  this.cells.add(_elem76);
+                  Cell _elem88;
+                  _elem88 = new Cell();
+                  _elem88.read(iprot);
+                  this.cells.add(_elem88);
                 }
                 iprot.readListEnd();
               }
@@ -20908,9 +26480,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
-          for (Cell _iter77 : this.cells)
+          for (Cell _iter89 : this.cells)
           {
-            _iter77.write(oprot);
+            _iter89.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -21727,23 +27299,23 @@ public class ClientService {
           case 4: // CELLS
             if (field.type == TType.LIST) {
               {
-                TList _list78 = iprot.readListBegin();
-                this.cells = new ArrayList<List<String>>(_list78.size);
-                for (int _i79 = 0; _i79 < _list78.size; ++_i79)
+                TList _list90 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list90.size);
+                for (int _i91 = 0; _i91 < _list90.size; ++_i91)
                 {
-                  List<String> _elem80;
+                  List<String> _elem92;
                   {
-                    TList _list81 = iprot.readListBegin();
-                    _elem80 = new ArrayList<String>(_list81.size);
-                    for (int _i82 = 0; _i82 < _list81.size; ++_i82)
+                    TList _list93 = iprot.readListBegin();
+                    _elem92 = new ArrayList<String>(_list93.size);
+                    for (int _i94 = 0; _i94 < _list93.size; ++_i94)
                     {
-                      String _elem83;
-                      _elem83 = iprot.readString();
-                      _elem80.add(_elem83);
+                      String _elem95;
+                      _elem95 = iprot.readString();
+                      _elem92.add(_elem95);
                     }
                     iprot.readListEnd();
                   }
-                  this.cells.add(_elem80);
+                  this.cells.add(_elem92);
                 }
                 iprot.readListEnd();
               }
@@ -21783,13 +27355,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.cells.size()));
-          for (List<String> _iter84 : this.cells)
+          for (List<String> _iter96 : this.cells)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter84.size()));
-              for (String _iter85 : _iter84)
+              oprot.writeListBegin(new TList(TType.STRING, _iter96.size()));
+              for (String _iter97 : _iter96)
               {
-                oprot.writeString(_iter85);
+                oprot.writeString(_iter97);
               }
               oprot.writeListEnd();
             }
@@ -23433,13 +29005,13 @@ public class ClientService {
           case 4: // CELL
             if (field.type == TType.LIST) {
               {
-                TList _list86 = iprot.readListBegin();
-                this.cell = new ArrayList<String>(_list86.size);
-                for (int _i87 = 0; _i87 < _list86.size; ++_i87)
+                TList _list98 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list98.size);
+                for (int _i99 = 0; _i99 < _list98.size; ++_i99)
                 {
-                  String _elem88;
-                  _elem88 = iprot.readString();
-                  this.cell.add(_elem88);
+                  String _elem100;
+                  _elem100 = iprot.readString();
+                  this.cell.add(_elem100);
                 }
                 iprot.readListEnd();
               }
@@ -23479,9 +29051,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.cell.size()));
-          for (String _iter89 : this.cell)
+          for (String _iter101 : this.cell)
           {
-            oprot.writeString(_iter89);
+            oprot.writeString(_iter101);
           }
           oprot.writeListEnd();
         }
@@ -26345,13 +31917,13 @@ public class ClientService {
           case 2: // CELL
             if (field.type == TType.LIST) {
               {
-                TList _list90 = iprot.readListBegin();
-                this.cell = new ArrayList<String>(_list90.size);
-                for (int _i91 = 0; _i91 < _list90.size; ++_i91)
+                TList _list102 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list102.size);
+                for (int _i103 = 0; _i103 < _list102.size; ++_i103)
                 {
-                  String _elem92;
-                  _elem92 = iprot.readString();
-                  this.cell.add(_elem92);
+                  String _elem104;
+                  _elem104 = iprot.readString();
+                  this.cell.add(_elem104);
                 }
                 iprot.readListEnd();
               }
@@ -26381,9 +31953,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.cell.size()));
-          for (String _iter93 : this.cell)
+          for (String _iter105 : this.cell)
           {
-            oprot.writeString(_iter93);
+            oprot.writeString(_iter105);
           }
           oprot.writeListEnd();
         }
@@ -27031,14 +32603,14 @@ public class ClientService {
           case 2: // CELLS
             if (field.type == TType.LIST) {
               {
-                TList _list94 = iprot.readListBegin();
-                this.cells = new ArrayList<Cell>(_list94.size);
-                for (int _i95 = 0; _i95 < _list94.size; ++_i95)
+                TList _list106 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list106.size);
+                for (int _i107 = 0; _i107 < _list106.size; ++_i107)
                 {
-                  Cell _elem96;
-                  _elem96 = new Cell();
-                  _elem96.read(iprot);
-                  this.cells.add(_elem96);
+                  Cell _elem108;
+                  _elem108 = new Cell();
+                  _elem108.read(iprot);
+                  this.cells.add(_elem108);
                 }
                 iprot.readListEnd();
               }
@@ -27068,9 +32640,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
-          for (Cell _iter97 : this.cells)
+          for (Cell _iter109 : this.cells)
           {
-            _iter97.write(oprot);
+            _iter109.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -27718,23 +33290,23 @@ public class ClientService {
           case 2: // CELLS
             if (field.type == TType.LIST) {
               {
-                TList _list98 = iprot.readListBegin();
-                this.cells = new ArrayList<List<String>>(_list98.size);
-                for (int _i99 = 0; _i99 < _list98.size; ++_i99)
+                TList _list110 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list110.size);
+                for (int _i111 = 0; _i111 < _list110.size; ++_i111)
                 {
-                  List<String> _elem100;
+                  List<String> _elem112;
                   {
-                    TList _list101 = iprot.readListBegin();
-                    _elem100 = new ArrayList<String>(_list101.size);
-                    for (int _i102 = 0; _i102 < _list101.size; ++_i102)
+                    TList _list113 = iprot.readListBegin();
+                    _elem112 = new ArrayList<String>(_list113.size);
+                    for (int _i114 = 0; _i114 < _list113.size; ++_i114)
                     {
-                      String _elem103;
-                      _elem103 = iprot.readString();
-                      _elem100.add(_elem103);
+                      String _elem115;
+                      _elem115 = iprot.readString();
+                      _elem112.add(_elem115);
                     }
                     iprot.readListEnd();
                   }
-                  this.cells.add(_elem100);
+                  this.cells.add(_elem112);
                 }
                 iprot.readListEnd();
               }
@@ -27764,13 +33336,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.cells.size()));
-          for (List<String> _iter104 : this.cells)
+          for (List<String> _iter116 : this.cells)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter104.size()));
-              for (String _iter105 : _iter104)
+              oprot.writeListBegin(new TList(TType.STRING, _iter116.size()));
+              for (String _iter117 : _iter116)
               {
-                oprot.writeString(_iter105);
+                oprot.writeString(_iter117);
               }
               oprot.writeListEnd();
             }
@@ -33593,13 +39165,13 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list106 = iprot.readListBegin();
-                this.success = new ArrayList<String>(_list106.size);
-                for (int _i107 = 0; _i107 < _list106.size; ++_i107)
+                TList _list118 = iprot.readListBegin();
+                this.success = new ArrayList<String>(_list118.size);
+                for (int _i119 = 0; _i119 < _list118.size; ++_i119)
                 {
-                  String _elem108;
-                  _elem108 = iprot.readString();
-                  this.success.add(_elem108);
+                  String _elem120;
+                  _elem120 = iprot.readString();
+                  this.success.add(_elem120);
                 }
                 iprot.readListEnd();
               }
@@ -33633,9 +39205,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.success.size()));
-          for (String _iter109 : this.success)
+          for (String _iter121 : this.success)
           {
-            oprot.writeString(_iter109);
+            oprot.writeString(_iter121);
           }
           oprot.writeListEnd();
         }
@@ -34278,14 +39850,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list110 = iprot.readListBegin();
-                this.success = new ArrayList<NamespaceListing>(_list110.size);
-                for (int _i111 = 0; _i111 < _list110.size; ++_i111)
+                TList _list122 = iprot.readListBegin();
+                this.success = new ArrayList<NamespaceListing>(_list122.size);
+                for (int _i123 = 0; _i123 < _list122.size; ++_i123)
                 {
-                  NamespaceListing _elem112;
-                  _elem112 = new NamespaceListing();
-                  _elem112.read(iprot);
-                  this.success.add(_elem112);
+                  NamespaceListing _elem124;
+                  _elem124 = new NamespaceListing();
+                  _elem124.read(iprot);
+                  this.success.add(_elem124);
                 }
                 iprot.readListEnd();
               }
@@ -34319,9 +39891,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (NamespaceListing _iter113 : this.success)
+          for (NamespaceListing _iter125 : this.success)
           {
-            _iter113.write(oprot);
+            _iter125.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -35053,14 +40625,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list114 = iprot.readListBegin();
-                this.success = new ArrayList<TableSplit>(_list114.size);
-                for (int _i115 = 0; _i115 < _list114.size; ++_i115)
+                TList _list126 = iprot.readListBegin();
+                this.success = new ArrayList<TableSplit>(_list126.size);
+                for (int _i127 = 0; _i127 < _list126.size; ++_i127)
                 {
-                  TableSplit _elem116;
-                  _elem116 = new TableSplit();
-                  _elem116.read(iprot);
-                  this.success.add(_elem116);
+                  TableSplit _elem128;
+                  _elem128 = new TableSplit();
+                  _elem128.read(iprot);
+                  this.success.add(_elem128);
                 }
                 iprot.readListEnd();
               }
@@ -35094,9 +40666,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (TableSplit _iter117 : this.success)
+          for (TableSplit _iter129 : this.success)
           {
-            _iter117.write(oprot);
+            _iter129.write(oprot);
           }
           oprot.writeListEnd();
         }

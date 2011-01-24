@@ -30,10 +30,10 @@
 
 #include "Common/Thread.h"
 #include "Common/Mutex.h"
-#include "Common/Logger.h"
 #include "Common/HashMap.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
+#include "Common/Logger.h"
 
 #include "ApplicationHandler.h"
 

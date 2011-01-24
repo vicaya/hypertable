@@ -1,0 +1,13 @@
+Issuing scans for 'apple'
+Got result = {name:apple, location:Western Asia, color:red, energy_density:2.18kJ/g}
+Issuing scans for 'banana'
+Got result = {name:banana, location:Papua New Guinea, color:yellow, energy_density:0.89Cal/g}
+Issuing scans for 'pomegranate'
+Got result = {name:pomegranate, location:Iranian plateau, color:red, energy_density:0.83Cal/g}
+Issuing scans for 'kiwi'
+Got result = {name:kiwi, location:Southern China, color:brown, energy_density:0.61Cal/g}
+Issuing scans for 'guava'
+Received 0cells for scan 
+Received 0cells for scan 
+Received 0cells for scan 
+Got result = {name:, location:, color:, energy_density:}

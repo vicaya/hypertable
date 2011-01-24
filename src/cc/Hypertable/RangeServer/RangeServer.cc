@@ -380,7 +380,7 @@ namespace {
 
     try {
 
-      if (Global::log_dfs->exists(meta_log_dir)) { 
+      if (Global::log_dfs->exists(meta_log_dir)) {
         bool found_recover_entry;
         rsml_reader = new OldMetaLog::RangeServerMetaLogReader(Global::log_dfs.get(), meta_log_dir);
         if (!rsml_reader->empty()) {
@@ -398,7 +398,7 @@ namespace {
       HT_ABORT;
     }
   }
-  
+
 }
 
 
@@ -2429,7 +2429,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
       HT_ERROR_OUT << "Range statistics object found without table ID" << HT_END;
       continue;
     }
-    
+
     if (table_stat.table_id == "")
       table_stat.table_id = range_data[ii]->table_id;
     else if (strcmp(table_stat.table_id.c_str(), range_data[ii]->table_id)) {

@@ -74,6 +74,85 @@ require 'client_types'
                   return
                 end
 
+                def open_future(queue_size)
+                  send_open_future(queue_size)
+                  return recv_open_future()
+                end
+
+                def send_open_future(queue_size)
+                  send_message('open_future', Open_future_args, :queue_size => queue_size)
+                end
+
+                def recv_open_future()
+                  result = receive_message(Open_future_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_future failed: unknown result')
+                end
+
+                def get_future_result(ff)
+                  send_get_future_result(ff)
+                  return recv_get_future_result()
+                end
+
+                def send_get_future_result(ff)
+                  send_message('get_future_result', Get_future_result_args, :ff => ff)
+                end
+
+                def recv_get_future_result()
+                  result = receive_message(Get_future_result_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_future_result failed: unknown result')
+                end
+
+                def get_future_result_as_arrays(ff)
+                  send_get_future_result_as_arrays(ff)
+                  return recv_get_future_result_as_arrays()
+                end
+
+                def send_get_future_result_as_arrays(ff)
+                  send_message('get_future_result_as_arrays', Get_future_result_as_arrays_args, :ff => ff)
+                end
+
+                def recv_get_future_result_as_arrays()
+                  result = receive_message(Get_future_result_as_arrays_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_future_result_as_arrays failed: unknown result')
+                end
+
+                def get_future_result_serialized(ff)
+                  send_get_future_result_serialized(ff)
+                  return recv_get_future_result_serialized()
+                end
+
+                def send_get_future_result_serialized(ff)
+                  send_message('get_future_result_serialized', Get_future_result_serialized_args, :ff => ff)
+                end
+
+                def recv_get_future_result_serialized()
+                  result = receive_message(Get_future_result_serialized_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_future_result_serialized failed: unknown result')
+                end
+
+                def close_future(ff)
+                  send_close_future(ff)
+                  recv_close_future()
+                end
+
+                def send_close_future(ff)
+                  send_message('close_future', Close_future_args, :ff => ff)
+                end
+
+                def recv_close_future()
+                  result = receive_message(Close_future_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def open_scanner(ns, table_name, scan_spec, retry_table_not_found)
                   send_open_scanner(ns, table_name, scan_spec, retry_table_not_found)
                   return recv_open_scanner()
@@ -90,6 +169,22 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_scanner failed: unknown result')
                 end
 
+                def open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found)
+                  send_open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found)
+                  return recv_open_scanner_async()
+                end
+
+                def send_open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found)
+                  send_message('open_scanner_async', Open_scanner_async_args, :ns => ns, :table_name => table_name, :future => future, :scan_spec => scan_spec, :retry_table_not_found => retry_table_not_found)
+                end
+
+                def recv_open_scanner_async()
+                  result = receive_message(Open_scanner_async_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_scanner_async failed: unknown result')
+                end
+
                 def close_scanner(scanner)
                   send_close_scanner(scanner)
                   recv_close_scanner()
@@ -101,6 +196,21 @@ require 'client_types'
 
                 def recv_close_scanner()
                   result = receive_message(Close_scanner_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def close_scanner_async(scanner)
+                  send_close_scanner_async(scanner)
+                  recv_close_scanner_async()
+                end
+
+                def send_close_scanner_async(scanner)
+                  send_message('close_scanner_async', Close_scanner_async_args, :scanner => scanner)
+                end
+
+                def recv_close_scanner_async()
+                  result = receive_message(Close_scanner_async_result)
                   raise result.e unless result.e.nil?
                   return
                 end
@@ -730,6 +840,61 @@ require 'client_types'
                   write_result(result, oprot, 'close_namespace', seqid)
                 end
 
+                def process_open_future(seqid, iprot, oprot)
+                  args = read_args(iprot, Open_future_args)
+                  result = Open_future_result.new()
+                  begin
+                    result.success = @handler.open_future(args.queue_size)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'open_future', seqid)
+                end
+
+                def process_get_future_result(seqid, iprot, oprot)
+                  args = read_args(iprot, Get_future_result_args)
+                  result = Get_future_result_result.new()
+                  begin
+                    result.success = @handler.get_future_result(args.ff)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'get_future_result', seqid)
+                end
+
+                def process_get_future_result_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Get_future_result_as_arrays_args)
+                  result = Get_future_result_as_arrays_result.new()
+                  begin
+                    result.success = @handler.get_future_result_as_arrays(args.ff)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'get_future_result_as_arrays', seqid)
+                end
+
+                def process_get_future_result_serialized(seqid, iprot, oprot)
+                  args = read_args(iprot, Get_future_result_serialized_args)
+                  result = Get_future_result_serialized_result.new()
+                  begin
+                    result.success = @handler.get_future_result_serialized(args.ff)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'get_future_result_serialized', seqid)
+                end
+
+                def process_close_future(seqid, iprot, oprot)
+                  args = read_args(iprot, Close_future_args)
+                  result = Close_future_result.new()
+                  begin
+                    @handler.close_future(args.ff)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'close_future', seqid)
+                end
+
                 def process_open_scanner(seqid, iprot, oprot)
                   args = read_args(iprot, Open_scanner_args)
                   result = Open_scanner_result.new()
@@ -741,6 +906,17 @@ require 'client_types'
                   write_result(result, oprot, 'open_scanner', seqid)
                 end
 
+                def process_open_scanner_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Open_scanner_async_args)
+                  result = Open_scanner_async_result.new()
+                  begin
+                    result.success = @handler.open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec, args.retry_table_not_found)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'open_scanner_async', seqid)
+                end
+
                 def process_close_scanner(seqid, iprot, oprot)
                   args = read_args(iprot, Close_scanner_args)
                   result = Close_scanner_result.new()
@@ -750,6 +926,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'close_scanner', seqid)
+                end
+
+                def process_close_scanner_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Close_scanner_async_args)
+                  result = Close_scanner_async_result.new()
+                  begin
+                    @handler.close_scanner_async(args.scanner)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'close_scanner_async', seqid)
                 end
 
                 def process_next_cells(seqid, iprot, oprot)
@@ -1293,6 +1480,174 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
+              class Open_future_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                QUEUE_SIZE = 1
+
+                FIELDS = {
+                  QUEUE_SIZE => {:type => ::Thrift::Types::I32, :name => 'queue_size', :default => 0}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Open_future_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::I64, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Get_future_result_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                FF = 1
+
+                FIELDS = {
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Get_future_result_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::Result},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Get_future_result_as_arrays_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                FF = 1
+
+                FIELDS = {
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Get_future_result_as_arrays_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::ResultAsArrays},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Get_future_result_serialized_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                FF = 1
+
+                FIELDS = {
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Get_future_result_serialized_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::ResultSerialized},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Close_future_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                FF = 1
+
+                FIELDS = {
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Close_future_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
               class Open_scanner_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
@@ -1333,6 +1688,48 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
+              class Open_scanner_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+                FUTURE = 3
+                SCAN_SPEC = 4
+                RETRY_TABLE_NOT_FOUND = 5
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
+                  FUTURE => {:type => ::Thrift::Types::I64, :name => 'future'},
+                  SCAN_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec},
+                  RETRY_TABLE_NOT_FOUND => {:type => ::Thrift::Types::BOOL, :name => 'retry_table_not_found', :default => false}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Open_scanner_async_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::I64, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
               class Close_scanner_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 SCANNER = 1
@@ -1350,6 +1747,38 @@ require 'client_types'
               end
 
               class Close_scanner_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Close_scanner_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SCANNER = 1
+
+                FIELDS = {
+                  SCANNER => {:type => ::Thrift::Types::I64, :name => 'scanner'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Close_scanner_async_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 

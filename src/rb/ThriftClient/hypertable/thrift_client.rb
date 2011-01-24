@@ -25,6 +25,14 @@ module Hypertable
     end
 
     # more convenience methods
+    def with_future(queue_size = 0)
+      future = open_future(queue_size)
+      begin
+        yield future 
+      ensure
+        close_future(future)
+      end
+    end
 
     def with_scanner(namespace, table, scan_spec, retry_table_not_found = true)
       scanner = open_scanner(namespace, table, scan_spec, retry_table_not_found)

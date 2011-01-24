@@ -33,12 +33,13 @@ ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
   cbp->append_i32(Error::OK);
   cbp->append_i16(moreflag);
   cbp->append_i32(id);   // scanner ID
+
   return m_comm->send_response(m_event_ptr->addr, cbp);
 }
 
 
 int
-ResponseCallbackCreateScanner::response(short moreflag, int32_t id, 
+ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
 					boost::shared_array<uint8_t> &ext_buffer,
 					uint32_t ext_len) {
   CommHeader header;
@@ -47,6 +48,7 @@ ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
   cbp->append_i32(Error::OK);
   cbp->append_i16(moreflag);
   cbp->append_i32(id);   // scanner ID
+
   return m_comm->send_response(m_event_ptr->addr, cbp);
 }
 

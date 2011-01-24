@@ -250,6 +250,7 @@ namespace {
     { Error::THRIFTBROKER_BAD_SCANNER_ID, "THRIFT BROKER bad scanner id" },
     { Error::THRIFTBROKER_BAD_MUTATOR_ID, "THRIFT BROKER bad mutator id" },
     { Error::THRIFTBROKER_BAD_NAMESPACE_ID , "THRIFT BROKER bad namespace id" },
+    { Error::THRIFTBROKER_BAD_FUTURE_ID ,    "THRIFT BROKER bad future id" },
     { 0, 0 }
   };
 

@@ -922,6 +922,526 @@ class Cell:
   def __ne__(self, other):
     return not (self == other)
 
+class Result:
+  """
+  Specifies a result object for asynchronous requests.
+  TODO: add support for update results
+
+  <dl>
+    <dt>is_empty</dt>
+    <dd>Indicates whether this object contains a result or not</dd>
+
+    <dt>id</dt>
+    <dd>Scanner/mutator id for which these results pertain to</dd>
+    
+    <dt>is_scan</dt>
+    <dd>Indicates whether these are scan results or update results</dd>
+    
+    <dt>is_error</dt>
+    <dd>Indicates whether the async request was successful or not</dd>
+    
+    <dt>error</dt>
+    <dd>Error code</dd>
+
+    <dt>error_msg</dt>
+    <dd>Error message</dd>
+
+    <dt>cells</dt>
+    <dd>Cells returned by asynchronous scanner</dd>
+  </dl>
+
+  Attributes:
+   - is_empty
+   - id
+   - is_scan
+   - is_error
+   - error
+   - error_msg
+   - cells
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.BOOL, 'is_empty', None, None, ), # 1
+    (2, TType.I64, 'id', None, None, ), # 2
+    (3, TType.BOOL, 'is_scan', None, None, ), # 3
+    (4, TType.BOOL, 'is_error', None, None, ), # 4
+    (5, TType.I32, 'error', None, None, ), # 5
+    (6, TType.STRING, 'error_msg', None, None, ), # 6
+    (7, TType.LIST, 'cells', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 7
+  )
+
+  def __init__(self, is_empty=None, id=None, is_scan=None, is_error=None, error=None, error_msg=None, cells=None,):
+    self.is_empty = is_empty
+    self.id = id
+    self.is_scan = is_scan
+    self.is_error = is_error
+    self.error = error
+    self.error_msg = error_msg
+    self.cells = cells
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.BOOL:
+          self.is_empty = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I64:
+          self.id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.BOOL:
+          self.is_scan = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.BOOL:
+          self.is_error = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.I32:
+          self.error = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.STRING:
+          self.error_msg = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.LIST:
+          self.cells = []
+          (_etype24, _size21) = iprot.readListBegin()
+          for _i25 in xrange(_size21):
+            _elem26 = Cell()
+            _elem26.read(iprot)
+            self.cells.append(_elem26)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Result')
+    if self.is_empty != None:
+      oprot.writeFieldBegin('is_empty', TType.BOOL, 1)
+      oprot.writeBool(self.is_empty)
+      oprot.writeFieldEnd()
+    if self.id != None:
+      oprot.writeFieldBegin('id', TType.I64, 2)
+      oprot.writeI64(self.id)
+      oprot.writeFieldEnd()
+    if self.is_scan != None:
+      oprot.writeFieldBegin('is_scan', TType.BOOL, 3)
+      oprot.writeBool(self.is_scan)
+      oprot.writeFieldEnd()
+    if self.is_error != None:
+      oprot.writeFieldBegin('is_error', TType.BOOL, 4)
+      oprot.writeBool(self.is_error)
+      oprot.writeFieldEnd()
+    if self.error != None:
+      oprot.writeFieldBegin('error', TType.I32, 5)
+      oprot.writeI32(self.error)
+      oprot.writeFieldEnd()
+    if self.error_msg != None:
+      oprot.writeFieldBegin('error_msg', TType.STRING, 6)
+      oprot.writeString(self.error_msg)
+      oprot.writeFieldEnd()
+    if self.cells != None:
+      oprot.writeFieldBegin('cells', TType.LIST, 7)
+      oprot.writeListBegin(TType.STRUCT, len(self.cells))
+      for iter27 in self.cells:
+        iter27.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      if self.is_empty is None:
+        raise TProtocol.TProtocolException(message='Required field is_empty is unset!')
+      if self.id is None:
+        raise TProtocol.TProtocolException(message='Required field id is unset!')
+      if self.is_scan is None:
+        raise TProtocol.TProtocolException(message='Required field is_scan is unset!')
+      if self.is_error is None:
+        raise TProtocol.TProtocolException(message='Required field is_error is unset!')
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class ResultAsArrays:
+  """
+  Specifies a result object for asynchronous requests.
+  TODO: add support for update results
+
+  <dl>
+    <dt>is_empty</dt>
+    <dd>Indicates whether this object contains a result or not</dd>
+
+    <dt>id</dt>
+    <dd>Scanner/mutator id for which these results pertain to</dd>
+    
+    <dt>is_scan</dt>
+    <dd>Indicates whether these are scan results or update results</dd>
+    
+    <dt>is_error</dt>
+    <dd>Indicates whether the async request was successful or not</dd>
+    
+    <dt>error</dt>
+    <dd>Error code</dd>
+
+    <dt>error_msg</dt>
+    <dd>Error message</dd>
+
+    <dt>cells</dt>
+    <dd>Cells returned by asynchronous scanner</dd>
+  </dl>
+
+  Attributes:
+   - is_empty
+   - id
+   - is_scan
+   - is_error
+   - error
+   - error_msg
+   - cells
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.BOOL, 'is_empty', None, None, ), # 1
+    (2, TType.I64, 'id', None, None, ), # 2
+    (3, TType.BOOL, 'is_scan', None, None, ), # 3
+    (4, TType.BOOL, 'is_error', None, None, ), # 4
+    (5, TType.I32, 'error', None, None, ), # 5
+    (6, TType.STRING, 'error_msg', None, None, ), # 6
+    (7, TType.LIST, 'cells', (TType.LIST,(TType.STRING,None)), None, ), # 7
+  )
+
+  def __init__(self, is_empty=None, id=None, is_scan=None, is_error=None, error=None, error_msg=None, cells=None,):
+    self.is_empty = is_empty
+    self.id = id
+    self.is_scan = is_scan
+    self.is_error = is_error
+    self.error = error
+    self.error_msg = error_msg
+    self.cells = cells
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.BOOL:
+          self.is_empty = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I64:
+          self.id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.BOOL:
+          self.is_scan = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.BOOL:
+          self.is_error = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.I32:
+          self.error = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.STRING:
+          self.error_msg = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.LIST:
+          self.cells = []
+          (_etype31, _size28) = iprot.readListBegin()
+          for _i32 in xrange(_size28):
+            _elem33 = []
+            (_etype37, _size34) = iprot.readListBegin()
+            for _i38 in xrange(_size34):
+              _elem39 = iprot.readString();
+              _elem33.append(_elem39)
+            iprot.readListEnd()
+            self.cells.append(_elem33)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('ResultAsArrays')
+    if self.is_empty != None:
+      oprot.writeFieldBegin('is_empty', TType.BOOL, 1)
+      oprot.writeBool(self.is_empty)
+      oprot.writeFieldEnd()
+    if self.id != None:
+      oprot.writeFieldBegin('id', TType.I64, 2)
+      oprot.writeI64(self.id)
+      oprot.writeFieldEnd()
+    if self.is_scan != None:
+      oprot.writeFieldBegin('is_scan', TType.BOOL, 3)
+      oprot.writeBool(self.is_scan)
+      oprot.writeFieldEnd()
+    if self.is_error != None:
+      oprot.writeFieldBegin('is_error', TType.BOOL, 4)
+      oprot.writeBool(self.is_error)
+      oprot.writeFieldEnd()
+    if self.error != None:
+      oprot.writeFieldBegin('error', TType.I32, 5)
+      oprot.writeI32(self.error)
+      oprot.writeFieldEnd()
+    if self.error_msg != None:
+      oprot.writeFieldBegin('error_msg', TType.STRING, 6)
+      oprot.writeString(self.error_msg)
+      oprot.writeFieldEnd()
+    if self.cells != None:
+      oprot.writeFieldBegin('cells', TType.LIST, 7)
+      oprot.writeListBegin(TType.LIST, len(self.cells))
+      for iter40 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter40))
+        for iter41 in iter40:
+          oprot.writeString(iter41)
+        oprot.writeListEnd()
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      if self.is_empty is None:
+        raise TProtocol.TProtocolException(message='Required field is_empty is unset!')
+      if self.id is None:
+        raise TProtocol.TProtocolException(message='Required field id is unset!')
+      if self.is_scan is None:
+        raise TProtocol.TProtocolException(message='Required field is_scan is unset!')
+      if self.is_error is None:
+        raise TProtocol.TProtocolException(message='Required field is_error is unset!')
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class ResultSerialized:
+  """
+  Specifies a serialized result object for asynchronous requests.
+  TODO: add support for update results
+
+  <dl>
+    <dt>is_empty</dt>
+    <dd>Indicates whether this object contains a result or not</dd>
+
+    <dt>id</dt>
+    <dd>Scanner/mutator id for which these results pertain to</dd>
+    
+    <dt>is_scan</dt>
+    <dd>Indicates whether these are scan results or update results</dd>
+    
+    <dt>is_error</dt>
+    <dd>Indicates whether the async request was successful or not</dd>
+    
+    <dt>error</dt>
+    <dd>Error code</dd>
+
+    <dt>error_msg</dt>
+    <dd>Error message</dd>
+
+    <dt>cells</dt>
+    <dd>Cells returned by asynchronous scanner</dd>
+  </dl>
+
+  Attributes:
+   - is_empty
+   - id
+   - is_scan
+   - is_error
+   - error
+   - error_msg
+   - cells
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.BOOL, 'is_empty', None, None, ), # 1
+    (2, TType.I64, 'id', None, None, ), # 2
+    (3, TType.BOOL, 'is_scan', None, None, ), # 3
+    (4, TType.BOOL, 'is_error', None, None, ), # 4
+    (5, TType.I32, 'error', None, None, ), # 5
+    (6, TType.STRING, 'error_msg', None, None, ), # 6
+    (7, TType.STRING, 'cells', None, None, ), # 7
+  )
+
+  def __init__(self, is_empty=None, id=None, is_scan=None, is_error=None, error=None, error_msg=None, cells=None,):
+    self.is_empty = is_empty
+    self.id = id
+    self.is_scan = is_scan
+    self.is_error = is_error
+    self.error = error
+    self.error_msg = error_msg
+    self.cells = cells
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.BOOL:
+          self.is_empty = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I64:
+          self.id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.BOOL:
+          self.is_scan = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.BOOL:
+          self.is_error = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.I32:
+          self.error = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.STRING:
+          self.error_msg = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.STRING:
+          self.cells = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('ResultSerialized')
+    if self.is_empty != None:
+      oprot.writeFieldBegin('is_empty', TType.BOOL, 1)
+      oprot.writeBool(self.is_empty)
+      oprot.writeFieldEnd()
+    if self.id != None:
+      oprot.writeFieldBegin('id', TType.I64, 2)
+      oprot.writeI64(self.id)
+      oprot.writeFieldEnd()
+    if self.is_scan != None:
+      oprot.writeFieldBegin('is_scan', TType.BOOL, 3)
+      oprot.writeBool(self.is_scan)
+      oprot.writeFieldEnd()
+    if self.is_error != None:
+      oprot.writeFieldBegin('is_error', TType.BOOL, 4)
+      oprot.writeBool(self.is_error)
+      oprot.writeFieldEnd()
+    if self.error != None:
+      oprot.writeFieldBegin('error', TType.I32, 5)
+      oprot.writeI32(self.error)
+      oprot.writeFieldEnd()
+    if self.error_msg != None:
+      oprot.writeFieldBegin('error_msg', TType.STRING, 6)
+      oprot.writeString(self.error_msg)
+      oprot.writeFieldEnd()
+    if self.cells != None:
+      oprot.writeFieldBegin('cells', TType.STRING, 7)
+      oprot.writeString(self.cells)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      if self.is_empty is None:
+        raise TProtocol.TProtocolException(message='Required field is_empty is unset!')
+      if self.id is None:
+        raise TProtocol.TProtocolException(message='Required field id is unset!')
+      if self.is_scan is None:
+        raise TProtocol.TProtocolException(message='Required field is_scan is unset!')
+      if self.is_error is None:
+        raise TProtocol.TProtocolException(message='Required field is_error is unset!')
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class NamespaceListing:
   """
   Defines an individual namespace listing
@@ -1326,11 +1846,11 @@ class AccessGroup:
       elif fid == 7:
         if ftype == TType.LIST:
           self.columns = []
-          (_etype24, _size21) = iprot.readListBegin()
-          for _i25 in xrange(_size21):
-            _elem26 = ColumnFamily()
-            _elem26.read(iprot)
-            self.columns.append(_elem26)
+          (_etype45, _size42) = iprot.readListBegin()
+          for _i46 in xrange(_size42):
+            _elem47 = ColumnFamily()
+            _elem47.read(iprot)
+            self.columns.append(_elem47)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -1371,8 +1891,8 @@ class AccessGroup:
     if self.columns != None:
       oprot.writeFieldBegin('columns', TType.LIST, 7)
       oprot.writeListBegin(TType.STRUCT, len(self.columns))
-      for iter27 in self.columns:
-        iter27.write(oprot)
+      for iter48 in self.columns:
+        iter48.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -1445,24 +1965,24 @@ class Schema:
       if fid == 1:
         if ftype == TType.MAP:
           self.access_groups = {}
-          (_ktype29, _vtype30, _size28 ) = iprot.readMapBegin() 
-          for _i32 in xrange(_size28):
-            _key33 = iprot.readString();
-            _val34 = AccessGroup()
-            _val34.read(iprot)
-            self.access_groups[_key33] = _val34
+          (_ktype50, _vtype51, _size49 ) = iprot.readMapBegin() 
+          for _i53 in xrange(_size49):
+            _key54 = iprot.readString();
+            _val55 = AccessGroup()
+            _val55.read(iprot)
+            self.access_groups[_key54] = _val55
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
       elif fid == 2:
         if ftype == TType.MAP:
           self.column_families = {}
-          (_ktype36, _vtype37, _size35 ) = iprot.readMapBegin() 
-          for _i39 in xrange(_size35):
-            _key40 = iprot.readString();
-            _val41 = ColumnFamily()
-            _val41.read(iprot)
-            self.column_families[_key40] = _val41
+          (_ktype57, _vtype58, _size56 ) = iprot.readMapBegin() 
+          for _i60 in xrange(_size56):
+            _key61 = iprot.readString();
+            _val62 = ColumnFamily()
+            _val62.read(iprot)
+            self.column_families[_key61] = _val62
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
@@ -1479,17 +1999,17 @@ class Schema:
     if self.access_groups != None:
       oprot.writeFieldBegin('access_groups', TType.MAP, 1)
       oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.access_groups))
-      for kiter42,viter43 in self.access_groups.items():
-        oprot.writeString(kiter42)
-        viter43.write(oprot)
+      for kiter63,viter64 in self.access_groups.items():
+        oprot.writeString(kiter63)
+        viter64.write(oprot)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     if self.column_families != None:
       oprot.writeFieldBegin('column_families', TType.MAP, 2)
       oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.column_families))
-      for kiter44,viter45 in self.column_families.items():
-        oprot.writeString(kiter44)
-        viter45.write(oprot)
+      for kiter65,viter66 in self.column_families.items():
+        oprot.writeString(kiter65)
+        viter66.write(oprot)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

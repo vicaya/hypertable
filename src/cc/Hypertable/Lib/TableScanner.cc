@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -35,74 +35,27 @@ extern "C" {
 using namespace Hypertable;
 
 
-/**
- * TODO: Asynchronously destroy dangling scanners on EOS
- */
-TableScanner::TableScanner(Comm *comm, Table *table,
+TableScanner::TableScanner(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
-    uint32_t timeout_ms, bool retry_table_not_found)
-  : m_eos(false), m_scanneri(0), m_rows_seen(0), m_bytes_scanned(0) {
+    uint32_t timeout_ms, bool retry_table_not_found, size_t max_queued_results)
+  : m_callback(this), m_cur_cells_index(0), m_error(Error::OK),
+    m_queue_capacity(max_queued_results), m_started(false), m_eos(false), m_bytes_scanned(0) {
 
-  HT_ASSERT(timeout_ms);
-
-  IntervalScannerPtr ri_scanner;
-  ScanSpec interval_scan_spec;
-  Timer timer(timeout_ms);
-
-  if (scan_spec.row_intervals.empty()) {
-    if (scan_spec.cell_intervals.empty()) {
-      ri_scanner = new IntervalScanner(comm, table, range_locator, scan_spec,
-                                       timeout_ms, retry_table_not_found);
-      m_interval_scanners.push_back(ri_scanner);
-    }
-    else {
-      for (size_t i=0; i<scan_spec.cell_intervals.size(); i++) {
-        scan_spec.base_copy(interval_scan_spec);
-        interval_scan_spec.cell_intervals.push_back(
-            scan_spec.cell_intervals[i]);
-        ri_scanner = new IntervalScanner(comm, table, range_locator,
-            interval_scan_spec, timeout_ms, retry_table_not_found);
-        m_interval_scanners.push_back(ri_scanner);
-      }
-    }
-  }
-  else if (scan_spec.scan_and_filter_rows) {
-    ScanSpec rowset_scan_spec;
-    scan_spec.base_copy(rowset_scan_spec);
-    rowset_scan_spec.row_intervals.reserve(scan_spec.row_intervals.size());
-    foreach (const RowInterval& ri, scan_spec.row_intervals) {
-      if (ri.start != ri.end && strcmp(ri.start, ri.end) != 0) {
-        scan_spec.base_copy(interval_scan_spec);
-        interval_scan_spec.row_intervals.push_back(ri);
-        ri_scanner = new IntervalScanner(comm, table, range_locator,
-            interval_scan_spec, timeout_ms, retry_table_not_found);
-        m_interval_scanners.push_back(ri_scanner);
-      }
-      else
-        rowset_scan_spec.row_intervals.push_back(ri);
-    }
-    if (rowset_scan_spec.row_intervals.size()) {
-      ri_scanner = new IntervalScanner(comm, table, range_locator, rowset_scan_spec,
-                                       timeout_ms, retry_table_not_found);
-      m_interval_scanners.push_back(ri_scanner);
-    }
-  }
-  else {
-    for (size_t i=0; i<scan_spec.row_intervals.size(); i++) {
-      scan_spec.base_copy(interval_scan_spec);
-      interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
-      ri_scanner = new IntervalScanner(comm, table, range_locator,
-          interval_scan_spec, timeout_ms, retry_table_not_found);
-      m_interval_scanners.push_back(ri_scanner);
-    }
-  }
+  HT_ASSERT(m_queue_capacity > 0);
+  m_scanner = new TableScannerAsync(comm, app_queue, table, range_locator, scan_spec,
+                                    timeout_ms, retry_table_not_found, &m_callback);
 }
 
 
 bool TableScanner::next(Cell &cell) {
 
-  if (m_eos)
-    return false;
+  {
+    ScopedLock lock(m_mutex);
+    if (m_error != Error::OK)
+      HT_THROW(m_error, m_error_msg);
+    if (m_eos)
+      return false;
+  }
 
   if (m_ungot.row_key) {
     cell = m_ungot;
@@ -110,31 +63,62 @@ bool TableScanner::next(Cell &cell) {
     return true;
   }
 
-  do {
-    if (m_interval_scanners[m_scanneri]->next(cell))
+  while (true) {
+    // if we have cells ready serve them out
+    if (m_cur_cells_index < m_cur_cells.size()) {
+      cell = m_cur_cells[m_cur_cells_index++];
       return true;
+    }
+    else {
+      ScopedLock lock (m_mutex);
+      // pop the front of the queue check for eos, signal and wait till the queue is not empty
+      if (!is_empty() && m_started) {
+        m_eos = m_queue.front()->get_eos();
+        m_queue.pop_front();
+        m_cond.notify_one();
+      }
+      if (m_eos)
+        return false;
+      while (is_empty() && m_error == Error::OK) {
+        m_cond.wait(lock);
+      }
 
-    m_rows_seen += m_interval_scanners[m_scanneri]->get_rows_seen();
-    m_bytes_scanned += m_interval_scanners[m_scanneri]->bytes_scanned();
+      if (m_error != Error::OK)
+        HT_THROW(m_error, m_error_msg);
+      m_queue.front()->get(m_cur_cells);
+      m_cur_cells_index=0;
+      m_started = true;
+    }
+  }
 
-    m_scanneri++;
-
-    if (m_scanneri < m_interval_scanners.size())
-      m_interval_scanners[m_scanneri]->set_rows_seen(m_rows_seen);
-    else
-      break;
-  } while (true);
-
-  m_eos = true;
-  return false;
 }
-
 
 void TableScanner::unget(const Cell &cell) {
   if (m_ungot.row_key)
     HT_THROW_(Error::DOUBLE_UNGET);
 
   m_ungot = cell;
+}
+
+void TableScanner::scan_ok(ScanCellsPtr &cells) {
+  ScopedLock lock(m_mutex);
+  while (m_error == Error::OK && is_full()) {
+    m_cond.wait(lock);
+  }
+  if (m_error == Error::OK) {
+    m_queue.push_back(cells);
+  }
+  m_cond.notify_one();
+}
+
+void TableScanner::scan_error(int error, const String &error_msg, bool eos) {
+  ScopedLock lock(m_mutex);
+
+  m_error = error;
+  m_error_msg = error_msg;
+  if (eos)
+    m_eos = eos;
+  m_cond.notify_one();
 }
 
 

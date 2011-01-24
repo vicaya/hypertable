@@ -31,12 +31,15 @@
 
 typedef std::set<std::string> StringSet;
 
+
 /** STL Strict Weak Ordering for comparing c-style strings. */
 struct LtCstr {
   bool operator()(const char* s1, const char* s2) const {
     return strcmp(s1, s2) < 0;
   }
 };
+
+typedef std::set<const char *, LtCstr>  CstrSet;
 
 inline std::string operator+(const std::string& s1, short sval) {
   char cbuf[8];

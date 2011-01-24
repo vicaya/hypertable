@@ -886,6 +886,532 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::Result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::Result->mk_accessors( qw( is_empty id is_scan is_error error error_msg cells ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{is_empty} = undef;
+  $self->{id} = undef;
+  $self->{is_scan} = undef;
+  $self->{is_error} = undef;
+  $self->{error} = undef;
+  $self->{error_msg} = undef;
+  $self->{cells} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{is_empty}) {
+      $self->{is_empty} = $vals->{is_empty};
+    }
+    if (defined $vals->{id}) {
+      $self->{id} = $vals->{id};
+    }
+    if (defined $vals->{is_scan}) {
+      $self->{is_scan} = $vals->{is_scan};
+    }
+    if (defined $vals->{is_error}) {
+      $self->{is_error} = $vals->{is_error};
+    }
+    if (defined $vals->{error}) {
+      $self->{error} = $vals->{error};
+    }
+    if (defined $vals->{error_msg}) {
+      $self->{error_msg} = $vals->{error_msg};
+    }
+    if (defined $vals->{cells}) {
+      $self->{cells} = $vals->{cells};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'Result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{is_empty});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{id});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{is_scan});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{is_error});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^5$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{error});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^6$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{error_msg});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^7$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size21 = 0;
+          $self->{cells} = [];
+          my $_etype24 = 0;
+          $xfer += $input->readListBegin(\$_etype24, \$_size21);
+          for (my $_i25 = 0; $_i25 < $_size21; ++$_i25)
+          {
+            my $elem26 = undef;
+            $elem26 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem26->read($input);
+            push(@{$self->{cells}},$elem26);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('Result');
+  if (defined $self->{is_empty}) {
+    $xfer += $output->writeFieldBegin('is_empty', TType::BOOL, 1);
+    $xfer += $output->writeBool($self->{is_empty});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{id}) {
+    $xfer += $output->writeFieldBegin('id', TType::I64, 2);
+    $xfer += $output->writeI64($self->{id});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{is_scan}) {
+    $xfer += $output->writeFieldBegin('is_scan', TType::BOOL, 3);
+    $xfer += $output->writeBool($self->{is_scan});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{is_error}) {
+    $xfer += $output->writeFieldBegin('is_error', TType::BOOL, 4);
+    $xfer += $output->writeBool($self->{is_error});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{error}) {
+    $xfer += $output->writeFieldBegin('error', TType::I32, 5);
+    $xfer += $output->writeI32($self->{error});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{error_msg}) {
+    $xfer += $output->writeFieldBegin('error_msg', TType::STRING, 6);
+    $xfer += $output->writeString($self->{error_msg});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cells}) {
+    $xfer += $output->writeFieldBegin('cells', TType::LIST, 7);
+    {
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
+      {
+        foreach my $iter27 (@{$self->{cells}}) 
+        {
+          $xfer += ${iter27}->write($output);
+        }
+      }
+      $xfer += $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ResultAsArrays;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ResultAsArrays->mk_accessors( qw( is_empty id is_scan is_error error error_msg cells ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{is_empty} = undef;
+  $self->{id} = undef;
+  $self->{is_scan} = undef;
+  $self->{is_error} = undef;
+  $self->{error} = undef;
+  $self->{error_msg} = undef;
+  $self->{cells} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{is_empty}) {
+      $self->{is_empty} = $vals->{is_empty};
+    }
+    if (defined $vals->{id}) {
+      $self->{id} = $vals->{id};
+    }
+    if (defined $vals->{is_scan}) {
+      $self->{is_scan} = $vals->{is_scan};
+    }
+    if (defined $vals->{is_error}) {
+      $self->{is_error} = $vals->{is_error};
+    }
+    if (defined $vals->{error}) {
+      $self->{error} = $vals->{error};
+    }
+    if (defined $vals->{error_msg}) {
+      $self->{error_msg} = $vals->{error_msg};
+    }
+    if (defined $vals->{cells}) {
+      $self->{cells} = $vals->{cells};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ResultAsArrays';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{is_empty});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{id});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{is_scan});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{is_error});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^5$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{error});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^6$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{error_msg});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^7$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size28 = 0;
+          $self->{cells} = [];
+          my $_etype31 = 0;
+          $xfer += $input->readListBegin(\$_etype31, \$_size28);
+          for (my $_i32 = 0; $_i32 < $_size28; ++$_i32)
+          {
+            my $elem33 = undef;
+            {
+              my $_size34 = 0;
+              $elem33 = [];
+              my $_etype37 = 0;
+              $xfer += $input->readListBegin(\$_etype37, \$_size34);
+              for (my $_i38 = 0; $_i38 < $_size34; ++$_i38)
+              {
+                my $elem39 = undef;
+                $xfer += $input->readString(\$elem39);
+                push(@{$elem33},$elem39);
+              }
+              $xfer += $input->readListEnd();
+            }
+            push(@{$self->{cells}},$elem33);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ResultAsArrays');
+  if (defined $self->{is_empty}) {
+    $xfer += $output->writeFieldBegin('is_empty', TType::BOOL, 1);
+    $xfer += $output->writeBool($self->{is_empty});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{id}) {
+    $xfer += $output->writeFieldBegin('id', TType::I64, 2);
+    $xfer += $output->writeI64($self->{id});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{is_scan}) {
+    $xfer += $output->writeFieldBegin('is_scan', TType::BOOL, 3);
+    $xfer += $output->writeBool($self->{is_scan});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{is_error}) {
+    $xfer += $output->writeFieldBegin('is_error', TType::BOOL, 4);
+    $xfer += $output->writeBool($self->{is_error});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{error}) {
+    $xfer += $output->writeFieldBegin('error', TType::I32, 5);
+    $xfer += $output->writeI32($self->{error});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{error_msg}) {
+    $xfer += $output->writeFieldBegin('error_msg', TType::STRING, 6);
+    $xfer += $output->writeString($self->{error_msg});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cells}) {
+    $xfer += $output->writeFieldBegin('cells', TType::LIST, 7);
+    {
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
+      {
+        foreach my $iter40 (@{$self->{cells}}) 
+        {
+          {
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter40}}));
+            {
+              foreach my $iter41 (@{${iter40}}) 
+              {
+                $xfer += $output->writeString($iter41);
+              }
+            }
+            $xfer += $output->writeListEnd();
+          }
+        }
+      }
+      $xfer += $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ResultSerialized;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ResultSerialized->mk_accessors( qw( is_empty id is_scan is_error error error_msg cells ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{is_empty} = undef;
+  $self->{id} = undef;
+  $self->{is_scan} = undef;
+  $self->{is_error} = undef;
+  $self->{error} = undef;
+  $self->{error_msg} = undef;
+  $self->{cells} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{is_empty}) {
+      $self->{is_empty} = $vals->{is_empty};
+    }
+    if (defined $vals->{id}) {
+      $self->{id} = $vals->{id};
+    }
+    if (defined $vals->{is_scan}) {
+      $self->{is_scan} = $vals->{is_scan};
+    }
+    if (defined $vals->{is_error}) {
+      $self->{is_error} = $vals->{is_error};
+    }
+    if (defined $vals->{error}) {
+      $self->{error} = $vals->{error};
+    }
+    if (defined $vals->{error_msg}) {
+      $self->{error_msg} = $vals->{error_msg};
+    }
+    if (defined $vals->{cells}) {
+      $self->{cells} = $vals->{cells};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ResultSerialized';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{is_empty});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{id});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{is_scan});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{is_error});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^5$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{error});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^6$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{error_msg});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^7$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{cells});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ResultSerialized');
+  if (defined $self->{is_empty}) {
+    $xfer += $output->writeFieldBegin('is_empty', TType::BOOL, 1);
+    $xfer += $output->writeBool($self->{is_empty});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{id}) {
+    $xfer += $output->writeFieldBegin('id', TType::I64, 2);
+    $xfer += $output->writeI64($self->{id});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{is_scan}) {
+    $xfer += $output->writeFieldBegin('is_scan', TType::BOOL, 3);
+    $xfer += $output->writeBool($self->{is_scan});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{is_error}) {
+    $xfer += $output->writeFieldBegin('is_error', TType::BOOL, 4);
+    $xfer += $output->writeBool($self->{is_error});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{error}) {
+    $xfer += $output->writeFieldBegin('error', TType::I32, 5);
+    $xfer += $output->writeI32($self->{error});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{error_msg}) {
+    $xfer += $output->writeFieldBegin('error_msg', TType::STRING, 6);
+    $xfer += $output->writeString($self->{error_msg});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cells}) {
+    $xfer += $output->writeFieldBegin('cells', TType::STRING, 7);
+    $xfer += $output->writeString($self->{cells});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::NamespaceListing;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::NamespaceListing->mk_accessors( qw( name is_namespace ) );
@@ -1281,16 +1807,16 @@ sub read {
       last; };
       /^7$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size21 = 0;
+          my $_size42 = 0;
           $self->{columns} = [];
-          my $_etype24 = 0;
-          $xfer += $input->readListBegin(\$_etype24, \$_size21);
-          for (my $_i25 = 0; $_i25 < $_size21; ++$_i25)
+          my $_etype45 = 0;
+          $xfer += $input->readListBegin(\$_etype45, \$_size42);
+          for (my $_i46 = 0; $_i46 < $_size42; ++$_i46)
           {
-            my $elem26 = undef;
-            $elem26 = new Hypertable::ThriftGen::ColumnFamily();
-            $xfer += $elem26->read($input);
-            push(@{$self->{columns}},$elem26);
+            my $elem47 = undef;
+            $elem47 = new Hypertable::ThriftGen::ColumnFamily();
+            $xfer += $elem47->read($input);
+            push(@{$self->{columns}},$elem47);
           }
           $xfer += $input->readListEnd();
         }
@@ -1345,9 +1871,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{columns}}));
       {
-        foreach my $iter27 (@{$self->{columns}}) 
+        foreach my $iter48 (@{$self->{columns}}) 
         {
-          $xfer += ${iter27}->write($output);
+          $xfer += ${iter48}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -1401,19 +1927,19 @@ sub read {
     {
       /^1$/ && do{      if ($ftype == TType::MAP) {
         {
-          my $_size28 = 0;
+          my $_size49 = 0;
           $self->{access_groups} = {};
-          my $_ktype29 = 0;
-          my $_vtype30 = 0;
-          $xfer += $input->readMapBegin(\$_ktype29, \$_vtype30, \$_size28);
-          for (my $_i32 = 0; $_i32 < $_size28; ++$_i32)
+          my $_ktype50 = 0;
+          my $_vtype51 = 0;
+          $xfer += $input->readMapBegin(\$_ktype50, \$_vtype51, \$_size49);
+          for (my $_i53 = 0; $_i53 < $_size49; ++$_i53)
           {
-            my $key33 = '';
-            my $val34 = new Hypertable::ThriftGen::AccessGroup();
-            $xfer += $input->readString(\$key33);
-            $val34 = new Hypertable::ThriftGen::AccessGroup();
-            $xfer += $val34->read($input);
-            $self->{access_groups}->{$key33} = $val34;
+            my $key54 = '';
+            my $val55 = new Hypertable::ThriftGen::AccessGroup();
+            $xfer += $input->readString(\$key54);
+            $val55 = new Hypertable::ThriftGen::AccessGroup();
+            $xfer += $val55->read($input);
+            $self->{access_groups}->{$key54} = $val55;
           }
           $xfer += $input->readMapEnd();
         }
@@ -1423,19 +1949,19 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::MAP) {
         {
-          my $_size35 = 0;
+          my $_size56 = 0;
           $self->{column_families} = {};
-          my $_ktype36 = 0;
-          my $_vtype37 = 0;
-          $xfer += $input->readMapBegin(\$_ktype36, \$_vtype37, \$_size35);
-          for (my $_i39 = 0; $_i39 < $_size35; ++$_i39)
+          my $_ktype57 = 0;
+          my $_vtype58 = 0;
+          $xfer += $input->readMapBegin(\$_ktype57, \$_vtype58, \$_size56);
+          for (my $_i60 = 0; $_i60 < $_size56; ++$_i60)
           {
-            my $key40 = '';
-            my $val41 = new Hypertable::ThriftGen::ColumnFamily();
-            $xfer += $input->readString(\$key40);
-            $val41 = new Hypertable::ThriftGen::ColumnFamily();
-            $xfer += $val41->read($input);
-            $self->{column_families}->{$key40} = $val41;
+            my $key61 = '';
+            my $val62 = new Hypertable::ThriftGen::ColumnFamily();
+            $xfer += $input->readString(\$key61);
+            $val62 = new Hypertable::ThriftGen::ColumnFamily();
+            $xfer += $val62->read($input);
+            $self->{column_families}->{$key61} = $val62;
           }
           $xfer += $input->readMapEnd();
         }
@@ -1460,10 +1986,10 @@ sub write {
     {
       $xfer += $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{access_groups}}));
       {
-        while( my ($kiter42,$viter43) = each %{$self->{access_groups}}) 
+        while( my ($kiter63,$viter64) = each %{$self->{access_groups}}) 
         {
-          $xfer += $output->writeString($kiter42);
-          $xfer += ${viter43}->write($output);
+          $xfer += $output->writeString($kiter63);
+          $xfer += ${viter64}->write($output);
         }
       }
       $xfer += $output->writeMapEnd();
@@ -1475,10 +2001,10 @@ sub write {
     {
       $xfer += $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{column_families}}));
       {
-        while( my ($kiter44,$viter45) = each %{$self->{column_families}}) 
+        while( my ($kiter65,$viter66) = each %{$self->{column_families}}) 
         {
-          $xfer += $output->writeString($kiter44);
-          $xfer += ${viter45}->write($output);
+          $xfer += $output->writeString($kiter65);
+          $xfer += ${viter66}->write($output);
         }
       }
       $xfer += $output->writeMapEnd();

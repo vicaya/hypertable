@@ -67,6 +67,7 @@ public:
     m_cells.push_back(copy);
   }
 
+  void get(Cells &cells) { cells = m_cells; }
   Cells &get() { return m_cells; }
   const Cells &get() const { return m_cells; }
 
@@ -77,7 +78,7 @@ public:
 
   void clear() { m_cells.clear(); }
 
-private:
+protected:
   CharArena m_arena;
   Cells m_cells;
   size_t m_size_hint;

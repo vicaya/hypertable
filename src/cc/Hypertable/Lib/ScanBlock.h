@@ -91,7 +91,6 @@ namespace Hypertable {
      * @return scanner ID
      */
     int get_scanner_id() { return m_scanner_id; }
-
   private:
     int m_error;
     uint16_t m_flags;

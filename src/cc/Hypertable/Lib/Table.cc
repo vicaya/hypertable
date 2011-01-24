@@ -47,7 +47,6 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
     m_stale(true) {
 
   m_timeout_ms = props->get_i32("Hypertable.Request.Timeout");
-
   initialize();
 
   m_range_locator = new RangeLocator(props, m_conn_manager, m_hyperspace,
@@ -80,6 +79,10 @@ void Table::initialize() {
   m_toplevel_dir = m_props->get_str("Hypertable.Directory");
   boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
   m_toplevel_dir = String("/") + m_toplevel_dir;
+
+  m_scanner_queue_size = m_props->get_i32("Hypertable.Scanner.QueueSize");
+  HT_ASSERT(m_scanner_queue_size > 0);
+
 
   // Convert table name to ID string
   if (m_table.id == 0) {
@@ -184,8 +187,17 @@ Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
 
 TableScanner *
 Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms,
-                      bool retry_table_not_found) {
-  return new TableScanner(m_comm, this, m_range_locator, scan_spec,
+                      bool retry_table_not_found, size_t scanner_queue_size) {
+  return new TableScanner(m_comm, m_app_queue, this, m_range_locator, scan_spec,
                           timeout_ms ? timeout_ms : m_timeout_ms,
-                          retry_table_not_found);
+                          retry_table_not_found,
+                          scanner_queue_size ? scanner_queue_size : m_scanner_queue_size);
+}
+
+TableScannerAsync *
+Table::create_scanner_async(ResultCallback *cb, const ScanSpec &scan_spec, uint32_t timeout_ms,
+                            bool retry_table_not_found) {
+  return  new TableScannerAsync(m_comm, m_app_queue, this, m_range_locator, scan_spec,
+                                timeout_ms ? timeout_ms : m_timeout_ms, retry_table_not_found,
+                                cb);
 }
