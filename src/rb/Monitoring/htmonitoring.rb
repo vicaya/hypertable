@@ -9,7 +9,6 @@ require 'pathname'
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
 Dir["#{  File.dirname(__FILE__)}/app/lib/*.rb"].each {|r| require r}
 
-
 module HTMonitoring
   @root = Pathname.new(File.dirname(__FILE__)).expand_path
   @hypertable_home = ENV['HYPERTABLE_HOME']

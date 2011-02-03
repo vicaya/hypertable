@@ -52,6 +52,7 @@ Monitoring::Monitoring(PropertiesPtr &props,NameIdMapperPtr &m_namemap) {
   m_monitoring_dir = (data_dir /= "/run/monitoring").string();
   m_monitoring_table_dir = m_monitoring_dir + "/tables";
   m_monitoring_rs_dir = m_monitoring_dir + "/rangeservers";
+
   create_dir(m_monitoring_dir);
   create_dir(m_monitoring_table_dir);
   create_dir(m_monitoring_rs_dir);
@@ -286,6 +287,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
 }
 
 void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fetch_timestamp) {
+
   TableStatMap::iterator iter;
 
   for (size_t i=0; i<table_stats.size(); i++) {
@@ -298,6 +300,7 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     }
     table_data.fetch_timestamp = fetch_timestamp;
     table_data.range_count += table_stats[i].range_count;
+
     table_data.cell_count += table_stats[i].cell_count;
     table_data.scans += table_stats[i].scans;
     table_data.cells_read += table_stats[i].cells_scanned;
@@ -306,6 +309,7 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     table_data.cells_written += table_stats[i].cells_written;
     table_data.bytes_written += table_stats[i].bytes_written;
     table_data.disk_used += table_stats[i].disk_used;
+
     table_data.compression_ratio += (double)table_stats[i].disk_used / table_stats[i].compression_ratio;
     table_data.memory_used += table_stats[i].memory_used;
     table_data.memory_allocated += table_stats[i].memory_allocated;
@@ -316,7 +320,6 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     table_data.bloom_filter_maybes += table_stats[i].bloom_filter_maybes;
     m_table_stat_map[table_stats[i].table_id] = table_data;
   }
-
 }
 
 void Monitoring::compute_clock_skew(int64_t server_timestamp, RangeServerStatistics *stats) {

@@ -111,7 +111,7 @@ namespace Hypertable {
       double byte_write_rate;
     };
 
-      void create_dir(const String &dir);
+    void create_dir(const String &dir);
     void compute_clock_skew(int64_t server_timestamp, RangeServerStatistics *stats);
     void create_rangeserver_rrd(const String &filename);
     void update_rangeserver_rrd(const String &filename, struct rangeserver_rrd_data &rrd_data);
@@ -125,7 +125,6 @@ namespace Hypertable {
 
     typedef std::map<String, RangeServerStatistics *> RangeServerMap;
     typedef std::map<String, table_rrd_data> TableStatMap;
-
     Mutex m_mutex;
     RangeServerMap m_server_map;
     TableStatMap m_table_stat_map;
@@ -136,12 +135,10 @@ namespace Hypertable {
     int32_t m_monitoring_interval;
     int32_t m_allowable_skew;
     uint64_t table_stats_timestamp;
-      NameIdMapperPtr m_namemap_ptr;
+    NameIdMapperPtr m_namemap_ptr;
   };
 
   typedef intrusive_ptr<Monitoring> MonitoringPtr;
-  //NameIdMapperPtr m_namemap;
-
 }
 
 
