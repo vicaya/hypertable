@@ -7,13 +7,17 @@
 <thead class="ht-table-thead">
 <tr class="ht-table-subheader">
 <th  class="ht-table-subheadercell">RangeServers</th>
-<th class="ht-table-subheadercell"> Hostname </th>
-<th class="ht-table-subheadercell"> Disk </th>
-<th class="ht-table-subheadercell"> Disk Use Pct </th>
-<th class="ht-table-subheadercell"> Ram </th>
-<th class="ht-table-subheadercell"> Skew </th>
-<th class="ht-table-subheadercell"> LastError </th>
-<th class="ht-table-subheadercell"> LastContact </th>
+<th class="ht-table-subheadercell"> Host </th>
+<th class="ht-table-subheadercell"> System </th>
+<th class="ht-table-subheadercell"> Kernel </th>
+<th class="ht-table-subheadercell"> Arch </th>
+<th class="ht-table-subheadercell"> Cores </th>
+<th class="ht-table-subheadercell"> Disk (TB) </th>
+<th class="ht-table-subheadercell"> Use<br/> (%) </th>
+<th class="ht-table-subheadercell"> RAM<br/> (GB) </th>
+<th class="ht-table-subheadercell"> Clock<br/> Skew </th>
+<th class="ht-table-subheadercell"> Last<br/>Error </th>
+<th class="ht-table-subheadercell"> Last<br/>Contact </th>
 </tr>
 </thead>
 <% @rs_records['RangeServerSummary']['servers'].each do |server|  %>
@@ -22,12 +26,23 @@
 <% else %>
 <tr class="ht-table-firstrow">
 <% end %>
-
 <td class="ht-table-cell">
-<a href="/graphs?server=<%= server['location'] %>"><%= server['location']+" - "+server['ip'] %></a>
+<a href="/graphs?server=<%= server['location'] %>"><%= server['location'] %></a>
 </td>
 <td class="ht-table-cell">
-<%= server['hostname'] %>
+<%= server['hostname']+" ("+server['ip']+")" %>
+</td>
+<td class="ht-table-cell">
+<%= server['vendor']+' '+server['vendorVersion'] %>
+</td>
+<td class="ht-table-cell">
+<%= server['os']+' '+server['osVersion'] %>
+</td>
+<td class="ht-table-cell">
+<%= server['arch'] %>
+</td>
+<td class="ht-table-cell">
+<%= server['cores'] %>
 </td>
 <td class="ht-table-cell">
 <%= server['disk'] %>

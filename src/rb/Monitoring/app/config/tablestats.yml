@@ -1,26 +1,26 @@
 :stats: {
-        :cells_read: { :pair: [:cells_read],
+        :cell_read_rate: { :pair: [:cell_read_rate],
                        :units: "" ,
                        :color: ["#edd400"],
                        :pname: "Cells Read"},
-        :cells_written: {
-                       :pair: [:cells_written],
+        :cell_write_rate: {
+                       :pair: [:cell_write_rate],
                        :units: "" ,
                        :color: ["#73d216"],
                        :pname: "Cells Written"
                       },
-        :bytes_read: { :pair: [:bytes_read],
+        :byte_read_rate: { :pair: [:byte_read_rate],
                        :units: "bytes" ,
                        :color: ["#edd400"],
                        :pname: "Bytes Read"},
-        :bytes_written: {
-                       :pair: [:bytes_written],
+        :byte_write_rate: {
+                       :pair: [:byte_write_rate],
                        :units: "bytes" ,
                        :color: ["#73d216"],
                        :pname: "Bytes Written"
                       },
-        :bloom_filter_accesses: {
-                       :pair: [:bloom_filter_accesses],
+        :bloom_filter_access: {
+                       :pair: [:bloom_filter_access],
                        :units: "",
                        :color: ["#ad7fa8"],
                        :pname: "Bloom Filter Accesses"
@@ -46,6 +46,20 @@
                        :pname: "Block Index Memory"
                        },
 
+	:shadow_cache_memory: {
+                       :pair: [ :shadow_cache_memory],
+                       :units: "Bytes",
+                       :color: ["#5c3566"],
+                       :pname: "Shadow Cache Memory"
+                       },
+
+	:compression_ratio: {
+                       :pair: [ :compression_ratio],
+                       :units: "Bytes",
+                       :color: ["#5c3566"],
+                       :pname: "Compression Ratio"
+                       },
+
         :scans: {
                       :pair: [:scans],
                       :units: "",
@@ -67,11 +81,18 @@
                       :pname: "Memory Used"
                       },
 
+		      
         :memory_allocated: {
                      :pair: [:memory_allocated],
                      :units: "Bytes",
                      :immutable: true,
                      :color: ["#888a85"],
                      :pname: "Memory Allocated"
-                     }
+                     },
+	:updates: {
+                      :pair: [:updates],
+		      :units: "",
+                      :color: ["#c17d11"],
+                      :pname: "Updates"
+                      }
 }

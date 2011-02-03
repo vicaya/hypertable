@@ -56,8 +56,9 @@ var HTMonitoring = new Class({
 
     dataURL: function() {
         url = ['data', this.options.type]
-        if (this.options.stat)
-            url.push(this.options.stat)
+        if (this.options.stat) {
+            url.push(this.options.stat.replace("/","_"))
+	}
         if(this.options.time_interval)
             url.push(this.options.time_interval)
         if(this.options.start_time)
@@ -68,6 +69,7 @@ var HTMonitoring = new Class({
             url.push(this.options.sort)
         if (this.options.resolution)
             url.push(this.options.resolution);
+	console.log(url.join('/'));
         return url.join('/')
     },
 
@@ -150,265 +152,6 @@ var HTMonitoring = new Class({
 
 });
 
-var HTMGraph = new Class({
-    Extends: HTMonitoring,
-    Implements: Chain,
-
-
-    // assemble data to graph, then draw it
-    graphData: function(data) {
-        this.ys        = [];
-        this.instances = [];
-        this.metrics   = [];
-        this.stats = new Hash(data["stats"]);
-        this.timescales = new Hash(data["time_intervals"])
-        this.type = this.options.type;
-        this.stat = this.options.stat;
-        this.buildGraphContainer();
-        this.buildSelectors();
-        google.setOnLoadCallback(this.drawGoogleChart(data));
-
-        if (data['graph']['error'] && data['graph']['error']!='') {
-            this.displayError(data['graph']['error']);
-        }
-    },
-
-    drawGoogleChart: function(gdata) {
-
-        chart_data = gdata['graph']['data'];
-        type = this.options.type;
-
-        var gtable = new google.visualization.DataTable();
-        gtable.addColumn('string', 'Tables');
-
-        for( stat in gdata['graph']['stats']) {
-            gtable.addColumn('number',gdata['graph']['stats'][stat]);
-        }
-
-        gtable.addRows(gdata['graph']['size']);
-        row = 0;
-
-        for (row=0;row < chart_data.length; row++) {
-            column_values = chart_data[row];
-            column=0;
-            gtable.setValue(row,column,column_values[column]);
-            gtable.setValue(row,column+1,column_values[column+1]);
-        }
-
-
-        chart = new google.visualization.BarChart($(this.graphContainer));
-        chart.draw(gtable, {width: 900, height: 300,
-                            vAxis: {title: gdata['graph']['vaxis']['title'],titleColor: '#73d216'} ,
-                            hAxis: {title: gdata['graph']['haxis']['title'], titleColor: '#c17d11'},
-                            colors: gdata['graph']['colors'],
-                            title: gdata['graph']['title'],
-
-                         });
-        google.visualization.events.addListener(chart, 'select', function() {
-            if (type == "RangeServer") {
-                selection = chart.getSelection();
-                row = selection[0].row;
-                column = selection[0].column;
-                url = ["http:/",window.location.host]
-                url.push("graphs?server="+gtable.getValue(row,column-1));
-                window.location = url.join("/");
-            } else {
-                return;
-            }
-        });
-    },
-
-
-
-    displayError: function(error) {
-        if (this.errorContainer) {
-            $(this.errorContainer).dispose();
-        }
-        this.buildErrorContainer();
-        this.errorContainer.set('text',error);
-    },
-
-    buildContainers: function() {
-
-        this.formContainer = new Element('div', {
-            'class': 'form container',
-            'styles': {
-                'text-align': 'center',
-            }
-        });
-        $(this.parentElement).grab(this.formContainer, 'top')
-
-        this.sortContainer = new Element('span', {
-            'class': 'sort container',
-            'styles': {
-                'width': '30%',
-            }
-        });
-
-        this.statContainer = new Element('span',{
-            'class': 'stat container',
-            'styles': {
-                'width': '30%',
-            }
-        });
-
-        this.timeContainer = new Element('span',{
-            'class': 'time container',
-            'styles': {
-                'width': '30%',
-            }
-        });
-
-        this.resolutionContainer = new Element('span', {
-            'class': 'resolution container',
-            'styles': {
-                'width': '20%',
-            }
-        });
-
-        this.submitContainer = new Element('span',{
-            'class': 'submit container',
-            'styles': {
-                'width': '10%',
-            }
-        });
-
-    },
-
-    validateForm: function() {
-        if(this.type == "RangeServer") {
-            if (this.options.resolution == "") {
-                this.displayError("Please provide valid value for resolution");
-                return false;
-            }
-            if (this.options.resolution != "") {
-                var secs = this.options.time_interval * 60;
-                var resolution = this.options.resolution * 60;
-                var percentage = resolution / secs;
-                if (percentage >= 0.75) {
-                    this.displayError("Resolution should be less than 75% of duration selected");
-                    return false;
-                } else if(percentage <= 0) {
-                    this.displayError("Resolution should be greater than 0");
-                    return false;
-                }
-            }
-        }
-        return true;
-    },
-
-    buildSelectors: function() {
-        var container = $(this.formContainer);
-        var stat_container = $(this.statContainer);
-        var time_container = $(this.timeContainer);
-        var submit_container = $(this.submitContainer);
-        var sort_container = $(this.sortContainer);
-        var resolution_container = $(this.resolutionContainer);
-
-        var form = new Element('form', {
-            'action': this.dataURL(),
-            'method': 'get',
-            'events': {
-                'submit': function(e, foo) {
-
-                    e.stop();
-                    this.options.stat = $('stat').get('value');
-                    this.options.time_interval = $('time_interval').get('value');
-                    this.options.sort = $('sort').get('value');
-                    if(this.type == "RangeServer") {
-                        this.options.resolution = $('resolution').get('value');
-                    }
-                    if (this.validateForm()) {
-                        $(this.timeContainer).empty();
-                        $(this.statContainer).empty();
-                        $(this.sortContainer).empty();
-                        $(this.formContainer).empty();
-
-                        if (this.errorContainer) {
-                            $(this.errorContainer).dispose();
-                        }
-                        if (this.graphContainer) {
-                            $(this.graphContainer).dispose();
-                        }
-                        /* Draw everything again. */
-                        this.getData();
-                    }
-                }.bind(this)
-            }
-        });
-
-        var stat_select = new Element('select', { 'id': 'stat', 'class': 'date timescale' });
-        var selected_stat = this.options.stat;
-
-
-        this.stats.sort().each(function(element) {
-            $each(element,function(name,id) {
-                var option = new Element('option', {
-                    html: name,
-                    value: id,
-                    selected: (id == selected_stat ? 'selected' : '')
-
-                });
-                stat_select.grab(option)
-            });
-        });
-
-        var time_select = new Element('select', { 'id':'time_interval','class': 'date timescale' });
-        var selected_time = this.options.time_interval;
-
-
-
-        this.timescales.sort(sortNumber).each(function(element) {
-            $each(element,function(label,hour) {
-                var option = new Element('option', {
-                    html: label,
-                    value: hour,
-                    selected: (hour == selected_time ? 'selected' : '')
-                });
-                time_select.grab(option)
-            });
-        });
-
-        var selected_sort = this.options.sort;
-        var sort_select = new Element('select', { 'id':'sort','class': 'date timescale' });
-        this.options.sort_options.each(function(sort) {
-            var option = new Element('option', {
-                html: sort,
-                value: sort,
-                selected: (sort == selected_sort ? 'selected' : '')
-            });
-            sort_select.grab(option);
-        });
-
-        var sort_label = new Element('label', {'for':'sort','text':'Sort By: '});
-        var stat_label = new Element('label', {'for':'stat','text':'Stat: '});
-        var time_label = new Element('label', {'for':'time_select','text':'Duration: '});
-
-        var submit = new Element('input', { 'type': 'submit', 'value': 'show' });
-        sort_container.grab(sort_label);
-        sort_container.grab(sort_select);
-        stat_container.grab(stat_label);
-        stat_container.grab(stat_select);
-        time_container.grab(time_label);
-        time_container.grab(time_select);
-
-        submit_container.grab(submit);
-        form.grab(sort_container);
-        form.grab(stat_container);
-        form.grab(time_container);
-        if (this.type == "RangeServer") {
-            var resolution_label = new Element('label',{'for':'resolution_select','text':'Resolution (in mins): '});
-            this.options.resolution = new Element('input',{'id':'resolution', 'value':this.options.resolution ,'size':'5'});
-            resolution_container.grab(resolution_label);
-            resolution_container.grab(this.options.resolution);
-            form.grab(resolution_container);
-        }
-        form.grab(submit_container);
-        container.grab(form);
-    },
-});
-
-
 
 var RSGraph = new Class({
     Extends: HTMonitoring,
@@ -444,7 +187,6 @@ var RSGraph = new Class({
 
     // this method is to show the default 1hour graphs for the first server or selected server in the list
     displayDefaultGraphs: function() {
-        this.options.type = 'graphs';
         this.options.start_time = $('start_time').get('value');
         this.options.end_time = $('end_time').get('value');
 
@@ -467,6 +209,7 @@ var RSGraph = new Class({
             selected_server = this.options.stat + " (" + selected_server + ")";
         }
         this.graphHeader.set('text',"RRD Graphs for "+selected_server);
+	console.log(this.data);
         for (i=0; i < this.data['stats'].length; i++) {
             key = this.data['stats'][i];
             this.buildGraphImageContainer();
@@ -478,11 +221,14 @@ var RSGraph = new Class({
     },
 
     buildGraphImageUrl: function(key) {
+	console.log(this.options.type);
         url = ['/graph'];
-        url.push(this.options.stat);
+	url.push(this.options.type);
+	url.push(this.options.stat.replace("/","_"))
         url.push(key);
         url.push(this.options.start_time);
         url.push(this.options.end_time);
+	console.log("graph image "+url.join('/'));
         return url.join('/');
     },
 
@@ -549,7 +295,6 @@ var RSGraph = new Class({
             'events': {
                 'submit': function(e, foo) {
                     e.stop();
-                    this.options.type = 'graphs';
                     this.options.start_time = $('start_time').get('value');
                     this.options.end_time = $('end_time').get('value');
                     this.options.stat = $('rs').get('value');
@@ -586,8 +331,11 @@ var RSGraph = new Class({
         end_date = parseInt(now.getTime()/1000);
         start_date = end_date - 3600;
 
-
-        var rs_label = new Element('label', {'for':'rs','text':'Range Servers: '});
+	var rs_label;
+	if (this.options.type == "table") 
+            rs_label = new Element('label', {'for':'rs','text':'Tables: '});
+	else
+	    rs_label = new Element('label', {'for':'rs','text':'RangeServers: '});
         var starttime_label = new Element('label', {'for':'start_time','text':'Start Time: '});
         var endtime_label = new Element('label', {'for':'end_time','text':'End Time: '});
 

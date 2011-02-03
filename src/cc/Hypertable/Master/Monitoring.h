@@ -28,8 +28,10 @@
 
 #include "Hypertable/Lib/KeySpec.h"
 #include "Hypertable/Lib/StatsRangeServer.h"
+#include "Hypertable/Lib/StatsTable.h"
 
 #include "RangeServerStatistics.h"
+#include "Hypertable/Lib/NameIdMapper.h"
 
 
 namespace Hypertable {
@@ -50,6 +52,7 @@ namespace Hypertable {
     void drop_server(const String &location);
 
     void add(std::vector<RangeServerStatistics> &stats);
+    
 
   private:
 
@@ -81,21 +84,59 @@ namespace Hypertable {
       double load_average;
     };
 
+    struct table_rrd_data {
+      int64_t fetch_timestamp;
+      uint32_t range_count;
+      uint64_t scans;
+      uint64_t cells_read;
+      uint64_t bytes_read;
+      uint64_t updates;
+      uint64_t cells_written;
+      uint64_t bytes_written;
+      uint64_t disk_used;
+      double compression_ratio;
+      uint64_t memory_used;
+      uint64_t memory_allocated;
+      uint64_t shadow_cache_memory;
+      uint64_t block_index_memory;
+      uint64_t bloom_filter_memory;
+      uint64_t bloom_filter_accesses;
+      uint64_t bloom_filter_maybes;
+      double cell_read_rate;
+      double cell_write_rate;
+      double byte_read_rate;
+      double byte_write_rate;
+    };
+
     void compute_clock_skew(int64_t server_timestamp, RangeServerStatistics *stats);
     void create_rangeserver_rrd(const String &filename);
     void update_rangeserver_rrd(const String &filename, struct rangeserver_rrd_data &rrd_data);
     void dump_rangeserver_summary_json(std::vector<RangeServerStatistics> &stats);
 
+    void create_table_rrd(const String &filename);
+    void update_table_rrd(const String &filename, struct table_rrd_data &rrd_data);
+    void add_table_stats(std::vector<StatsTable> &table_stats,int64_t fetch_timestamp);
+    void dump_table_summary_json();
+    void dump_table_id_name_map();
+
     typedef hash_map<String, RangeServerStatistics *> RangeServerMap;
+    typedef hash_map<String, table_rrd_data> TableStatMap;
 
     Mutex m_mutex;
     RangeServerMap m_server_map;
+    TableStatMap m_table_stat_map;
+    TableStatMap m_prev_table_stat_map;
     String m_monitoring_dir;
+    String m_monitoring_table_dir;
+    String m_monitoring_rs_dir;
     int32_t m_monitoring_interval;
     int32_t m_allowable_skew;
+    uint64_t table_stats_timestamp;
   };
+
   typedef intrusive_ptr<Monitoring> MonitoringPtr;
-  
+  //NameIdMapperPtr m_namemap;
+
 }
 
 

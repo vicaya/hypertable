@@ -1,63 +1,43 @@
 :stats: {
-        :num_ranges: { :pair: [:num_ranges],
+        :range_count: { :pair: [:range_count],
                        :units: "" ,
                        :color: ["#73d216"],
-                       :pname: "Number of ranges"},
+                       :pname: "Range Count"},
 
-        :cells_read: { :pair: [:cells_read],
+        :cell_read_rate: { :pair: [:cell_read_rate],
                        :units: "" ,
                        :color: ["#edd400"],
                        :pname: "Cells Read/s"},
 
-        :cells_written: {
-                       :pair: [:cells_written],
+        :cell_write_rate: {
+                       :pair: [:cell_write_rate],
                        :units: "" ,
                        :color: ["#73d216"],
-                       :pname: "Cells Written/s",
-                       :flag: "1"
+                       :pname: "Cells Written/s"
                       },
 
-        :mem_used: {
-                      :pair: [:mem_used],
-                      :units: "Bytes",
-                      :color: '["#c17d11"]',
-                      :pname: "Memory Used"
-                      },
-
-        :net_recv_KBps: {
-                     :pair: [:net_recv_KBps],
-                     :color: ["#c17d11"] ,
-                     :units: "KBps",
-                     :pname: "Net Recv KB/s"},
-
-        :net_sent_KBps: {
-                     :pair: [:net_sent_KBps],
-                     :color: ["#888a85"] ,
-                     :units: "KBps",
-                     :pname: "Net Send KB/s"},
-
-        :bytes_read: {
-                     :pair: [:bytes_read],
+        :byte_read_rate: {
+                     :pair: [:byte_read_rate],
                      :color: ["#c17d11"],
                      :units: "Bytes",
                      :pname: "Bytes Read/s"},
 
-        :bytes_written: {
-                     :pair: [:bytes_written],
+        :byte_write_rate: {
+                     :pair: [:byte_write_rate],
                      :color: [ "#888a85"],
                      :units: "Bytes",
                      :pname: "Bytes Written/s"},
 
-        :q_c_accesses: {
-                     :pair: [:q_c_accesses],
+        :qcache_max_mem: {
+                     :pair: [:qcache_max_mem],
                      :color: ["#8ae234"],
                      :units: "",
-                     :pname: "Query Cache Accesses/s"},
-        :q_c_hits: {
-                     :pair: [:q_c_hits],
+                     :pname: "Query Cache Max Mem"},
+        :qcache_hit_pct: {
+                     :pair: [:qcache_hit_pct],
                      :color: ["#ef2929"],
                      :units: "",
-                     :pname: "Query Cache Hits/s"},
+                     :pname: "Query Cache Hits Percentage"},
 
         :loadavg: {
                     :pair: [:loadavg],
@@ -65,17 +45,11 @@
                     :units: "",
                     :pname: "Load Avg"},
 
-       :mem_used: {
-                  :pair: [:mem_used],
+        :qcache_fill: {
+                  :pair: [:qcache_fill],
                   :color: ["#fcaf3e"],
-                  :units: "KB" ,
-                  :pname: "Mem Used"},
-
-        :q_c_avail_mem: {
-                  :pair: [:q_c_avail_mem],
-                  :color: ["#fcaf3e"],
-                  :units: "KB" ,
-                  :pname: "Query Cache Available Memory"},
+                  :units: "" ,
+                  :pname: "Query Cache Fill"},
 
 
          :scans: {
@@ -89,17 +63,57 @@
                    :color: ["#cc0000"],
                    :pname: "Syncs/s"},
 
-         :b_c_accesses: {
-                    :pair: [:b_c_accesses],
+         :bcache_hit_pct: {
+                    :pair: [:bcache_hit_pct],
                     :color: ["#cc0000"],
                     :units: "",
-                    :pname: "Block Cache Access/s"},
-         :b_c_hits: {
-                    :pair: [:b_c_hits],
+                    :pname: "Block Cache Hit Percentage"},
+         :bcache_max_mem: {
+                    :pair: [:bcache_max_mem],
                     :color: ["#5c3566"],
                     :units: "",
-                    :pname: "Block Cache Hits/s",
+                    :pname: "Block Cache Max Mem",
                     :flag: "1"  },
+
+	:bcache_fill: {
+                    :pair: [:bcache_fill],
+                    :color: ["#5c3566"],
+                    :units: "",
+                    :pname: "Block Cache Fill"
+                    },
+	
+	:disk_used_pct: {
+                    :pair: [:disk_used_pct],
+                    :color: ["#5c3566"],
+                    :units: "",
+                    :pname: "Disk Used Pct"
+                    },
+
+	:disk_read_KBps: {
+                    :pair: [:disk_read_KBps],
+                    :color: ["#cc0000"],
+                    :units: "",
+                    :pname: "Disk Read KBps"},
+
+	
+	:disk_write_KBps: {
+                     :pair: [:disk_write_KBps],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Disk Write KBps"},
+
+	:disk_write_iops: {
+                     :pair: [:disk_write_iops],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Disk Write IOPS"},
+	
+	:disk_read_iops: {
+                     :pair: [:disk_read_iops],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Disk Read IOPS"},
+
 
         :vm_size: {
                   :pair: [:vm_size],
@@ -113,10 +127,17 @@
                   :units: "KB",
                   :pname: "Virtual Memory Resident"},
 
-        :cpu_pct: {
-                  :pair: [:cpu_pct],
-                  :color: ["#cc0000"],
-                  :units: "percent",
-                  :pname: "Cpu Percent"}
 
+	:net_rx_rate: {
+                     :pair: [:net_rx_rate],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Net RX Rate"},
+
+	:net_tx_rate: {
+                     :pair: [:net_tx_rate],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Net TX Rate"}
+	
 }

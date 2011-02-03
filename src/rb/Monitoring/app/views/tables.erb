@@ -1,22 +1,38 @@
-<script>
-</script>
- <div id='graphs'>
-            <script type='text/javascript'>
-               google.load("visualization", "1", {packages:["corechart"]});
-             //<![CDATA[
-                window.addEvent('domready', function() {
-                  var graph = new HTMGraph('graph','Table','block_index_memory','10','5', {
-                    width: 900,
-                    height: 220,
-                    gridWidth: 800,
-                    gridHeight: 200,
-                    shade: false,
-                  });
-                });
-              //]]>
-            </script>
-            <div id='graph' class='graph' styles='text-align:center'>
-            <div class ='chart' id ='chart' styles='text-align:center'>
-            <div>
-            </div>
+<div id="rangeservers">
+<h3>Tables </h3>
+<h4>Number of Tables: <%= @table_records['TableSummary']['tables'].length %></h4>
+<table class="ht-table table_nodes">
+<colgroup span="4"></colgroup>
+<thead class="ht-table-thead">
+<tr class="ht-table-subheader">
+<th  class="ht-table-subheadercell">ID</th>
+<th class="ht-table-subheadercell"> Range Count </th>
+<th class="ht-table-subheadercell"> Cell Count </th>
+<th class="ht-table-subheadercell"> Disk </th>
+<th class="ht-table-subheadercell"> Memory </th>
+<th class="ht-table-subheadercell"> Compression Ratio </th>
+</tr>
+</thead>
+<% @table_records['TableSummary']['tables'].each do |table|  %>
+<td class="ht-table-cell">
+<a href="/graphs?server=<%= table['id'] %>&type=table"><%= table['id'] %></a>
+</td>
+<td class="ht-table-cell">
+<%= table['rangecount'] %>
+</td>
+<td class="ht-table-cell">
+<%= table['cellcount'] %>
+</td>
+<td class="ht-table-cell">
+<%= table['disk'] %>
+</td>
+<td class="ht-table-cell">
+<%= table['memory'] %>
+</td>
+<td class="ht-table-cell">
+<%= table['compression_ratio'] %>
+</td>
+</tr>
+<% end %>
+</table>
 </div>

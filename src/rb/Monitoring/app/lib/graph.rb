@@ -58,7 +58,7 @@ module RRD
       begin
        # system *params
         command = params.join(" ")
-        # puts command
+        puts command
         @image_data = `#{command}`
       rescue Exception => err
         raise err
