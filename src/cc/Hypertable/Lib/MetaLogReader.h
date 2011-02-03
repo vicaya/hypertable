@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2010 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,57 +19,49 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_METALOG_READER_H
-#define HYPERTABLE_METALOG_READER_H
+#ifndef HYPERTABLE_METALOGREADER_H
+#define HYPERTABLE_METALOGREADER_H
 
+#include "Common/Filesystem.h"
+#include "Common/ReferenceCount.h"
+
+#include <map>
 #include <vector>
-#include "Common/DynamicBuffer.h"
-#include "MetaLog.h"
+
+#include "MetaLogDefinition.h"
+
 
 namespace Hypertable {
 
-/**
- * Interface for meta log readers
- */
-class MetaLogReader : public ReferenceCount {
-public:
-  struct ScanEntry {
-    int type;
-    uint32_t checksum;
-    int64_t timestamp;
-    size_t payload_size;
-    DynamicBuffer buf;
-  };
+  namespace MetaLog {
 
-public:
-  MetaLogReader();
-  virtual ~MetaLogReader() {}
+    class Reader : public ReferenceCount {
 
-  /**
-   * quick scan without deserialize entries, throws if invalid
-   */
-  virtual ScanEntry *next(ScanEntry &) = 0;
+    public:
+      Reader(FilesystemPtr &fs, DefinitionPtr &definition);
+      Reader(FilesystemPtr &fs, DefinitionPtr &definition, const String &path);
+      void get_entities(std::vector<EntityPtr> &entities);
+      void get_all_entities(std::vector<EntityPtr> &entities);
+      void reload();
+      int32_t next_file_number() { return m_next_filenum; }
+      bool load_file(const String &fname);
 
-  /**
-   * read and get ready for the next record, throws if invalid
-   */
-  virtual MetaLogEntry *read() = 0;
+    private:
 
-  bool skips_errors() const { return m_skips_errors; }
+      void read_header(int fd);
 
-  bool set_skips_errors(bool choice) {
-    bool old = m_skips_errors;
-    m_skips_errors = choice;
-    return old;
+      FilesystemPtr m_fs;
+      MetaLog::DefinitionPtr m_definition;
+      String m_path;
+      int32_t m_next_filenum;
+      std::vector<int32_t> m_file_nums;
+      std::map<EntityHeader, EntityPtr> m_entity_map;
+      std::vector<EntityPtr> m_entities;
+      size_t m_cur_offset;
+
+    };
+    typedef intrusive_ptr<Reader> ReaderPtr;
   }
+}
 
-private:
-  bool m_skips_errors;
-};
-
-typedef std::vector<MetaLogEntryPtr> MetaLogEntries;
-typedef intrusive_ptr<MetaLogReader> MetaLogReaderPtr;
-
-} // namespace Hypertable
-
-#endif // HYPERTABLE_METALOG_READER_H
+#endif // HYPERTABLE_METALOGREADER_H

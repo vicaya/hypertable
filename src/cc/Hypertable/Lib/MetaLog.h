@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2010 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,73 +22,31 @@
 #ifndef HYPERTABLE_METALOG_H
 #define HYPERTABLE_METALOG_H
 
-#include "Common/ReferenceCount.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/StaticBuffer.h"
-#include "Common/Time.h"
+#include <iostream>
+#include <vector>
 
-/**
- * Abstract classes/interfaces for meta log classes
- * cf. http://code.google.com/p/hypertable/wiki/MetaLogDesignNotes
- */
+#include "Common/Filesystem.h"
+#include "Common/Mutex.h"
+#include "Common/ReferenceCount.h"
 
 namespace Hypertable {
 
-class MetaLogEntry : public ReferenceCount {
-public:
-  MetaLogEntry() : timestamp(get_ts64()) {}
-  virtual ~MetaLogEntry() {}
+  namespace MetaLog {
+    class Header {
+    public:
+      void encode(uint8_t **bufp) const;
+      void decode(const uint8_t **bufp, size_t *remainp);
 
-  /**
-   * Serialize to buffer
-   *
-   * @param buf - output buffer
-   */
-  virtual void write(DynamicBuffer &buf) = 0;
+      enum {
+        LENGTH = 16
+      };
 
-  /**
-   * Deserialize from buffer
-   *
-   * @param buf - input buffer (consumed)
-   * @return current pointer of input buffer for further reading
-   */
-  virtual const uint8_t *read(StaticBuffer &buf) = 0;
-
-  /**
-   * Get the most derived type of the entry
-   *
-   * @return type of entry
-   */
-  virtual int get_type() const = 0;
-
-  int64_t timestamp;
-  StaticBuffer buffer;
-};
-
-typedef intrusive_ptr<MetaLogEntry> MetaLogEntryPtr;
-
-std::ostream &operator<<(std::ostream &, const MetaLogEntry *);
-
-class MetaLog : public ReferenceCount {
-public:
-  virtual ~MetaLog() {}
-
-  /**
-   * Write a metalog entry
-   *
-   * @param mle - metalog entry to write
-   */
-  virtual void write(MetaLogEntry *mle) = 0;
-
-  /**
-   * Close the metalog
-   * Implementation should handle multiple close calls
-   */
-  virtual void close() = 0;
-};
-
-typedef intrusive_ptr<MetaLog> MetaLogPtr;
-
-} // namespace Hypertable
+      uint16_t version;
+      char name[14];
+    };
+    void scan_log_directory(FilesystemPtr &fs, const String &path,
+                            std::vector<int32_t> &file_ids, int32_t *nextidp);
+  }
+}
 
 #endif // HYPERTABLE_METALOG_H

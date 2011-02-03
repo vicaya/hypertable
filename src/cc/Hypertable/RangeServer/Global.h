@@ -33,8 +33,8 @@
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
 #include "Hypertable/Lib/CommitLog.h"
+#include "Hypertable/Lib/MetaLogWriter.h"
 #include "Hypertable/Lib/RangeServerClient.h"
-#include "Hypertable/Lib/RangeServerMetaLog.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Client.h"
@@ -53,8 +53,8 @@ namespace Hypertable {
   class Global {
   public:
     static Hyperspace::SessionPtr hyperspace;
-    static Hypertable::Filesystem *dfs;
-    static Hypertable::Filesystem *log_dfs;
+    static Hypertable::FilesystemPtr dfs;
+    static Hypertable::FilesystemPtr log_dfs;
     static Hypertable::MaintenanceQueuePtr maintenance_queue;
     static Hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
@@ -62,7 +62,7 @@ namespace Hypertable {
     static CommitLog     *system_log;
     static CommitLog     *metadata_log;
     static CommitLog     *root_log;
-    static Hypertable::RangeServerMetaLog *range_log;
+    static MetaLog::WriterPtr rsml_writer;
     static std::string    log_dir;
     static int64_t        range_split_size;
     static int64_t        range_maximum_size;

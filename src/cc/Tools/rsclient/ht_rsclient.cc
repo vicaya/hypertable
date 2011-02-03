@@ -66,8 +66,8 @@ namespace {
     }
   };
 
-  typedef Meta::list<AppPolicy, CommandShellPolicy, HyperspaceClientPolicy,
-          RangeServerClientPolicy, DefaultCommPolicy> Policies;
+  typedef Meta::list<CommandShellPolicy, HyperspaceClientPolicy,
+                     RangeServerClientPolicy, DefaultCommPolicy, AppPolicy> Policies;
 
   class RangeServerDispatchHandler : public DispatchHandler {
   public:

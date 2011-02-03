@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2010 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,103 +18,64 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-
 #include "Common/Compat.h"
-#include "Common/Time.h"
-#include "RangeServerMetaLogEntries.h"
-#include "MasterMetaLogEntries.h"
+#include "Common/Filesystem.h"
+#include "Common/Serialization.h"
 
-#define R_CAST_AND_OUTPUT(_type_, _ep_, _out_) \
-  _type_ *sp = (_type_ *)_ep_; _out_ <<'{'<< #_type_ <<": timestamp='" \
-      << hires_ts_date <<"' table="<< sp->table <<" range="<< sp->range
+#include <cctype>
 
-namespace Hypertable {
+#include "MetaLog.h"
 
-using namespace MetaLogEntryFactory;
-using namespace RangeServerTxn;
+using namespace Hypertable;
+using namespace Hypertable::MetaLog;
 
-std::ostream &
-operator<<(std::ostream &out, const MetaLogEntry *ep) {
-  switch (ep->get_type()) {
-    case RS_SPLIT_START: {
-      R_CAST_AND_OUTPUT(SplitStart, ep, out)
-          <<" state="<< sp->range_state <<'}';
-    } break;
-    case RS_SPLIT_SHRUNK: {
-      R_CAST_AND_OUTPUT(SplitShrunk, ep, out)
-          <<" state="<< sp->range_state <<'}';
-    } break;
-    case RS_SPLIT_DONE: {
-      R_CAST_AND_OUTPUT(SplitDone, ep, out)
-          <<" state="<< sp->range_state <<'}';
-    } break;
-    case RS_RANGE_LOADED: {
-      R_CAST_AND_OUTPUT(RangeLoaded, ep, out)
-          <<" state="<< sp->range_state <<'}';
-    } break;
-    case RS_RELINQUISH_START: {
-      R_CAST_AND_OUTPUT(RelinquishStart, ep, out)
-          <<" state="<< sp->range_state <<'}';
-    } break;
-    case RS_RELINQUISH_DONE: {
-      R_CAST_AND_OUTPUT(RelinquishDone, ep, out) <<'}';
-    } break;
-    case RS_DROP_TABLE: {
-      R_CAST_AND_OUTPUT(DropTable, ep, out) <<'}';
-    } break;
-    case RS_LOG_RECOVER: {
-      out << "{RsmlRecover: timestamp='" << hires_ts_date << "'}";
-    } break;
-    case MASTER_SERVER_JOINED: {
-      out << "{ServerJoined: timestamp='" << hires_ts_date
-          << "' location='" << ((MasterTxn::ServerJoined *)ep)->location << "'}";
-    } break;
-    case MASTER_SERVER_LEFT: {
-      out << "{ServerLeft: timestamp='" << hires_ts_date
-          << "' location='" << ((MasterTxn::ServerLeft *)ep)->location << "'}";
-    } break;
-    case MASTER_SERVER_REMOVED: {
-      out << "{ServerRemoved: timestamp='" << hires_ts_date
-          << "' location='" << ((MasterTxn::ServerRemoved *)ep)->location << "'}";
-    } break;
-    case MASTER_RANGE_MOVE_STARTED: {
-      MasterTxn::RangeMoveStarted *sp = (MasterTxn::RangeMoveStarted *)ep;
-      out << "{RangeMoveStarted: timestamp='" << hires_ts_date
-          <<"' table="<< sp->table <<" range="<< sp->range
-          <<"' transfer_log='" << sp->transfer_log << "' soft_limit="
-          << sp->soft_limit << " location='" << sp->location << "'}";
-    } break;
-    case MASTER_RANGE_MOVE_RESTARTED: {
-      MasterTxn::RangeMoveRestarted *sp = (MasterTxn::RangeMoveRestarted *)ep;
-      out << "{RangeMoveRestarted: timestamp='" << hires_ts_date
-          <<"' table="<< sp->table <<" range="<< sp->range
-          <<"' transfer_log='" << sp->transfer_log << "' soft_limit="
-          << sp->soft_limit << " location='" << sp->location << "'}";
-    } break;
-    case MASTER_RANGE_MOVE_LOADED: {
-      MasterTxn::RangeMoveLoaded *sp = (MasterTxn::RangeMoveLoaded *)ep;
-      out << "{RangeMoveLoaded: timestamp='" << hires_ts_date
-          <<"' table="<< sp->table <<" range="<< sp->range
-          <<"' location='" << sp->location << "'}";
-    } break;
-    case MASTER_RANGE_MOVE_ACKNOWLEDGED: {
-      MasterTxn::RangeMoveAcknowledged *sp = (MasterTxn::RangeMoveAcknowledged *)ep;
-      out << "{RangeMoveAcknowledged: timestamp='" << hires_ts_date
-          <<"' table="<< sp->table <<" range="<< sp->range
-          <<"' location='" << sp->location << "'}";
-    } break;
-    case MASTER_LOG_RECOVER: {
-      out << "{MmlRecover: timestamp='" << hires_ts_date << "'}";
-    } break;
-    case MASTER_BALANCE_STARTED: {
-      out << "{BalanceStarted: timestamp='" << hires_ts_date << "'}";
-    } break;
-     case MASTER_BALANCE_DONE: {
-      out << "{BalanceDone: timestamp='" << hires_ts_date << "'}";
-    } break;
-    default: out <<"{UnknownEntry("<< ep->get_type() <<")}";
-  }
-  return out;
+void Header::encode(uint8_t **bufp) const {
+  Serialization::encode_i16(bufp, version);
+  memcpy(*bufp, name, 14);
+  *bufp += 14;
 }
 
-} // namespace Hypertable
+void Header::decode(const uint8_t **bufp, size_t *remainp) {
+  HT_ASSERT(*remainp >= LENGTH);
+  version = Serialization::decode_i16(bufp, remainp);
+  memcpy(name, *bufp, 14);
+  *bufp += 14;
+}
+
+
+void MetaLog::scan_log_directory(FilesystemPtr &fs, const String &path,
+                                 std::vector<int32_t> &file_ids, int32_t *nextidp) {
+  const char *ptr;
+  int32_t id;
+  std::vector<String> listing;
+
+  *nextidp = 0;
+
+  if (!fs->exists(path))
+    return;
+
+  fs->readdir(path, listing);
+
+  for (size_t i=0; i<listing.size(); i++) {
+
+    for (ptr=listing[i].c_str(); ptr; ++ptr) {
+      if (!isdigit(*ptr))
+        break;
+    }
+
+    if (*ptr == 0 || (ptr > listing[i].c_str() && !strcmp(ptr, ".bad"))) {
+      id = atoi(listing[i].c_str());
+      if (id >= *nextidp)
+        *nextidp = id+1;
+    }
+  
+    if (*ptr != 0) {
+      HT_WARNF("Invalid META LOG file name encountered '%s', skipping...",
+               listing[i].c_str());
+      continue;
+    }
+
+    file_ids.push_back(id);
+  }
+
+}

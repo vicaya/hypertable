@@ -31,13 +31,14 @@
 #include "AsyncComm/ReactorFactory.h"
 #include "AsyncComm/ConnectionManager.h"
 #include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/RangeServerMetaLogEntryFactory.h"
-#include "Hypertable/Lib/RangeServerMetaLogReader.h"
-#include "Hypertable/Lib/RangeServerMetaLog.h"
+#include "Hypertable/Lib/old/RangeServerMetaLogEntryFactory.h"
+#include "Hypertable/Lib/old/RangeServerMetaLogReader.h"
+#include "Hypertable/Lib/old/RangeServerMetaLog.h"
 
 using namespace Hypertable;
 using namespace Config;
-using namespace MetaLogEntryFactory;
+using namespace Hypertable::OldMetaLog;
+using namespace Hypertable::OldMetaLog::MetaLogEntryFactory;
 
 namespace {
 

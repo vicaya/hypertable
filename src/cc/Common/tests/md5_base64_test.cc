@@ -13,7 +13,6 @@ int main(int ac, char *av[]) {
                                -2486747253553136565LL, 7702431781597023531LL,
                                -8752389877473518803 };
 
-  int64_t hash;
   char output[17];
 
   for (int ii=0; ii<5; ++ii) {

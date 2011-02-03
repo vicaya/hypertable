@@ -41,6 +41,7 @@
 #include "CellStore.h"
 #include "LoadMetricsRange.h"
 #include "MaintenanceFlag.h"
+#include "MetaLogEntityRange.h"
 #include "Metadata.h"
 #include "RangeMaintenanceGuard.h"
 #include "RangeSet.h"
@@ -103,6 +104,7 @@ namespace Hypertable {
 
     Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
           const RangeSpec *, RangeSet *, const RangeState *);
+    Range(MasterClientPtr &, SchemaPtr &, MetaLog::EntityRange *, RangeSet *);
     virtual ~Range() {}
     virtual void add(const Key &key, const ByteString value);
     virtual const char *get_split_row() { return 0; }
@@ -124,7 +126,7 @@ namespace Hypertable {
 
     String start_row() {
       ScopedLock lock(m_mutex);
-      return m_start_row;
+      return m_metalog_entity->spec.start_row;
     }
 
     /**
@@ -132,7 +134,7 @@ namespace Hypertable {
      */
     String end_row() {
       ScopedLock lock(m_mutex);
-      return m_end_row;
+      return m_metalog_entity->spec.end_row;
     }
 
     int64_t get_scan_revision();
@@ -242,8 +244,6 @@ namespace Hypertable {
       m_cells_written += n;
     }
 
-    uint64_t get_size_limit() { return m_state.soft_limit; }
-
     bool need_maintenance();
 
     bool is_root() { return m_is_root; }
@@ -260,11 +260,18 @@ namespace Hypertable {
       return (String)m_name;
     }
 
-    int get_state() { return m_state.state; }
+    int get_state() { 
+      ScopedLock lock(m_mutex);
+      return m_metalog_entity->state.state;
+    }
 
     int32_t get_error() { return m_error; }
 
+    MetaLog::EntityRange *metalog_entity() { return m_metalog_entity.get(); }
+
   private:
+
+    void initialize();
 
     void load_cell_stores(Metadata *metadata);
 
@@ -292,10 +299,8 @@ namespace Hypertable {
     Mutex            m_mutex;
     Mutex            m_schema_mutex;
     MasterClientPtr  m_master_client;
-    TableIdentifierManaged m_identifier;
+    MetaLog::EntityRangePtr m_metalog_entity;
     SchemaPtr        m_schema;
-    String           m_start_row;
-    String           m_end_row;
     String           m_name;
     AccessGroupMap     m_access_group_map;
     AccessGroupVector  m_access_group_vector;
@@ -312,7 +317,6 @@ namespace Hypertable {
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;
     RangeSet        *m_range_set;
-    RangeStateManaged m_state;
     int32_t          m_error;
     bool             m_dropped;
     bool             m_capacity_exceeded_throttle;

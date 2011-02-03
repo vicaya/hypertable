@@ -95,7 +95,7 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v4.deserialize(trailer_buf.get() + (amount - trailer_v4.size()));
 
-    cellstore_v4 = new CellStoreV4(Global::dfs);
+    cellstore_v4 = new CellStoreV4(Global::dfs.get());
     cellstore_v4->open(name, start, end, fd, file_length, &trailer_v4);
     return cellstore_v4;
   }
@@ -110,7 +110,7 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v3.deserialize(trailer_buf.get() + (amount - trailer_v3.size()));
 
-    cellstore_v3 = new CellStoreV3(Global::dfs);
+    cellstore_v3 = new CellStoreV3(Global::dfs.get());
     cellstore_v3->open(name, start, end, fd, file_length, &trailer_v3);
     return cellstore_v3;
   }
@@ -125,7 +125,7 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v2.deserialize(trailer_buf.get() + (amount - trailer_v2.size()));
 
-    cellstore_v2 = new CellStoreV2(Global::dfs);
+    cellstore_v2 = new CellStoreV2(Global::dfs.get());
     cellstore_v2->open(name, start, end, fd, file_length, &trailer_v2);
     return cellstore_v2;
   }
@@ -140,7 +140,7 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v1.deserialize(trailer_buf.get() + (amount - trailer_v1.size()));
 
-    cellstore_v1 = new CellStoreV1(Global::dfs);
+    cellstore_v1 = new CellStoreV1(Global::dfs.get());
     cellstore_v1->open(name, start, end, fd, file_length, &trailer_v1);
     return cellstore_v1;
   }
@@ -155,7 +155,7 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v0.deserialize(trailer_buf.get() + (amount - trailer_v0.size()));
 
-    cellstore_v0 = new CellStoreV0(Global::dfs);
+    cellstore_v0 = new CellStoreV0(Global::dfs.get());
     cellstore_v0->open(name, start, end, fd, file_length, &trailer_v0);
     return cellstore_v0;
   }

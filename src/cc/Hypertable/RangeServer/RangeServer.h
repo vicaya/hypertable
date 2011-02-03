@@ -48,6 +48,7 @@
 #include "GroupCommitInterface.h"
 #include "GroupCommitTimerHandler.h"
 #include "MaintenanceScheduler.h"
+#include "MetaLogEntityRange.h"
 #include "QueryCache.h"
 #include "RSStats.h"
 #include "ResponseCallbackCreateScanner.h"
@@ -95,8 +96,8 @@ namespace Hypertable {
     void get_statistics(ResponseCallbackGetStatistics *);
 
     void replay_begin(ResponseCallback *, uint16_t group);
-    void replay_load_range(ResponseCallback *, const TableIdentifier *,
-                           const RangeSpec *, const RangeState *, bool write_rsml=true);
+    void replay_load_range(ResponseCallback *, MetaLog::EntityRange *,
+                           bool write_rsml=true);
     void replay_update(ResponseCallback *, const uint8_t *data, size_t len);
     void replay_commit(ResponseCallback *);
 

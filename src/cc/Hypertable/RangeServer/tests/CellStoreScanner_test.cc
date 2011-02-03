@@ -578,7 +578,7 @@ int main(int argc, char **argv) {
     Global::dfs = new DfsBroker::Client(conn_mgr, addr, 15000);
 
     // force broker client to be destroyed before connection manager
-    client = (DfsBroker::Client *)Global::dfs;
+    client = (DfsBroker::Client *)Global::dfs.get();
 
     if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");
@@ -603,7 +603,7 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    cs = new CellStoreV4(Global::dfs, schema.get());
+    cs = new CellStoreV4(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
 
     DynamicBuffer dbuf(64000);
@@ -1391,7 +1391,7 @@ int main(int argc, char **argv) {
     csname = testdir + "/cs1";
     cs_props->set("blocksize", (uint32_t)10000);
     cs_props->set("compressor", String("none"));
-    cs = new CellStoreV4(Global::dfs, schema.get());
+    cs = new CellStoreV4(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
 
     value = "Like a lot of new ideas, Media Cloud started with a long-running argument among friends.  Ethan Zuckerman and a handful of";
@@ -1492,7 +1492,7 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    cs = new CellStoreV4(Global::dfs, schema.get());
+    cs = new CellStoreV4(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
 
     wordi = 0;

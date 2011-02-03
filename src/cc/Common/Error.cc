@@ -238,7 +238,7 @@ namespace {
     { Error::RANGESERVER_SHORT_CELLSTORE_READ, "RANGE SERVER short cellstore read" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
     { Error::METALOG_BAD_RS_HEADER, "METALOG bad range server metalog header" },
-    { Error::METALOG_BAD_M_HEADER,  "METALOG bad master metalog header" },
+    { Error::METALOG_BAD_HEADER,  "METALOG bad metalog header" },
     { Error::METALOG_ENTRY_TRUNCATED,   "METALOG entry truncated" },
     { Error::METALOG_CHECKSUM_MISMATCH, "METALOG checksum mismatch" },
     { Error::METALOG_ENTRY_BAD_TYPE, "METALOG bad entry type" },

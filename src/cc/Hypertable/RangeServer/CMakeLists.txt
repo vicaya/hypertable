@@ -72,6 +72,8 @@ MaintenanceTaskMemoryPurge.cc
 MaintenanceTaskRelinquish.cc
 MaintenanceTaskSplit.cc
 MergeScanner.cc
+MetaLogEntityRange.cc
+MetaLogDefinitionRangeServer.cc
 MetadataNormal.cc
 MetadataRoot.cc
 QueryCache.cc

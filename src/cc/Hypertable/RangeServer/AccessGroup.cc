@@ -582,7 +582,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
       }
 
-      cellstore = new CellStoreV4(Global::dfs, m_schema.get());
+      cellstore = new CellStoreV4(Global::dfs.get(), m_schema.get());
 
       max_num_entries = m_immutable_cache->size();
 

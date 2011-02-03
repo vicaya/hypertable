@@ -28,49 +28,39 @@ BlockCompressionCodecZlib.cc
 BlockCompressionHeader.cc
 BlockCompressionHeaderCommitLog.cc
 Cell.cc
-CompressorFactory.cc
 Client.cc
-Namespace.cc
-TableCache.cc
-NamespaceCache.cc
-CommitLogBlockStream.cc
 CommitLog.cc
+CommitLogBlockStream.cc
 CommitLogReader.cc
+CompressorFactory.cc
 Config.cc
 DataGenerator.cc
 EventHandlerMasterChange.cc
 FixedRandomStringGenerator.cc
-HqlInterpreter.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc
+HqlInterpreter.cc
 IntervalScanner.cc
 Key.cc
 KeySpec.cc
 LoadDataEscape.cc
 LoadDataSource.cc
-LoadDataSourceFileLocal.cc
-LoadDataSourceFileDfs.cc
-LoadDataSourceStdin.cc
 LoadDataSourceFactory.cc
+LoadDataSourceFileDfs.cc
+LoadDataSourceFileLocal.cc
+LoadDataSourceStdin.cc
 LocationCache.cc
 MasterClient.cc
 MasterFileHandler.cc
 MasterProtocol.cc
 MetaLog.cc
+MetaLogEntity.cc
+MetaLogEntityHeader.cc
 MetaLogReader.cc
-MetaLogVersion.cc
-MetaLogDfsBase.cc
-MetaLogReaderDfsBase.cc
+MetaLogWriter.cc
 NameIdMapper.cc
-RangeServerMetaLogEntryFactory.cc
-RangeServerMetaLog.cc
-RangeServerMetaLogReader.cc
-MetaLogEntryBase.cc
-RangeServerMetaLogEntries.cc
-MasterMetaLog.cc
-MasterMetaLogEntries.cc
-MasterMetaLogEntryFactory.cc
-MasterMetaLogReader.cc
+Namespace.cc
+NamespaceCache.cc
 RangeLocator.cc
 RangeServerClient.cc
 RangeServerProtocol.cc
@@ -79,21 +69,36 @@ RootFileHandler.cc
 ScanBlock.cc
 ScanSpec.cc
 Schema.cc
-StatsTable.cc
 StatsRangeServer.cc
+StatsTable.cc
 Table.cc
+TableCache.cc
 TableDumper.cc
 TableMutator.cc
 TableMutatorDispatchHandler.cc
-TableMutatorSyncDispatchHandler.cc
-TableMutatorScatterBuffer.cc
-TableMutatorIntervalHandler.cc
 TableMutatorFlushHandler.cc
+TableMutatorIntervalHandler.cc
+TableMutatorScatterBuffer.cc
 TableMutatorShared.cc
+TableMutatorSyncDispatchHandler.cc
 TableScanner.cc
 TableSplit.cc
 TestSource.cc
 Types.cc
+old/MasterMetaLog.cc
+old/MasterMetaLogEntries.cc
+old/MasterMetaLogEntryFactory.cc
+old/MasterMetaLogReader.cc
+old/MetaLog.cc
+old/MetaLogDfsBase.cc
+old/MetaLogEntryBase.cc
+old/MetaLogReader.cc
+old/MetaLogReaderDfsBase.cc
+old/MetaLogVersion.cc
+old/RangeServerMetaLog.cc
+old/RangeServerMetaLogEntries.cc
+old/RangeServerMetaLogEntryFactory.cc
+old/RangeServerMetaLogReader.cc
 bmz/bmz.c
 lzo/minilzo.c
 quicklz/quicklz.cc
@@ -107,17 +112,9 @@ target_link_libraries(Hypertable ${EXPAT_LIBRARIES} ${RRD_LIBRARIES} Hyperspace 
 add_executable(generate_test_data generate_test_data.cc)
 target_link_libraries(generate_test_data Hypertable)
 
-# meta log test
-add_executable(metalog_api_test tests/MetaLogApiTest.cc)
-target_link_libraries(metalog_api_test HyperDfsBroker Hypertable)
-add_executable(metalog_master_test tests/MetaLogMasterTest.cc)
-target_link_libraries(metalog_master_test HyperDfsBroker Hypertable)
-add_executable(metalog_rs_test tests/MetaLogRangeServerTest.cc)
-target_link_libraries(metalog_rs_test HyperDfsBroker Hypertable)
-
-# meta log dumper
-add_executable(dump_metalog tests/DumpMetaLog.cc)
-target_link_libraries(dump_metalog HyperDfsBroker Hypertable)
+# old meta log dumper
+add_executable(dump_old_metalog tests/DumpMetaLog.cc)
+target_link_libraries(dump_old_metalog HyperDfsBroker Hypertable)
 
 # schemaTest
 add_executable(schemaTest tests/schemaTest.cc)
@@ -182,6 +179,10 @@ target_link_libraries(name_id_mapper_test Hypertable Hyperspace)
 add_executable(rangeserver_serialize_test tests/rangeserver_serialize_test.cc)
 target_link_libraries(rangeserver_serialize_test Hypertable Hyperspace)
 
+# MetaLog test
+add_executable(metalog_test tests/metalog_test.cc)
+target_link_libraries(metalog_test HyperDfsBroker Hypertable)
+
 
 #
 # Copy test files
@@ -237,6 +238,8 @@ configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
 configure_file (${SRC_DIR}/MutatorNoLogSyncTest.cfg ${DST_DIR}/MutatorNoLogSyncTest.cfg)
 configure_file(${SRC_DIR}/name_id_mapper_test.cfg ${DST_DIR}/name_id_mapper_test.cfg)
+configure_file(${SRC_DIR}/metalog_test.golden ${DST_DIR}/metalog_test.golden)
+configure_file(${SRC_DIR}/metalog_test2.golden ${DST_DIR}/metalog_test2.golden)
 
 add_test(Schema schemaTest)
 add_test(LocationCache locationCacheTest)
@@ -248,8 +251,7 @@ add_test(BlockCompressor-NONE compressor_test none)
 add_test(BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test(BlockCompressor-ZLIB compressor_test zlib)
 add_test(CommitLog commit_log_test)
-add_test(MetaLog-Master metalog_master_test)
-add_test(MetaLog-RangeServer metalog_rs_test)
+add_test(MetaLog metalog_test)
 add_test(Client-large-block large_insert_test)
 add_test(Client-row-delete row_delete_test)
 add_test(Client-periodic-flush periodic_flush_test)
@@ -263,7 +265,7 @@ if (NOT HT_COMPONENT_INSTALL)
 
   install(TARGETS generate_test_data RUNTIME DESTINATION bin)
 
-  install(TARGETS Hypertable dump_metalog
+  install(TARGETS Hypertable dump_old_metalog
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

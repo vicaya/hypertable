@@ -20,10 +20,11 @@
  */
 
 #include "Common/Compat.h"
-#include "Hypertable/Lib/MetaLogReader.h"
+#include "Hypertable/Lib/old/MetaLogReader.h"
 #include <boost/scoped_ptr.hpp>
 
 using namespace Hypertable;
+using namespace Hypertable::OldMetaLog;
 
 namespace MetaLogEntryFactory {
 

@@ -65,7 +65,7 @@ namespace {
 }
 
 
-CommitLogReader::CommitLogReader(Filesystem *fs, const String &log_dir, bool mark_for_deletion)
+CommitLogReader::CommitLogReader(FilesystemPtr &fs, const String &log_dir, bool mark_for_deletion)
   : CommitLogBase(log_dir), m_fs(fs), m_fragment_queue_offset(0),
     m_block_buffer(256), m_revision(TIMESTAMP_MIN), m_compressor(0) {
 

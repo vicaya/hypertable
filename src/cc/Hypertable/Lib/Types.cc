@@ -63,6 +63,11 @@ void TableIdentifier::decode(const uint8_t **bufp, size_t *remainp) {
     generation = decode_i32(bufp, remainp));
 }
 
+void TableIdentifierManaged::decode(const uint8_t **bufp, size_t *remainp) {
+  TableIdentifier::decode(bufp, remainp);
+  *this = *this;
+}
+
 bool RangeSpec::operator==(const RangeSpec &other) const {
   if (start_row == 0 || other.start_row == 0) {
     if (start_row != other.start_row)
@@ -100,6 +105,11 @@ void RangeSpec::decode(const uint8_t **bufp, size_t *remainp) {
   HT_TRY("decoding range spec",
     start_row = decode_vstr(bufp, remainp);
     end_row = decode_vstr(bufp, remainp));
+}
+
+void RangeSpecManaged::decode(const uint8_t **bufp, size_t *remainp) {
+  RangeSpec::decode(bufp, remainp);
+  *this = *this;
 }
 
 ostream &Hypertable::operator<<(ostream &os, const TableIdentifier &tid) {

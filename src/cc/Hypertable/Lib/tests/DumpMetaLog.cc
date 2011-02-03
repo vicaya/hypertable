@@ -24,11 +24,12 @@
 #include "Common/Logger.h"
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/RangeServerMetaLog.h"
-#include "Hypertable/Lib/RangeServerMetaLogReader.h"
-#include "Hypertable/Lib/MasterMetaLogReader.h"
+#include "Hypertable/Lib/old/RangeServerMetaLog.h"
+#include "Hypertable/Lib/old/RangeServerMetaLogReader.h"
+#include "Hypertable/Lib/old/MasterMetaLogReader.h"
 
 using namespace Hypertable;
+using namespace Hypertable::OldMetaLog;
 using namespace Config;
 
 namespace {

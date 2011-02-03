@@ -35,13 +35,13 @@ namespace {
 bool CommitLogBlockStream::ms_assert_on_error = true;
 
 
-CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs)
+CommitLogBlockStream::CommitLogBlockStream(FilesystemPtr &fs)
   : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),
     m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
 }
 
 
-CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs,
+CommitLogBlockStream::CommitLogBlockStream(FilesystemPtr &fs,
     const String &log_dir, const String &fragment)
   : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),
     m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {

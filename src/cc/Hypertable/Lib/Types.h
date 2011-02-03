@@ -44,6 +44,8 @@ namespace Hypertable {
     TableIdentifier(const uint8_t **bufp, size_t *remainp) {
       decode(bufp, remainp);
     }
+    virtual ~TableIdentifier() { }
+
     bool operator==(const TableIdentifier &other) const;
     bool operator!=(const TableIdentifier &other) const;
 
@@ -60,7 +62,7 @@ namespace Hypertable {
 
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;
-    void decode(const uint8_t **bufp, size_t *remainp);
+    virtual void decode(const uint8_t **bufp, size_t *remainp);
 
     const char *id;
     uint32_t generation;
@@ -76,6 +78,7 @@ namespace Hypertable {
     TableIdentifierManaged(const TableIdentifier &identifier) {
       operator=(identifier);
     }
+    virtual ~TableIdentifierManaged() { }
     TableIdentifierManaged &operator=(const TableIdentifierManaged &other) {
       const TableIdentifier *otherp = &other;
       return operator=(*otherp);
@@ -101,6 +104,8 @@ namespace Hypertable {
       return m_name;
     }
 
+    virtual void decode(const uint8_t **bufp, size_t *remainp);
+
   private:
     String m_name;
   };
@@ -112,12 +117,13 @@ namespace Hypertable {
     RangeSpec(const char *start, const char *end)
         : start_row(start), end_row(end) {}
     RangeSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
+    virtual ~RangeSpec() { }
     bool operator==(const RangeSpec &other) const;
     bool operator!=(const RangeSpec &other) const;
 
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;
-    void decode(const uint8_t **bufp, size_t *remainp);
+    virtual void decode(const uint8_t **bufp, size_t *remainp);
 
     const char *start_row;
     const char *end_row;
@@ -129,27 +135,34 @@ namespace Hypertable {
     RangeSpecManaged() { start_row = end_row = 0; }
     RangeSpecManaged(const RangeSpecManaged &range) { operator=(range); }
     RangeSpecManaged(const RangeSpec &range) { operator=(range); }
+    virtual ~RangeSpecManaged() { }
 
     RangeSpecManaged &operator=(const RangeSpecManaged &other) {
       const RangeSpec *otherp = &other;
       return operator=(*otherp);
     }
     RangeSpecManaged &operator=(const RangeSpec &range) {
-      if (range.start_row) {
-        m_start = range.start_row;
-        start_row = m_start.c_str();
-      }
+      if (range.start_row)
+        set_start_row(range.start_row);
       else
         start_row = 0;
 
-      if (range.end_row) {
-        m_end = range.end_row;
-        end_row = m_end.c_str();
-      }
+      if (range.end_row)
+        set_end_row(range.end_row);
       else
         end_row = 0;
       return *this;
     }
+    void set_start_row(const String &s) {
+      m_start = s;
+      start_row = m_start.c_str();
+    }
+    void set_end_row(const String &e) {
+      m_end = e;
+      end_row = m_end.c_str();
+    }
+
+    void decode(const uint8_t **bufp, size_t *remainp);
 
   private:
     String m_start, m_end;

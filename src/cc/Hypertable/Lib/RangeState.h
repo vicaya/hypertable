@@ -34,17 +34,13 @@ namespace Hypertable {
     enum StateType { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK, RELINQUISH_LOG_INSTALLED };
     RangeState() : state(STEADY), soft_limit(0), transfer_log(0),
                    split_point(0), old_boundary_row(0) { }
+    virtual ~RangeState() {}
 
-    void clear() {
-      state = STEADY;
-      timestamp = 0;
-      //soft_limit = 0;  NOTE: this should not be cleared
-      transfer_log = split_point = old_boundary_row = 0;
-    }
+    virtual void clear();
 
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;
-    void decode(const uint8_t **bufp, size_t *remainp);
+    virtual void decode(const uint8_t **bufp, size_t *remainp);
 
     int state;
     int64_t timestamp;
@@ -68,6 +64,9 @@ namespace Hypertable {
     RangeStateManaged(const RangeState &rs) {
       operator=(rs);
     }
+    virtual ~RangeStateManaged() {}
+    virtual void clear();
+
     RangeStateManaged& operator=(const RangeStateManaged &other) {
       const RangeState *otherp = &other;
       return operator=(*otherp);
@@ -82,21 +81,21 @@ namespace Hypertable {
         transfer_log = m_transfer_log.c_str();
       }
       else
-        transfer_log = 0;
+        clear_transfer_log();
 
       if (rs.split_point) {
         m_split_point = rs.split_point;
         split_point = m_split_point.c_str();
       }
       else
-        split_point = 0;
+        clear_split_point();
 
       if (rs.old_boundary_row) {
         m_old_boundary_row = rs.old_boundary_row;
         old_boundary_row = m_old_boundary_row.c_str();
       }
       else
-        old_boundary_row = 0;
+        clear_old_boundary_row();
 
       return *this;
     }
@@ -130,6 +129,8 @@ namespace Hypertable {
       m_old_boundary_row = "";
       old_boundary_row = 0;
     }
+
+    virtual void decode(const uint8_t **bufp, size_t *remainp);
 
   private:
     String m_transfer_log;

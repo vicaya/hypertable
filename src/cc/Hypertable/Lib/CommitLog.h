@@ -78,10 +78,10 @@ namespace Hypertable {
      * @param props reference to properties map
      * @param init_log base log to pull fragments from
      */
-    CommitLog(Filesystem *fs, const String &log_dir,
+    CommitLog(FilesystemPtr &fs, const String &log_dir,
               PropertiesPtr &props, CommitLogBase *init_log = 0)
-      : CommitLogBase(log_dir) {
-      initialize(fs, log_dir, props, init_log);
+      : CommitLogBase(log_dir), m_fs(fs) {
+      initialize(log_dir, props, init_log);
     }
 
     /**
@@ -90,7 +90,7 @@ namespace Hypertable {
      * @param fs filesystem to write log into
      * @param log_dir directory of the commit log
      */
-    CommitLog(Filesystem *fs, const String &log_dir);
+    CommitLog(FilesystemPtr &fs, const String &log_dir);
 
     virtual ~CommitLog();
 
@@ -181,14 +181,14 @@ namespace Hypertable {
     static const char MAGIC_LINK[10];
 
   private:
-    void initialize(Filesystem *, const String &log_dir,
+    void initialize(const String &log_dir,
                     PropertiesPtr &, CommitLogBase *init_log);
     int roll();
     int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header,
                            int64_t revision, bool sync);
 
     Mutex                   m_mutex;
-    Filesystem             *m_fs;
+    FilesystemPtr           m_fs;
     BlockCompressionCodec  *m_compressor;
     String                  m_cur_fragment_fname;
     int64_t                 m_cur_fragment_length;

@@ -113,7 +113,9 @@ namespace {
     // Create /hypertable/test_log/c
     dfs_client->mkdirs(fname);
 
-    log = new CommitLog(dfs_client, fname, properties);
+    FilesystemPtr fs = dfs_client;
+
+    log = new CommitLog(fs, fname, properties);
 
     write_entries(log, 20, &sum_written, 0);
 
@@ -121,7 +123,7 @@ namespace {
 
     delete log;
 
-    log_reader = new CommitLogReader(dfs_client, fname);
+    log_reader = new CommitLogReader(fs, fname);
 
     read_entries(dfs_client, log_reader, &sum_read);
 
@@ -137,6 +139,7 @@ namespace {
     CommitLogReaderPtr log_reader_ptr;
     uint64_t sum_written = 0;
     uint64_t sum_read = 0;
+    FilesystemPtr fs = dfs_client;
 
     // Remove /hypertable/test_log
     dfs_client->rmdir(log_dir);
@@ -151,18 +154,18 @@ namespace {
      * Create log "c"
      */
     fname = log_dir + "/c";
-    log = new CommitLog(dfs_client, fname, properties);
+    log = new CommitLog(fs, fname, properties);
     write_entries(log, 20, &sum_written, 0);
     delete log;
 
-    log_reader_ptr = new CommitLogReader(dfs_client, fname);
+    log_reader_ptr = new CommitLogReader(fs, fname);
     read_entries(dfs_client, log_reader_ptr.get(), &sum_read);
 
     /**
      * Create log "b" and link in log "c"
      */
     fname = log_dir + "/b";
-    log = new CommitLog(dfs_client, fname, properties);
+    log = new CommitLog(fs, fname, properties);
     write_entries(log, 20, &sum_written, log_reader_ptr.get());
     delete log;
 
@@ -170,7 +173,7 @@ namespace {
      * Create log "d"
      */
     fname = log_dir + "/d";
-    log = new CommitLog(dfs_client, fname, properties);
+    log = new CommitLog(fs, fname, properties);
     write_entries(log, 20, &sum_written, 0);
     delete log;
 
@@ -178,17 +181,17 @@ namespace {
      * Create log "a" and link in "b" and "d"
      */
     fname = log_dir + "/a";
-    log = new CommitLog(dfs_client, fname, properties);
+    log = new CommitLog(fs, fname, properties);
 
     // Open "b", read it, and link it into "a"
     fname = log_dir + "/b";
-    log_reader_ptr = new CommitLogReader(dfs_client, fname);
+    log_reader_ptr = new CommitLogReader(fs, fname);
     read_entries(dfs_client, log_reader_ptr.get(), &sum_read);
     write_entries(log, 20, &sum_written, log_reader_ptr.get());
 
     // Open "d", read it, and link it into "a"
     fname = log_dir + "/d";
-    log_reader_ptr = new CommitLogReader(dfs_client, fname);
+    log_reader_ptr = new CommitLogReader(fs, fname);
     read_entries(dfs_client, log_reader_ptr.get(), &sum_read);
     write_entries(log, 20, &sum_written, log_reader_ptr.get());
 
@@ -196,7 +199,7 @@ namespace {
 
     sum_read = 0;
     fname = log_dir + "/a";
-    log_reader_ptr = new CommitLogReader(dfs_client, fname);
+    log_reader_ptr = new CommitLogReader(fs, fname);
     read_entries(dfs_client, log_reader_ptr.get(), &sum_read);
 
     HT_ASSERT(sum_read == sum_written);

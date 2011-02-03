@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
     Global::dfs = new DfsBroker::Client(conn_mgr, addr, 15000);
 
     // force broker client to be destroyed before connection manager
-    client = (DfsBroker::Client *)Global::dfs;
+    client = (DfsBroker::Client *)Global::dfs.get();
 
     if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
     Config::properties->set("Hypertable.RangeServer.CellStore.DefaultCompressor", String("none"));
     Config::properties->set("Hypertable.RangeServer.CellStore.DefaultBlockSize", 4*1024*1024);
 
-    cs = new CellStoreV4(Global::dfs);
+    cs = new CellStoreV4(Global::dfs.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 4096, Config::properties));
 
     // setup value

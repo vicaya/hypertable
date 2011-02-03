@@ -57,9 +57,9 @@ namespace {
 }
 
 
-CommitLog::CommitLog(Filesystem *fs, const String &log_dir)
-  : CommitLogBase(log_dir) {
-  initialize(fs, log_dir, Config::properties, 0);
+CommitLog::CommitLog(FilesystemPtr &fs, const String &log_dir)
+  : CommitLogBase(log_dir), m_fs(fs) {
+  initialize(log_dir, Config::properties, 0);
 }
 
 CommitLog::~CommitLog() {
@@ -68,11 +68,10 @@ CommitLog::~CommitLog() {
 }
 
 void
-CommitLog::initialize(Filesystem *fs, const String &log_dir,
+CommitLog::initialize(const String &log_dir,
                       PropertiesPtr &props, CommitLogBase *init_log) {
   String compressor;
 
-  m_fs = fs;
   m_log_dir = log_dir;
   m_cur_fragment_length = 0;
   m_cur_fragment_num = 0;
