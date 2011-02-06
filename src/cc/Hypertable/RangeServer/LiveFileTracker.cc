@@ -45,12 +45,13 @@ LiveFileTracker::LiveFileTracker(const TableIdentifier *identifier,
 
 }
 
-void LiveFileTracker::update_live(const String &add, std::vector<String> &deletes) {
+void LiveFileTracker::update_live(const String &add, std::vector<String> &deletes, uint32_t nextcsid) {
   ScopedLock lock(m_mutex);
   for (size_t i=0; i<deletes.size(); i++)
     m_live.erase(strip_basename(deletes[i]));
   if (add != "")
     m_live.insert(strip_basename(add));
+  m_cur_nextcsid = nextcsid;
   m_need_update = true;
 }
 
@@ -126,11 +127,21 @@ void LiveFileTracker::update_files_column() {
   try {
     if (m_is_root) {
       MetadataRoot metadata(m_schema_ptr);
-      metadata.write_files(m_ag_name, file_list);
+      if (m_cur_nextcsid != m_last_nextcsid) {
+        metadata.write_files(m_ag_name, file_list, m_cur_nextcsid);
+        m_last_nextcsid = m_cur_nextcsid;
+      }
+      else
+        metadata.write_files(m_ag_name, file_list);
     }
     else {
       MetadataNormal metadata(&m_identifier, end_row);
-      metadata.write_files(m_ag_name, file_list);
+      if (m_cur_nextcsid != m_last_nextcsid) {
+        metadata.write_files(m_ag_name, file_list, m_cur_nextcsid);
+        m_last_nextcsid = m_cur_nextcsid;
+      }
+      else
+        metadata.write_files(m_ag_name, file_list);
     }
     HT_MAYBE_FAIL("LiveFileTracker-update_files_column");
   }

@@ -28,8 +28,9 @@ namespace Hypertable {
   public:
     virtual ~Metadata() { return; }
     virtual void reset_files_scan() = 0;
-    virtual bool get_next_files(String &ag_name, String &files) = 0;
+    virtual bool get_next_files(String &ag_name, String &files, uint32_t *nextcsidp) = 0;
     virtual void write_files(const String &ag_name, const String &files) = 0;
+    virtual void write_files(const String &ag_name, const String &files, uint32_t nextcsid) = 0;
   };
 
 }

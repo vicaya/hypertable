@@ -220,6 +220,13 @@ namespace Hypertable {
 
     void dump_keys(std::ofstream &out);
 
+    void set_next_csid(uint32_t nid) { 
+      if (nid > m_next_cs_id) {
+        m_next_cs_id = nid;
+        m_file_tracker.set_next_csid(nid);
+      }
+    }
+
   private:
 
     void merge_caches();

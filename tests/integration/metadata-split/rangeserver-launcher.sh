@@ -25,7 +25,7 @@ fi
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.Range.SplitSize=25K \
     --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
-    --Hypertable.RangeServer.Range.MetadataSplitSize=6K \
+    --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
     --Hypertable.RangeServer.Maintenance.Interval=100 $@
 
@@ -38,5 +38,5 @@ echo ""
 $HT_HOME/bin/ht Hypertable.RangeServer --pidfile=$PIDFILE --verbose \
     --Hypertable.RangeServer.Range.SplitSize=25K \
     --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
-    --Hypertable.RangeServer.Range.MetadataSplitSize=6K \
+    --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
     --Hypertable.RangeServer.Maintenance.Interval=100

@@ -247,10 +247,11 @@ void Range::load_cell_stores(Metadata *metadata) {
   String files;
   String file_str;
   bool need_update;
+  uint32_t nextcsid;
 
   metadata->reset_files_scan();
 
-  while (metadata->get_next_files(ag_name, files)) {
+  while (metadata->get_next_files(ag_name, files, &nextcsid)) {
     csvec.clear();
     need_update = false;
 
@@ -259,6 +260,8 @@ void Range::load_cell_stores(Metadata *metadata) {
                 "table '%s'", ag_name.c_str(), m_metalog_entity->table.id);
       HT_ABORT;
     }
+
+    ag->set_next_csid(nextcsid);
 
     ptr = base = (const char *)files.c_str();
     end = base + strlen(base);
@@ -547,23 +550,15 @@ void Range::relinquish_install_log() {
   md5_trunc_modified_base64(m_metalog_entity->spec.end_row, md5DigestStr);
   md5DigestStr[16] = 0;
 
-  try {
-
-    do {
-      if (now != 0)
-        poll(0, 0, 1200);
-      now = time(0);
-      m_metalog_entity->state.set_transfer_log(Global::log_dir + "/" + m_metalog_entity->table.id + "/" + md5DigestStr + "-" + (int)now);
-    }
-    while (Global::log_dfs->exists(m_metalog_entity->state.transfer_log));
-
-    Global::log_dfs->mkdirs(m_metalog_entity->state.transfer_log);
+  do {
+    if (now != 0)
+      poll(0, 0, 1200);
+    now = time(0);
+    m_metalog_entity->state.set_transfer_log(Global::log_dir + "/" + m_metalog_entity->table.id + "/" + md5DigestStr + "-" + (int)now);
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << "Problem creating transfer log directory '"
-                 << m_metalog_entity->state.transfer_log << "' - " << e << HT_END;
-    HT_ABORT;
-  }
+  while (Global::log_dfs->exists(m_metalog_entity->state.transfer_log));
+
+  Global::log_dfs->mkdirs(m_metalog_entity->state.transfer_log);
 
   /**
    * Write RelinquishStart MetaLog entry
@@ -818,17 +813,18 @@ void Range::split_install_log() {
    */
   md5_trunc_modified_base64(m_metalog_entity->state.split_point, md5DigestStr);
   md5DigestStr[16] = 0;
-  m_metalog_entity->state.set_transfer_log(Global::log_dir + "/" + m_metalog_entity->table.id + "/" + md5DigestStr);
+  time_t now = 0;
+
+  do {
+    if (now != 0)
+      poll(0, 0, 1200);
+    now = time(0);
+    m_metalog_entity->state.set_transfer_log(Global::log_dir + "/" + m_metalog_entity->table.id + "/" + md5DigestStr + "-" + (int)now);
+  }
+  while (Global::log_dfs->exists(m_metalog_entity->state.transfer_log));
 
   // Create transfer log dir
-  try {
-    Global::log_dfs->rmdir(m_metalog_entity->state.transfer_log);
-    Global::log_dfs->mkdirs(m_metalog_entity->state.transfer_log);
-  }
-  catch (Exception &e) {
-    HT_ERROR_OUT << "Problem creating log directory '%s' - " << e << HT_END;
-    HT_ABORT;
-  }
+  Global::log_dfs->mkdirs(m_metalog_entity->state.transfer_log);
 
   if (m_split_off_high)
     m_metalog_entity->state.set_old_boundary_row(m_metalog_entity->spec.end_row);

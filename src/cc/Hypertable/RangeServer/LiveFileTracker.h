@@ -56,8 +56,9 @@ namespace Hypertable {
      *
      * @param add filename to add
      * @param deletes vector of filenames to delete
+     * @param nextcsid Next available CellStore ID
      */
-    void update_live(const String &add, std::vector<String> &deletes);
+    void update_live(const String &add, std::vector<String> &deletes, uint32_t nextcsid);
 
     /**
      * Adds a file to the live file set without seting the 'need_update' bit
@@ -104,6 +105,10 @@ namespace Hypertable {
      */
     void get_file_list(String &file_list, bool include_blocked);
 
+    void set_next_csid(uint32_t nid) { 
+      m_last_nextcsid = m_cur_nextcsid = nid;
+    }
+
   private:
 
     String strip_basename(const String &fname);
@@ -121,6 +126,8 @@ namespace Hypertable {
     std::set<String> m_blocked;
     bool             m_need_update;
     bool             m_is_root;
+    uint32_t         m_last_nextcsid;
+    uint32_t         m_cur_nextcsid;
   };
 
 }

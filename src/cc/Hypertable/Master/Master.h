@@ -103,10 +103,12 @@ namespace Hypertable {
 
   protected:
     void create_namespace(const char *name, int flags=0);
-    void create_table(const char *tablename, const char *schemastr);
+    void create_table(const char *tablename, const char *schemastr,
+                      bool with_ids=false);
     bool table_exists(const String &name, String &id);
 
   private:
+    void handle_metadata_schema_update();
     bool initialize();
     void scan_servers_directory();
     bool create_hyperspace_dir(const String &dir);

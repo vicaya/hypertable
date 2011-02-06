@@ -24,6 +24,8 @@
 
 #include <string>
 
+#include "Common/HashMap.h"
+
 #include "Hypertable/Lib/TableScanner.h"
 #include "Hypertable/Lib/Types.h"
 
@@ -36,12 +38,23 @@ namespace Hypertable {
     MetadataNormal(const TableIdentifier *identifier, const String &end_row);
     virtual ~MetadataNormal();
     virtual void reset_files_scan();
-    virtual bool get_next_files(String &ag_name, String &files);
+    virtual bool get_next_files(String &ag_name, String &files, uint32_t *nextcsidp);
     virtual void write_files(const String &ag_name, const String &files);
+    virtual void write_files(const String &ag_name, const String &files, uint32_t nextcsid);
 
   private:
-    TableScannerPtr         m_files_scanner;
-    String                  m_metadata_key;
+
+    class AgMetadata {
+    public:
+      AgMetadata() : nextcsid(0) { }
+      String files;
+      uint32_t nextcsid;
+    };
+    typedef hash_map<String, AgMetadata> AgMetadataMap;
+    
+    String          m_metadata_key;
+    AgMetadataMap   m_ag_map;
+    AgMetadataMap::iterator  m_ag_map_iter;
   };
 }
 

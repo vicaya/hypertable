@@ -158,6 +158,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   master_gc_start(props, m_threads, m_metadata_table, m_dfs_client);
 
+  handle_metadata_schema_update();
 
 }
 
@@ -166,6 +167,46 @@ Master::~Master() {
 }
 
 
+void Master::handle_metadata_schema_update() {
+  SchemaPtr schema, new_schema;
+  DynamicBuffer value_buf(0);
+  off_t len;
+  uint64_t handle = 0;
+  String tablefile = m_toplevel_dir + "/tables/0/0";
+
+  if (!m_hyperspace->exists(tablefile))
+    return;
+
+  /**
+   * Read old schema
+   */ 
+  handle = m_hyperspace->open(tablefile, OPEN_FLAG_READ);
+  m_hyperspace->attr_get(handle, "schema", value_buf);
+  schema = Schema::new_instance((char *)value_buf.base,
+                                strlen((char *)value_buf.base), true);
+  m_hyperspace->close(handle);
+  handle = 0;
+
+  /**
+   * Read new schema
+   */
+  String schema_file = System::install_dir + "/conf/METADATA.xml";
+  String schema_str = FileUtils::file_to_buffer(schema_file, &len);
+  new_schema = Schema::new_instance(schema_str.c_str(), schema_str.length(), true);
+
+
+  if (schema->get_generation() < new_schema->get_generation()) {
+    handle = m_hyperspace->open(tablefile,
+                                OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE);
+    m_hyperspace->attr_set(handle, "schema", schema_str.c_str(),
+                           schema_str.length());
+    m_hyperspace->close(handle);
+
+    HT_INFOF("Upgraded METADATA from generation %u to %u",
+             schema->get_generation(), new_schema->get_generation());
+  }
+
+}
 
 /**
  *
@@ -649,7 +690,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
           FileUtils::file_to_buffer(metadata_schema_file.c_str(), &schemalen);
 
         try {
-          create_table(TableIdentifier::METADATA_NAME, schemastr);
+          create_table(TableIdentifier::METADATA_NAME, schemastr, true);
         }
         catch (Exception &e) {
           if (e.code() != Error::MASTER_TABLE_EXISTS) {
@@ -773,7 +814,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
         const char *schemastr = FileUtils::file_to_buffer(rs_stats_schema_file.c_str(), &schemalen);
 
         try {
-          create_table("sys/RS_METRICS", schemastr);
+          create_table("sys/RS_METRICS", schemastr, true);
           HT_INFO("sys/RS_METRICS table successfully created");
         }
         catch (Exception &e) {
@@ -1108,7 +1149,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
 
 void
-Master::create_table(const char *tablename, const char *schemastr) {
+Master::create_table(const char *tablename, const char *schemastr, bool with_ids) {
   String finalschema = "";
   string table_basedir;
   string agdir;
@@ -1140,12 +1181,14 @@ Master::create_table(const char *tablename, const char *schemastr) {
   /**
    *  Parse Schema and assign Generation number and Column ids
    */
-  schema = Schema::new_instance(schemastr, strlen(schemastr));
+  schema = Schema::new_instance(schemastr, strlen(schemastr), with_ids);
   if (!schema->is_valid())
     HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
 
-  schema->assign_ids();
-  schema->render(finalschema);
+  if (!with_ids)
+    schema->assign_ids();
+
+  schema->render(finalschema, true);
   HT_DEBUG_OUT <<"schema:\n"<< finalschema << HT_END;
 
   /**

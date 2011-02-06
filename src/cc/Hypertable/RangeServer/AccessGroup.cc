@@ -716,7 +716,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         m_compression_ratio = 0.0;
     }
 
-    m_file_tracker.update_live(added_file, removed_files);
+    m_file_tracker.update_live(added_file, removed_files, m_next_cs_id);
     m_file_tracker.update_files_column();
 
     m_earliest_cached_revision_saved = TIMESTAMP_MAX;

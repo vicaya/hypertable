@@ -37,8 +37,9 @@ namespace Hypertable {
     MetadataRoot(SchemaPtr &schema_ptr);
     virtual ~MetadataRoot();
     virtual void reset_files_scan();
-    virtual bool get_next_files(String &ag_name, String &files);
+    virtual bool get_next_files(String &ag_name, String &files, uint32_t *nextcsidp);
     virtual void write_files(const String &ag_name, const String &files);
+    virtual void write_files(const String &ag_name, const String &files, uint32_t nextcsid);
 
   private:
     std::vector<String> m_agnames;
