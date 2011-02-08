@@ -233,7 +233,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     rrd_data.net_tx_rate = (int64_t)stats[i].stats->system.net_stat.tx_rate;
     rrd_data.load_average = stats[i].stats->system.loadavg_stat.loadavg[0];
 
-    compute_clock_skew(stats[i].stats->timestamp, (*iter).second);
+    compute_clock_skew(stats[i].stats->timestamp, &stats[i]);
 
     String rrd_file = m_monitoring_rs_dir + "/" + stats[i].location + "_stats_v0.rrd";
 
@@ -628,7 +628,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
         denominator += stats[i].stats->system.fs_stat[j].total;
         disk += stats[i].stats->system.fs_stat[j].total;
       }
-      disk /= 1000000000;
+      disk /= 1000000000.0;
       disk_use_pct = (unsigned)((numerator/denominator)*100.0);
       time_t contact = (time_t)(stats[i].fetch_timestamp / 1000000000LL);
       char buf[64];
