@@ -45,7 +45,7 @@ namespace Hypertable {
     /**
      * Constructor.
      */
-    Monitoring(PropertiesPtr &props);
+      Monitoring(PropertiesPtr &props,NameIdMapperPtr &m_namemap);
 
     void add_server(const String &location, StatsSystem &system_info);
 
@@ -108,6 +108,7 @@ namespace Hypertable {
       double byte_write_rate;
     };
 
+      void create_dir(const String &dir);
     void compute_clock_skew(int64_t server_timestamp, RangeServerStatistics *stats);
     void create_rangeserver_rrd(const String &filename);
     void update_rangeserver_rrd(const String &filename, struct rangeserver_rrd_data &rrd_data);
@@ -132,6 +133,7 @@ namespace Hypertable {
     int32_t m_monitoring_interval;
     int32_t m_allowable_skew;
     uint64_t table_stats_timestamp;
+      NameIdMapperPtr m_namemap_ptr;
   };
 
   typedef intrusive_ptr<Monitoring> MonitoringPtr;

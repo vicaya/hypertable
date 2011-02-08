@@ -1,6 +1,6 @@
 # Author : Sriharsha Chintalapani(harsha@defun.org)
 
-require "#{File.dirname(__FILE__)}/../graph.rb"
+require "#{File.dirname(__FILE__)}/graph.rb"
 require "#{File.dirname(__FILE__)}/stats_json.rb"
 class RRDStat
 
@@ -47,7 +47,7 @@ class RRDStat
     json = StatsJson.new(:file => 'table_summary.json',:data => '/opt/hypertable/0.9.4.3/run/monitoring/')
     range_servers = json.parse_stats_file
     range_servers['TableSummary']['tables'].each do |server|
-      @server_ip_list[:"#{server['id']}"] = server['id']
+      @server_ip_list[:"#{server['id']}"] = server['name']
     end
     @server_ip_list                  
   end

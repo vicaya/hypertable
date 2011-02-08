@@ -111,7 +111,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   if (!initialize())
     exit(1);
 
-  m_monitoring = new Monitoring(props);
+  m_monitoring = new Monitoring(props,m_namemap);
 
   /* Read Last Table ID */
   {

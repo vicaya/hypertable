@@ -15,7 +15,7 @@
 </thead>
 <% @table_records['TableSummary']['tables'].each do |table|  %>
 <td class="ht-table-cell">
-<a href="/graphs?server=<%= table['id'] %>&type=table"><%= table['id'] %></a>
+<a href="/graphs?server=<%= table['id'] %>&type=table"><%= table['name']%> (<%= table['id'] %>)</a>
 </td>
 <td class="ht-table-cell">
 <%= table['rangecount'] %>

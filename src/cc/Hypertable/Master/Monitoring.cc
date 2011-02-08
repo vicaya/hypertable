@@ -42,7 +42,7 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-Monitoring::Monitoring(PropertiesPtr &props) {
+Monitoring::Monitoring(PropertiesPtr &props,NameIdMapperPtr &m_namemap) {
 
   /**
    * Create dir for storing monitoring stats
@@ -52,39 +52,23 @@ Monitoring::Monitoring(PropertiesPtr &props) {
   m_monitoring_dir = (data_dir /= "/run/monitoring").string();
   m_monitoring_table_dir = m_monitoring_dir + "/tables";
   m_monitoring_rs_dir = m_monitoring_dir + "/rangeservers";
-
-  if (!FileUtils::exists(m_monitoring_dir)) {
-    if (!FileUtils::mkdirs(m_monitoring_dir)) {
-      HT_THROW(Error::LOCAL_IO_ERROR, "Unable to create monitoring dir ");
-    }
-    HT_INFO("Created monitoring stats dir");
-  }
-  else
-    HT_INFO("monitoring stats dir exists");
-
-  if (!FileUtils::exists(m_monitoring_table_dir)) {
-    if (!FileUtils::mkdirs(m_monitoring_table_dir)) {
-      HT_THROW(Error::LOCAL_IO_ERROR, "Unable to create monitoring tables dir ");
-    }
-    HT_INFO("Created monitoring stats dir");
-  }
-  else
-    HT_INFO("table monitoring stats dir exists");
-  
-  if (!FileUtils::exists(m_monitoring_rs_dir)) {
-    if (!FileUtils::mkdirs(m_monitoring_rs_dir)) {
-      HT_THROW(Error::LOCAL_IO_ERROR, "Unable to create monitoring rangeservers dir ");
-    }
-    HT_INFO("Created monitoring stats rangeservers dir");
-  }
-  else
-    HT_INFO("rangeservers monitoring stats dir exists");
-
-
+  create_dir(m_monitoring_dir);
+  create_dir(m_monitoring_table_dir);
+  create_dir(m_monitoring_rs_dir);
   m_allowable_skew = props->get_i32("Hypertable.RangeServer.ClockSkew.Max");
-  //this.m_namemap = m_namemap;
+  this->m_namemap_ptr = m_namemap;
 }
 
+void Monitoring::create_dir(const String &dir) {
+    if (!FileUtils::exists(dir)) {
+        if (!FileUtils::mkdirs(dir)) {
+            HT_THROW(Error::LOCAL_IO_ERROR, "Unable to create monitoring dir "+dir);
+        }
+        HT_INFOF("Created monitoring dir %s",dir.c_str());
+    }
+    else
+        HT_INFOF("rangeservers monitoring stats dir %s exists ",dir.c_str());
+}
 
 void Monitoring::add_server(const String &location, StatsSystem &system_info) {
   ScopedLock lock(m_mutex);
@@ -107,22 +91,6 @@ void Monitoring::add_server(const String &location, StatsSystem &system_info) {
   m_server_map[location]->location = location;
   m_server_map[location]->id = id;
   m_server_map[location]->system_info = new StatsSystem(system_info);
-
-  /**
-   *  Remove Me!  This file is no longer needed since the data now
-   *  exists in the rangeserver_summary.json file.
-   */
-  {
-    String str;
-    for (RangeServerMap::iterator iter = m_server_map.begin(); iter != m_server_map.end(); ++iter)
-      str += (*iter).first + "=" + (*iter).second->system_info->net_info.primary_addr + "\n";
-    String tmp_filename = m_monitoring_dir + "/rs_map.tmp";
-    String real_filename = m_monitoring_dir + "/rs_map.txt";
-    if (FileUtils::write(tmp_filename, str) == -1)
-      return;
-    FileUtils::rename(tmp_filename, real_filename);
-  }
-  
 }
 
 
@@ -605,7 +573,7 @@ namespace {
   const char *table_json_header = "{\"TableSummary\": {\n  \"tables\": [\n";
   const char *table_json_footer= "\n  ]\n}}\n";
   const char *table_entry_format = 
-    "{\"id\": \"%s\", \"rangecount\": \"%d\", \"cellcount\": \"%d\", \"disk\": \"%d\","
+    "{\"id\": \"%s\",\"name\": \"%s\",\"rangecount\": \"%d\", \"cellcount\": \"%d\", \"disk\": \"%d\","
     " \"memory\": \"%d\", \"compression_ratio\": \"%.2f\"}";
 }
 
@@ -688,13 +656,16 @@ void Monitoring::dump_table_summary_json() {
   String entry;
   struct table_rrd_data table_data;
   String table_id;
+  String table_name;
   TableStatMap::iterator ts_iter;
   int i = 0;
   for(ts_iter = m_table_stat_map.begin();ts_iter != m_table_stat_map.end(); ++ts_iter) {
     table_id = ts_iter->first;
     table_data = ts_iter->second;
+    m_namemap_ptr->id_to_name(table_id,table_name);
     entry = format(table_entry_format,
                    table_id.c_str(),
+                   table_name.c_str(),
                    table_data.range_count,
                    table_data.cells_written,
                    table_data.disk_used,

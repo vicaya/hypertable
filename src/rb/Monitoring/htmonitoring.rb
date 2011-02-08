@@ -7,7 +7,7 @@ require 'sinatra/base'
 require 'pathname'
 
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
-Dir["#{  File.dirname(__FILE__)}/app/lib/data/*.rb"].each {|r| require r}
+Dir["#{  File.dirname(__FILE__)}/app/lib/*.rb"].each {|r| require r}
 
 
 module HTMonitoring
