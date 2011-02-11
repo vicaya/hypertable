@@ -218,22 +218,6 @@ configure_file(${SRC_DIR}/loadDataSourceTest-qualified-header.golden
                ${DST_DIR}/loadDataSourceTest-qualified-header.golden)
 configure_file(${SRC_DIR}/loadDataSourceTest-qualified-header.dat
                ${DST_DIR}/loadDataSourceTest-qualified-header.dat)
-configure_file(${SRC_DIR}/rsmltest.golden ${DST_DIR}/rsmltest.golden
-               COPYONLY)
-configure_file(${SRC_DIR}/rsmltest2.golden ${DST_DIR}/rsmltest2.golden
-               COPYONLY)
-configure_file(${SRC_DIR}/rsmltest3.golden ${DST_DIR}/rsmltest3.golden
-               COPYONLY)
-configure_file(${SRC_DIR}/rsmltest4.golden ${DST_DIR}/rsmltest4.golden
-               COPYONLY)
-configure_file(${SRC_DIR}/mmltest.golden ${DST_DIR}/mmltest.golden
-               COPYONLY)
-configure_file(${SRC_DIR}/mmltest2.golden ${DST_DIR}/mmltest2.golden
-               COPYONLY)
-configure_file(${SRC_DIR}/mmltest3.golden ${DST_DIR}/mmltest3.golden
-               COPYONLY)
-configure_file(${SRC_DIR}/mmltest4.golden ${DST_DIR}/mmltest4.golden
-               COPYONLY)
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
 configure_file (${SRC_DIR}/MutatorNoLogSyncTest.cfg ${DST_DIR}/MutatorNoLogSyncTest.cfg)

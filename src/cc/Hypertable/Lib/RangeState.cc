@@ -30,6 +30,7 @@ using namespace Serialization;
 
 void RangeState::clear() {
   state = STEADY;
+  // timestmp shouldn't be cleared
   soft_limit = 0;
   transfer_log = split_point = old_boundary_row = 0;
 }

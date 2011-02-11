@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
      * connect to DFS broker
      */
     InetAddr addr(get_str("dfs-host"), get_i16("dfs-port"));
-    DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, addr, timeout);
+    DfsBroker::ClientPtr dfs = new DfsBroker::Client(conn_mgr, addr, timeout);
 
     if (!dfs->wait_for_connection(10000)) {
       HT_ERROR("Unable to connect to DFS Broker, exiting...");
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     srandom(1);
 
     //test1(dfs);
-    test_link(dfs);
+    test_link(dfs.get());
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

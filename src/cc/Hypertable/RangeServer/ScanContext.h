@@ -51,15 +51,16 @@ namespace Hypertable {
       cutoff_time = other.cutoff_time;
       max_versions = other.max_versions;
       counter = other.counter;
+      regexp_qualifiers.clear();
       for (size_t ii=0; ii<other.regexp_qualifiers.size(); ++ii) {
-        regexp_qualifiers[ii] = new RE2(other.regexp_qualifiers[ii]->pattern());
+        regexp_qualifiers.push_back( new RE2(other.regexp_qualifiers[ii]->pattern()) );
       }
       exact_qualifiers = other.exact_qualifiers;
       for (size_t ii=0; ii<exact_qualifiers.size(); ++ii) {
         exact_qualifiers_set.insert(exact_qualifiers[ii].c_str());
       }
       filter_by_exact_qualifier = other.filter_by_exact_qualifier;
-      filter_by_regexp_qualifier = other.filter_by_exact_qualifier;
+      filter_by_regexp_qualifier = other.filter_by_regexp_qualifier;
     }
 
     ~CellFilterInfo() {
