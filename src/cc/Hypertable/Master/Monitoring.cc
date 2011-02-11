@@ -222,6 +222,16 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   }
   // calcualte read rates from previous table stats map
 
+  // finish compression ratio aggregation
+  for (TableStatMap::iterator iter = m_table_stat_map.begin();
+       iter != m_table_stat_map.end(); ++iter) {
+    if (iter->second.disk_used != 0)
+      iter->second.compression_ratio = 
+	(double)iter->second.disk_used / iter->second.compression_ratio;
+    else
+      iter->second.compression_ratio = 0.0;
+  }
+
   // Dump RangeServer summary data
   std::vector<RangeServerStatistics> stats_vec;
   struct LtRangeServerStatistics comp;
@@ -276,9 +286,10 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
 }
 
 void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fetch_timestamp) {
+  TableStatMap::iterator iter;
 
   for (size_t i=0; i<table_stats.size(); i++) {
-    TableStatMap::iterator iter = m_table_stat_map.find(table_stats[i].table_id);
+    iter = m_table_stat_map.find(table_stats[i].table_id);
     struct table_rrd_data table_data;
     if (iter != m_table_stat_map.end()) {
       table_data = iter->second;
@@ -287,6 +298,7 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     }
     table_data.fetch_timestamp = fetch_timestamp;
     table_data.range_count += table_stats[i].range_count;
+    table_data.cell_count += table_stats[i].cell_count;
     table_data.scans += table_stats[i].scans;
     table_data.cells_read += table_stats[i].cells_scanned;
     table_data.bytes_read += table_stats[i].bytes_scanned;
@@ -294,7 +306,7 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     table_data.cells_written += table_stats[i].cells_written;
     table_data.bytes_written += table_stats[i].bytes_written;
     table_data.disk_used += table_stats[i].disk_used;
-    table_data.compression_ratio += (table_stats[i].compression_ratio * table_stats[i].disk_used) / table_stats[i].disk_used;
+    table_data.compression_ratio += (double)table_stats[i].disk_used / table_stats[i].compression_ratio;
     table_data.memory_used += table_stats[i].memory_used;
     table_data.memory_allocated += table_stats[i].memory_allocated;
     table_data.shadow_cache_memory += table_stats[i].shadow_cache_memory;
@@ -304,6 +316,7 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     table_data.bloom_filter_maybes += table_stats[i].bloom_filter_maybes;
     m_table_stat_map[table_stats[i].table_id] = table_data;
   }
+
 }
 
 void Monitoring::compute_clock_skew(int64_t server_timestamp, RangeServerStatistics *stats) {
@@ -573,8 +586,8 @@ namespace {
   const char *table_json_header = "{\"TableSummary\": {\n  \"tables\": [\n";
   const char *table_json_footer= "\n  ]\n}}\n";
   const char *table_entry_format = 
-    "{\"id\": \"%s\",\"name\": \"%s\",\"rangecount\": \"%d\", \"cellcount\": \"%d\", \"disk\": \"%d\","
-    " \"memory\": \"%d\", \"compression_ratio\": \"%.2f\"}";
+    "{\"id\": \"%s\",\"name\": \"%s\",\"rangecount\": \"%u\", \"cellcount\": \"%llu\", \"disk\": \"%llu\","
+    " \"memory\": \"%llu\", \"compression_ratio\": \"%.3f\"}";
 }
 
 void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics> &stats) {
@@ -666,10 +679,10 @@ void Monitoring::dump_table_summary_json() {
     entry = format(table_entry_format,
                    table_id.c_str(),
                    table_name.c_str(),
-                   table_data.range_count,
-                   table_data.cells_written,
-                   table_data.disk_used,
-                   table_data.memory_used,
+                   (unsigned)table_data.range_count,
+                   (Llu)table_data.cell_count,
+                   (Llu)table_data.disk_used,
+                   (Llu)table_data.memory_used,
                    table_data.compression_ratio);
     if (i != 0)
       str += String(",\n    ") + entry;

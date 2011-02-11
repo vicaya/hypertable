@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_MONITORING_H
 #define HYPERTABLE_MONITORING_H
 
+#include <map>
+
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StatsSystem.h"
@@ -87,6 +89,7 @@ namespace Hypertable {
     struct table_rrd_data {
       int64_t fetch_timestamp;
       uint32_t range_count;
+      uint64_t cell_count;
       uint64_t scans;
       uint64_t cells_read;
       uint64_t bytes_read;
@@ -120,8 +123,8 @@ namespace Hypertable {
     void dump_table_summary_json();
     void dump_table_id_name_map();
 
-    typedef hash_map<String, RangeServerStatistics *> RangeServerMap;
-    typedef hash_map<String, table_rrd_data> TableStatMap;
+    typedef std::map<String, RangeServerStatistics *> RangeServerMap;
+    typedef std::map<String, table_rrd_data> TableStatMap;
 
     Mutex m_mutex;
     RangeServerMap m_server_map;
