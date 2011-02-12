@@ -55,6 +55,9 @@ namespace Hypertable {
 
     void add(std::vector<RangeServerStatistics> &stats);
     
+    void change_id_mapping(const String &table_id, const String &table_name);
+
+    void invalidate_id_mapping(const String &table_id);
 
   private:
 
@@ -122,13 +125,16 @@ namespace Hypertable {
     void add_table_stats(std::vector<StatsTable> &table_stats,int64_t fetch_timestamp);
     void dump_table_summary_json();
     void dump_table_id_name_map();
+    
 
     typedef std::map<String, RangeServerStatistics *> RangeServerMap;
     typedef std::map<String, table_rrd_data> TableStatMap;
+    typedef hash_map<String, String> TableNameMap;
     Mutex m_mutex;
     RangeServerMap m_server_map;
     TableStatMap m_table_stat_map;
     TableStatMap m_prev_table_stat_map;
+    TableNameMap m_table_name_map;
     String m_monitoring_dir;
     String m_monitoring_table_dir;
     String m_monitoring_rs_dir;

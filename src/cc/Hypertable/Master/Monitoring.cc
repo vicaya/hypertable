@@ -33,10 +33,6 @@ extern "C" {
 #include <time.h>
 }
 
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/replace.hpp>
-
-
 #include "Monitoring.h"
 
 using namespace Hypertable;
@@ -258,9 +254,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
       HT_INFOF("cell_write_rate %.2f",ts_iter->second.cell_write_rate);
     }
 
-    //String table_file_name = boost::algorithm::replace_all_copy(ts_iter->first,"/","_");
     String table_file_name = ts_iter->first;
-
     String rrd_file = m_monitoring_table_dir + "/" + table_file_name + "_table_stats_v0.rrd";
     if (!FileUtils::exists(rrd_file)) {
         String dir;
@@ -280,9 +274,6 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     update_table_rrd(rrd_file,ts_iter->second);
   }
   dump_table_summary_json();
-
-  //create table id , name map file
-  dump_table_id_name_map();
 
 }
 
@@ -473,6 +464,7 @@ void Monitoring::create_table_rrd(const String &filename) {
   rrd_clear_error();
   delete [] argv;
 }
+
 void Monitoring::update_table_rrd(const String &filename, struct table_rrd_data &rrd_data) {
   std::vector<String> args;
   int argc;
@@ -678,7 +670,13 @@ void Monitoring::dump_table_summary_json() {
   for(ts_iter = m_table_stat_map.begin();ts_iter != m_table_stat_map.end(); ++ts_iter) {
     table_id = ts_iter->first;
     table_data = ts_iter->second;
-    m_namemap_ptr->id_to_name(table_id,table_name);
+    TableNameMap::iterator tn_iter = m_table_name_map.find(table_id);
+    if (tn_iter != m_table_name_map.end()) {
+      table_name = tn_iter->second;
+    } else {
+      m_namemap_ptr->id_to_name(table_id,table_name);
+      m_table_name_map[table_id] = table_name;
+    }
     entry = format(table_entry_format,
                    table_id.c_str(),
                    table_name.c_str(),
@@ -705,13 +703,12 @@ void Monitoring::dump_table_summary_json() {
   FileUtils::rename(tmp_filename, json_filename);
 }
 
-void Monitoring::dump_table_id_name_map() {
-  /*  if (m_namemap) {
-    std::vector<NamespaceListing> listing;
-    ns->get_listing(true, listing);
-    foreach (const NamespaceListing &entry, listing) {
-      
-    }
-    }*/
+void Monitoring::change_id_mapping(const String &table_id, const String &table_name) {
+  String s_table_id(table_id);
+  String s_table_name(table_name);
+  m_table_name_map[s_table_id] = s_table_name;
 }
 
+void Monitoring::invalidate_id_mapping(const String &table_id) {
+  m_table_name_map.erase(table_id);
+}

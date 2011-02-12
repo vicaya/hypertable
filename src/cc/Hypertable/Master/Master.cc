@@ -940,6 +940,7 @@ Master::rename_table(ResponseCallback *cb, const char *old_name, const char *new
     // TODO: log the 'STARTED RENAME TABLE fully_qual_name' in the Master METALOG here
     m_namemap->rename(old_name, new_name);
     HT_INFOF("RENAME TABLE '%s' -> '%s' success", old_name, new_name);
+    m_monitoring->change_id_mapping(table_id,new_name);
     cb->response_ok();
   }
   catch (Exception &e) {
@@ -1063,6 +1064,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
     HT_INFOF("DROP TABLE '%s' id=%s success",
              table_name_str.c_str(), table_id.c_str());
 
+    m_monitoring->invalidate_id_mapping(table_id);
     cb->response_ok();
 
   }
