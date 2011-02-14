@@ -53,7 +53,7 @@ case $confirm in
     if [ $? != 0 ] ; then
       echo "ERROR: DfsBroker not running, database not cleaned"
       # remove local stuff anyway.
-      rm -rf $RUNTIME_ROOT/hyperspace/* $RUNTIME_ROOT/fs/* $RUNTIME_ROOT/run/rsml_backup/*
+      rm -rf $RUNTIME_ROOT/hyperspace/* $RUNTIME_ROOT/fs/* $RUNTIME_ROOT/run/log_backup/rsml/*
       exit 1
     fi
 
@@ -65,7 +65,7 @@ case $confirm in
     echo "Removed $TOPLEVEL/servers in DFS"
     echo "Removed $TOPLEVEL/tables in DFS"
     /bin/rm -rf $RUNTIME_ROOT/hyperspace/*
-    /bin/rm -rf $RUNTIME_ROOT/run/rsml_backup/*
+    /bin/rm -rf $RUNTIME_ROOT/run/log_backup/rsml/*
     /bin/rm -rf $RUNTIME_ROOT/run/location
     /bin/rm -rf $RUNTIME_ROOT/run/last-dfs
     echo "Cleared hyperspace"
