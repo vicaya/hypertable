@@ -33,10 +33,6 @@ extern "C" {
 #include <time.h>
 }
 
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/replace.hpp>
-
-
 #include "Monitoring.h"
 
 using namespace Hypertable;
@@ -52,6 +48,7 @@ Monitoring::Monitoring(PropertiesPtr &props,NameIdMapperPtr &m_namemap) {
   m_monitoring_dir = (data_dir /= "/run/monitoring").string();
   m_monitoring_table_dir = m_monitoring_dir + "/tables";
   m_monitoring_rs_dir = m_monitoring_dir + "/rangeservers";
+
   create_dir(m_monitoring_dir);
   create_dir(m_monitoring_table_dir);
   create_dir(m_monitoring_rs_dir);
@@ -257,9 +254,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
       HT_INFOF("cell_write_rate %.2f",ts_iter->second.cell_write_rate);
     }
 
-    //String table_file_name = boost::algorithm::replace_all_copy(ts_iter->first,"/","_");
     String table_file_name = ts_iter->first;
-
     String rrd_file = m_monitoring_table_dir + "/" + table_file_name + "_table_stats_v0.rrd";
     if (!FileUtils::exists(rrd_file)) {
         String dir;
@@ -280,12 +275,10 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   }
   dump_table_summary_json();
 
-  //create table id , name map file
-  dump_table_id_name_map();
-
 }
 
 void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fetch_timestamp) {
+
   TableStatMap::iterator iter;
 
   for (size_t i=0; i<table_stats.size(); i++) {
@@ -298,6 +291,7 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     }
     table_data.fetch_timestamp = fetch_timestamp;
     table_data.range_count += table_stats[i].range_count;
+
     table_data.cell_count += table_stats[i].cell_count;
     table_data.scans += table_stats[i].scans;
     table_data.cells_read += table_stats[i].cells_scanned;
@@ -306,6 +300,7 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     table_data.cells_written += table_stats[i].cells_written;
     table_data.bytes_written += table_stats[i].bytes_written;
     table_data.disk_used += table_stats[i].disk_used;
+
     table_data.compression_ratio += (double)table_stats[i].disk_used / table_stats[i].compression_ratio;
     table_data.memory_used += table_stats[i].memory_used;
     table_data.memory_allocated += table_stats[i].memory_allocated;
@@ -316,7 +311,6 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     table_data.bloom_filter_maybes += table_stats[i].bloom_filter_maybes;
     m_table_stat_map[table_stats[i].table_id] = table_data;
   }
-
 }
 
 void Monitoring::compute_clock_skew(int64_t server_timestamp, RangeServerStatistics *stats) {
@@ -470,6 +464,7 @@ void Monitoring::create_table_rrd(const String &filename) {
   rrd_clear_error();
   delete [] argv;
 }
+
 void Monitoring::update_table_rrd(const String &filename, struct table_rrd_data &rrd_data) {
   std::vector<String> args;
   int argc;
@@ -675,7 +670,13 @@ void Monitoring::dump_table_summary_json() {
   for(ts_iter = m_table_stat_map.begin();ts_iter != m_table_stat_map.end(); ++ts_iter) {
     table_id = ts_iter->first;
     table_data = ts_iter->second;
-    m_namemap_ptr->id_to_name(table_id,table_name);
+    TableNameMap::iterator tn_iter = m_table_name_map.find(table_id);
+    if (tn_iter != m_table_name_map.end()) {
+      table_name = tn_iter->second;
+    } else {
+      m_namemap_ptr->id_to_name(table_id,table_name);
+      m_table_name_map[table_id] = table_name;
+    }
     entry = format(table_entry_format,
                    table_id.c_str(),
                    table_name.c_str(),
@@ -702,13 +703,12 @@ void Monitoring::dump_table_summary_json() {
   FileUtils::rename(tmp_filename, json_filename);
 }
 
-void Monitoring::dump_table_id_name_map() {
-  /*  if (m_namemap) {
-    std::vector<NamespaceListing> listing;
-    ns->get_listing(true, listing);
-    foreach (const NamespaceListing &entry, listing) {
-      
-    }
-    }*/
+void Monitoring::change_id_mapping(const String &table_id, const String &table_name) {
+  String s_table_id(table_id);
+  String s_table_name(table_name);
+  m_table_name_map[s_table_id] = s_table_name;
 }
 
+void Monitoring::invalidate_id_mapping(const String &table_id) {
+  m_table_name_map.erase(table_id);
+}

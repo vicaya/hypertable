@@ -9,7 +9,6 @@ require 'pathname'
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
 Dir["#{  File.dirname(__FILE__)}/app/lib/*.rb"].each {|r| require r}
 
-
 module HTMonitoring
   @root = Pathname.new(File.dirname(__FILE__)).expand_path
   @hypertable_home = ENV['HYPERTABLE_HOME']
@@ -49,12 +48,40 @@ module HTMonitoring
     get '/' do
       @range_servers = StatsJson.new(:file => 'rangeserver_summary.json')
       @rs_records = @range_servers.parse_stats_file
+      @rs_records['RangeServerSummary']['servers'].sort! { |a,b| a['location'] <=> b['location'] }
+      @n_ord="dsc"
+      @name_sort_img = "/images/arrow_up.png"
+      if params[:sort] == "name" && params[:ord] = "dsc"
+        @rs_records['RangeServerSummary']['servers'].sort! { |a,b| b['location'] <=> a['location'] }
+        @n_ord="asc"
+        @name_sort_img = "/images/arrow_down.png"
+      end
       erb :index
     end
 
     get '/tables' do
       @tables = StatsJson.new(:file => 'table_summary.json')
       @table_records = @tables.parse_stats_file
+      
+      @id_sort_img = "/images/arrows.png"
+      @id_ord = "asc"
+      @table_records['TableSummary']['tables'].sort! { |a,b| a['name'] <=> b['name'] }
+      @n_ord="dsc"
+      @name_sort_img = "/images/arrow_up.png"
+      
+      if params[:sort] == "name" && params[:ord] = "dsc"
+        @table_records['TableSummary']['tables'].sort! { |a,b| b['name'] <=> a['name'] }
+        @n_ord="asc"
+        @name_sort_img = "/images/arrow_down.png"
+      elsif params[:sort] == "id" && params[:ord] == "asc"
+        @table_records['TableSummary']['tables'].sort! { |a,b| a['id'] <=> b['id'] }
+        @id_ord = "dsc"
+        @id_sort_img = "/images/arrow_up.png"
+      elsif params[:sort] == "id" && params[:ord] == "dsc"
+        @table_records['TableSummary']['tables'].sort! { |a,b| b['id'] <=> a['id'] }
+        @id_ord = "asc"
+        @id_sort_img = "/images/arrow_asc.png"
+      end
       erb :tables
     end
 

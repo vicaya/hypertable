@@ -82,14 +82,10 @@ module HTMonitoring
 
     end
 
-    def nav_tab_on(page)
-      if request.path_info == "/" and page == "index"
+    def nav_tab_on(page,type)
+      if (request.path_info == "/" and page=="index") or (type.nil? and request.path_info == "/graphs" and page=="index" )
         return "on"
-      elsif request.path_info == "/tables" and page == "tables"
-        return "on"
-      elsif request.path_info == "/rangeservers" and page == "rangeservers"
-        return "on"
-      elsif request.path_info == "/graphs" and page == "graphs"
+      elsif (request.path_info == "/tables" and page=="tables")  or (type == "table" and request.path_info == "/graphs" and page=="tables")
         return "on"
       end
       return "off"

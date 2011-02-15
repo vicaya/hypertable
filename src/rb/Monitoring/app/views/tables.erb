@@ -5,31 +5,44 @@
 <colgroup span="4"></colgroup>
 <thead class="ht-table-thead">
 <tr class="ht-table-subheader">
-<th  class="ht-table-subheadercell">ID</th>
-<th class="ht-table-subheadercell"> Range Count </th>
+<th class="ht-table-subheadercell">
+<div>
+<span class="ht-table-sortable-header">Name <a href="/tables?sort=name&ord=<%=@n_ord%>"><img src=<%= @name_sort_img %> height="15" width="15"></a>
+</span>
+</div>
+</th>
+<th class="ht-table-subheadercell"> 
+<div>
+<span class="ht-table-sortable-header">ID <a href="/tables?sort=id&ord=<%=@id_ord%>"><img src=<%= @id_sort_img %> height="15" width="15"></a>
+</span>
+</th>
+<th class="ht-table-subheadercell"> Range <br/>  Count </th>
 <th class="ht-table-subheadercell"> Cell Count </th>
 <th class="ht-table-subheadercell"> Disk </th>
 <th class="ht-table-subheadercell"> Memory </th>
-<th class="ht-table-subheadercell"> Compression Ratio </th>
+<th class="ht-table-subheadercell"> Compression <br/>  Ratio </th>
 </tr>
 </thead>
 <% @table_records['TableSummary']['tables'].each do |table|  %>
 <td class="ht-table-cell">
-<a href="/graphs?server=<%= table['id'] %>&type=table"><%= table['name']%> (<%= table['id'] %>)</a>
+<a href="/graphs?server=<%= table['id'] %>&type=table"><%= table['name']%></a>
 </td>
 <td class="ht-table-cell">
-<%= table['rangecount'] %>
+<%= table['id'] %>
 </td>
-<td class="ht-table-cell">
-<%= table['cellcount'] %>
+<td class="ht-table-cell" align="right">
+<%= number_with_delimiter table['rangecount'] %>
 </td>
-<td class="ht-table-cell">
-<%= table['disk'] %>
+<td class="ht-table-cell" align="right">
+<%= number_with_delimiter table['cellcount'] %>
 </td>
-<td class="ht-table-cell">
-<%= table['memory'] %>
+<td class="ht-table-cell" align="right">
+<%= number_with_delimiter table['disk'] %>
 </td>
-<td class="ht-table-cell">
+<td class="ht-table-cell" align="right">
+<%= number_with_delimiter table['memory'] %>
+</td>
+<td class="ht-table-cell" align="right">
 <%= table['compression_ratio'] %>
 </td>
 </tr>
