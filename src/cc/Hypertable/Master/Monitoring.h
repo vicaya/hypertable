@@ -129,7 +129,8 @@ namespace Hypertable {
 
     typedef std::map<String, RangeServerStatistics *> RangeServerMap;
     typedef std::map<String, table_rrd_data> TableStatMap;
-    typedef hash_map<String, String> TableNameMap;
+    typedef std::map<String, String> TableNameMap;
+
     Mutex m_mutex;
     RangeServerMap m_server_map;
     TableStatMap m_table_stat_map;

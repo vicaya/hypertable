@@ -461,10 +461,16 @@ div.chart {
    background-position:top left;background-repeat:repeat-x;
 }
 .ht-table-headercell{
-        border-right:solid 0;
-        border-bottom:solid 0;
-        padding:4px 4px 4px 4px;
-        text-align:center;
+    border-right:solid 0;
+    border-bottom:solid 0;
+    padding:4px 4px 4px 4px;
+    text-align:center;
+}
+
+.ht-table-sortable-header {
+    background-position:right center;
+    background-repeat:no-repeat;
+    white-space:nowrap;
 }
 
 .ht-table-thead {
