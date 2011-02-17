@@ -596,8 +596,8 @@ int main(int argc, char **argv) {
     String csname = testdir + "/cs0";
     PropertiesPtr cs_props = new Properties();
 
-    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str),
-                                            true);
+    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str));
+
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
       exit(1);
@@ -1486,7 +1486,7 @@ int main(int argc, char **argv) {
     csname = testdir + "/cs2";
     cs_props = new Properties();
 
-    schema = Schema::new_instance(schema2_str, strlen(schema2_str), true);
+    schema = Schema::new_instance(schema2_str, strlen(schema2_str));
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
       exit(1);

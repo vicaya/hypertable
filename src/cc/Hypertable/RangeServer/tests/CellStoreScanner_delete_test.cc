@@ -528,8 +528,7 @@ int main(int argc, char **argv) {
     String testdir = "/CellStoreScanner_delete_test";
     client->mkdirs(testdir);
 
-    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str),
-                                            true);
+    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str));
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
       exit(1);

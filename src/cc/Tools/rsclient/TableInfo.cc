@@ -51,10 +51,14 @@ namespace Hypertable {
     hyperspace->attr_get(handle, "schema", valbuf);
 
     Schema *schema = Schema::new_instance((const char *)valbuf.base,
-                                          valbuf.fill(), true);
+                                          valbuf.fill());
     if (!schema->is_valid())
       HT_THROWF(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
                 "Schema Parse Error: %s", schema->get_error_string());
+    if (schema->need_id_assignment())
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
+               "Schema Parse Error: need ID assignment");
+
     m_schema = schema;
 
     m_table.generation = schema->get_generation();

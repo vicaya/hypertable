@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
 
     std::ofstream out(output_file.c_str(), ios_base::out|ios_base::app);
 
-    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str), true);
+    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str));
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
       exit(1);

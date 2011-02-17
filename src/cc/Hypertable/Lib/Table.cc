@@ -125,12 +125,14 @@ void Table::initialize() {
   m_hyperspace->close(handle);
 
   m_schema = Schema::new_instance((const char *)value_buf.base,
-      strlen((const char *)value_buf.base), true);
+                                  strlen((const char *)value_buf.base));
 
   if (!m_schema->is_valid()) {
     HT_ERRORF("Schema Parse Error: %s", m_schema->get_error_string());
-    HT_THROW_(Error::BAD_SCHEMA);
+    HT_THROW_(Error::SCHEMA_PARSE_ERROR);
   }
+  if (m_schema->need_id_assignment())
+    HT_THROW(Error::SCHEMA_PARSE_ERROR, "Schema needs ID assignment");
 
   m_table.generation = m_schema->get_generation();
   m_stale = false;

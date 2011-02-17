@@ -119,10 +119,10 @@ void init_schema_options_desc() {
 } // local namespace
 
 
-Schema::Schema(bool read_ids)
+Schema::Schema()
   : m_error_string(), m_next_column_id(0), m_access_group_map(),
-    m_column_family_map(), m_generation(1), m_access_groups(),
-    m_open_access_group(0), m_open_column_family(0), m_read_ids(read_ids),
+    m_column_family_map(), m_generation(0), m_access_groups(),
+    m_open_access_group(0), m_open_column_family(0), m_need_id_assignment(false),
     m_output_ids(false), m_max_column_family_id(0), m_counter_flags(0),
     m_group_commit_interval(0) {
 }
@@ -140,7 +140,7 @@ Schema::Schema(const Schema &src_schema)
   m_group_commit_interval = src_schema.m_group_commit_interval;
   m_next_column_id = src_schema.m_next_column_id;
   m_max_column_family_id = src_schema.m_max_column_family_id;
-  m_read_ids = src_schema.m_read_ids;
+  m_need_id_assignment = src_schema.m_need_id_assignment;
   m_output_ids = src_schema.m_output_ids;
   m_counter_flags = src_schema.m_counter_flags;
 
@@ -176,14 +176,14 @@ Schema::~Schema() {
 }
 
 
-Schema *Schema::new_instance(const String &buf, int len, bool read_ids) {
+Schema *Schema::new_instance(const String &buf, int len) {
   ScopedLock lock(ms_mutex);
   XML_Parser parser = XML_ParserCreate("US-ASCII");
 
   XML_SetElementHandler(parser, &start_element_handler, &end_element_handler);
   XML_SetCharacterDataHandler(parser, &character_data_handler);
 
-  ms_schema = new Schema(read_ids);
+  ms_schema = new Schema();
 
   if (XML_Parse(parser, buf.c_str(), len, 1) == 0) {
     String errstr = (String)"Schema Parse Error: "
@@ -293,7 +293,7 @@ void Schema::start_element_handler(void *userdata,
     for (i=0; atts[i] != 0; i+=2) {
       if (atts[i+1] == 0)
         return;
-      if (ms_schema->m_read_ids && !strcasecmp(atts[i], "generation"))
+      if (!strcasecmp(atts[i], "generation"))
         ms_schema->set_generation(atts[i+1]);
       else if (!strcasecmp(atts[i], "compressor"))
         ms_schema->set_compressor((String)atts[i+1]);
@@ -410,18 +410,16 @@ void Schema::close_column_family() {
   else {
     if (m_open_column_family->name == "")
       set_error_string((string)"ColumnFamily must have Name child element");
-    else if (m_read_ids && m_open_column_family->id == 0) {
-      set_error_string((String)"No id specified for ColumnFamily '"
-                        + m_open_column_family->name + "'");
-    }
     else {
+      if (m_open_column_family->id == 0)
+        m_need_id_assignment = true;
       if (m_column_family_map.find(m_open_column_family->name)
           != m_column_family_map.end())
         set_error_string((string)"Multiply defined column families '"
                           + m_open_column_family->name + "'");
       else {
         m_column_family_map[m_open_column_family->name] = m_open_column_family;
-        if (m_read_ids) {
+        if (m_open_column_family->id != 0) {
           m_column_family_id_map[m_open_column_family->id] =
               m_open_column_family;
           if (m_open_column_family->counter) {
@@ -536,7 +534,7 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
       else
         m_open_column_family->counter = false;
     }
-    else if (m_read_ids && !strcasecmp(param, "id")) {
+    else if (!strcasecmp(param, "id")) {
       m_open_column_family->id = atoi(value);
       if (m_open_column_family->id == 0)
         set_error_string((String)"Invalid value (" + value
@@ -544,13 +542,11 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
       if (m_open_column_family->id > m_max_column_family_id)
         m_max_column_family_id = m_open_column_family->id;
     }
-    else if (m_read_ids && !strcasecmp(param, "Generation")) {
+    else if (!strcasecmp(param, "Generation")) {
       m_open_column_family->generation = atoi(value);
       if (m_open_column_family->generation == 0)
-        m_open_column_family->generation = m_generation;
+        m_need_id_assignment = true;
     }
-
-
     else
       set_error_string(format("Invalid ColumnFamily parameter '%s'", param));
   }
@@ -558,20 +554,59 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
 
 
 void Schema::assign_ids() {
-  m_max_column_family_id = 0;
+  bool need_assignment = false;
+  size_t max_column_family_id = 0;
+  uint32_t generation = 0;
 
-  m_generation = 1;
+  /**
+   * Sanity check and determine if ID assignment is necessary
+   */
+  foreach(ColumnFamily *cf, m_column_families) {
+    if (cf->generation == 0) {
+      need_assignment = true;
+      if (cf->id != 0)
+        HT_THROW(Error::SCHEMA_PARSE_ERROR,
+                 format("Column '%s' has ID %d but unassigned generation",
+                        cf->name.c_str(), (int)cf->id));
+    }
+    else {
+      if (cf->id == 0)
+        HT_THROW(Error::SCHEMA_PARSE_ERROR,
+                 format("Column '%s' has empty ID with generation %d",
+                        cf->name.c_str(), (int)cf->generation));
+      if (cf->generation > m_generation)
+        HT_THROW(Error::SCHEMA_PARSE_ERROR, 
+                 format("Column '%s' has newer generation (%d) than schema generation (%d)",
+                        cf->name.c_str(), (int)cf->generation, (int)m_generation));
+      if (cf->generation > generation)
+        generation = cf->generation;
+    }
+    if (cf->id == 0)
+      need_assignment = true;
+    if (cf->id > max_column_family_id)
+      max_column_family_id = cf->id;
+  }
+
+  if (!need_assignment)
+    return;
+
+  m_max_column_family_id = max_column_family_id;
+  if (m_generation == 0)
+    m_generation = 1;
+
   m_output_ids=true;
   foreach(ColumnFamily *cf, m_column_families) {
-    cf->id = ++m_max_column_family_id;
-    if (cf->generation == 0)
+    if (cf->id == 0) {
+      cf->id = ++m_max_column_family_id;
       cf->generation = m_generation;
+    }
     if (cf->counter) {
       if (m_counter_flags.empty())
         m_counter_flags.resize(256);
       m_counter_flags[cf->id] = 1;
     }
   }
+  m_need_id_assignment = false;
 }
 
 

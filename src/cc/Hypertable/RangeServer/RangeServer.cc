@@ -1371,13 +1371,17 @@ RangeServer::update_schema(ResponseCallback *cb,
     /**
      * Create new schema object and test for validity
      */
-    schema = Schema::new_instance(schema_str, strlen(schema_str), true);
+    schema = Schema::new_instance(schema_str, strlen(schema_str));
 
     if (!schema->is_valid()) {
       HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
         (String) "Update schema Parse Error for table '"
         + table->id + "' : " + schema->get_error_string());
     }
+    if (schema->need_id_assignment())
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
+               (String) "Update schema Parse Error for table '"
+               + table->id + "' : needs ID assignment");
 
     m_live_map->get(table, table_info);
 
@@ -2941,12 +2945,17 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation) {
 
     m_hyperspace->close(handle);
 
-    schema = Schema::new_instance((char *)valbuf.base, valbuf.fill(), true);
+    schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
 
     if (!schema->is_valid())
       HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
                (String)"Schema Parse Error for table '"
                + table_info->identifier().id + "' : " + schema->get_error_string());
+
+    if (schema->need_id_assignment())
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
+               (String)"Schema Parse Error for table '"
+               + table_info->identifier().id + "' : needs ID assignment");
 
     table_info->update_schema(schema);
 

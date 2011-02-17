@@ -76,11 +76,11 @@ namespace Hypertable {
 
     typedef std::vector<AccessGroup *> AccessGroups;
 
-    Schema(bool read_ids=false);
+    Schema();
     Schema(const Schema &src_schema);
     ~Schema();
 
-    static Schema *new_instance(const String &buf, int len, bool read_ids=false);
+    static Schema *new_instance(const String &buf, int len);
 
     static void parse_compressor(const String &spec, PropertiesPtr &);
     void validate_compressor(const String &spec);
@@ -98,6 +98,7 @@ namespace Hypertable {
     void set_column_family_parameter(const char *param, const char *value);
 
     void assign_ids();
+    bool need_id_assignment() { return m_need_id_assignment; }
 
     void render(String &output, bool with_ids=false);
 
@@ -188,7 +189,7 @@ namespace Hypertable {
     AccessGroups   m_access_groups;
     AccessGroup   *m_open_access_group;
     ColumnFamily  *m_open_column_family;
-    bool           m_read_ids;
+    bool           m_need_id_assignment;
     bool           m_output_ids;
     size_t         m_max_column_family_id;
     String         m_compressor;

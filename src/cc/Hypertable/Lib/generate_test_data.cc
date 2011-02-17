@@ -158,9 +158,14 @@ int main(int argc, char **argv) {
     return e.code();
   }
 
-  schema = Schema::new_instance(schemaspec.c_str(), schemaspec.length(), true);
+  schema = Schema::new_instance(schemaspec.c_str(), schemaspec.length());
   if (!schema->is_valid()) {
     HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
+    exit(1);
+  }
+
+  if (schema->need_id_assignment()) {
+    HT_ERROR("Schema Parse Error: needs ID assignment");
     exit(1);
   }
 

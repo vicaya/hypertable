@@ -155,7 +155,7 @@ cmd_show_create_table(NamespacePtr &ns, ParserState &state,
   String out_str;
   String schema_str = ns->get_schema_str(state.table_name, true);
   SchemaPtr schema = Schema::new_instance(schema_str.c_str(),
-                                          schema_str.length(), true);
+                                          schema_str.length());
   if (!schema->is_valid())
     HT_THROW(Error::BAD_SCHEMA, schema->get_error_string());
 
@@ -176,7 +176,7 @@ cmd_create_table(NamespacePtr &ns, ParserState &state,
 
   if (!state.clone_table_name.empty()) {
     schema_str = ns->get_schema_str(state.clone_table_name, true);
-    schema = Schema::new_instance(schema_str.c_str(), schema_str.size(), true);
+    schema = Schema::new_instance(schema_str.c_str(), schema_str.size());
     schema_str.clear();
     schema->render(schema_str);
     ns->create_table(state.table_name, schema_str.c_str());

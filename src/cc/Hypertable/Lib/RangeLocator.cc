@@ -189,13 +189,16 @@ void RangeLocator::initialize() {
     }
   }
 
-  SchemaPtr schema = Schema::new_instance((char *)valbuf.base, valbuf.fill(),
-                                          true);
+  SchemaPtr schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
+
   if (!schema->is_valid()) {
     HT_ERRORF("Schema Parse Error for table METADATA : %s",
               schema->get_error_string());
     HT_THROW_(Error::RANGESERVER_SCHEMA_PARSE_ERROR);
   }
+
+  if (schema->need_id_assignment())
+    HT_THROW(Error::SCHEMA_PARSE_ERROR, "Schema needs ID assignment");
 
   m_metadata_table.id = TableIdentifier::METADATA_ID;
   m_metadata_table.generation = schema->get_generation();
