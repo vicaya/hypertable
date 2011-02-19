@@ -1371,6 +1371,13 @@ control=(REV|TS|SHARED) row='http://www.vivisectionally.com/' family=1 qualifier
 control=(REV|TS|SHARED) row='http://www.wastement.com/' family=1 qualifier='cubelet' ts=147 rev=147
 control=(REV|TS|SHARED) row='http://www.whack.com/' family=1 qualifier='gypsography' ts=111 rev=111
 control=(REV|TS|SHARED) row='http://www.yonside.com/' family=1 qualifier='testamentarily' ts=2 rev=2
+[replaced-files-0]
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs100
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs10
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs3
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs1
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs11
 [cs-range-0]
 control=(REV|TS|SHARED) row='http://www.Achernar.com/' family=1 qualifier='Acroceraunian' ts=86 rev=86
 control=(REV|TS|SHARED) row='http://www.Aepyceros.com/' family=1 qualifier='nunch' ts=219 rev=219
@@ -1628,6 +1635,19 @@ control=(REV|TS|SHARED) row='http://www.wastement.com/' family=1 qualifier='cube
 control=(REV|TS|SHARED) row='http://www.whack.com/' family=1 qualifier='gypsography' ts=111 rev=111
 control=(REV|TS|SHARED) row='http://www.yonside.com/' family=1 qualifier='testamentarily' ts=2 rev=2
 control=(REV|TS|SHARED) row='http://www.younglet.com/' family=1 qualifier='laeotropism' ts=162 rev=162
+[replaced-files-1]
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs100
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs10
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs3
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs1
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs11
+1/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+2/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+3/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+4/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+5/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+6/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
 [range-restriction-1]
 control=(AUTO) row='row000050' family=1 qualifier='' ts=-9223372036854775806 rev=-9223372036854775806
 control=(AUTO) row='row000051' family=1 qualifier='' ts=-9223372036854775806 rev=-9223372036854775806
@@ -2230,5 +2250,21 @@ control=(AUTO) row='row000272' family=1 qualifier='' ts=-9223372036854775806 rev
 control=(AUTO) row='row000273' family=1 qualifier='' ts=-9223372036854775806 rev=-9223372036854775806
 control=(AUTO) row='row000274' family=1 qualifier='' ts=-9223372036854775806 rev=-9223372036854775806
 control=(AUTO) row='row000275' family=1 qualifier='' ts=-9223372036854775806 rev=-9223372036854775806
+[replaced-files-2]
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs100
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs10
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs3
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs1
+/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs11
+1/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+2/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+3/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+4/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+5/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+6/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+7/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+8/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
+9/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
 trailer.expiration_time = 18000000000497
 trailer.expirable_data = 14030

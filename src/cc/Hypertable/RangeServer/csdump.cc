@@ -231,6 +231,15 @@ int main(int argc, char **argv) {
          << cellstore->bloom_filter_size() << endl;
 
     /**
+     * Dump replaced files
+     */
+    cout << endl;
+    const vector<String> &replaced_files = cellstore->get_replaced_files();
+    cout << "REPLACED FILES: " << endl;
+    for(size_t ii=0; ii < replaced_files.size(); ++ii)
+         cout << replaced_files[ii] << endl;
+
+    /**
      * Dump trailer
      */
     CellStoreTrailer *trailer = cellstore->get_trailer();

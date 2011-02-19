@@ -39,7 +39,30 @@ try:
     if (len(cells) == 0):
       break
     print cells
-   
+  
+  print "asynchronous scanner examples\n";
+  future = client.open_future(0);
+  color_scanner = client.open_scanner_async(namespace, "FruitColor", future, ScanSpec(None, None, None, 1), True);
+  location_scanner = client.open_scanner_async(namespace, "FruitLocation", future, ScanSpec(None, None, None, 1), True);
+  energy_scanner = client.open_scanner_async(namespace, "FruitEnergy", future, ScanSpec(None, None, None, 1), True);
+
+  
+  expected_cells = 6;
+  num_cells = 0;
+
+  while True:
+    result = client.get_future_result(future);
+    print result;
+    if (result.is_empty or result.is_error or not(result.is_scan) ):
+      print "Unexpected result\n"
+      exit(1); 
+    for cell in result.cells:
+      print cell;
+      num_cells+=1;
+    if(num_cells >= 6):
+      client.cancel_future(future);
+      break;
+
   print "regexp scanner example";
   scanner = client.open_scanner(namespace, "thrift_test",
       ScanSpec(None, None, None, 1, 0, None, None, ["col"], False,0, "k", "v[24]"), True);
@@ -49,8 +72,12 @@ try:
     if (len(cells) == 0):
       break
     print cells
-
-
+  
+  client.close_scanner_async(color_scanner); 
+  client.close_scanner_async(location_scanner);
+  client.close_scanner_async(energy_scanner);
+  client.close_future(future);
+  
   client.close_namespace(namespace)
 except:
   print sys.exc_info()

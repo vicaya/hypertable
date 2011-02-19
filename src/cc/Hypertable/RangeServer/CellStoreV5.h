@@ -92,7 +92,6 @@ namespace Hypertable {
       return may_contain(key.data(), key.size());
     }
     virtual bool may_contain(ScanContextPtr &);
-
     virtual uint64_t disk_usage() {
       if (m_disk_usage < 0)
         HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
@@ -114,6 +113,7 @@ namespace Hypertable {
     virtual int64_t block_index_memory_used() { return m_index_stats.block_index_memory; }
     virtual uint64_t purge_indexes();
     virtual bool restricted_range() { return m_restricted_range; }
+    virtual const std::vector<String> &get_replaced_files();
 
     virtual int32_t get_fd() {
       ScopedLock lock(m_mutex);
@@ -135,6 +135,7 @@ namespace Hypertable {
     void create_bloom_filter(bool is_approx = false);
     void load_bloom_filter();
     void load_block_index();
+    void load_replaced_files();
 
     typedef BlobHashSet<> BloomFilterItems;
 
@@ -173,6 +174,7 @@ namespace Hypertable {
     KeyCompressorPtr       m_key_compressor;
     bool                   m_restricted_range;
     int64_t               *m_column_ttl;
+    bool                   m_replaced_files_loaded;
   };
 
   typedef intrusive_ptr<CellStoreV5> CellStoreV5Ptr;

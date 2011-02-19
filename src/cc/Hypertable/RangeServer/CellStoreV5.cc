@@ -29,6 +29,8 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
+#include "Common/StringCompressorPrefix.h"
+#include "Common/StringDecompressorPrefix.h"
 
 #include "AsyncComm/Protocol.h"
 
@@ -62,7 +64,7 @@ CellStoreV5::CellStoreV5(Filesystem *filesys, Schema *schema)
     m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0),
     m_bloom_filter_mode(BLOOM_FILTER_DISABLED), m_bloom_filter(0),
     m_bloom_filter_items(0), m_filter_false_positive_prob(0.0),
-    m_restricted_range(false), m_column_ttl(0) {
+    m_restricted_range(false), m_column_ttl(0), m_replaced_files_loaded(false) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -252,6 +254,61 @@ void CellStoreV5::create_bloom_filter(bool is_approx) {
     << m_filename <<"'"<< HT_END;
 }
 
+const std::vector<String> &CellStoreV5::get_replaced_files() {
+  if (!m_replaced_files_loaded)
+    load_replaced_files();
+  return m_replaced_files;
+}
+
+void CellStoreV5::load_replaced_files() {
+ bool second_try = false;
+ int64_t amount = m_trailer.replaced_files_length;
+ int64_t len;
+
+ try_again:
+
+  try {
+    DynamicBuffer buf(amount);
+
+    if (second_try)
+      reopen_fd();
+
+    /** Read index data **/
+    len = m_filesys->pread(m_fd, buf.ptr, amount, m_trailer.replaced_files_offset);
+
+    if (len != amount)
+      HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error loading replaced files for "
+                "CellStore '%s' : tried to read %lld but only got %lld",
+                m_filename.c_str(), (Lld)amount, (Lld)len);
+    /** inflate replaced files **/
+
+    StringDecompressorPrefix decompressor;
+    String filename;
+    const uint8_t *ptr = buf.base;
+    for (uint32_t ii=0; ii < m_trailer.replaced_files_entries; ++ii) {
+      if (ptr - buf.base >= (unsigned) m_trailer.replaced_files_length)
+        HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
+            "Bad replaced_files_offset in CellStore trailer fd=%u replaced_files_offset=%lld, "
+            "length=%llu, entries=%u, file='%s'", (unsigned)m_fd,
+            (Lld)m_trailer.replaced_files_offset, (Lld)m_trailer.replaced_files_length,
+            (unsigned)m_trailer.replaced_files_entries, m_filename.c_str());
+      ptr = decompressor.add(ptr);
+      decompressor.load(filename);
+      m_replaced_files.push_back(filename);
+    }
+  }
+  catch (Exception &e) {
+    String msg;
+    HT_ERROR_OUT << "pread(fd=" << m_fd << ", len=" << len << ", amount="
+        << amount << ")\n" << HT_END;
+    HT_ERROR_OUT << m_trailer << HT_END;
+    if (second_try)
+      HT_THROW2(e.code(), e, msg);
+    second_try = true;
+    goto try_again;
+  }
+  m_replaced_files_loaded = true;
+}
 
 void CellStoreV5::load_bloom_filter() {
   size_t len;
@@ -274,7 +331,7 @@ void CellStoreV5::load_bloom_filter() {
   }
 
   if (m_bloom_filter->total_size() > 0) {
-    len = m_filesys->pread(m_fd, m_bloom_filter->base(), 
+    len = m_filesys->pread(m_fd, m_bloom_filter->base(),
                            m_bloom_filter->total_size(),
                            m_trailer.filter_offset);
 
@@ -378,7 +435,7 @@ void CellStoreV5::add(const Key &key, const ByteString value) {
   }
 
   m_key_compressor->add(key);
-  
+
   size_t key_len = m_key_compressor->length();
   size_t value_len = value.length();
 
@@ -549,6 +606,47 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
     }
   }
 
+  // Write compressed replaced_file lists
+  // Coalesce with trailer block if possible
+  zbuf.clear();
+  size_t compressed_len = 0;
+  StringCompressorPrefix compressor;
+  bool coalesce_with_trailer =false;
+  for (size_t ii=0; ii < m_replaced_files.size();++ii) {
+    compressor.add(m_replaced_files[ii].c_str());
+    compressed_len += compressor.length();
+  }
+
+  if (HT_IO_ALIGNMENT_PADDING(compressed_len) >= m_trailer.size()) {
+    coalesce_with_trailer = true;
+    zbuf.reserve(compressed_len + m_trailer.size() +
+                 HT_IO_ALIGNMENT_PADDING(compressed_len+m_trailer.size()));
+  }
+  else
+    zbuf.reserve(compressed_len + HT_IO_ALIGNMENT_PADDING(compressed_len));
+  m_trailer.replaced_files_offset = m_offset;
+  m_trailer.replaced_files_entries = m_replaced_files.size();
+  m_trailer.replaced_files_length = compressed_len;
+
+  compressor.reset();
+  for (size_t ii=0; ii < m_replaced_files.size();++ii) {
+    compressor.add(m_replaced_files[ii].c_str());
+    compressor.write(zbuf.ptr);
+    zbuf.ptr += compressor.length();
+  }
+
+  if (!coalesce_with_trailer) {
+    if (!HT_IO_ALIGNED(zbuf.fill())) {
+      memset(zbuf.ptr, 0, HT_IO_ALIGNMENT_PADDING(zbuf.fill()));
+      zbuf.ptr += HT_IO_ALIGNMENT_PADDING(zbuf.fill());
+    }
+    send_buf = zbuf;
+    m_filesys->append(m_fd, send_buf);
+    m_outstanding_appends++;
+    zlen = zbuf.fill();
+    m_offset += zlen;
+  }
+
   m_64bit_index = m_index_builder.big_int();
 
   /** Set up index **/
@@ -583,11 +681,18 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
   }
 
   // write trailer
-  zbuf.clear();
-  assert(m_trailer.size() <= HT_DIRECT_IO_ALIGNMENT);
-  zbuf.reserve(HT_DIRECT_IO_ALIGNMENT);
-  memset(zbuf.base, 0, HT_DIRECT_IO_ALIGNMENT);
-  zbuf.ptr = zbuf.base + (HT_DIRECT_IO_ALIGNMENT-m_trailer.size());
+  if (!coalesce_with_trailer) {
+    zbuf.clear();
+    assert(m_trailer.size() <= HT_DIRECT_IO_ALIGNMENT);
+    zbuf.reserve(HT_DIRECT_IO_ALIGNMENT);
+    memset(zbuf.base, 0, HT_DIRECT_IO_ALIGNMENT);
+    zbuf.ptr = zbuf.base + (HT_DIRECT_IO_ALIGNMENT-m_trailer.size());
+  }
+  else {
+    size_t padding = HT_IO_ALIGNMENT_PADDING(m_trailer.replaced_files_length) - m_trailer.size();
+    memset(zbuf.ptr, 0, padding);
+    zbuf.ptr += padding;
+  }
   m_trailer.serialize(zbuf.ptr);
   zbuf.ptr += m_trailer.size();
 

@@ -22,6 +22,9 @@
 #ifndef HYPERTABLE_CELLSTORE_H
 #define HYPERTABLE_CELLSTORE_H
 
+#include <vector>
+
+#include "Common/String.h"
 #include "Common/ByteString.h"
 #include "Common/Filesystem.h"
 
@@ -182,6 +185,18 @@ namespace Hypertable {
     virtual KeyDecompressor *create_key_decompressor();
 
     /**
+     * Sets the cell store files replaced by this CellStore
+     */
+    virtual void set_replaced_files(const std::vector<String> &old_files);
+
+    /**
+     * Returns all the cell store files replaced by this CellStore
+     *
+     * @return vector of strings with names of the files that this cell store replaces
+     */
+    virtual const std::vector<String> &get_replaced_files();
+
+    /**
      * Displays block information to stdout
      */
     virtual void display_block_info() = 0;
@@ -254,7 +269,7 @@ namespace Hypertable {
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
     IndexMemoryStats m_index_stats;
-
+    std::vector <String> m_replaced_files;
   };
 
   typedef intrusive_ptr<CellStore> CellStorePtr;

@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,27 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "CellStore.h"
-#include "KeyDecompressorNone.h"
+#ifndef HYPERTABLE_STRINGDECOMPRESSORPREFIX_H
+#define HYPERTABLE_STRINGDECOMPRESSORPREFIX_H
 
-using namespace Hypertable;
+#include "ReferenceCount.h"
+#include "String.h"
 
-const char CellStore::DATA_BLOCK_MAGIC[10]           =
-    { 'D','a','t','a','-','-','-','-','-','-' };
-const char CellStore::INDEX_FIXED_BLOCK_MAGIC[10]    =
-    { 'I','d','x','F','i','x','-','-','-','-' };
-const char CellStore::INDEX_VARIABLE_BLOCK_MAGIC[10] =
-    { 'I','d','x','V','a','r','-','-','-','-' };
+namespace Hypertable {
 
-KeyDecompressor *CellStore::create_key_decompressor() {
-  return new KeyDecompressorNone();
+  class StringDecompressorPrefix : public ReferenceCount {
+  public:
+    StringDecompressorPrefix() : m_compressed_len(0) { }
+
+    virtual void reset();
+    virtual const uint8_t *add(const uint8_t *ptr);
+    virtual size_t length();
+    virtual size_t length_uncompressed();
+    virtual void load(String &str);
+  private:
+    String m_last_string;
+    size_t m_compressed_len;
+  };
+  typedef intrusive_ptr<StringDecompressorPrefix> StringDecompressorPrefixPtr;
 }
 
-void CellStore::set_replaced_files(const std::vector<String> &old_files) {
-  m_replaced_files = old_files;
-}
-
-const std::vector<String> &CellStore::get_replaced_files() {
-  return m_replaced_files;
-}
+#endif // HYPERTABLE_STRINGDECOMPRESSORPREFIX_H

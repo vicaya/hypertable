@@ -33,7 +33,7 @@ namespace Hypertable {
     CellStoreTrailerV5();
     virtual ~CellStoreTrailerV5() { return; }
     virtual void clear();
-    virtual size_t size() { return 164; }
+    virtual size_t size() { return 184; }
     virtual void serialize(uint8_t *buf);
     virtual void deserialize(const uint8_t *buf);
     virtual void display(std::ostream &os);
@@ -42,11 +42,14 @@ namespace Hypertable {
     int64_t fix_index_offset;
     int64_t var_index_offset;
     int64_t filter_offset;
+    int64_t replaced_files_offset;
     int64_t index_entries;
     int64_t total_entries;
     int64_t filter_length;
     int64_t filter_items_estimate;
     int64_t filter_items_actual;
+    int64_t replaced_files_length;
+    uint32_t replaced_files_entries;
     int64_t blocksize;
     int64_t revision;
     int64_t timestamp_min;
@@ -80,11 +83,14 @@ namespace Hypertable {
       else if (prop == "fix_index_offset")      return fix_index_offset;
       else if (prop == "var_index_offset")      return var_index_offset;
       else if (prop == "filter_offset")         return filter_offset;
+      else if (prop == "replaced_files_offset") return replaced_files_offset;
       else if (prop == "index_entries")         return index_entries;
       else if (prop == "total_entries")         return total_entries;
       else if (prop == "filter_length")         return filter_length;
       else if (prop == "filter_items_estimate") return filter_items_estimate;
       else if (prop == "filter_items_actual")   return filter_items_actual;
+      else if (prop == "replaced_files_length") return replaced_files_length;
+      else if (prop == "replaced_files_entries") return replaced_files_entries;
       else if (prop == "blocksize")             return blocksize;
       else if (prop == "revision")              return revision;
       else if (prop == "timestamp_min")         return timestamp_min;
