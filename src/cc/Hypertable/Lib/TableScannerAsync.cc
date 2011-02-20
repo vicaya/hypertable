@@ -42,7 +42,8 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
     uint32_t timeout_ms, bool retry_table_not_found, ResultCallback *cb)
   : m_bytes_scanned(0), m_cb(cb), m_current_scanner(0),
-    m_outstanding(0), m_error(Error::OK), m_table(table), m_scan_spec(scan_spec) {
+    m_outstanding(0), m_error(Error::OK), m_table(table), m_scan_spec(scan_spec),
+    m_cancelled(false) {
 
   ScopedLock lock(m_mutex);
 
@@ -133,88 +134,117 @@ TableScannerAsync::~TableScannerAsync() {
   wait_for_completion();
 }
 
-void TableScannerAsync::handle_error(int scanner_id, int error, const String &error_msg) {
+void TableScannerAsync::cancel() {
+  ScopedLock lock(m_mutex);
+  m_cancelled = true;
+}
+
+void TableScannerAsync::handle_error(int scanner_id, int error, const String &error_msg,
+                                     bool is_create) {
   ScopedLock lock(m_mutex);
   bool abort = false;
+  bool next = false;
+  bool do_callback = true;
 
-  if (m_error != Error::OK)
-    return;
-  switch(error) {
-    case (Error::TABLE_NOT_FOUND):
-    case (Error::RANGESERVER_TABLE_NOT_FOUND):
-      if (m_retry_table_not_found)
-        abort = !(m_interval_scanners[scanner_id]->retry(true, true));
-      else {
-        m_interval_scanners[scanner_id]->abort();
+  // if we've already seen an error or the scanner has been cacncelled
+  if (m_error != Error::OK || m_cancelled) {
+    abort=true;
+    next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+  }
+  else {
+    switch(error) {
+      case (Error::TABLE_NOT_FOUND):
+      case (Error::RANGESERVER_TABLE_NOT_FOUND):
+        if (m_retry_table_not_found && is_create)
+        abort = !(m_interval_scanners[scanner_id]->retry(true, true, is_create));
+        else {
+          next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+          abort = true;
+        }
+        break;
+      case (Error::RANGESERVER_GENERATION_MISMATCH):
+        if (is_create)
+        abort = !(m_interval_scanners[scanner_id]->retry(true, false, is_create));
+        else {
+          next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+          abort = true;
+        }
+        break;
+      case(Error::RANGESERVER_RANGE_NOT_FOUND):
+      case(Error::COMM_NOT_CONNECTED):
+      case(Error::COMM_BROKEN_CONNECTION):
+        abort = !(m_interval_scanners[scanner_id]->retry(false, true, is_create));
+        break;
+
+      default:
+        Exception e(error, error_msg);
+        HT_ERROR_OUT <<  "Received error: is_create=" << is_create << " - "<< e << HT_END;
+        next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
         abort = true;
-      }
-      break;
-    case (Error::RANGESERVER_GENERATION_MISMATCH):
-      abort = !(m_interval_scanners[scanner_id]->retry(true, false));
-      break;
-
-    case(Error::REQUEST_TIMEOUT):
-      handle_timeout(scanner_id, error_msg);
-      return;
-
-    case(Error::RANGESERVER_RANGE_NOT_FOUND):
-    case(Error::COMM_NOT_CONNECTED):
-    case(Error::COMM_BROKEN_CONNECTION):
-      abort = !(m_interval_scanners[scanner_id]->retry(false, true));
-      break;
-
-    default:
-      Exception e(error, error_msg);
-      HT_ERROR_OUT <<  e << HT_END;
-      m_interval_scanners[scanner_id]->abort();
-      abort = true;
+    }
   }
 
-  if (abort) {
+  // if we've seen an error before then don't bother with callback
+  if (m_error != Error::OK || m_cancelled) {
+    maybe_callback_error(next, false);
+    return;
+  }
+  else if (abort) {
     Exception e(error, error_msg);
     m_error = error;
     m_error_msg = error_msg;
     HT_ERROR_OUT << e << HT_END;
-
-    maybe_callback_error(true, true);
+    maybe_callback_error(next, do_callback);
   }
 }
 
-void TableScannerAsync::handle_timeout(int scanner_id, const String &error_msg) {
+void TableScannerAsync::handle_timeout(int scanner_id, const String &error_msg, bool is_create) {
   ScopedLock lock(m_mutex);
-  if (m_error != Error::OK)
-    return;
+  bool do_callback;
+  bool next;
+
+  next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+  // if we've seen an error before or scanner has been cancelled then don't bother with callback
+  if (m_error != Error::OK || m_cancelled) {
+   maybe_callback_error(next, false);
+   return;
+  }
+
   HT_ERROR_OUT << "Unable to complete scan request within " << m_timeout_ms
                << " - " << error_msg << HT_END;
   m_error = Error::REQUEST_TIMEOUT;
-  maybe_callback_error(true, true);
+  maybe_callback_error(next, true);
 }
 
-void TableScannerAsync::handle_result(int scanner_id, EventPtr &event) {
+void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_create) {
   ScopedLock lock(m_mutex);
   ScanCellsPtr cells;
 
-  // If the scan already encountered an error don't bother calling into callback anymore
-  if (m_error != Error::OK) {
-    maybe_callback_error(true, false);
-    return;
-  }
+  // abort interval scanners if we've seen an error previously or scanned has been cancelled
+  bool abort = (m_error != Error::OK || m_cancelled);
 
   bool next;
   bool do_callback;
   int current_scanner = scanner_id;
 
   try {
-    // send results to interval scanner
-    next = m_interval_scanners[scanner_id]->handle_result(event, cells, do_callback);
-    // if error then remember it and we are done with this interval scanner
-    maybe_callback_ok(next, do_callback, cells);
+    // If the scan already encountered an error/cancelled
+    // don't bother calling into callback anymore
+    if (abort) {
+      next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+      maybe_callback_error(next, false);
+    }
+    else {
+      // send results to interval scanner
+      next = m_interval_scanners[scanner_id]->handle_result(&do_callback, cells, event, is_create);
+      maybe_callback_ok(next, do_callback, cells);
+    }
 
-    while (next && m_outstanding && !m_error) {
+    while (next && m_outstanding) {
       current_scanner++;
       m_current_scanner = current_scanner;
-      next = m_interval_scanners[current_scanner]->set_current(cells, do_callback);
-      HT_ASSERT(do_callback || !next);
+      next = m_interval_scanners[current_scanner]->set_current(&do_callback, cells, abort);
+      HT_ASSERT(do_callback || !next || abort);
       maybe_callback_ok(next, do_callback, cells);
     }
   }
@@ -222,7 +252,8 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event) {
     HT_ERROR_OUT << e << HT_END;
     m_error = e.code();
     m_error_msg = e.what();
-    maybe_callback_error(true, true);
+    next = m_interval_scanners[current_scanner]->has_outstanding_requests();
+    maybe_callback_error(next, true);
     throw;
   }
 }
@@ -237,7 +268,7 @@ void TableScannerAsync::maybe_callback_error(bool next, bool do_callback) {
   if (m_outstanding == 0)
     eos = true;
 
-  if (do_callback)
+  if (do_callback && !m_cancelled)
     m_cb->scan_error(this, m_error, m_error_msg, eos);
 
   if (eos) {
@@ -258,9 +289,10 @@ void TableScannerAsync::maybe_callback_ok(bool next, bool do_callback, ScanCells
     eos = true;
   }
 
-  if (do_callback) {
+  if (do_callback && !m_cancelled) {
     if (eos)
       cells->set_eos();
+    HT_ASSERT(cells != 0);
     m_cb->scan_ok(this, cells);
   }
 

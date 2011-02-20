@@ -29,7 +29,7 @@
 
 #include "Cells.h"
 #include "TableDumper.h"
-#include "TableScanner.h"
+#include "TableScannerSync.h"
 #include "TableMutator.h"
 
 namespace Hypertable {
@@ -69,7 +69,7 @@ namespace Hypertable {
       virtual void on_return(const String &) { }
 
       /** Called when interpreter is ready to scan */
-      virtual void on_scan(TableScanner &) { }
+      virtual void on_scan(TableScannerSync &) { }
 
       /** Called when interpreter is ready to dump */
       virtual void on_dump(TableDumper &) { }

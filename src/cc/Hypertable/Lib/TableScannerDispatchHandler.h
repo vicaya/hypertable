@@ -40,7 +40,7 @@ namespace Hypertable {
      * Constructor.  Initializes state.
      */
     TableScannerDispatchHandler(ApplicationQueuePtr &app_queue, TableScannerAsync *scanner,
-                                int m_interval_scanner);
+                                int m_interval_scanner, bool is_create);
 
     /**
      * Dispatch method.  This gets called by the AsyncComm layer
@@ -55,6 +55,7 @@ namespace Hypertable {
     ApplicationQueuePtr     m_app_queue;
     TableScannerAsync      *m_scanner;
     int                     m_interval_scanner;
+    bool                    m_is_create;
   };
 }
 

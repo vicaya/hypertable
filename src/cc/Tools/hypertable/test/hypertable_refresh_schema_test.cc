@@ -113,6 +113,7 @@ namespace {
 int main(int argc, char **argv) {
   std::vector<const char *> client_no_refresh_args;
   std::vector<const char *> client_refresh_args;
+  std::vector<const char *> client_valgrind_args;
   Comm *comm;
   CommAddress addr;
   struct sockaddr_in inet_addr;
@@ -144,12 +145,24 @@ int main(int argc, char **argv) {
   client_refresh_args.push_back("--notification-address=23451");
   client_refresh_args.push_back((const char *)0);
 
-  client_no_refresh_args.push_back("hypertable");
+  client_no_refresh_args.push_back("./hypertable");
   client_no_refresh_args.push_back("--config=./hypertable.cfg");
   client_no_refresh_args.push_back("--Hypertable.Client.RefreshSchema=false");
   client_no_refresh_args.push_back("--test-mode");
   client_no_refresh_args.push_back("--notification-address=23451");
   client_no_refresh_args.push_back((const char *)0);
+
+  client_valgrind_args.push_back("valgrind");
+  client_valgrind_args.push_back("--tool=memcheck");
+  client_valgrind_args.push_back("-v");
+  client_valgrind_args.push_back("--read-var-info=yes");
+  client_valgrind_args.push_back("--track-origins=yes");
+  client_valgrind_args.push_back("--log-file=vg2.log");
+  client_valgrind_args.push_back("./hypertable");
+  client_valgrind_args.push_back("--config=./hypertable.cfg");
+  client_valgrind_args.push_back("--Hypertable.Client.RefreshSchema=false");
+  client_valgrind_args.push_back("--notification-address=23451");
+  client_valgrind_args.push_back((const char *)0);
 
   {
     ServerLauncher client1("./hypertable",

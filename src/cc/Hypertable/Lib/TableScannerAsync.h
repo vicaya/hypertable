@@ -64,11 +64,25 @@ namespace Hypertable {
     ~TableScannerAsync();
 
     /**
+     * Cancels the scanner
+     */
+    void cancel();
+
+    /**
+     *
+     */
+    bool is_complete() {
+      ScopedLock lock(m_mutex);
+      return m_outstanding == 0;
+    }
+
+    /**
      * Deal with results of a scanner
      * @param scanner_id id of the scanner which triggered the error
      * @param event event with results
+     * @param is_create true if this is event is for a create_scanner request
      */
-    void handle_result(int scanner_id, EventPtr &event);
+    void handle_result(int scanner_id, EventPtr &event, bool is_result);
 
     /**
      * Deal with errors
@@ -76,16 +90,18 @@ namespace Hypertable {
      * @param scanner_id id of the scanner which triggered the error
      * @param error error code
      * @param error_msg error message
+     * @param is_create true if this is event is for a create_scanner request
      */
-    void handle_error(int scanner_id, int error, const String &error_msg);
+    void handle_error(int scanner_id, int error, const String &error_msg, bool is_create);
 
     /**
      * Deal with timeouts
      *
      * @param scanner_id id of the scanner which triggered the error
      * @param error_msg error message
+     * @param is_create true if this is event is for a create_scanner request
      */
-    void handle_timeout(int scanner_id, const String &error_msg);
+    void handle_timeout(int scanner_id, const String &error_msg, bool is_create);
 
 
     /**
@@ -131,6 +147,7 @@ namespace Hypertable {
     String              m_table_name;
     Table              *m_table;
     ScanSpec            m_scan_spec;
+    bool                m_cancelled;
   };
 
   typedef intrusive_ptr<TableScannerAsync> TableScannerAsyncPtr;

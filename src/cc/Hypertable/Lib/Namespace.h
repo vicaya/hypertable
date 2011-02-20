@@ -37,6 +37,7 @@
 #include "TableCache.h"
 #include "Table.h"
 #include "TableScanner.h"
+#include "TableScannerAsync.h"
 #include "TableSplit.h"
 #include "TableMutator.h"
 #include "NamespaceListing.h"

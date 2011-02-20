@@ -27,13 +27,16 @@ namespace Hypertable {
 class TableScannerAsync;
 
 struct TableScannerHandler: ApplicationHandler {
-  TableScannerHandler(TableScannerAsync *scanner, int interval_scanner, EventPtr &event)
-    : ApplicationHandler(event), m_scanner(scanner), m_interval_scanner(interval_scanner) { }
+  TableScannerHandler(TableScannerAsync *scanner, int interval_scanner, EventPtr &event,
+    bool is_create)
+    : ApplicationHandler(event), m_scanner(scanner), m_interval_scanner(interval_scanner),
+      m_is_create(is_create){ }
 
   virtual void run();
 
   TableScannerAsync  *m_scanner;
   int m_interval_scanner;
+  bool m_is_create;
 };
 
 }// namespace Hypertable

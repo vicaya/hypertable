@@ -35,8 +35,10 @@ using namespace Serialization;
  *
  */
 TableScannerDispatchHandler::TableScannerDispatchHandler(
-  ApplicationQueuePtr &app_queue, TableScannerAsync *scanner, int interval_scanner)
-  : m_app_queue(app_queue), m_scanner(scanner), m_interval_scanner(interval_scanner) {
+  ApplicationQueuePtr &app_queue, TableScannerAsync *scanner, int interval_scanner,
+  bool is_create)
+  : m_app_queue(app_queue), m_scanner(scanner), m_interval_scanner(interval_scanner),
+    m_is_create(is_create) {
 }
 
 
@@ -46,6 +48,6 @@ TableScannerDispatchHandler::TableScannerDispatchHandler(
  */
 void TableScannerDispatchHandler::handle(EventPtr &event) {
   // Create TableScannerHandler and add task to application queue
-  m_app_queue->add(new TableScannerHandler(m_scanner, m_interval_scanner, event));
+  m_app_queue->add(new TableScannerHandler(m_scanner, m_interval_scanner, event, m_is_create));
 }
 

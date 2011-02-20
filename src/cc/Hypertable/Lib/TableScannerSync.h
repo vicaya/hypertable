@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,32 +19,30 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLESCANNER_H
-#define HYPERTABLE_TABLESCANNER_H
+#ifndef HYPERTABLE_TABLESCANNERSYNC_H
+#define HYPERTABLE_TABLESCANNERSYNC_H
 
+#include <list>
 #include "Common/ReferenceCount.h"
-
-#include "AsyncComm/DispatchHandlerSynchronizer.h"
-
-#include "Cells.h"
-#include "RangeLocator.h"
-#include "RangeServerClient.h"
-#include "IntervalScanner.h"
-#include "ScanBlock.h"
-#include "Schema.h"
-#include "Types.h"
+#include "TableScannerQueue.h"
+#include "TableScannerAsync.h"
+#include "ResultCallback.h"
+#include "TableScannerCallback.h"
+#include "ScanCells.h"
 
 namespace Hypertable {
 
-  class Table;
-
-  class TableScanner : public ReferenceCount {
+  /**
+   */
+  class TableScannerSync : public ReferenceCount {
 
   public:
+
     /**
      * Constructs a TableScanner object.
      *
      * @param comm pointer to the Comm layer
+     * @param app_queue pointer to ApplicationQueue
      * @param table pointer to the table object
      * @param range_locator smart pointer to range locator
      * @param scan_spec reference to scan specification object
@@ -52,10 +50,26 @@ namespace Hypertable {
      *        methods to execute before throwing an exception
      * @param retry_table_not_found whether to retry upon errors caused by
      *        drop/create tables with the same name
+     * @param max_queued_results max number of results to enqueue before blocking
      */
-    TableScanner(Comm *comm, Table *table, RangeLocatorPtr &range_locator,
-                 const ScanSpec &scan_spec, uint32_t timeout_ms,
-                 bool retry_table_not_found);
+    TableScannerSync(Comm *comm, Table *table,  RangeLocatorPtr &range_locator,
+                     const ScanSpec &scan_spec, uint32_t timeout_ms,
+                     bool retry_table_not_found);
+
+    /**
+     * Cancel asynchronous scanner and keep dealing with RangeServer responses
+     * till async scanner is done
+     */
+    ~TableScannerSync() {
+      m_scanner->cancel();
+      if (!m_scanner->is_complete()) {
+        ScanCellsPtr cells;
+        int error=Error::OK;
+        String error_msg;
+        while (!m_scanner->is_complete())
+          m_queue->next_result(cells, error, error_msg);
+      }
+    }
 
     /**
      * Get the next cell.
@@ -85,20 +99,40 @@ namespace Hypertable {
     int64_t bytes_scanned() { return m_bytes_scanned; }
 
   private:
-    std::vector<IntervalScannerPtr>  m_interval_scanners;
 
-    bool      m_eos;
-    size_t    m_scanneri;
-    int64_t   m_rows_seen;
-    int64_t   m_bytes_scanned;
-    Cell      m_ungot;
+    friend class TableScannerCallback;
+    /**
+     * Callback method for successful scan
+     *
+     * @param scanner
+     * @param cells vector of returned cells
+     */
+    void scan_ok(ScanCellsPtr &cells);
+
+    /**
+     * Callback method for scan errors
+     *
+     * @param error
+     * @param error_msg
+     */
+    void scan_error(int error, const String &error_msg);
+
+    TableScannerQueuePtr m_queue;
+    TableScannerAsyncPtr m_scanner;
+    TableScannerCallback m_callback;
+    ScanCellsPtr m_cur_cells;
+    size_t m_cur_cells_index;
+    size_t m_cur_cells_size;
+    int m_error;
+    String m_error_msg;
+    bool m_eos;
+    Cell m_ungot;
+    int64_t m_bytes_scanned;
   };
+  typedef intrusive_ptr<TableScannerSync> TableScannerSyncPtr;
 
-  typedef intrusive_ptr<TableScanner> TableScannerPtr;
-
-  void copy(TableScanner &, CellsBuilder &);
-  inline void copy(TableScannerPtr &p, CellsBuilder &v) { copy(*p.get(), v); }
-
-} // namespace Hypertable
+  void copy(TableScannerSync &scanner, CellsBuilder &b);
+  inline void copy(TableScannerSyncPtr &p, CellsBuilder &v) { copy(*p.get(), v); }
+} // namesapce Hypertable
 
 #endif // HYPERTABLE_TABLESCANNER_H

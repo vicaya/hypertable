@@ -22,7 +22,7 @@
 #include "Common/Compat.h"
 
 #include "TableScannerCallback.h"
-#include "TableScanner.h"
+#include "TableScannerSync.h"
 
 namespace Hypertable {
 
@@ -32,7 +32,7 @@ void TableScannerCallback::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cel
 
 void TableScannerCallback::scan_error(TableScannerAsync *scanner, int error,
                                           const String &error_msg, bool eos) {
-  m_scanner->scan_error(error, error_msg, eos);
+  m_scanner->scan_error(error, error_msg);
 }
 
 } // namespace Hypertable

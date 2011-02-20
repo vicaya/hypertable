@@ -42,6 +42,7 @@ namespace Hypertable {
   class ResultCallback;
   class TableScannerAsync;
   class TableScanner;
+  class TableScannerSync;
   class TableMutator;
 
   /** Represents an open table.
@@ -78,13 +79,27 @@ namespace Hypertable {
      *        scanner methods to execute before throwing an exception
      * @param retry_table_not_found whether to retry upon errors caused by
      *        drop/create tables with the same name
-     * @param scanner_queue_size max scanblocks the scanner can queue up
      * @return pointer to scanner object
      */
     TableScanner *create_scanner(const ScanSpec &scan_spec,
                                  uint32_t timeout_ms = 0,
-                                 bool retry_table_not_found = false,
-                                 size_t scanner_queue_size=0);
+                                 bool retry_table_not_found = false);
+
+    /**
+     * Creates a synchronous scanner on this table
+     *
+     * @param scan_spec scan specification
+     * @param timeout_ms maximum time in milliseconds to allow
+     *        scanner methods to execute before throwing an exception
+     * @param retry_table_not_found whether to retry upon errors caused by
+     *        drop/create tables with the same name
+     * @return pointer to scanner object
+     */
+    TableScannerSync *create_scanner_sync(const ScanSpec &scan_spec,
+                                          uint32_t timeout_ms = 0,
+                                          bool retry_table_not_found = false);
+
+
     /**
      * Creates an asynchronous scanner on this table
      *

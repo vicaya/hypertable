@@ -24,6 +24,7 @@
 
 #include <vector>
 
+#include "Common/ReferenceCount.h"
 #include "Common/PageArenaAllocator.h"
 #include "Cell.h"
 
@@ -32,12 +33,21 @@ namespace Hypertable {
 typedef PageArenaAllocator<Cell> CellAlloc;
 typedef std::vector<Cell, CellAlloc> Cells;
 
-class CellsBuilder {
+class CellsBuilder : public ReferenceCount {
 public:
   CellsBuilder(size_t size_hint = 128)
     : m_cells(CellAlloc(m_arena)), m_size_hint(size_hint) {}
 
+  size_t size() const {
+    return m_cells.size();
+  }
+
+  void get_cell(Cell &cc, size_t ii) {
+    cc = m_cells[ii];
+  }
+
   void add(const Cell &cell, bool own = true) {
+
     if (!m_cells.capacity())
       m_cells.reserve(m_size_hint);
 
@@ -45,6 +55,7 @@ public:
       m_cells.push_back(cell);
       return;
     }
+
     Cell copy;
 
     if (cell.row_key)
@@ -84,6 +95,7 @@ protected:
   size_t m_size_hint;
 };
 
+typedef intrusive_ptr<CellsBuilder> CellsBuilderPtr;
 } // namespace Hypertable
 
 #endif // HYPERTABLE_CELLS_H

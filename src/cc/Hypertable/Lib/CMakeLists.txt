@@ -41,6 +41,7 @@ Future.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc
 HqlInterpreter.cc
+IntervalScanner.cc
 IntervalScannerAsync.cc
 Key.cc
 KeySpec.cc
@@ -86,6 +87,7 @@ TableMutatorScatterBuffer.cc
 TableMutatorShared.cc
 TableMutatorSyncDispatchHandler.cc
 TableScanner.cc
+TableScannerSync.cc
 TableScannerAsync.cc
 TableScannerCallback.cc
 TableScannerHandler.cc

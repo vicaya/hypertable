@@ -34,6 +34,7 @@
 
 #include "Table.h"
 #include "TableScanner.h"
+#include "TableScannerSync.h"
 #include "TableMutatorShared.h"
 
 using namespace Hypertable;
@@ -184,14 +185,20 @@ Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
   return new TableMutator(m_props, m_comm, this, m_range_locator, timeout, flags);
 }
 
-
 TableScanner *
 Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms,
-                      bool retry_table_not_found, size_t scanner_queue_size) {
-  return new TableScanner(m_comm, m_app_queue, this, m_range_locator, scan_spec,
+                      bool retry_table_not_found) {
+  return new TableScanner(m_comm, this, m_range_locator, scan_spec,
                           timeout_ms ? timeout_ms : m_timeout_ms,
-                          retry_table_not_found,
-                          scanner_queue_size ? scanner_queue_size : m_scanner_queue_size);
+                          retry_table_not_found);
+}
+
+TableScannerSync *
+Table::create_scanner_sync(const ScanSpec &scan_spec, uint32_t timeout_ms,
+                           bool retry_table_not_found) {
+  return new TableScannerSync(m_comm, this, m_range_locator, scan_spec,
+                              timeout_ms ? timeout_ms : m_timeout_ms,
+                              retry_table_not_found);
 }
 
 TableScannerAsync *

@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "AsyncComm/Event.h"
+#include "Common/ReferenceCount.h"
 #include "Common/ByteString.h"
 #include "SerializedKey.h"
 
@@ -35,7 +36,7 @@ namespace Hypertable {
    * and this class parses and provides easy access to the key/value
    * pairs in that result.
    */
-  class ScanBlock {
+  class ScanBlock : public ReferenceCount {
   public:
 
     typedef std::vector< std::pair<SerializedKey, ByteString> > Vector;
@@ -99,6 +100,7 @@ namespace Hypertable {
     Vector::iterator m_iter;
     EventPtr m_event_ptr;
   };
+  typedef intrusive_ptr<ScanBlock> ScanBlockPtr;
 }
 
 #endif // HYPERTABLE_SCANBLOCK_H
