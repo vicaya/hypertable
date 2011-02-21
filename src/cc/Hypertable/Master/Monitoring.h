@@ -93,6 +93,7 @@ namespace Hypertable {
       int64_t fetch_timestamp;
       uint32_t range_count;
       uint64_t cell_count;
+      uint64_t file_count;
       uint64_t scans;
       uint64_t cells_read;
       uint64_t bytes_read;

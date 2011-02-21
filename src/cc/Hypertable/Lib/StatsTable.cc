@@ -42,6 +42,7 @@ void StatsTable::clear() {
   table_id = "";
   range_count = 0;
   cell_count = 0;
+  file_count = 0;
   scans = 0;
   cells_scanned = 0;
   cells_returned = 0;
@@ -67,6 +68,7 @@ size_t StatsTable::encoded_length_group(int group) const {
     return Serialization::encoded_length_vstr(table_id) + \
       Serialization::encoded_length_vi32(range_count) + \
       Serialization::encoded_length_vi64(cell_count) + \
+      Serialization::encoded_length_vi64(file_count) + \
       Serialization::encoded_length_vi64(scans) +       \
       Serialization::encoded_length_vi64(cells_scanned) + \
       Serialization::encoded_length_vi64(cells_returned) + \
@@ -95,6 +97,7 @@ void StatsTable::encode_group(int group, uint8_t **bufp) const {
     Serialization::encode_vstr(bufp, table_id);
     Serialization::encode_vi32(bufp, range_count);
     Serialization::encode_vi64(bufp, cell_count);
+    Serialization::encode_vi64(bufp, file_count);
     Serialization::encode_vi64(bufp, scans);
     Serialization::encode_vi64(bufp, cells_scanned);
     Serialization::encode_vi64(bufp, cells_returned);
@@ -122,6 +125,7 @@ void StatsTable::decode_group(int group, uint16_t len, const uint8_t **bufp, siz
     table_id = Serialization::decode_vstr(bufp, remainp);
     range_count = Serialization::decode_vi32(bufp, remainp);
     cell_count = Serialization::decode_vi64(bufp, remainp);
+    file_count = Serialization::decode_vi64(bufp, remainp);
     scans = Serialization::decode_vi64(bufp, remainp);
     cells_scanned = Serialization::decode_vi64(bufp, remainp);
     cells_returned = Serialization::decode_vi64(bufp, remainp);
@@ -150,6 +154,7 @@ bool StatsTable::operator==(const StatsTable &other) const {
   if (table_id == other.table_id &&
       range_count == other.range_count &&
       cell_count == other.cell_count &&
+      file_count == other.file_count &&
       scans == other.scans &&
       cells_scanned == other.cells_scanned &&
       cells_returned == other.cells_returned &&

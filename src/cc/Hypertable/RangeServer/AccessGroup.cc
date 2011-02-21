@@ -411,6 +411,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
     mdata->shadow_cache_memory += (*tailp)->shadow_cache_size;
   }
+  mdata->file_count = m_stores.size();
 
   mdata->gc_needed = m_garbage_tracker.check_needed(mdata->deletes, mdata->mem_used, now);
 
@@ -424,8 +425,6 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore) {
   ScopedLock lock(m_mutex);
 
   m_disk_usage += cellstore->disk_usage();
-
-  m_compression_ratio = cellstore->compression_ratio();
 
   // Record the latest stored revision
   int64_t revision = boost::any_cast<int64_t>
@@ -447,6 +446,8 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore) {
   }
 
   m_stores.push_back( cellstore );
+  recompute_compression_ratio();
+
   m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
 
   m_file_tracker.add_live_noupdate(cellstore->get_filename());
@@ -701,19 +702,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
       }
 
-      /** Re-compute disk usage and compresion ratio**/
-      m_disk_usage = 0;
-      m_compression_ratio = 0.0;
-      for (size_t i=0; i<m_stores.size(); i++) {
-        HT_ASSERT(m_stores[i].cs);
-        double disk_usage = m_stores[i].cs->disk_usage();
-        m_disk_usage += (uint64_t)disk_usage;
-        m_compression_ratio += m_stores[i].cs->compression_ratio() * disk_usage;
-      }
-      if (m_disk_usage != 0)
-        m_compression_ratio /= m_disk_usage;
-      else
-        m_compression_ratio = 0.0;
+      recompute_compression_ratio();
     }
 
     m_file_tracker.update_live(added_file, removed_files, m_next_cs_id);
@@ -957,6 +946,21 @@ void AccessGroup::range_dir_initialize() {
            m_end_row.c_str(), m_name.c_str(), (int)getpid(), (unsigned)m_next_cs_id);
   */
 
+}
+
+void AccessGroup::recompute_compression_ratio() {
+  m_disk_usage = 0;
+  m_compression_ratio = 0.0;
+  for (size_t i=0; i<m_stores.size(); i++) {
+    HT_ASSERT(m_stores[i].cs);
+    double disk_usage = m_stores[i].cs->disk_usage();
+    m_disk_usage += (uint64_t)disk_usage;
+    m_compression_ratio += disk_usage / m_stores[i].cs->compression_ratio();
+  }
+  if (m_disk_usage != 0)
+    m_compression_ratio = (double)m_disk_usage / m_compression_ratio;
+  else
+    m_compression_ratio = 1.0;
 }
 
 void AccessGroup::dump_keys(std::ofstream &out) {

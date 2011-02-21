@@ -82,6 +82,7 @@ namespace Hypertable {
       int64_t disk_used;
       int64_t disk_estimate;
       int64_t log_space_pinned;
+      uint32_t file_count;
       int32_t deletes;
       int32_t outstanding_scanners;
       float    compression_ratio;
@@ -230,8 +231,8 @@ namespace Hypertable {
   private:
 
     void merge_caches();
-
     void range_dir_initialize();
+    void recompute_compression_ratio();
 
     Mutex                m_mutex;
     Mutex                m_outstanding_scanner_mutex;

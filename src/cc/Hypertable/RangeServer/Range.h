@@ -81,6 +81,7 @@ namespace Hypertable {
       int32_t  priority;
       int16_t  state;
       int16_t  maintenance_flags;
+      uint32_t file_count;
       uint64_t cell_count;
       uint64_t memory_used;
       uint64_t memory_allocated;

@@ -36,6 +36,7 @@ namespace Hypertable {
       table_id = other.table_id;
       range_count = other.range_count;
       cell_count = other.cell_count;
+      file_count = other.file_count;
       scans = other.scans;
       cells_scanned = other.cells_returned;
       cells_returned = other.cells_returned;
@@ -63,6 +64,7 @@ namespace Hypertable {
     String table_id;
     uint32_t range_count;
     uint64_t cell_count;
+    uint64_t file_count;
     uint64_t scans;
     uint64_t cells_scanned;
     uint64_t cells_returned;

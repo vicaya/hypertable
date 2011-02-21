@@ -2448,6 +2448,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     table_stat.bloom_filter_accesses += range_data[ii]->bloom_filter_accesses;
     table_stat.bloom_filter_maybes += range_data[ii]->bloom_filter_maybes;
     table_stat.cell_count += range_data[ii]->cell_count;
+    table_stat.file_count += range_data[ii]->file_count;
     table_stat.range_count++;
   }
 

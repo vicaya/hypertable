@@ -476,6 +476,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->bloom_filter_fps += (*tailp)->bloom_filter_fps;
     mdata->shadow_cache_memory += (*tailp)->shadow_cache_memory;
     mdata->cell_count += (*tailp)->cell_count;
+    mdata->file_count += (*tailp)->file_count;
   }
 
   if (ag_vector.size() > 0)
