@@ -133,3 +133,4 @@ run/monitoring/*stats.txt
 /src/rb/Monitoring/app/config/config.yml.in
 /src/rb/Monitoring/test.log
 /src/cc/Hypertable/Master/#RangeServerStatistics.h#
+/src/rb/Monitoring/Monitoring

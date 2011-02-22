@@ -17,10 +17,12 @@
 </span>
 </th>
 <th class="ht-table-subheadercell"> Range <br/>  Count </th>
+<th class="ht-table-subheadercell"> CellStore <br/> Count</th>
 <th class="ht-table-subheadercell"> Cell Count </th>
 <th class="ht-table-subheadercell"> Disk </th>
 <th class="ht-table-subheadercell"> Memory </th>
 <th class="ht-table-subheadercell"> Compression <br/>  Ratio </th>
+
 </tr>
 </thead>
 <% @table_records['TableSummary']['tables'].each do |table|  %>
@@ -32,6 +34,9 @@
 </td>
 <td class="ht-table-cell" align="right">
 <%= number_with_delimiter table['rangecount'] %>
+</td>
+<td class="ht-table-cell" align="right">
+<%= number_with_delimiter table['filecount'] %>
 </td>
 <td class="ht-table-cell" align="right">
 <%= number_with_delimiter table['cellcount'] %>
