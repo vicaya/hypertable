@@ -16,7 +16,7 @@ Error: Hyperspace 'mkdir' error, name=/how/now/brown/cow - HYPERSPACE file not f
 delete foo;
 Error: Hyperspace 'unlink' error, name=/foo - HYPERSPACE file not found
 open foo flags=READ;
-Error: Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 - HYPERSPACE bad pathname
+Error: Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 - HYPERSPACE file not found
 open foo flags=READ|CREATE;
 open foo flags=READ|CREATE|EXCL;
 Error: Hyperspace 'open' error, name=/foo flags=0x19 events=0x0 - HYPERSPACE file exists

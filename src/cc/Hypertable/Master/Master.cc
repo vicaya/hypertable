@@ -179,7 +179,7 @@ void Master::handle_metadata_schema_update() {
 
   /**
    * Read old schema
-   */ 
+   */
   handle = m_hyperspace->open(tablefile, OPEN_FLAG_READ);
   m_hyperspace->attr_get(handle, "schema", value_buf);
   schema = Schema::new_instance((char *)value_buf.base,
@@ -901,7 +901,9 @@ Master::move_range(ResponseCallback *cb, const TableIdentifier &table,
     }
     catch (Exception &e) {
       if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED &&
-          e.code() != Error::RANGESERVER_TABLE_DROPPED) {
+          e.code() != Error::RANGESERVER_TABLE_DROPPED &&
+          e.code() != Error::HYPERSPACE_BAD_PATHNAME &&
+          e.code() != Error::HYPERSPACE_FILE_NOT_FOUND) {
         HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
                   "%s - %s, will retry in 3000 ms ...", table.id, range.start_row, range.end_row,
                   location.c_str(), Error::get_text(e.code()));

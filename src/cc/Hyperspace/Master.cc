@@ -139,9 +139,9 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
 
   Path base_dir(props->get_str("Hyperspace.Replica.Dir"));
 
-  if (!base_dir.is_complete()) { 
-    Path data_dir = props->get_str("Hypertable.DataDirectory"); 
-    base_dir = data_dir / base_dir; 
+  if (!base_dir.is_complete()) {
+    Path data_dir = props->get_str("Hypertable.DataDirectory");
+    base_dir = data_dir / base_dir;
   }
 
   m_base_dir = base_dir.directory_string();
@@ -806,7 +806,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
     } // node exists in DB already
     else { // node doesn't exist in DB
       if (!(flags & OPEN_FLAG_CREATE)) {
-        error = Error::HYPERSPACE_BAD_PATHNAME;
+        error = Error::HYPERSPACE_FILE_NOT_FOUND;
         error_msg = name;
         aborted = true;
         goto txn_commit;

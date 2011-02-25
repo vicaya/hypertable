@@ -1132,7 +1132,19 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
       // Verify schema, this will create the Schema object and add it to
       // table_info if it doesn't exist
-      verify_schema(table_info, table->generation);
+      try {
+        verify_schema(table_info, table->generation);
+      }
+      catch (Hypertable::Exception &e) {
+        if (e.code() == Error::HYPERSPACE_BAD_PATHNAME || e.code() == Error::HYPERSPACE_FILE_NOT_FOUND) {
+          HT_WARNF("Table %s file error in hyperspace '%s'", table->id, e.what());
+          cb->error(e.code(), table->id);
+          return;
+        }
+        else {
+          HT_THROW(e.code(), e.what());
+        }
+      }
 
       if (register_table)
         m_live_map->set(table->id, table_info);
@@ -1348,9 +1360,9 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
   }
   catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
     if (table_info)
       table_info->unstage_range(range_spec);
-    HT_ERROR_OUT << e << HT_END;
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
   }
