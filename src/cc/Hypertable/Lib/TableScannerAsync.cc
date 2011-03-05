@@ -43,7 +43,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
     uint32_t timeout_ms, bool retry_table_not_found, ResultCallback *cb)
   : m_bytes_scanned(0), m_cb(cb), m_current_scanner(0),
     m_outstanding(0), m_error(Error::OK), m_table(table), m_scan_spec(scan_spec),
-    m_cancelled(false) {
+    m_cancelled(false), m_error_shown(false) {
 
   ScopedLock lock(m_mutex);
 
@@ -61,24 +61,26 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
   try {
     if (scan_spec.row_intervals.empty()) {
       if (scan_spec.cell_intervals.empty()) {
-        m_outstanding++;
+        ri_scanner = 0;
         ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator, scan_spec,
             timeout_ms, retry_table_not_found, !current_set, this, scanner_id++);
 
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
+        m_outstanding++;
       }
       else {
         for (size_t i=0; i<scan_spec.cell_intervals.size(); i++) {
           scan_spec.base_copy(interval_scan_spec);
           interval_scan_spec.cell_intervals.push_back(
               scan_spec.cell_intervals[i]);
-          m_outstanding++;
+          ri_scanner = 0;
           ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
               interval_scan_spec, timeout_ms, retry_table_not_found, !current_set, this,
               scanner_id++);
           current_set = true;
           m_interval_scanners.push_back(ri_scanner);
+          m_outstanding++;
         }
       }
     }
@@ -90,43 +92,50 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
         if (ri.start != ri.end && strcmp(ri.start, ri.end) != 0) {
           scan_spec.base_copy(interval_scan_spec);
           interval_scan_spec.row_intervals.push_back(ri);
-          m_outstanding++;
+          ri_scanner = 0;
           ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
               interval_scan_spec, timeout_ms, retry_table_not_found, !current_set,
               this, scanner_id++);
           current_set = true;
           m_interval_scanners.push_back(ri_scanner);
+          m_outstanding++;
         }
         else
           rowset_scan_spec.row_intervals.push_back(ri);
       }
       if (rowset_scan_spec.row_intervals.size()) {
-       m_outstanding++;
+       ri_scanner = 0;
        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
             rowset_scan_spec, timeout_ms, retry_table_not_found, !current_set,
             this, scanner_id++);
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
+        m_outstanding++;
       }
     }
     else {
       for (size_t i=0; i<scan_spec.row_intervals.size(); i++) {
         scan_spec.base_copy(interval_scan_spec);
         interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
-        m_outstanding++;
+        ri_scanner = 0;
         ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
             interval_scan_spec, timeout_ms, retry_table_not_found, !current_set,
             this, scanner_id++);
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
+        m_outstanding++;
       }
     }
   }
   catch (Exception &e) {
     m_error = e.code();
-    m_outstanding--;
-    cb->decrement_outstanding();
-    throw;
+    m_error_msg = e.what();
+    if (ri_scanner && ri_scanner->has_outstanding_requests()) {
+      m_interval_scanners.push_back(ri_scanner);
+      m_outstanding++;
+    }
+    if (m_outstanding == 0)
+      maybe_callback_error(false);
   }
 }
 
@@ -135,21 +144,26 @@ TableScannerAsync::~TableScannerAsync() {
 }
 
 void TableScannerAsync::cancel() {
-  ScopedLock lock(m_mutex);
+  ScopedLock lock(m_cancel_mutex);
   m_cancelled = true;
+}
+
+bool TableScannerAsync::is_cancelled() {
+  ScopedLock lock(m_cancel_mutex);
+  return m_cancelled;
 }
 
 void TableScannerAsync::handle_error(int scanner_id, int error, const String &error_msg,
                                      bool is_create) {
+  bool cancelled = is_cancelled();
   ScopedLock lock(m_mutex);
   bool abort = false;
   bool next = false;
-  bool do_callback = true;
 
   // if we've already seen an error or the scanner has been cacncelled
-  if (m_error != Error::OK || m_cancelled) {
+  if (m_error != Error::OK || cancelled) {
     abort=true;
-    next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+    next = m_interval_scanners[scanner_id]->abort(is_create);
   }
   else {
     switch(error) {
@@ -158,7 +172,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
         if (m_retry_table_not_found && is_create)
         abort = !(m_interval_scanners[scanner_id]->retry(true, true, is_create));
         else {
-          next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+          next = m_interval_scanners[scanner_id]->abort(is_create);
           abort = true;
         }
         break;
@@ -166,7 +180,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
         if (is_create)
         abort = !(m_interval_scanners[scanner_id]->retry(true, false, is_create));
         else {
-          next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+          next = m_interval_scanners[scanner_id]->abort(is_create);
           abort = true;
         }
         break;
@@ -179,14 +193,14 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
       default:
         Exception e(error, error_msg);
         HT_ERROR_OUT <<  "Received error: is_create=" << is_create << " - "<< e << HT_END;
-        next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+        next = m_interval_scanners[scanner_id]->abort(is_create);
         abort = true;
     }
   }
 
   // if we've seen an error before then don't bother with callback
-  if (m_error != Error::OK || m_cancelled) {
-    maybe_callback_error(next, false);
+  if (m_error != Error::OK || cancelled) {
+    maybe_callback_error(next);
     return;
   }
   else if (abort) {
@@ -194,34 +208,36 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
     m_error = error;
     m_error_msg = error_msg;
     HT_ERROR_OUT << e << HT_END;
-    maybe_callback_error(next, do_callback);
+    maybe_callback_error(next);
   }
 }
 
 void TableScannerAsync::handle_timeout(int scanner_id, const String &error_msg, bool is_create) {
+  bool cancelled = is_cancelled();
   ScopedLock lock(m_mutex);
-  bool do_callback;
   bool next;
 
-  next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
+  next = m_interval_scanners[scanner_id]->abort(is_create);
   // if we've seen an error before or scanner has been cancelled then don't bother with callback
-  if (m_error != Error::OK || m_cancelled) {
-   maybe_callback_error(next, false);
+  if (m_error != Error::OK || cancelled) {
+   maybe_callback_error(next);
    return;
   }
 
   HT_ERROR_OUT << "Unable to complete scan request within " << m_timeout_ms
                << " - " << error_msg << HT_END;
   m_error = Error::REQUEST_TIMEOUT;
-  maybe_callback_error(next, true);
+  maybe_callback_error(next);
 }
 
 void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_create) {
+
+  bool cancelled = is_cancelled();
   ScopedLock lock(m_mutex);
   ScanCellsPtr cells;
 
   // abort interval scanners if we've seen an error previously or scanned has been cancelled
-  bool abort = (m_error != Error::OK || m_cancelled);
+  bool abort = (m_error != Error::OK || cancelled);
 
   bool next;
   bool do_callback;
@@ -231,8 +247,8 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
     // If the scan already encountered an error/cancelled
     // don't bother calling into callback anymore
     if (abort) {
-      next = m_interval_scanners[scanner_id]->abort(&do_callback, is_create);
-      maybe_callback_error(next, false);
+      next = m_interval_scanners[scanner_id]->abort(is_create);
+      maybe_callback_error(next);
     }
     else {
       // send results to interval scanner
@@ -253,12 +269,12 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
     m_error = e.code();
     m_error_msg = e.what();
     next = m_interval_scanners[current_scanner]->has_outstanding_requests();
-    maybe_callback_error(next, true);
+    maybe_callback_error(next);
     throw;
   }
 }
 
-void TableScannerAsync::maybe_callback_error(bool next, bool do_callback) {
+void TableScannerAsync::maybe_callback_error(bool next) {
   bool eos = false;
   // ok to update m_outstanding since caller has locked mutex
   if (next) {
@@ -268,8 +284,10 @@ void TableScannerAsync::maybe_callback_error(bool next, bool do_callback) {
   if (m_outstanding == 0)
     eos = true;
 
-  if (do_callback && !m_cancelled)
+  if (!m_error_shown) {
     m_cb->scan_error(this, m_error, m_error_msg, eos);
+    m_error_shown = true;
+  }
 
   if (eos) {
     m_cb->deregister_scanner(this);
@@ -289,7 +307,7 @@ void TableScannerAsync::maybe_callback_ok(bool next, bool do_callback, ScanCells
     eos = true;
   }
 
-  if (do_callback && !m_cancelled) {
+  if (do_callback) {
     if (eos)
       cells->set_eos();
     HT_ASSERT(cells != 0);

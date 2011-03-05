@@ -596,6 +596,13 @@ service ClientService {
       throws (1:ClientException e),
   
   /**
+   * Cancel tasks outstanding in a future object 
+   * @param ff - Future object 
+   */
+  void cancel_future(1:Future ff)
+      throws (1:ClientException e),
+  
+  /**
    * Fetch asynchronous results 
    * @param ff - Future object which has the asynchronous results
    * @return - result from async scanner/mutator

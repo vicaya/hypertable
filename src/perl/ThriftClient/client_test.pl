@@ -69,6 +69,10 @@ while (1) {
     print Dumper($cell);
     $num_cells++;
   }
+  if ($num_cells >= 6) {
+    $client->cancel_future($future);
+    last;
+  }
 }
 
 $client->close_scanner_async($color_scanner);

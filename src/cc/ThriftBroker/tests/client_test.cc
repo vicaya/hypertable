@@ -47,6 +47,10 @@ struct BasicTest : HqlServiceIf {
     return client->open_future(queue_size);
   }
 
+  void cancel_future(const Future ff) {
+    return client->cancel_future(ff);
+  }
+
   void get_future_result(Result& _result, const Future ff) {
     return client->get_future_result(_result, ff);
   }
@@ -438,13 +442,13 @@ struct BasicTest : HqlServiceIf {
     hql_query(hql_result, ns, "create table FruitLocation(data)");
     hql_query(hql_result, ns, "create table FruitEnergy(data)");
     insert = (String) "insert into FruitColor values ('apple', 'data', 'red'), " +
-             "('kiwi', 'data', 'brown')";
+             "('kiwi', 'data', 'brown'), ('pomegranate', 'data', 'pink')";
     hql_query(hql_result, ns, insert.c_str());
     insert = (String) "insert into FruitLocation values ('apple', 'data', 'Western Asia'), " +
-             "('kiwi','data', 'Southern China')";
+             "('kiwi','data', 'Southern China'), ('pomegranate', 'data', 'Iran')";
     hql_query(hql_result, ns, insert.c_str());
     insert = (String) "insert into FruitEnergy values ('apple', 'data', '2.18kJ/g'), " +
-             "('kiwi', 'data', '0.61Cal/g')";
+             "('kiwi', 'data', '0.61Cal/g'), ('pomegranate', 'data', '0.53Cal/g')";
     hql_query(hql_result, ns, insert.c_str());
 
     RowInterval ri_apple;
@@ -459,9 +463,17 @@ struct BasicTest : HqlServiceIf {
     ri_kiwi.end_row = "kiwi";
     ri_kiwi.__isset.end_row = true;
 
+    RowInterval ri_pomegranate;
+    ri_pomegranate.start_row = "pomegranate";
+    ri_pomegranate.__isset.start_row = true;
+    ri_pomegranate.end_row = "pomegranate";
+    ri_pomegranate.__isset.end_row = true;
+
     ScanSpec ss;
     ss.row_intervals.push_back(ri_apple);
     ss.row_intervals.push_back(ri_kiwi);
+    ss.row_intervals.push_back(ri_pomegranate);
+
     ss.__isset.row_intervals = true;
 
     Future ff = open_future();
@@ -541,7 +553,7 @@ struct BasicTest : HqlServiceIf {
           num_results++;
         }
       }
-      else {
+      else if (num_results < 6){
         get_future_result_serialized(result_serialized, ff);
         if (result_serialized.is_empty)
           break;
@@ -575,6 +587,10 @@ struct BasicTest : HqlServiceIf {
           out << hcell << std::endl;
           num_results++;
         }
+      }
+      else {
+        cancel_future(ff);
+        break;
       }
     }
 

@@ -22,6 +22,7 @@
 
 #include <boost/thread/condition.hpp>
 #include <list>
+#include <map>
 
 #include "ResultCallback.h"
 #include "Result.h"
@@ -56,18 +57,13 @@ namespace Hypertable {
     bool get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out);
 
     /**
-     * Blocking call which stops any results from being added to the queue
-     * and blocks till all outstanding async ops are complete.
-     * TODO: need to pass this call thru to all async scanners/mutators to cancel
-     * incomplete ops
+     * Cancels outstanding scanners/mutators
      */
-    void cancel() {
-      {
-        ScopedLock lock(m_mutex);
-        m_cancelled = true;
-        m_cond.notify_all();
-      }
-    }
+    void cancel();
+
+    void register_scanner(TableScannerAsync *scanner);
+
+    void deregister_scanner(TableScannerAsync *scanner);
 
   private:
     friend class TableScannerAsync;
@@ -86,6 +82,7 @@ namespace Hypertable {
     bool is_cancelled() const {
       return m_cancelled;
     }
+
     void enqueue(ResultPtr &result);
 
     ResultQueue m_queue;
@@ -93,6 +90,8 @@ namespace Hypertable {
     boost::condition m_cond;
     Mutex m_mutex;
     bool m_cancelled;
+    typedef map<uint64_t, TableScannerAsync *> ScannerMap;
+    ScannerMap m_scanner_map;
   };
   typedef intrusive_ptr<Future> FuturePtr;
 }

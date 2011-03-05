@@ -142,6 +142,10 @@ public class BasicClientTest {
             show(result.cells.toString());
             num_cells++;
           }
+          if (num_cells >=6) {
+            client.cancel_future(future);
+            break;
+          }
         }
       }
       finally {

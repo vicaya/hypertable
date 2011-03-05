@@ -22,7 +22,7 @@
 #include "Common/Compat.h"
 
 #include "TableScannerCallback.h"
-#include "TableScannerSync.h"
+#include "TableScanner.h"
 
 namespace Hypertable {
 

@@ -79,6 +79,16 @@ class Iface:
     """
     pass
 
+  def cancel_future(self, ff):
+    """
+    Cancel tasks outstanding in a future object
+    @param ff - Future object
+
+    Parameters:
+     - ff
+    """
+    pass
+
   def get_future_result(self, ff):
     """
     Fetch asynchronous results
@@ -894,6 +904,39 @@ class Client(Iface):
     if result.e != None:
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "open_future failed: unknown result");
+
+  def cancel_future(self, ff):
+    """
+    Cancel tasks outstanding in a future object
+    @param ff - Future object
+
+    Parameters:
+     - ff
+    """
+    self.send_cancel_future(ff)
+    self.recv_cancel_future()
+
+  def send_cancel_future(self, ff):
+    self._oprot.writeMessageBegin('cancel_future', TMessageType.CALL, self._seqid)
+    args = cancel_future_args()
+    args.ff = ff
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_cancel_future(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = cancel_future_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
 
   def get_future_result(self, ff):
     """
@@ -2672,6 +2715,7 @@ class Processor(Iface, TProcessor):
     self._processMap["open_namespace"] = Processor.process_open_namespace
     self._processMap["close_namespace"] = Processor.process_close_namespace
     self._processMap["open_future"] = Processor.process_open_future
+    self._processMap["cancel_future"] = Processor.process_cancel_future
     self._processMap["get_future_result"] = Processor.process_get_future_result
     self._processMap["get_future_result_as_arrays"] = Processor.process_get_future_result_as_arrays
     self._processMap["get_future_result_serialized"] = Processor.process_get_future_result_serialized
@@ -2799,6 +2843,20 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("open_future", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_cancel_future(self, seqid, iprot, oprot):
+    args = cancel_future_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = cancel_future_result()
+    try:
+      self._handler.cancel_future(args.ff)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("cancel_future", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -4053,6 +4111,125 @@ class open_future_result:
       oprot.writeFieldBegin('success', TType.I64, 0)
       oprot.writeI64(self.success)
       oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class cancel_future_args:
+  """
+  Attributes:
+   - ff
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ff', None, None, ), # 1
+  )
+
+  def __init__(self, ff=None,):
+    self.ff = ff
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ff = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('cancel_future_args')
+    if self.ff != None:
+      oprot.writeFieldBegin('ff', TType.I64, 1)
+      oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class cancel_future_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('cancel_future_result')
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)

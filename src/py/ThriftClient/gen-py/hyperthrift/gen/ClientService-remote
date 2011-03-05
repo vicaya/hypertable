@@ -26,6 +26,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  Namespace open_namespace(string ns)'
   print '  void close_namespace(Namespace ns)'
   print '  Future open_future(i32 queue_size)'
+  print '  void cancel_future(Future ff)'
   print '  Result get_future_result(Future ff)'
   print '  ResultAsArrays get_future_result_as_arrays(Future ff)'
   print '  ResultSerialized get_future_result_serialized(Future ff)'
@@ -150,6 +151,12 @@ elif cmd == 'open_future':
     print 'open_future requires 1 args'
     sys.exit(1)
   pp.pprint(client.open_future(eval(args[0]),))
+
+elif cmd == 'cancel_future':
+  if len(args) != 1:
+    print 'cancel_future requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.cancel_future(eval(args[0]),))
 
 elif cmd == 'get_future_result':
   if len(args) != 1:

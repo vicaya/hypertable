@@ -1,4 +1,4 @@
-#
+ #
 # Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 #
 # This program is free software; you can redistribute it and/or
@@ -87,7 +87,6 @@ TableMutatorScatterBuffer.cc
 TableMutatorShared.cc
 TableMutatorSyncDispatchHandler.cc
 TableScanner.cc
-TableScannerSync.cc
 TableScannerAsync.cc
 TableScannerCallback.cc
 TableScannerHandler.cc
@@ -172,6 +171,10 @@ target_link_libraries(large_insert_test Hypertable)
 add_executable(scanner_async_test tests/scanner_async_test.cc)
 target_link_libraries(scanner_async_test Hypertable)
 
+# future_cancel_test 
+add_executable(future_cancel_test tests/future_cancel_test.cc)
+target_link_libraries(future_cancel_test Hypertable)
+
 # row_delete_test
 add_executable(row_delete_test tests/row_delete_test.cc)
 target_link_libraries(row_delete_test Hypertable)
@@ -235,6 +238,7 @@ configure_file(${SRC_DIR}/loadDataSourceTest-qualified-header.dat
                ${DST_DIR}/loadDataSourceTest-qualified-header.dat)
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
+configure_file(${SRC_DIR}/future_cancel_test.cfg ${DST_DIR}/future_cancel_test.cfg)
 configure_file (${SRC_DIR}/MutatorNoLogSyncTest.cfg ${DST_DIR}/MutatorNoLogSyncTest.cfg)
 configure_file(${SRC_DIR}/name_id_mapper_test.cfg ${DST_DIR}/name_id_mapper_test.cfg)
 configure_file(${SRC_DIR}/metalog_test.golden ${DST_DIR}/metalog_test.golden)
@@ -253,6 +257,7 @@ add_test(CommitLog commit_log_test)
 add_test(MetaLog metalog_test)
 add_test(Client-large-block large_insert_test)
 add_test(Client-scanner-async scanner_async_test)
+add_test(Client-future-cancel future_cancel_test)
 add_test(Client-row-delete row_delete_test)
 add_test(Client-periodic-flush periodic_flush_test)
 add_test(NameIdMapper name_id_mapper_test --config=${DST_DIR}/name_id_mapper_test.cfg)

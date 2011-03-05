@@ -26,7 +26,7 @@
 
 namespace Hypertable {
 
-  class TableScannerSync;
+  class TableScanner;
 
   /** Represents an open table.
    */
@@ -34,7 +34,7 @@ namespace Hypertable {
 
   public:
 
-    TableScannerCallback(TableScannerSync *scanner) : m_scanner(scanner) {};
+    TableScannerCallback(TableScanner *scanner) : m_scanner(scanner) {};
 
     /**
      * Callback method for successful scan
@@ -63,7 +63,7 @@ namespace Hypertable {
 
 
   private:
-    TableScannerSync *m_scanner;
+    TableScanner *m_scanner;
   };
   typedef intrusive_ptr<TableScannerCallback> TableScannerCallbackPtr;
 } // namesapce Hypertable

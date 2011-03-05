@@ -717,6 +717,135 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_cancel_future_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_cancel_future_args->mk_accessors( qw( ff ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ff} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ff}) {
+      $self->{ff} = $vals->{ff};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_cancel_future_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ff});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_cancel_future_args');
+  if (defined $self->{ff}) {
+    $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ff});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_cancel_future_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_cancel_future_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_cancel_future_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_cancel_future_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_get_future_result_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientService_get_future_result_args->mk_accessors( qw( ff ) );
@@ -8300,6 +8429,13 @@ sub open_future{
   die 'implement interface';
 }
 
+sub cancel_future{
+  my $self = shift;
+  my $ff = shift;
+
+  die 'implement interface';
+}
+
 sub get_future_result{
   my $self = shift;
   my $ff = shift;
@@ -8718,6 +8854,13 @@ sub open_future{
 
   my $queue_size = ($request->{'queue_size'}) ? $request->{'queue_size'} : undef;
   return $self->{impl}->open_future($queue_size);
+}
+
+sub cancel_future{
+  my ($self, $request) = @_;
+
+  my $ff = ($request->{'ff'}) ? $request->{'ff'} : undef;
+  return $self->{impl}->cancel_future($ff);
 }
 
 sub get_future_result{
@@ -9330,6 +9473,49 @@ sub recv_open_future{
     die $result->{e};
   }
   die "open_future failed: unknown result";
+}
+sub cancel_future{
+  my $self = shift;
+  my $ff = shift;
+
+    $self->send_cancel_future($ff);
+  $self->recv_cancel_future();
+}
+
+sub send_cancel_future{
+  my $self = shift;
+  my $ff = shift;
+
+  $self->{output}->writeMessageBegin('cancel_future', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_cancel_future_args();
+  $args->{ff} = $ff;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_cancel_future{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_cancel_future_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
 }
 sub get_future_result{
   my $self = shift;
@@ -11626,6 +11812,23 @@ sub process_open_future {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('open_future', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_cancel_future {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_cancel_future_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_cancel_future_result();
+    eval {
+      $self->{handler}->cancel_future($args->ff);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('cancel_future', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

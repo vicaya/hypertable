@@ -119,6 +119,7 @@ SELECT * FROM test WHERE (ROW = 'a' or ROW = 'c' or ROW = 'g');
 SELECT * FROM test WHERE ('a' < ROW <= 'c' or ROW = 'g' or ROW = 'c');
 SELECT * FROM test WHERE (ROW < 'c' or ROW > 'd');
 SELECT * FROM test WHERE (ROW < 'b' or ROW =^ 'b');
+SELECT * FROM test WHERE (ROW =^'a' or 'd' < ROW < 'b' or ROW =^ 'b');
 DROP TABLE IF EXISTS test;
 CREATE TABLE test ( tag );
 INSERT INTO test VALUES("how", "tag:A", "n");

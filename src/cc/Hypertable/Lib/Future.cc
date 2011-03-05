@@ -82,10 +82,10 @@ void Future::enqueue(ResultPtr &result) {
   while (is_full() && !is_cancelled()) {
     m_cond.wait(lock);
   }
-  if (!is_full() && !is_cancelled()) {
+  if (!is_cancelled()) {
     m_queue.push_back(result);
-    m_cond.notify_one();
   }
+  m_cond.notify_one();
 }
 
 void Future::scan_error(TableScannerAsync *scanner, int error, const String &error_msg,
@@ -104,5 +104,30 @@ void Future::update_error(TableMutator *mutator, int error, const String &error_
   enqueue(result);
 }
 
+void Future::cancel() {
+  ScopedLock lock(m_mutex);
+  m_cancelled = true;
+  ScannerMap::iterator it = m_scanner_map.begin();
+  while (it != m_scanner_map.end()) {
+    it->second->cancel();
+    it++;
+  }
+  m_cond.notify_all();
 
+}
 
+void Future::register_scanner(TableScannerAsync *scanner) {
+  ScopedLock lock(m_mutex);
+  uint64_t addr = (uint64_t) scanner;
+  ScannerMap::iterator it = m_scanner_map.find(addr);
+  HT_ASSERT(it == m_scanner_map.end());
+  m_scanner_map[addr] = scanner;
+}
+
+void Future::deregister_scanner(TableScannerAsync *scanner) {
+  ScopedLock lock(m_mutex);
+  uint64_t addr = (uint64_t) scanner;
+  ScannerMap::iterator it = m_scanner_map.find(addr);
+  HT_ASSERT(it != m_scanner_map.end());
+  m_scanner_map.erase(it);
+}

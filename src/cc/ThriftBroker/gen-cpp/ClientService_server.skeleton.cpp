@@ -47,6 +47,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("open_future\n");
   }
 
+  void cancel_future(const Future ff) {
+    // Your implementation goes here
+    printf("cancel_future\n");
+  }
+
   void get_future_result(Result& _return, const Future ff) {
     // Your implementation goes here
     printf("get_future_result\n");

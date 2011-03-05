@@ -39,6 +39,10 @@ begin
           pp cell
           num_cells = num_cells+1
         end
+        if (num_cells >= 6)
+          client.cancel_future(future)
+          break
+        end
       end
       client.close_scanner_async(color_scanner)
       client.close_scanner_async(location_scanner)

@@ -58,14 +58,14 @@ namespace Hypertable {
       m_cond.notify_one();
     }
 
-    void next_result(ScanCellsPtr &cells, int error, String &error_msg) {
+    void next_result(ScanCellsPtr &cells, int *error, String &error_msg) {
       ApplicationHandler *app_handler;
       cells = 0;
-      error = Error::OK;
+      *error = Error::OK;
       while(true) {
         ScopedLock lock(m_mutex);
         if (m_error != Error::OK) {
-          error = m_error;
+          *error = m_error;
           error_msg = m_error_msg;
           break;
         }
@@ -83,7 +83,7 @@ namespace Hypertable {
         m_work_queue.pop_front();
         delete app_handler;
       }
-      HT_ASSERT(cells != 0 || error != Error::OK);
+      HT_ASSERT(cells != 0 || *error != Error::OK);
     }
 
 

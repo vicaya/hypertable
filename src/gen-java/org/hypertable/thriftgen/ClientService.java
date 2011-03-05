@@ -84,6 +84,14 @@ public class ClientService {
     public long open_future(int queue_size) throws ClientException, TException;
 
     /**
+     * Cancel tasks outstanding in a future object
+     * @param ff - Future object
+     * 
+     * @param ff
+     */
+    public void cancel_future(long ff) throws ClientException, TException;
+
+    /**
      * Fetch asynchronous results
      * @param ff - Future object which has the asynchronous results
      * @return - result from async scanner/mutator
@@ -628,6 +636,8 @@ public class ClientService {
 
     public void open_future(int queue_size, AsyncMethodCallback<AsyncClient.open_future_call> resultHandler) throws TException;
 
+    public void cancel_future(long ff, AsyncMethodCallback<AsyncClient.cancel_future_call> resultHandler) throws TException;
+
     public void get_future_result(long ff, AsyncMethodCallback<AsyncClient.get_future_result_call> resultHandler) throws TException;
 
     public void get_future_result_as_arrays(long ff, AsyncMethodCallback<AsyncClient.get_future_result_as_arrays_call> resultHandler) throws TException;
@@ -943,6 +953,42 @@ public class ClientService {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "open_future failed: unknown result");
+    }
+
+    public void cancel_future(long ff) throws ClientException, TException
+    {
+      send_cancel_future(ff);
+      recv_cancel_future();
+    }
+
+    public void send_cancel_future(long ff) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("cancel_future", TMessageType.CALL, ++seqid_));
+      cancel_future_args args = new cancel_future_args();
+      args.setFf(ff);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_cancel_future() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "cancel_future failed: out of sequence response");
+      }
+      cancel_future_result result = new cancel_future_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
     }
 
     public Result get_future_result(long ff) throws ClientException, TException
@@ -2878,6 +2924,37 @@ public class ClientService {
       }
     }
 
+    public void cancel_future(long ff, AsyncMethodCallback<cancel_future_call> resultHandler) throws TException {
+      checkReady();
+      cancel_future_call method_call = new cancel_future_call(ff, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class cancel_future_call extends TAsyncMethodCall {
+      private long ff;
+      public cancel_future_call(long ff, AsyncMethodCallback<cancel_future_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ff = ff;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("cancel_future", TMessageType.CALL, 0));
+        cancel_future_args args = new cancel_future_args();
+        args.setFf(ff);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_cancel_future();
+      }
+    }
+
     public void get_future_result(long ff, AsyncMethodCallback<get_future_result_call> resultHandler) throws TException {
       checkReady();
       get_future_result_call method_call = new get_future_result_call(ff, resultHandler, this, protocolFactory, transport);
@@ -4453,6 +4530,7 @@ public class ClientService {
       processMap_.put("open_namespace", new open_namespace());
       processMap_.put("close_namespace", new close_namespace());
       processMap_.put("open_future", new open_future());
+      processMap_.put("cancel_future", new cancel_future());
       processMap_.put("get_future_result", new get_future_result());
       processMap_.put("get_future_result_as_arrays", new get_future_result_as_arrays());
       processMap_.put("get_future_result_serialized", new get_future_result_serialized());
@@ -4710,6 +4788,44 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new TMessage("open_future", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class cancel_future implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        cancel_future_args args = new cancel_future_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("cancel_future", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        cancel_future_result result = new cancel_future_result();
+        try {
+          iface_.cancel_future(args.ff);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing cancel_future", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing cancel_future");
+          oprot.writeMessageBegin(new TMessage("cancel_future", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("cancel_future", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -9565,6 +9681,566 @@ public class ClientService {
       sb.append(this.success);
       first = false;
       if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class cancel_future_args implements TBase<cancel_future_args, cancel_future_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("cancel_future_args");
+
+    private static final TField FF_FIELD_DESC = new TField("ff", TType.I64, (short)1);
+
+    public long ff;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      FF((short)1, "ff");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // FF
+            return FF;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __FF_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.FF, new FieldMetaData("ff", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Future")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(cancel_future_args.class, metaDataMap);
+    }
+
+    public cancel_future_args() {
+    }
+
+    public cancel_future_args(
+      long ff)
+    {
+      this();
+      this.ff = ff;
+      setFfIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public cancel_future_args(cancel_future_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ff = other.ff;
+    }
+
+    public cancel_future_args deepCopy() {
+      return new cancel_future_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setFfIsSet(false);
+      this.ff = 0;
+    }
+
+    public long getFf() {
+      return this.ff;
+    }
+
+    public cancel_future_args setFf(long ff) {
+      this.ff = ff;
+      setFfIsSet(true);
+      return this;
+    }
+
+    public void unsetFf() {
+      __isset_bit_vector.clear(__FF_ISSET_ID);
+    }
+
+    /** Returns true if field ff is set (has been asigned a value) and false otherwise */
+    public boolean isSetFf() {
+      return __isset_bit_vector.get(__FF_ISSET_ID);
+    }
+
+    public void setFfIsSet(boolean value) {
+      __isset_bit_vector.set(__FF_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case FF:
+        if (value == null) {
+          unsetFf();
+        } else {
+          setFf((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case FF:
+        return new Long(getFf());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case FF:
+        return isSetFf();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof cancel_future_args)
+        return this.equals((cancel_future_args)that);
+      return false;
+    }
+
+    public boolean equals(cancel_future_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ff = true;
+      boolean that_present_ff = true;
+      if (this_present_ff || that_present_ff) {
+        if (!(this_present_ff && that_present_ff))
+          return false;
+        if (this.ff != that.ff)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(cancel_future_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      cancel_future_args typedOther = (cancel_future_args)other;
+
+      lastComparison = Boolean.valueOf(isSetFf()).compareTo(typedOther.isSetFf());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFf()) {
+        lastComparison = TBaseHelper.compareTo(this.ff, typedOther.ff);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // FF
+            if (field.type == TType.I64) {
+              this.ff = iprot.readI64();
+              setFfIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(FF_FIELD_DESC);
+      oprot.writeI64(this.ff);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("cancel_future_args(");
+      boolean first = true;
+
+      sb.append("ff:");
+      sb.append(this.ff);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class cancel_future_result implements TBase<cancel_future_result, cancel_future_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("cancel_future_result");
+
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(cancel_future_result.class, metaDataMap);
+    }
+
+    public cancel_future_result() {
+    }
+
+    public cancel_future_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public cancel_future_result(cancel_future_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public cancel_future_result deepCopy() {
+      return new cancel_future_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public cancel_future_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof cancel_future_result)
+        return this.equals((cancel_future_result)that);
+      return false;
+    }
+
+    public boolean equals(cancel_future_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(cancel_future_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      cancel_future_result typedOther = (cancel_future_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("cancel_future_result(");
+      boolean first = true;
+
       sb.append("e:");
       if (this.e == null) {
         sb.append("null");

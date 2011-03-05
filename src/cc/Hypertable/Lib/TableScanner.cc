@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -35,74 +35,21 @@ extern "C" {
 using namespace Hypertable;
 
 
-/**
- * TODO: Asynchronously destroy dangling scanners on EOS
- */
 TableScanner::TableScanner(Comm *comm, Table *table,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
     uint32_t timeout_ms, bool retry_table_not_found)
-  : m_eos(false), m_scanneri(0), m_rows_seen(0), m_bytes_scanned(0) {
+  : m_callback(this), m_cur_cells(0), m_cur_cells_index(0), m_cur_cells_size(0),
+    m_error(Error::OK),
+    m_eos(false), m_bytes_scanned(0) {
 
-  HT_ASSERT(timeout_ms);
-
-  IntervalScannerPtr ri_scanner;
-  ScanSpec interval_scan_spec;
-  Timer timer(timeout_ms);
-
-  if (scan_spec.row_intervals.empty()) {
-    if (scan_spec.cell_intervals.empty()) {
-      ri_scanner = new IntervalScanner(comm, table, range_locator, scan_spec,
-                                       timeout_ms, retry_table_not_found);
-      m_interval_scanners.push_back(ri_scanner);
-    }
-    else {
-      for (size_t i=0; i<scan_spec.cell_intervals.size(); i++) {
-        scan_spec.base_copy(interval_scan_spec);
-        interval_scan_spec.cell_intervals.push_back(
-            scan_spec.cell_intervals[i]);
-        ri_scanner = new IntervalScanner(comm, table, range_locator,
-            interval_scan_spec, timeout_ms, retry_table_not_found);
-        m_interval_scanners.push_back(ri_scanner);
-      }
-    }
-  }
-  else if (scan_spec.scan_and_filter_rows) {
-    ScanSpec rowset_scan_spec;
-    scan_spec.base_copy(rowset_scan_spec);
-    rowset_scan_spec.row_intervals.reserve(scan_spec.row_intervals.size());
-    foreach (const RowInterval& ri, scan_spec.row_intervals) {
-      if (ri.start != ri.end && strcmp(ri.start, ri.end) != 0) {
-        scan_spec.base_copy(interval_scan_spec);
-        interval_scan_spec.row_intervals.push_back(ri);
-        ri_scanner = new IntervalScanner(comm, table, range_locator,
-            interval_scan_spec, timeout_ms, retry_table_not_found);
-        m_interval_scanners.push_back(ri_scanner);
-      }
-      else
-        rowset_scan_spec.row_intervals.push_back(ri);
-    }
-    if (rowset_scan_spec.row_intervals.size()) {
-      ri_scanner = new IntervalScanner(comm, table, range_locator, rowset_scan_spec,
-                                       timeout_ms, retry_table_not_found);
-      m_interval_scanners.push_back(ri_scanner);
-    }
-  }
-  else {
-    for (size_t i=0; i<scan_spec.row_intervals.size(); i++) {
-      scan_spec.base_copy(interval_scan_spec);
-      interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
-      ri_scanner = new IntervalScanner(comm, table, range_locator,
-          interval_scan_spec, timeout_ms, retry_table_not_found);
-      m_interval_scanners.push_back(ri_scanner);
-    }
-  }
+  m_queue = new TableScannerQueue;
+  ApplicationQueuePtr app_queue = (ApplicationQueue *)m_queue.get();
+  m_scanner = new TableScannerAsync(comm, app_queue, table, range_locator, scan_spec,
+                                    timeout_ms, retry_table_not_found, &m_callback);
 }
 
 
 bool TableScanner::next(Cell &cell) {
-
-  if (m_eos)
-    return false;
 
   if (m_ungot.row_key) {
     cell = m_ungot;
@@ -110,31 +57,47 @@ bool TableScanner::next(Cell &cell) {
     return true;
   }
 
-  do {
-    if (m_interval_scanners[m_scanneri]->next(cell))
+  if (m_eos)
+    return false;
+
+  while (true) {
+
+    // serve out ready results
+    if (m_cur_cells_index < m_cur_cells_size) {
+      m_cur_cells->get_cell_unchecked(cell, m_cur_cells_index);
+      m_cur_cells_index++;
       return true;
+    }
 
-    m_rows_seen += m_interval_scanners[m_scanneri]->get_rows_seen();
-    m_bytes_scanned += m_interval_scanners[m_scanneri]->bytes_scanned();
+    if (m_cur_cells != 0) {
+      m_eos = m_cur_cells->get_eos();
+      if (m_eos)
+        return false;
+    }
 
-    m_scanneri++;
-
-    if (m_scanneri < m_interval_scanners.size())
-      m_interval_scanners[m_scanneri]->set_rows_seen(m_rows_seen);
-    else
-      break;
-  } while (true);
-
-  m_eos = true;
-  return false;
+    m_queue->next_result(m_cur_cells, &m_error, m_error_msg);
+    if (m_error != Error::OK) {
+      m_eos = true;
+      HT_THROW(m_error, m_error_msg);
+    }
+    m_cur_cells_size = m_cur_cells->size();
+    m_cur_cells_index=0;
+  }
 }
-
 
 void TableScanner::unget(const Cell &cell) {
   if (m_ungot.row_key)
     HT_THROW_(Error::DOUBLE_UNGET);
 
   m_ungot = cell;
+}
+
+void TableScanner::scan_ok(ScanCellsPtr &cells) {
+  m_queue->add_cells(cells);
+}
+
+void TableScanner::scan_error(int error, const String &error_msg) {
+  m_queue->set_error(error, error_msg);
 }
 
 

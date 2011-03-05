@@ -67,7 +67,7 @@ namespace Hypertable {
 
     int32_t get_rows_seen() { return m_rows_seen; }
     void    set_rows_seen(int32_t n) { m_rows_seen = n; }
-    bool abort(bool *show_results, bool is_create);
+    bool abort(bool is_create);
     bool retry(bool refresh, bool hard, bool is_create);
     bool handle_result(bool *show_results, ScanCellsPtr &cells, EventPtr &event, bool is_create);
     bool set_current(bool *show_results, ScanCellsPtr &cells, bool abort);

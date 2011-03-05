@@ -68,6 +68,8 @@ namespace Hypertable {
      */
     void cancel();
 
+    bool is_cancelled();
+
     /**
      *
      */
@@ -127,7 +129,7 @@ namespace Hypertable {
     const ScanSpec &get_scan_spec() const { return m_scan_spec; }
   private:
     void maybe_callback_ok(bool next, bool do_callback, ScanCellsPtr &cells);
-    void maybe_callback_error(bool next, bool do_callback);
+    void maybe_callback_error(bool next);
     void wait_for_completion();
 
     std::vector<IntervalScannerAsyncPtr>  m_interval_scanners;
@@ -140,6 +142,7 @@ namespace Hypertable {
     ResultCallback     *m_cb;
     int                 m_current_scanner;
     Mutex               m_mutex;
+    Mutex               m_cancel_mutex;
     boost::condition    m_cond;
     int                 m_outstanding;
     int                 m_error;
@@ -148,6 +151,7 @@ namespace Hypertable {
     Table              *m_table;
     ScanSpec            m_scan_spec;
     bool                m_cancelled;
+    bool                m_error_shown;
   };
 
   typedef intrusive_ptr<TableScannerAsync> TableScannerAsyncPtr;

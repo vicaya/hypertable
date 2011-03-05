@@ -896,6 +896,17 @@ public:
     } RETHROW()
   }
 
+  virtual void
+  cancel_future(ThriftGen::Future ff) {
+    LOG_API("future=" << ff);
+
+    try {
+      FuturePtr &future_ptr = get_future(ff);
+      future_ptr->cancel();
+    } RETHROW()
+  }
+
+
   virtual void close_future(const ThriftGen::Future ff) {
     LOG_API("future="<< ff);
 

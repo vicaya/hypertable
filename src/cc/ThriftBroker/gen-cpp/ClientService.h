@@ -19,6 +19,7 @@ class ClientServiceIf {
   virtual Namespace open_namespace(const std::string& ns) = 0;
   virtual void close_namespace(const Namespace ns) = 0;
   virtual Future open_future(const int32_t queue_size) = 0;
+  virtual void cancel_future(const Future ff) = 0;
   virtual void get_future_result(Result& _return, const Future ff) = 0;
   virtual void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) = 0;
   virtual void get_future_result_serialized(ResultSerialized& _return, const Future ff) = 0;
@@ -85,6 +86,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
   Future open_future(const int32_t /* queue_size */) {
     Future _return = 0;
     return _return;
+  }
+  void cancel_future(const Future /* ff */) {
+    return;
   }
   void get_future_result(Result& /* _return */, const Future /* ff */) {
     return;
@@ -745,6 +749,106 @@ class ClientService_open_future_presult {
   ClientException e;
 
   _ClientService_open_future_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_cancel_future_args__isset {
+  _ClientService_cancel_future_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_cancel_future_args__isset;
+
+class ClientService_cancel_future_args {
+ public:
+
+  ClientService_cancel_future_args() : ff(0) {
+  }
+
+  virtual ~ClientService_cancel_future_args() throw() {}
+
+  Future ff;
+
+  _ClientService_cancel_future_args__isset __isset;
+
+  bool operator == (const ClientService_cancel_future_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_cancel_future_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_cancel_future_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_cancel_future_pargs {
+ public:
+
+
+  virtual ~ClientService_cancel_future_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_cancel_future_result__isset {
+  _ClientService_cancel_future_result__isset() : e(false) {}
+  bool e;
+} _ClientService_cancel_future_result__isset;
+
+class ClientService_cancel_future_result {
+ public:
+
+  ClientService_cancel_future_result() {
+  }
+
+  virtual ~ClientService_cancel_future_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_cancel_future_result__isset __isset;
+
+  bool operator == (const ClientService_cancel_future_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_cancel_future_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_cancel_future_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_cancel_future_presult__isset {
+  _ClientService_cancel_future_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_cancel_future_presult__isset;
+
+class ClientService_cancel_future_presult {
+ public:
+
+
+  virtual ~ClientService_cancel_future_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_cancel_future_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -5721,6 +5825,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   Future open_future(const int32_t queue_size);
   void send_open_future(const int32_t queue_size);
   Future recv_open_future();
+  void cancel_future(const Future ff);
+  void send_cancel_future(const Future ff);
+  void recv_cancel_future();
   void get_future_result(Result& _return, const Future ff);
   void send_get_future_result(const Future ff);
   void recv_get_future_result(Result& _return);
@@ -5874,6 +5981,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_open_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_close_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_open_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_cancel_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_future_result(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_future_result_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_future_result_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
@@ -5927,6 +6035,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["open_namespace"] = &ClientServiceProcessor::process_open_namespace;
     processMap_["close_namespace"] = &ClientServiceProcessor::process_close_namespace;
     processMap_["open_future"] = &ClientServiceProcessor::process_open_future;
+    processMap_["cancel_future"] = &ClientServiceProcessor::process_cancel_future;
     processMap_["get_future_result"] = &ClientServiceProcessor::process_get_future_result;
     processMap_["get_future_result_as_arrays"] = &ClientServiceProcessor::process_get_future_result_as_arrays;
     processMap_["get_future_result_serialized"] = &ClientServiceProcessor::process_get_future_result_serialized;
@@ -6030,6 +6139,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
       } else {
         ifaces_[i]->open_future(queue_size);
       }
+    }
+  }
+
+  void cancel_future(const Future ff) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->cancel_future(ff);
     }
   }
 

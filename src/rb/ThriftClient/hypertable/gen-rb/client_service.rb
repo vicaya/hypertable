@@ -90,6 +90,21 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_future failed: unknown result')
                 end
 
+                def cancel_future(ff)
+                  send_cancel_future(ff)
+                  recv_cancel_future()
+                end
+
+                def send_cancel_future(ff)
+                  send_message('cancel_future', Cancel_future_args, :ff => ff)
+                end
+
+                def recv_cancel_future()
+                  result = receive_message(Cancel_future_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def get_future_result(ff)
                   send_get_future_result(ff)
                   return recv_get_future_result()
@@ -851,6 +866,17 @@ require 'client_types'
                   write_result(result, oprot, 'open_future', seqid)
                 end
 
+                def process_cancel_future(seqid, iprot, oprot)
+                  args = read_args(iprot, Cancel_future_args)
+                  result = Cancel_future_result.new()
+                  begin
+                    @handler.cancel_future(args.ff)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'cancel_future', seqid)
+                end
+
                 def process_get_future_result(seqid, iprot, oprot)
                   args = read_args(iprot, Get_future_result_args)
                   result = Get_future_result_result.new()
@@ -1503,6 +1529,38 @@ require 'client_types'
 
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::I64, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Cancel_future_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                FF = 1
+
+                FIELDS = {
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Cancel_future_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

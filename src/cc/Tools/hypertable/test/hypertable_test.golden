@@ -265,6 +265,8 @@ a	b	n
 az	b	n
 b	b	n
 bz	b	n
+SELECT * FROM test WHERE (ROW =^'a' or 'd' < ROW < 'b' or ROW =^ 'b');
+Error: start_row (d) > end_row (b) - HYPERTABLE bad scan specification
 DROP TABLE IF EXISTS test;
 CREATE TABLE test ( tag );
 INSERT INTO test VALUES("how", "tag:A", "n");

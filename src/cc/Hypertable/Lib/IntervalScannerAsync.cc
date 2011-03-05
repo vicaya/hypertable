@@ -177,6 +177,7 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
   // start scan asynchronously (can trigger table not found exceptions)
   m_create_scanner_row = m_start_row;
   find_range_and_start_scan(m_create_scanner_row.c_str());
+  HT_ASSERT(m_create_outstanding && !m_fetch_outstanding);
 }
 
 IntervalScannerAsync::~IntervalScannerAsync() {
@@ -272,9 +273,8 @@ void IntervalScannerAsync::reset_outstanding_status(bool is_create, bool reset_t
   }
 }
 
-bool IntervalScannerAsync::abort(bool *show_results, bool is_create) {
+bool IntervalScannerAsync::abort(bool is_create) {
  reset_outstanding_status(is_create, true);
- *show_results = m_eos;
   m_eos = true;
   m_aborted = true;
   return (!has_outstanding_requests());
@@ -422,11 +422,10 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
 }
 
 bool IntervalScannerAsync::set_current(bool *show_results, ScanCellsPtr &cells, bool abort) {
+
+  HT_ASSERT(!m_fetch_outstanding && !m_current );
   m_current = true;
   *show_results = false;
-
-  HT_ASSERT(!m_fetch_outstanding);
-
   if (m_create_outstanding)
     return false;
 

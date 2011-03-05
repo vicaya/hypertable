@@ -297,7 +297,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
-  TableScannerSyncPtr scanner;
+  TableScannerPtr scanner;
   boost::iostreams::filtering_ostream fout;
   FILE *outf = cb.output;
   int out_fd = -1;
@@ -305,7 +305,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
   String localfs = "file://";
 
   table = ns->open_table(state.table_name);
-  scanner = table->create_scanner_sync(state.scan.builder.get(), 0, true);
+  scanner = table->create_scanner(state.scan.builder.get(), 0, true);
 
   // whether it's select into file
   if (!state.scan.outfile.empty()) {
