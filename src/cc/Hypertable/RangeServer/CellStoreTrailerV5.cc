@@ -111,7 +111,7 @@ void CellStoreTrailerV5::serialize(uint8_t *buf) {
   encode_i8(&buf, bloom_filter_mode);
   encode_i8(&buf, bloom_filter_hash_count);
   encode_i16(&buf, version);
-  assert(version == 4);
+  assert(version == 5);
   assert((buf-base) == (int)CellStoreTrailerV5::size());
   (void)base;
 }
