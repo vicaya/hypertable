@@ -820,6 +820,10 @@ int main(int argc, char **argv) {
     if (system(cmd_str.c_str()) != 0)
       return 1;
 
+    // close cell store
+    scanner = 0;
+    cs = 0;
+
     client->rmdir(testdir);
   }
   catch (Exception &e) {
