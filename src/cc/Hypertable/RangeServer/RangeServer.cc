@@ -2422,9 +2422,9 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
       table_stat.table_id = range_data[ii]->table_id;
     else if (strcmp(table_stat.table_id.c_str(), range_data[ii]->table_id)) {
       if (table_stat.disk_used > 0)
-	table_stat.compression_ratio /= (double)table_stat.disk_used;
+	table_stat.compression_ratio = (double)table_stat.disk_used / table_stat.compression_ratio;
       else
-	table_stat.compression_ratio = 0;
+	table_stat.compression_ratio = 1.0;
       m_stats->tables.push_back(table_stat);
       table_stat.clear();
       table_stat.table_id = range_data[ii]->table_id;
@@ -2439,7 +2439,9 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     table_stat.cells_written += range_data[ii]->cells_written;
     table_stat.bytes_written += range_data[ii]->bytes_written;
     table_stat.disk_used += range_data[ii]->disk_used;
-    table_stat.compression_ratio += range_data[ii]->compression_ratio * (double)range_data[ii]->disk_used;
+    table_stat.key_bytes += range_data[ii]->key_bytes;
+    table_stat.value_bytes += range_data[ii]->value_bytes;
+    table_stat.compression_ratio += (double)range_data[ii]->disk_used / range_data[ii]->compression_ratio;
     table_stat.memory_used += range_data[ii]->memory_used;
     table_stat.memory_allocated += range_data[ii]->memory_allocated;
     table_stat.shadow_cache_memory += range_data[ii]->shadow_cache_memory;
@@ -2455,9 +2457,9 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   m_stats->range_count = range_data.size();
   if (table_stat.table_id != "") {
     if (table_stat.disk_used > 0)
-      table_stat.compression_ratio /= (double)table_stat.disk_used;
+      table_stat.compression_ratio = (double)table_stat.disk_used / table_stat.compression_ratio;
     else
-      table_stat.compression_ratio = 0;
+      table_stat.compression_ratio = 1.0;
     m_stats->tables.push_back(table_stat);
   }
 

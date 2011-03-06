@@ -106,6 +106,13 @@ namespace Hypertable {
       return m_arena.total();
     }
 
+    void get_counts(size_t *cellsp, int64_t *key_bytesp, int64_t *value_bytesp) {
+      ScopedLock lock(m_mutex);
+      *cellsp = m_cell_map.size();
+      *key_bytesp = m_key_bytes;
+      *value_bytesp = m_value_bytes;
+    }
+
     int32_t get_collision_count() { return m_collisions; }
 
     int32_t get_delete_count() { return m_deletes; }
@@ -136,6 +143,8 @@ namespace Hypertable {
     CellMap            m_cell_map;
     int32_t            m_deletes;
     int32_t            m_collisions;
+    int64_t            m_key_bytes;
+    int64_t            m_value_bytes;
     bool               m_frozen;
     bool               m_have_counter_deletes;
 

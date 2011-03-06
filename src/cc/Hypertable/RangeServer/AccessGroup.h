@@ -43,7 +43,7 @@
 #include "AccessGroupGarbageTracker.h"
 #include "CellCache.h"
 #include "CellStore.h"
-#include "CellStoreTrailerV4.h"
+#include "CellStoreTrailerV5.h"
 #include "LiveFileTracker.h"
 #include "MaintenanceFlag.h"
 
@@ -82,6 +82,8 @@ namespace Hypertable {
       int64_t disk_used;
       int64_t disk_estimate;
       int64_t log_space_pinned;
+      int64_t key_bytes;
+      int64_t value_bytes;
       uint32_t file_count;
       int32_t deletes;
       int32_t outstanding_scanners;
@@ -117,25 +119,39 @@ namespace Hypertable {
       CellStoreInfo() : cell_count(0), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0),
       bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0) { }
       void init_from_trailer() {
+        int divisor = 0;
         try {
-           int divisor = (boost::any_cast<uint32_t>(cs->get_trailer()->get("flags")) & CellStoreTrailerV4::SPLIT) ? 2 : 1;
-          cell_count = boost::any_cast<int64_t>(cs->get_trailer()->get("total_entries"))
-                       / divisor;
+          divisor = (boost::any_cast<uint32_t>(cs->get_trailer()->get("flags")) & CellStoreTrailerV5::SPLIT) ? 2 : 1;
+          cell_count = boost::any_cast<int64_t>(cs->get_trailer()->get("total_entries")) / divisor;
           timestamp_min = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_min"));
           timestamp_max = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_max"));
           expirable_data = boost::any_cast<int64_t>(cs->get_trailer()->get("expirable_data"))
                            / divisor ;
         }
         catch (std::exception &e) {
+          divisor = 0;
           cell_count = 0;
           timestamp_min = TIMESTAMP_MAX;
           timestamp_max = TIMESTAMP_MIN;
           expirable_data = 0;
         }
+        try {
+          if (divisor) {
+            key_bytes = boost::any_cast<int64_t>(cs->get_trailer()->get("key_bytes")) / divisor;
+            value_bytes = boost::any_cast<int64_t>(cs->get_trailer()->get("value_bytes")) /divisor;
+          }
+          else
+            key_bytes = value_bytes = 0;
+        }
+        catch (std::exception &e) {
+          key_bytes = value_bytes = 0;
+        }
       }
       CellStorePtr cs;
       CellCachePtr shadow_cache;
       uint64_t cell_count;
+      int64_t key_bytes;
+      int64_t value_bytes;
       int64_t shadow_cache_ecr;
       uint32_t shadow_cache_hits;
       uint32_t bloom_filter_accesses;

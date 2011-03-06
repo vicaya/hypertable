@@ -101,6 +101,8 @@ namespace Hypertable {
       uint64_t cells_written;
       uint64_t bytes_written;
       uint64_t disk_used;
+      double average_key_size;
+      double average_value_size;
       double compression_ratio;
       uint64_t memory_used;
       uint64_t memory_allocated;

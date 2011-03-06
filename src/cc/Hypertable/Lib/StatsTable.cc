@@ -52,6 +52,8 @@ void StatsTable::clear() {
   cells_written = 0;
   bytes_written = 0;
   disk_used = 0;
+  key_bytes = 0;
+  value_bytes = 0;
   compression_ratio = 0.0;
   memory_used = 0;
   memory_allocated = 0;
@@ -78,6 +80,8 @@ size_t StatsTable::encoded_length_group(int group) const {
       Serialization::encoded_length_vi64(cells_written) + \
       Serialization::encoded_length_vi64(bytes_written) + \
       Serialization::encoded_length_vi64(disk_used) + \
+      Serialization::encoded_length_vi64(key_bytes) + \
+      Serialization::encoded_length_vi64(value_bytes) + \
       Serialization::encoded_length_double() + \
       Serialization::encoded_length_vi64(memory_used) + \
       Serialization::encoded_length_vi64(memory_allocated) + \
@@ -107,6 +111,8 @@ void StatsTable::encode_group(int group, uint8_t **bufp) const {
     Serialization::encode_vi64(bufp, cells_written);
     Serialization::encode_vi64(bufp, bytes_written);
     Serialization::encode_vi64(bufp, disk_used);
+    Serialization::encode_vi64(bufp, key_bytes);
+    Serialization::encode_vi64(bufp, value_bytes);
     Serialization::encode_double(bufp, compression_ratio);
     Serialization::encode_vi64(bufp, memory_used);
     Serialization::encode_vi64(bufp, memory_allocated);
@@ -135,6 +141,8 @@ void StatsTable::decode_group(int group, uint16_t len, const uint8_t **bufp, siz
     cells_written = Serialization::decode_vi64(bufp, remainp);
     bytes_written = Serialization::decode_vi64(bufp, remainp);
     disk_used = Serialization::decode_vi64(bufp, remainp);
+    key_bytes = Serialization::decode_vi64(bufp, remainp);
+    value_bytes = Serialization::decode_vi64(bufp, remainp);
     compression_ratio = Serialization::decode_double(bufp, remainp);
     memory_used = Serialization::decode_vi64(bufp, remainp);
     memory_allocated = Serialization::decode_vi64(bufp, remainp);
@@ -164,6 +172,8 @@ bool StatsTable::operator==(const StatsTable &other) const {
       cells_written == other.cells_written &&
       bytes_written == other.bytes_written &&
       disk_used == other.disk_used &&
+      key_bytes == other.key_bytes &&
+      value_bytes == other.value_bytes &&
       Serialization::equal(compression_ratio, other.compression_ratio) &&
       memory_used == other.memory_used &&
       memory_allocated == other.memory_allocated &&

@@ -40,12 +40,14 @@ CellStoreTrailerV1.cc
 CellStoreTrailerV2.cc
 CellStoreTrailerV3.cc
 CellStoreTrailerV4.cc
+CellStoreTrailerV5.cc
 CellStore.cc
 CellStoreV0.cc
 CellStoreV1.cc
 CellStoreV2.cc
 CellStoreV3.cc
 CellStoreV4.cc
+CellStoreV5.cc
 Config.cc
 ConnectionHandler.cc
 EventHandlerMasterConnection.cc

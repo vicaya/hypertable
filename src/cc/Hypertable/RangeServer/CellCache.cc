@@ -39,7 +39,8 @@ using namespace std;
 
 CellCache::CellCache()
   : m_arena(), m_cell_map(std::less<const SerializedKey>(), Alloc(m_arena)),
-    m_deletes(0), m_collisions(0), m_frozen(false), m_have_counter_deletes(false) {
+    m_deletes(0), m_collisions(0), m_key_bytes(0), m_value_bytes(0), 
+    m_frozen(false), m_have_counter_deletes(false) {
   assert(Config::properties); // requires Config::init* first
   m_arena.set_page_size((size_t)
       Config::get_i32("Hypertable.RangeServer.AccessGroup.CellCache.PageSize"));
@@ -52,6 +53,9 @@ void CellCache::add(const Key &key, const ByteString value) {
   SerializedKey new_key;
   uint8_t *ptr;
   size_t total_len = key.length + value.length();
+
+  m_key_bytes += key.length;
+  m_value_bytes += value.length();
 
   assert(!m_frozen);
 

@@ -34,7 +34,7 @@
 #include "CellCacheScanner.h"
 #include "CellStoreFactory.h"
 #include "CellStoreReleaseCallback.h"
-#include "CellStoreV4.h"
+#include "CellStoreV5.h"
 #include "Global.h"
 #include "MaintenanceFlag.h"
 #include "MergeScanner.h"
@@ -340,6 +340,8 @@ uint64_t AccessGroup::purge_memory(MaintenanceFlag::Map &subtask_map) {
 AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena, time_t now) {
   ScopedLock lock(m_mutex);
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc(sizeof(MaintenanceData));
+  int64_t key_bytes, value_bytes;
+  size_t cell_count;
 
   memset(mdata, 0, sizeof(MaintenanceData));
   mdata->ag = this;
@@ -351,13 +353,19 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
   mdata->latest_stored_revision = m_latest_stored_revision;
 
+  m_cell_cache->get_counts(&cell_count, &key_bytes, &value_bytes);
+  mdata->cached_items = cell_count;
+  mdata->key_bytes = key_bytes;
+  mdata->value_bytes = value_bytes;
   int64_t mu = m_cell_cache->memory_used();
-  mdata->cached_items = m_cell_cache->size();
   mdata->mem_allocated = m_cell_cache->memory_allocated();
 
   if (m_immutable_cache) {
     mu += m_immutable_cache->memory_used();
-    mdata->immutable_items = m_immutable_cache->size();
+    m_immutable_cache->get_counts(&cell_count, &key_bytes, &value_bytes);
+    mdata->immutable_items = cell_count;
+    mdata->key_bytes += key_bytes;
+    mdata->value_bytes += value_bytes;
     mdata->mem_allocated += m_immutable_cache->memory_allocated();
   }
   else
@@ -394,7 +402,11 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
     mdata->bloom_filter_accesses += m_stores[i].bloom_filter_accesses;
     mdata->bloom_filter_maybes += m_stores[i].bloom_filter_maybes;
     mdata->bloom_filter_fps += m_stores[i].bloom_filter_fps;
-    mdata->cell_count += m_stores[i].cell_count;
+    if (!m_in_memory) {
+      mdata->cell_count += m_stores[i].cell_count;
+      mdata->key_bytes += m_stores[i].key_bytes;
+      mdata->value_bytes += m_stores[i].value_bytes;
+    }
 
     if (m_stores[i].shadow_cache) {
       (*tailp)->shadow_cache_size = m_stores[i].shadow_cache->memory_allocated();
@@ -583,7 +595,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
       }
 
-      cellstore = new CellStoreV4(Global::dfs.get(), m_schema.get());
+      cellstore = new CellStoreV5(Global::dfs.get(), m_schema.get());
 
       max_num_entries = m_immutable_cache->size();
 
@@ -602,7 +614,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         for (size_t i=tableidx; i<m_stores.size(); i++) {
           HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
-          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV4::SPLIT) ? 2: 1;
+          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV5::SPLIT) ? 2: 1;
           max_num_entries += (boost::any_cast<int64_t>
               (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
@@ -621,13 +633,13 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       scanner->forward();
     }
 
-    CellStoreTrailerV4 *trailer = dynamic_cast<CellStoreTrailerV4 *>(cellstore->get_trailer());
+    CellStoreTrailerV5 *trailer = dynamic_cast<CellStoreTrailerV5 *>(cellstore->get_trailer());
 
     if (tableidx == 0 && mscanner)
-      trailer->flags |= CellStoreTrailerV4::MAJOR_COMPACTION;
+      trailer->flags |= CellStoreTrailerV5::MAJOR_COMPACTION;
 
     if (maintenance_flags & MaintenanceFlag::SPLIT)
-      trailer->flags |= CellStoreTrailerV4::SPLIT;
+      trailer->flags |= CellStoreTrailerV5::SPLIT;
 
     cellstore->finalize(&m_identifier);
 

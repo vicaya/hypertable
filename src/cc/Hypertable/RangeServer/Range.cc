@@ -465,7 +465,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     }
     size += (*tailp)->disk_estimate;
     mdata->disk_used += (*tailp)->disk_used;
-    mdata->compression_ratio += (*tailp)->compression_ratio;
+    mdata->compression_ratio += (double)(*tailp)->disk_used / (*tailp)->compression_ratio;
     mdata->disk_estimate += (*tailp)->disk_estimate;
     mdata->memory_used += (*tailp)->mem_used;
     mdata->memory_allocated += (*tailp)->mem_allocated;
@@ -477,10 +477,14 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->shadow_cache_memory += (*tailp)->shadow_cache_memory;
     mdata->cell_count += (*tailp)->cell_count;
     mdata->file_count += (*tailp)->file_count;
+    mdata->key_bytes += (*tailp)->key_bytes;
+    mdata->value_bytes += (*tailp)->value_bytes;
   }
 
-  if (ag_vector.size() > 0)
-    mdata->compression_ratio /= ag_vector.size();
+  if (mdata->disk_used)
+    mdata->compression_ratio = (double)mdata->disk_used / mdata->compression_ratio;
+  else
+    mdata->compression_ratio = 1.0;
 
   if (tailp)
     (*tailp)->next = 0;

@@ -227,6 +227,14 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
 	(double)iter->second.disk_used / iter->second.compression_ratio;
     else
       iter->second.compression_ratio = 1.0;
+    if (iter->second.cell_count != 0) {
+      iter->second.average_key_size /= iter->second.cell_count;
+      iter->second.average_value_size /= iter->second.cell_count;
+    }
+    else {
+      iter->second.average_key_size = 0.0;
+      iter->second.average_value_size = 0.0;
+    }
   }
 
   // Dump RangeServer summary data
@@ -301,7 +309,8 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     table_data.cells_written += table_stats[i].cells_written;
     table_data.bytes_written += table_stats[i].bytes_written;
     table_data.disk_used += table_stats[i].disk_used;
-
+    table_data.average_key_size += table_stats[i].key_bytes;
+    table_data.average_value_size += table_stats[i].value_bytes;
     table_data.compression_ratio += (double)table_stats[i].disk_used / table_stats[i].compression_ratio;
     table_data.memory_used += table_stats[i].memory_used;
     table_data.memory_allocated += table_stats[i].memory_allocated;
@@ -583,7 +592,7 @@ namespace {
   const char *table_json_footer= "\n  ]\n}}\n";
   const char *table_entry_format = 
     "{\"id\": \"%s\",\"name\": \"%s\",\"rangecount\": \"%u\", \"cellcount\": \"%llu\", \"filecount\": \"%llu\", \"disk\": \"%llu\","
-    " \"memory\": \"%llu\", \"compression_ratio\": \"%.3f\"}";
+    " \"memory\": \"%llu\", \"average_key_size\": \"%.1f\", \"average_value_size\": \"%.1f\", \"compression_ratio\": \"%.3f\"}";
 }
 
 void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics> &stats) {
@@ -686,6 +695,8 @@ void Monitoring::dump_table_summary_json() {
                    (Llu)table_data.file_count,
                    (Llu)table_data.disk_used,
                    (Llu)table_data.memory_used,
+                   table_data.average_key_size,
+                   table_data.average_value_size,
                    table_data.compression_ratio);
     if (i != 0)
       str += String(",\n    ") + entry;

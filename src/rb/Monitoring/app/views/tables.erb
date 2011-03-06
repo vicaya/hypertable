@@ -21,6 +21,8 @@
 <th class="ht-table-subheadercell"> Cell Count </th>
 <th class="ht-table-subheadercell"> Disk </th>
 <th class="ht-table-subheadercell"> Memory </th>
+<th class="ht-table-subheadercell"> Average <br/>  Key Size </th>
+<th class="ht-table-subheadercell"> Average <br/>  Value Size </th>
 <th class="ht-table-subheadercell"> Compression <br/>  Ratio </th>
 
 </tr>
@@ -46,6 +48,12 @@
 </td>
 <td class="ht-table-cell" align="right">
 <%= number_with_delimiter table['memory'] %>
+</td>
+<td class="ht-table-cell" align="right">
+<%= number_with_delimiter table['average_key_size'] %>
+</td>
+<td class="ht-table-cell" align="right">
+<%= number_with_delimiter table['average_value_size'] %>
 </td>
 <td class="ht-table-cell" align="right">
 <%= table['compression_ratio'] %>
