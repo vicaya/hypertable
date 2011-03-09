@@ -118,7 +118,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   //this value is used to update table rrds
   table_stats_timestamp = 0;
   // copy to previous hashmap to calculate read rates
-  m_prev_table_stat_map = m_table_stat_map; 
+  m_prev_table_stat_map = m_table_stat_map;
   m_table_stat_map.clear(); // clear the previous contents
 
   for (size_t i=0; i<stats.size(); i++) {
@@ -142,27 +142,27 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     if ((*iter).second->stats) {
 
       if (stats[i].stats->query_cache_accesses > (*iter).second->stats->query_cache_accesses) {
-        numerator = (double)stats[i].stats->query_cache_hits - 
+        numerator = (double)stats[i].stats->query_cache_hits -
           (double)(*iter).second->stats->query_cache_hits;
-        denominator = (double)stats[i].stats->query_cache_accesses - 
+        denominator = (double)stats[i].stats->query_cache_accesses -
           (double)(*iter).second->stats->query_cache_accesses;
         rrd_data.qcache_hit_pct = (numerator/denominator)*100.0;
       }
 
       if (stats[i].stats->block_cache_accesses > (*iter).second->stats->block_cache_accesses) {
-        numerator = (double)stats[i].stats->block_cache_hits - 
+        numerator = (double)stats[i].stats->block_cache_hits -
           (double)(*iter).second->stats->block_cache_hits;
-        denominator = (double)stats[i].stats->block_cache_accesses - 
+        denominator = (double)stats[i].stats->block_cache_accesses -
           (double)(*iter).second->stats->block_cache_accesses;
         rrd_data.bcache_hit_pct = (numerator/denominator)*100.0;
       }
 
       double elapsed_time = (double)(stats[i].fetch_timestamp - (*iter).second->fetch_timestamp)/1000000000.0;
 
-      rrd_data.cell_read_rate = (stats[i].stats->scanned_cells - (*iter).second->stats->scanned_cells)/elapsed_time;
-      rrd_data.cell_write_rate = (stats[i].stats->updated_cells - (*iter).second->stats->updated_cells)/elapsed_time;
-      rrd_data.byte_read_rate = (stats[i].stats->scanned_bytes - (*iter).second->stats->scanned_bytes)/elapsed_time;
-      rrd_data.byte_write_rate = (stats[i].stats->updated_bytes - (*iter).second->stats->updated_bytes)/elapsed_time;
+      rrd_data.cell_read_rate = stats[i].stats->scanned_cells /elapsed_time;
+      rrd_data.cell_write_rate = stats[i].stats->updated_cells /elapsed_time;
+      rrd_data.byte_read_rate = stats[i].stats->scanned_bytes /elapsed_time;
+      rrd_data.byte_write_rate = stats[i].stats->updated_bytes /elapsed_time;
     }
 
     rrd_data.timestamp = stats[i].stats_timestamp / 1000000000LL;
@@ -171,10 +171,10 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     rrd_data.updates = stats[i].stats->update_count;
     rrd_data.sync_count = stats[i].stats->sync_count;
     rrd_data.qcache_max_mem = stats[i].stats->query_cache_max_memory;
-    rrd_data.qcache_fill = stats[i].stats->query_cache_max_memory - 
+    rrd_data.qcache_fill = stats[i].stats->query_cache_max_memory -
       stats[i].stats->query_cache_available_memory;
     rrd_data.bcache_max_mem = stats[i].stats->block_cache_max_memory;
-    rrd_data.bcache_fill = stats[i].stats->block_cache_max_memory - 
+    rrd_data.bcache_fill = stats[i].stats->block_cache_max_memory -
       stats[i].stats->block_cache_available_memory;
 
     numerator = denominator = 0.0;
@@ -223,7 +223,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   for (TableStatMap::iterator iter = m_table_stat_map.begin();
        iter != m_table_stat_map.end(); ++iter) {
     if (iter->second.disk_used != 0)
-      iter->second.compression_ratio = 
+      iter->second.compression_ratio =
 	(double)iter->second.disk_used / iter->second.compression_ratio;
     else
       iter->second.compression_ratio = 1.0;
@@ -400,7 +400,7 @@ void Monitoring::create_rangeserver_rrd(const String &filename) {
   args.push_back((String)"RRA:AVERAGE:.5:720:2190");// 6hr res for last 1.5 yrs
   args.push_back((String)"RRA:MAX:.5:10:2880"); // 5min res spikes for last 10 days
   args.push_back((String)"RRA:MAX:.5:720:2190");// 6hr res spikes for last 1.5 yrs
-  
+
   int argc = args.size();
   const char **argv = new const char *[argc+1];
   for (int ii=0; ii< argc; ++ii)
@@ -465,9 +465,9 @@ void Monitoring::create_table_rrd(const String &filename) {
   for (int ii=0; ii< argc; ++ii)
     argv[ii] = args[ii].c_str();
   argv[argc] = NULL;
-  
+
   rrd_create(argc, (char**)argv);
-  
+
   if (rrd_test_error()!=0)
     HT_ERROR_OUT << "Error creating RRD " << filename << ": "<< rrd_get_error() << HT_END;
 
@@ -520,7 +520,7 @@ void Monitoring::update_table_rrd(const String &filename, struct table_rrd_data 
   }
   delete [] argv;
   rrd_clear_error();
-   
+
 }
 
 void Monitoring::update_rangeserver_rrd(const String &filename, struct rangeserver_rrd_data &rrd_data) {
@@ -581,7 +581,7 @@ void Monitoring::update_rangeserver_rrd(const String &filename, struct rangeserv
 namespace {
   const char *rs_json_header = "{\"RangeServerSummary\": {\n  \"servers\": [\n";
   const char *rs_json_footer= "\n  ]\n}}\n";
-  const char *rs_entry_format = 
+  const char *rs_entry_format =
     "{\"location\": \"%s\", \"hostname\": \"%s\", \"ip\": \"%s\", \"arch\": \"%s\","
     " \"cores\": \"%d\", \"skew\": \"%d\", \"os\": \"%s\", \"osVersion\": \"%s\","
     " \"vendor\": \"%s\", \"vendorVersion\": \"%s\", \"ram\": \"%.2f\","
@@ -590,7 +590,7 @@ namespace {
 
   const char *table_json_header = "{\"TableSummary\": {\n  \"tables\": [\n";
   const char *table_json_footer= "\n  ]\n}}\n";
-  const char *table_entry_format = 
+  const char *table_entry_format =
     "{\"id\": \"%s\",\"name\": \"%s\",\"rangecount\": \"%u\", \"cellcount\": \"%llu\", \"filecount\": \"%llu\", \"disk\": \"%llu\","
     " \"memory\": \"%llu\", \"average_key_size\": \"%.1f\", \"average_value_size\": \"%.1f\", \"compression_ratio\": \"%.3f\"}";
 }
@@ -633,7 +633,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
       error_str = "ok";
     else
       error_str = Error::get_text(stats[i].fetch_error);
-        
+
     entry = format(rs_entry_format,
                    stats[i].location.c_str(),
                    stats[i].system_info->net_info.host_name.c_str(),
@@ -666,7 +666,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
     return;
 
   FileUtils::rename(tmp_filename, json_filename);
-    
+
 }
 
 void Monitoring::dump_table_summary_json() {
