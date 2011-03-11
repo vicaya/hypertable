@@ -88,7 +88,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 {
 
   uint16_t port;
-  uint32_t maintenance_threads = std::min(2, System::cpu_info().total_cores);
+  m_cores = System::cpu_info().total_cores;
+  HT_ASSERT(m_cores != 0);
+  uint32_t maintenance_threads = std::min(2, (int) m_cores);
   SubProperties cfg(props, "Hypertable.RangeServer.");
 
   m_verbose = props->get_bool("verbose");
@@ -247,7 +249,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   local_recover();
 
   Global::log_prune_threshold_min = cfg.get_i64("CommitLog.PruneThreshold.Min",
-      2 * Global::user_log->get_max_fragment_size());
+      5 * Global::user_log->get_max_fragment_size());
 
   uint32_t max_memory_percentage =
     cfg.get_i32("CommitLog.PruneThreshold.Max.MemoryPercentage");
@@ -403,7 +405,8 @@ namespace {
 
 
 void RangeServer::local_recover() {
-  MetaLog::DefinitionPtr rsml_definition = new MetaLog::DefinitionRangeServer();
+  MetaLog::DefinitionPtr rsml_definition =
+      new MetaLog::DefinitionRangeServer(Location::get().c_str());
   MetaLog::ReaderPtr rsml_reader;
   CommitLogReaderPtr root_log_reader;
   CommitLogReaderPtr system_log_reader;
@@ -2534,7 +2537,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   if (mutator) {
     time_t rounded_time = (now+(Global::metrics_interval/2)) - ((now+(Global::metrics_interval/2))%Global::metrics_interval);
     String value = format("1:%ld,%.6f,%.2f,%.2f", rounded_time,
-                          m_loadavg_accum / (double)m_metric_samples,
+                          m_loadavg_accum / (double)(m_metric_samples * m_cores),
                           (double)m_page_in_accum / (double)m_metric_samples,
                           (double)m_page_out_accum / (double)m_metric_samples);
     String location = Location::get();

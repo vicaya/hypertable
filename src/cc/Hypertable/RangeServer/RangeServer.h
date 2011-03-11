@@ -202,6 +202,7 @@ namespace Hypertable {
     uint64_t               m_page_in_accum;
     uint64_t               m_page_out_accum;
     size_t                 m_metric_samples;
+    size_t                 m_cores;
     CellsBuilder          *m_pending_metrics_updates;
   };
 

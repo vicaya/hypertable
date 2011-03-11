@@ -147,9 +147,9 @@ int main(int argc, char **argv) {
 
     // Population Defintion map
     hash_map<String, MetaLog::DefinitionPtr> defmap;
-    MetaLog::DefinitionPtr def = new MetaLog::DefinitionRangeServer();
+    MetaLog::DefinitionPtr def = new MetaLog::DefinitionRangeServer("");
     defmap[def->name()] = def;
-    def = new MetaLog::DefinitionMaster();
+    def = new MetaLog::DefinitionMaster("");
     defmap[def->name()] = def;
 
     FilesystemPtr fs = dfs_client;

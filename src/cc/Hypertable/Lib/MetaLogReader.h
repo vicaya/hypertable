@@ -48,6 +48,7 @@ namespace Hypertable {
 
     private:
 
+      bool verify_backup(int32_t file_num);
       void read_header(int fd);
 
       FilesystemPtr m_fs;
@@ -58,7 +59,7 @@ namespace Hypertable {
       std::map<EntityHeader, EntityPtr> m_entity_map;
       std::vector<EntityPtr> m_entities;
       size_t m_cur_offset;
-
+      String m_backup_path;
     };
     typedef intrusive_ptr<Reader> ReaderPtr;
   }

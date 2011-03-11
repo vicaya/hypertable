@@ -32,8 +32,9 @@ namespace Hypertable {
   namespace MetaLog {
     class DefinitionMaster : public Definition {
     public:
-      DefinitionMaster() { }
-      DefinitionMaster(ContextPtr &context) : m_context(context) { }
+      DefinitionMaster(const char *instance_name) : Definition(instance_name) { }
+      DefinitionMaster(ContextPtr &context, const char *instance_name) : Definition(instance_name)
+          , m_context(context) { }
       virtual uint16_t version();
       virtual const char *name();
       virtual Entity *create(const EntityHeader &header);
@@ -42,7 +43,7 @@ namespace Hypertable {
     };
     typedef intrusive_ptr<DefinitionMaster> DefinitionMasterPtr;
   }
-  
+
 }
 
 #endif // HYPERTABLE_METALOGDEFINITIONMASTER_H

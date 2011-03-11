@@ -189,7 +189,7 @@ void InetAddr::encode(uint8_t **bufp) const {
 }
 
 void InetAddr::decode(const uint8_t **bufp, size_t *remainp) {
-  uint8_t foo = Serialization::decode_i8(bufp, remainp);
+  Serialization::decode_i8(bufp, remainp);
   sin_family = Serialization::decode_i8(bufp, remainp);
   sin_port = Serialization::decode_i16(bufp, remainp);
   sin_addr.s_addr = Serialization::decode_i32(bufp, remainp);

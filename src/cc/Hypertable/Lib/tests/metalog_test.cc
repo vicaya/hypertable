@@ -55,15 +55,15 @@ namespace Hypertable {
       EntityGeneric(const EntityHeader &header_) : Entity(header_), value(0) { m_name = String("GenericEntity") + header_.type; }
       virtual const String name() { return m_name; }
       virtual size_t encoded_length() const { return 4; }
-      virtual void encode(uint8_t **bufp) const { 
+      virtual void encode(uint8_t **bufp) const {
         Serialization::encode_i32(bufp, value);
       }
-      virtual void decode(const uint8_t **bufp, size_t *remainp) { 
+      virtual void decode(const uint8_t **bufp, size_t *remainp) {
         value = Serialization::decode_i32(bufp, remainp);
       }
       virtual void display(ostream &os) { os << "value=" << value; }
       void increment() { value++; }
-    
+
     private:
       String m_name;
       int32_t value;
@@ -71,6 +71,7 @@ namespace Hypertable {
 
     class TestDefinition : public Definition {
     public:
+      TestDefinition() : Definition("bar") {}
       virtual uint16_t version() { return 1; }
       virtual const char *name() { return "foo"; }
       virtual Entity *create(const EntityHeader &header) {
@@ -160,10 +161,10 @@ main(int ac, char *av[]) {
      *  Write initital log
      */
 
-    writer = new MetaLog::Writer(fs, g_test_definition, 
+    writer = new MetaLog::Writer(fs, g_test_definition,
                                  testdir + "/" + g_test_definition->name(),
                                  g_entities);
-    
+
     create_entities(32);
 
     {
@@ -183,7 +184,7 @@ main(int ac, char *av[]) {
      *  Write some more
      */
 
-    writer = new MetaLog::Writer(fs, g_test_definition, 
+    writer = new MetaLog::Writer(fs, g_test_definition,
                                  testdir + "/" + g_test_definition->name(),
                                  g_entities);
 

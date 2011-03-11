@@ -59,7 +59,8 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
 
   // Setup local backup path name
   Path data_dir = Config::properties->get_str("Hypertable.DataDirectory");
-  m_backup_path = (data_dir /= String("/run/log_backup/") + String(m_definition->name())).string();
+  m_backup_path = (data_dir /= String("/run/log_backup/") + String(m_definition->name()) +
+                   String(m_definition->instance_name())).string();
   if (!FileUtils::exists(m_backup_path))
     FileUtils::mkdirs(m_backup_path);
 
@@ -110,7 +111,7 @@ void Writer::close() {
   catch (Exception &e) {
     HT_THROW2F(e.code(), e, "Error closing metalog: %s (fd=%d)", m_filename.c_str(), m_fd);
   }
-  
+
 }
 
 

@@ -30,13 +30,14 @@ namespace Hypertable {
   namespace MetaLog {
     class DefinitionRangeServer : public Definition {
     public:
+      DefinitionRangeServer(const char *instance_name) : Definition(instance_name) { }
       virtual uint16_t version();
       virtual const char *name();
       virtual Entity *create(const EntityHeader &header);
     };
     typedef intrusive_ptr<DefinitionRangeServer> DefinitionRangeServerPtr;
   }
-  
+
 }
 
 #endif // HYPERTABLE_METALOGDEFINITIONRANGESERVER_H

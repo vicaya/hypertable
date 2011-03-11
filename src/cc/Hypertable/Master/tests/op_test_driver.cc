@@ -155,7 +155,7 @@ namespace {
               operation->get_state() == iter->second) {
             match = true;
             break;
-          }            
+          }
         }
       }
       else {
@@ -166,7 +166,7 @@ namespace {
           if (rsc->location() == *iter) {
             match = true;
             break;
-          }            
+          }
         }
       }
       if (!match) {
@@ -194,7 +194,7 @@ namespace {
         }
       }
     }
-    
+
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
                                               log_dir + "/" + context->mml_definition->name(),
                                               entities);
@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
 
   try {
     init_with_policies<Policies>(argc, argv);
-    
+
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
     context->props = properties;
@@ -233,7 +233,7 @@ int main(int argc, char **argv) {
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
-    context->mml_definition = new MetaLog::DefinitionMaster(context);
+    context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
     context->range_split_size = context->props->get_i64("Hypertable.RangeServer.Range.SplitSize");
     context->monitoring = new Monitoring(context->props, context->namemap);
     FailureInducer::instance = new FailureInducer();

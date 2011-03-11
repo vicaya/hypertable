@@ -63,6 +63,9 @@ namespace Hypertable {
     double total;
   };
 
+  /**
+   * Reports loadavg normalized over #cores
+   */
   struct LoadAvgStat {
     LoadAvgStat &refresh();
     bool operator==(const LoadAvgStat &other) const;

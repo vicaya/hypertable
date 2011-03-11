@@ -90,7 +90,8 @@ int main(int argc, char **argv) {
 
   try {
     init_with_policies<Policies>(argc, argv);
-    
+    uint16_t port = get_i16("port");
+
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
     context->props = properties;
@@ -105,7 +106,8 @@ int main(int argc, char **argv) {
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
     context->range_split_size = context->props->get_i64("Hypertable.RangeServer.Range.SplitSize");
     context->dfs = new DfsBroker::Client(context->conn_manager, context->props);
-    context->mml_definition = new MetaLog::DefinitionMaster(context);
+    context->mml_definition =
+        new MetaLog::DefinitionMaster(context, format("%s_%u", "master", port).c_str());
     context->monitoring = new Monitoring(properties, context->namemap);
     context->request_timeout = (time_t)(context->props->get_i32("Hypertable.Request.Timeout") / 1000);
 
@@ -178,7 +180,6 @@ int main(int argc, char **argv) {
 
     context->op->add_operations(operations);
 
-    uint16_t port = get_i16("port");
     ConnectionHandlerFactoryPtr hf(new HandlerFactory(context));
     InetAddr listen_addr(INADDR_ANY, port);
 
@@ -203,7 +204,7 @@ void obtain_master_lock(ContextPtr &context) {
   try {
     uint64_t handle = 0;
     HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, context->hyperspace, &handle);
-    
+
     /**
      *  Create TOPLEVEL directory if not exist
      */
@@ -274,5 +275,5 @@ void obtain_master_lock(ContextPtr &context) {
   catch (Exception &e) {
     HT_FATAL_OUT << e << HT_END;
   }
-  
+
 }

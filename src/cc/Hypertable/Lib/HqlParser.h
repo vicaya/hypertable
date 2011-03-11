@@ -1890,8 +1890,8 @@ namespace Hypertable {
           create_table_statement
             = CREATE >> TABLE
               >> user_identifier[set_table_name(self.state)]
-              >> *(LIKE >> user_identifier[set_clone_table_name(self.state)])
-              >> !(create_definitions)
+              >> ((LIKE >> user_identifier[set_clone_table_name(self.state)])
+                  | (create_definitions))
               >> *(table_option)
             ;
 

@@ -24,6 +24,9 @@
 #include "Common/Error.h"
 #include "Common/ScopeGuard.h"
 #include "Common/Serialization.h"
+#include "Common/FileUtils.h"
+#include "Common/Path.h"
+
 #include "Common/StringExt.h"
 
 #include <algorithm>
@@ -50,6 +53,11 @@ Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition, const String &path)
   m_path = path;
   boost::trim_right_if(m_path, boost::is_any_of("/"));
 
+  // Setup local backup path name
+  Path data_dir = Config::properties->get_str("Hypertable.DataDirectory");
+  m_backup_path = (data_dir /= String("/run/log_backup/") + String(m_definition->name()) +
+                   String(m_definition->instance_name())).string();
+
   reload();
 }
 
@@ -71,6 +79,7 @@ void Reader::reload() {
   std::sort(m_file_nums.begin(), m_file_nums.end());
 
   while (!m_file_nums.empty()) {
+    HT_ASSERT(verify_backup(m_file_nums.back()));
     String fname = m_path + "/" + m_file_nums.back();
 
     if (!load_file(fname)) {
@@ -103,6 +112,28 @@ namespace {
                 Error::get_text(e.code()), e.what());
     }
   }
+}
+
+bool Reader::verify_backup(int32_t file_num) {
+
+
+  String fname = m_path + "/" + file_num;
+  String backup_filename = m_backup_path + "/" + file_num;
+
+  if (!FileUtils::exists(backup_filename)) {
+    HT_WARN_OUT << "MetaLog backup file '" << backup_filename << "' doesnt exist" << HT_END;
+    return true;
+  }
+
+  size_t file_length = m_fs->length(fname);
+  size_t backup_file_length = FileUtils::size(backup_filename);
+  if (backup_file_length != file_length) {
+    HT_ERROR_OUT << "MetaLog file '" << fname << "' has length " << file_length
+        << " but backup file '" << backup_filename << "' has length " << backup_file_length
+        << HT_END;
+    return false;
+  }
+  return true;
 }
 
 bool Reader::load_file(const String &fname) {

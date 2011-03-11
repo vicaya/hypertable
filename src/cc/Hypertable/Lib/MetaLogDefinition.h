@@ -23,6 +23,7 @@
 #define HYPERTABLE_METALOGDEFINITION_H
 
 #include "Common/ReferenceCount.h"
+#include "Common/String.h"
 
 #include "MetaLogEntity.h"
 
@@ -30,13 +31,18 @@ namespace Hypertable {
   namespace MetaLog {
     class Definition : public ReferenceCount {
     public:
+      Definition(const char* instance_name) : m_instance_name(instance_name) { }
       virtual uint16_t version() = 0;
       virtual const char *name() = 0;
+      virtual const char *instance_name() { return m_instance_name.c_str(); }
       virtual Entity *create(const EntityHeader &header) = 0;
+
+    private:
+      String m_instance_name;
     };
     typedef intrusive_ptr<Definition> DefinitionPtr;
   }
-  
+
 }
 
 #endif // HYPERTABLE_METALOGDEFINITION_H
