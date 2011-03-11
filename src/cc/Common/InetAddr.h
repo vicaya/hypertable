@@ -54,6 +54,10 @@ namespace Hypertable {
     InetAddr(uint32_t ip32, uint16_t port);
     InetAddr(const sockaddr_in &addr) { operator=(addr); }
 
+    size_t encoded_length() const;
+    void encode(uint8_t **bufp) const;
+    void decode(const uint8_t **bufp, size_t *remainp);
+
     InetAddr &operator=(const sockaddr_in &addr) {
       if (this != &addr)
         memcpy(this, &addr, sizeof(sockaddr_in));

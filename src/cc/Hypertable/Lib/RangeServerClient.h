@@ -340,7 +340,7 @@ namespace Hypertable {
      * @param handler response handler
      */
     void update_schema(const CommAddress &addr,
-        const TableIdentifier &table, const char *schema,
+        const TableIdentifier &table, const String &schema,
         DispatchHandler *handler);
 
     /** Issues a "update schema" request asynchronously with timer.
@@ -352,7 +352,7 @@ namespace Hypertable {
      * @param timer timer
      */
     void update_schema(const CommAddress &addr,
-                       const TableIdentifier &table, const char *schema,
+                       const TableIdentifier &table, const String &schema,
                        DispatchHandler *handler, Timer &timer);
 
     /** Issues a "commit_log_sync" request asynchronously.

@@ -335,6 +335,15 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
   return rbuf;
 }
 
+String FileUtils::file_to_string(const String &fname) {
+  String str;
+  off_t len;
+  char *contents = file_to_buffer(fname, &len);
+  str = (contents == 0) ? "" : contents;
+  delete [] contents;
+  return str;
+}
+
 
 
 bool FileUtils::mkdirs(const String &dirname) {

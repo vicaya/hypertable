@@ -90,7 +90,7 @@ namespace Hypertable {
 
   CommBuf *
   RangeServerProtocol::create_request_update_schema(
-      const TableIdentifier &table, const char *schema) {
+      const TableIdentifier &table, const String &schema) {
     CommHeader header(COMMAND_UPDATE_SCHEMA);
     if (table.is_system()) // If system table, set the urgent bit
       header.flags |= CommHeader::FLAGS_BIT_URGENT;

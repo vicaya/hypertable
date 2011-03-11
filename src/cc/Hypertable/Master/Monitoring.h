@@ -47,7 +47,7 @@ namespace Hypertable {
     /**
      * Constructor.
      */
-      Monitoring(PropertiesPtr &props,NameIdMapperPtr &m_namemap);
+    Monitoring(PropertiesPtr &props, NameIdMapperPtr &m_namemap);
 
     void add_server(const String &location, StatsSystem &system_info);
 

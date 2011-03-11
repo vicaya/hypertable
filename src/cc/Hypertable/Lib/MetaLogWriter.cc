@@ -28,6 +28,7 @@
 #include <cassert>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/shared_array.hpp>
 
 #include "MetaLog.h"
 #include "MetaLogWriter.h"
@@ -178,6 +179,28 @@ void Writer::record_state(Entity *entity) {
   m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
 }
 
+void Writer::record_state(std::vector<Entity *> &entities) {
+  ScopedLock lock(m_mutex);
+  size_t length = 0;
+
+  for (size_t i=0; i<entities.size(); i++)
+    length += EntityHeader::LENGTH + entities[i]->encoded_length();
+
+  {
+    StaticBuffer buf(length);
+    uint8_t *ptr = buf.base;
+
+    for (size_t i=0; i<entities.size(); i++)
+      entities[i]->encode_entry( &ptr );
+
+    HT_ASSERT((ptr-buf.base) == buf.size);
+
+    FileUtils::write(m_backup_fd, buf.base, buf.size);
+    m_offset += buf.size;
+    m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+  }
+}
+
 
 void Writer::record_removal(Entity *entity) {
   ScopedLock lock(m_mutex);
@@ -195,4 +218,29 @@ void Writer::record_removal(Entity *entity) {
   FileUtils::write(m_backup_fd, buf.base, buf.size);
   m_offset += buf.size;
   m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+}
+
+
+void Writer::record_removal(std::vector<Entity *> &entities) {
+  ScopedLock lock(m_mutex);
+  size_t length = entities.size() * EntityHeader::LENGTH;
+
+  {
+    StaticBuffer buf(length);
+    uint8_t *ptr = buf.base;
+
+    for (size_t i=0; i<entities.size(); i++) {
+      entities[i]->header.flags |= EntityHeader::FLAG_REMOVE;
+      entities[i]->header.length = 0;
+      entities[i]->header.checksum = 0;
+      entities[i]->header.encode( &ptr );
+    }
+
+    HT_ASSERT((ptr-buf.base) == buf.size);
+
+    FileUtils::write(m_backup_fd, buf.base, buf.size);
+    m_offset += buf.size;
+    m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+  }
+
 }

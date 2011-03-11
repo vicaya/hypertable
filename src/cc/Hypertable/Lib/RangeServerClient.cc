@@ -338,7 +338,7 @@ RangeServerClient::do_drop_table(const CommAddress &addr,
 
 void
 RangeServerClient::update_schema(const CommAddress &addr,
-    const TableIdentifier &table, const char *schema,
+    const TableIdentifier &table, const String &schema,
     DispatchHandler *handler) {
   CommBufPtr cbp(RangeServerProtocol::create_request_update_schema(table,
       schema));
@@ -347,7 +347,7 @@ RangeServerClient::update_schema(const CommAddress &addr,
 
 void
 RangeServerClient::update_schema(const CommAddress &addr,
-    const TableIdentifier &table, const char *schema,
+    const TableIdentifier &table, const String &schema,
     DispatchHandler *handler, Timer &timer) {
   CommBufPtr cbp(RangeServerProtocol::create_request_update_schema(table,
       schema));

@@ -35,6 +35,8 @@ namespace Hypertable {
     static bool enabled() { return (bool)instance; }
     void parse_option(String option);
     void maybe_fail(const String &label);
+    void clear();
+
   private:
     struct failure_inducer_state {
       uint32_t iteration;

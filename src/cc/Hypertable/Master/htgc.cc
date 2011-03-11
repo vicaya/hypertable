@@ -30,45 +30,55 @@
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/Namespace.h"
 #include "DfsBroker/Lib/Client.h"
-#include "MasterGc.h"
+#include "GcWorker.h"
 
 using namespace Hypertable;
 using namespace Config;
 
 namespace {
 
-struct MyPolicy : Config::Policy {
-  static void init_options() {
-    cmdline_desc().add_options()
-      ("dryrun,n", "Dryrun, don't modify (delete files etc.)")
-      ("full", "Do a full scan of DFS files and compare with METADATA.")
-      ;
-  }
-};
+  struct MyPolicy : Config::Policy {
+    static void init_options() {
+      cmdline_desc().add_options()
+        ("dryrun,n", "Dryrun, don't modify (delete files etc.)")
+        ("full", "Do a full scan of DFS files and compare with METADATA.")
+        ;
+    }
+  };
 
-typedef Cons<MyPolicy, DefaultCommPolicy> AppPolicy;
-
-void
-do_tfgc(bool dryrun, bool full) {
-  ConnectionManagerPtr conn_mgr = new ConnectionManager();
-  DfsBroker::Client *fs = new DfsBroker::Client(conn_mgr, properties);
-  ClientPtr client = new Hypertable::Client("htgc");
-  NamespacePtr ns = client->open_namespace("sys");
-  TablePtr table = ns->open_table("METADATA");
-  master_gc_once(table, fs, dryrun);
-}
+  typedef Cons<MyPolicy, DefaultCommPolicy> AppPolicy;
 
 } // local namespace
 
 int
 main(int ac, char *av[]) {
+  ClientPtr client;
+  NamespacePtr ns;
+  ContextPtr context;
+
   try {
     init_with_policy<AppPolicy>(ac, av);
-    do_tfgc(has("dryrun"), has("full"));
+
+    context->comm = Comm::instance();
+    context->conn_manager = new ConnectionManager(context->comm);
+    context->props = properties;
+    context->toplevel_dir = properties->get_str("Hypertable.Directory");
+    boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
+    context->toplevel_dir = String("/") + context->toplevel_dir;
+    context->dfs = new DfsBroker::Client(context->conn_manager, context->props);
+
+    client = new Hypertable::Client("htgc");
+    ns = client->open_namespace("sys");
+    context->metadata_table = ns->open_table("METADATA");
+
+    GcWorker worker(context);
+
+    worker.gc();
+
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    return 1;
+    _exit(1);
   }
-  return 0;
+  _exit(0);
 }

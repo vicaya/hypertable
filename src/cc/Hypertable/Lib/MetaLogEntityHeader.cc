@@ -91,7 +91,7 @@ void EntityHeader::decode(const uint8_t **bufp, size_t *remainp) {
 void EntityHeader::display(std::ostream &os) {
   os << "type=" << type;
   os << ",checksum=" << checksum;
-  os << ",id=" << type;
+  os << ",id=" << id;
   if (display_timestamp) {
     time_t t = (time_t)(timestamp / 1000000000LL);
     char buf[32];

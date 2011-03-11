@@ -263,7 +263,7 @@ const std::vector<String> &CellStoreV5::get_replaced_files() {
 void CellStoreV5::load_replaced_files() {
  bool second_try = false;
  int64_t amount = m_trailer.replaced_files_length;
- int64_t len;
+ int64_t len = 0;
 
  try_again:
 

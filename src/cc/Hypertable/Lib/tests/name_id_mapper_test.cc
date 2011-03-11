@@ -77,6 +77,8 @@ void init(NameIdMapper &mapper) {
   HT_ASSERT(id == "0/0");
   mappings.push_back( Mapping("sys/METADATA", "0/0", false) );
 
+  /**
+     Changed the semantics of add_mapping() to be idempotent
   bool exists = false;
   try {
     mapper.add_mapping("sys", id, NameIdMapper::IS_NAMESPACE);
@@ -86,6 +88,7 @@ void init(NameIdMapper &mapper) {
     exists = true;
   }
   HT_ASSERT(exists);
+  **/
 
   mapper.add_mapping("acme", id, NameIdMapper::IS_NAMESPACE);
   HT_ASSERT(id == "1");

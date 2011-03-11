@@ -37,6 +37,8 @@ namespace Hyperspace {
    * Structure to hold extended attribute and value
    */
   struct Attribute {
+    Attribute() { }
+  Attribute(const char *n, const void *v, uint32_t vl) : name(n), value(v), value_len(vl) { }
     /** name of extended attribute */
     const char *name;
     /** pointer to attribute value */

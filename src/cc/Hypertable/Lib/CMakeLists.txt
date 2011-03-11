@@ -244,6 +244,8 @@ configure_file(${SRC_DIR}/name_id_mapper_test.cfg ${DST_DIR}/name_id_mapper_test
 configure_file(${SRC_DIR}/metalog_test.golden ${DST_DIR}/metalog_test.golden)
 configure_file(${SRC_DIR}/metalog_test2.golden ${DST_DIR}/metalog_test2.golden)
 
+add_test(Hypertable-Lib-TestSetup env INSTALL_DIR=${INSTALL_DIR}
+         ${SRC_DIR}/test_setup.sh)
 add_test(Schema schemaTest)
 add_test(LocationCache locationCacheTest)
 add_test(LoadDataSource loadDataSourceTest)

@@ -687,8 +687,8 @@ void Range::relinquish_compact_and_finish() {
 
   // Acknowledge write of the RelinquishDone RSML entry to the master
   try {
-    m_master_client->relinquish_acknowledge(&m_metalog_entity->table, 
-                                            m_metalog_entity->spec);
+    m_master_client->relinquish_acknowledge(&m_metalog_entity->table,
+                                            m_metalog_entity->spec, (DispatchHandler *)0);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << "Master::relinquish_acknowledge() error - " << e << HT_END;
@@ -1053,19 +1053,19 @@ void Range::split_compact_and_shrink() {
 
 
 void Range::split_notify_master() {
-  RangeSpec range;
+  RangeSpecManaged range;
   int64_t soft_limit = (int64_t)m_metalog_entity->state.soft_limit;
 
   if (cancel_maintenance())
     HT_THROW(Error::CANCELLED, "");
 
   if (m_split_off_high) {
-    range.start_row = m_metalog_entity->spec.end_row;
-    range.end_row = m_metalog_entity->state.old_boundary_row;
+    range.set_start_row(m_metalog_entity->spec.end_row);
+    range.set_end_row(m_metalog_entity->state.old_boundary_row);
   }
   else {
-    range.start_row = m_metalog_entity->state.old_boundary_row;
-    range.end_row = m_metalog_entity->spec.start_row;
+    range.set_start_row(m_metalog_entity->state.old_boundary_row);
+    range.set_end_row(m_metalog_entity->spec.start_row);
   }
 
   // update the latest generation, this should probably be protected
@@ -1123,7 +1123,8 @@ void Range::split_notify_master() {
 
   // Acknowledge write of the SplitDone RSML entry to the master
   try {
-    m_master_client->relinquish_acknowledge(&m_metalog_entity->table, range);
+    m_master_client->relinquish_acknowledge(&m_metalog_entity->table, range,
+                                            (DispatchHandler *)0);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << "Master::relinquish_acknowledge() error - " << e << HT_END;
@@ -1131,7 +1132,6 @@ void Range::split_notify_master() {
 
   HT_MAYBE_FAIL("split-4");
   HT_MAYBE_FAIL_X("metadata-split-4", m_metalog_entity->table.is_metadata());
-
 }
 
 

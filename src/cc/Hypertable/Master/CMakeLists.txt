@@ -19,42 +19,67 @@
 
 set(Master_SRCS
 ConnectionHandler.cc
-DispatchHandlerDropTable.cc
-DispatchHandlerUpdateSchema.cc
-DispatchHandlerGetStatistics.cc
-EventHandlerServerJoined.cc
-EventHandlerServerLeft.cc
-Master.cc
+Context.cc
+GcWorker.cc
+DispatchHandlerOperation.cc
+DispatchHandlerOperationGetStatistics.cc
+MetaLogDefinitionMaster.cc
 Monitoring.cc
-RequestHandlerCreateNamespace.cc
-RequestHandlerDropNamespace.cc
-RequestHandlerCreateTable.cc
-RequestHandlerAlterTable.cc
-RequestHandlerDropTable.cc
-RequestHandlerRenameTable.cc
-RequestHandlerDoMaintenance.cc
-RequestHandlerGetSchema.cc
-RequestHandlerMoveRange.cc
-RequestHandlerStatus.cc
-RequestHandlerRegisterServer.cc
-RequestHandlerRelinquishAcknowledge.cc
-RequestHandlerClose.cc
-RequestHandlerShutdown.cc
-ResponseCallbackGetSchema.cc
-ResponseCallbackRegisterServer.cc
-ServerLockFileHandler.cc
-ServersDirectoryHandler.cc
-MasterGc.cc
-main.cc
+Operation.cc
+OperationAlterTable.cc
+OperationCollectGarbage.cc
+OperationCreateNamespace.cc
+OperationCreateTable.cc
+OperationDropNamespace.cc
+OperationDropTable.cc
+OperationGatherStatistics.cc
+OperationInitialize.cc
+OperationMoveRange.cc
+OperationProcessor.cc
+OperationRecoverServer.cc
+OperationRegisterServer.cc
+OperationRelinquishAcknowledge.cc
+OperationRenameTable.cc
+OperationStatus.cc
+OperationSystemUpgrade.cc
+OperationWaitForServers.cc
+RangeServerConnection.cc
+Utility.cc
 )
 
-# Hypertable.Master
-add_executable(Hypertable.Master ${Master_SRCS})
-target_link_libraries(Hypertable.Master Hyperspace Hypertable HyperDfsBroker ${RRD_LIBRARIES} ${MALLOC_LIBRARY})
+# HyperMaster Lib
+add_library(HyperMaster ${Master_SRCS})
+target_link_libraries(HyperMaster m Hyperspace HyperDfsBroker Hypertable)
 
-add_executable(htgc htgc.cc MasterGc.cc)
+# Hypertable.Master
+add_executable(Hypertable.Master main.cc)
+target_link_libraries(Hypertable.Master HyperMaster Hyperspace Hypertable HyperDfsBroker ${RRD_LIBRARIES} ${MALLOC_LIBRARY})
+
+# op_test_driver
+add_executable(op_test_driver tests/op_test_driver.cc)
+target_link_libraries(op_test_driver HyperMaster Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
+
+# op_dependency_test
+add_executable(op_dependency_test tests/op_dependency_test.cc tests/OperationTest.cc)
+target_link_libraries(op_dependency_test HyperMaster Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
+
+add_executable(htgc htgc.cc GcWorker.cc)
 target_link_libraries(htgc HyperDfsBroker Hypertable ${RRD_LIBRARIES})
 
+add_test(MasterOperation-TestSetup env INSTALL_DIR=${INSTALL_DIR} 
+         ${CMAKE_CURRENT_SOURCE_DIR}/tests/op_test_setup.sh)
+add_test(MasterOperation-Proccessor op_dependency_test)
+add_test(MasterOperation-Initialize op_test_driver initialize)
+add_test(MasterOperation-SystemUpgrade op_test_driver system_upgrade)
+add_test(MasterOperation-CreateNamespace op_test_driver create_namespace)
+add_test(MasterOperation-DropNamespace op_test_driver drop_namespace)
+add_test(MasterOperation-CreateTable op_test_driver create_table)
+add_test(MasterOperation-RenameTable op_test_driver rename_table)
+add_test(MasterOperation-MoveRange op_test_driver move_range)
+
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS Hypertable.Master htgc RUNTIME DESTINATION bin)
+  install(TARGETS HyperMaster Hypertable.Master htgc op_test_driver op_dependency_test
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
 endif ()

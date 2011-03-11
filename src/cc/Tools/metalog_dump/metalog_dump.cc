@@ -43,6 +43,7 @@
 #include "Hypertable/Lib/MetaLogReader.h"
 
 #include "Hypertable/RangeServer/MetaLogDefinitionRangeServer.h"
+#include "Hypertable/Master/MetaLogDefinitionMaster.h"
 
 using namespace Hypertable;
 using namespace Config;
@@ -147,6 +148,8 @@ int main(int argc, char **argv) {
     // Population Defintion map
     hash_map<String, MetaLog::DefinitionPtr> defmap;
     MetaLog::DefinitionPtr def = new MetaLog::DefinitionRangeServer();
+    defmap[def->name()] = def;
+    def = new MetaLog::DefinitionMaster();
     defmap[def->name()] = def;
 
     FilesystemPtr fs = dfs_client;

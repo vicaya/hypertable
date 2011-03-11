@@ -76,12 +76,19 @@ namespace Hypertable {
      * @param id output parameter to hold newly mapped ID
      * @param flags control falgs (IS_NAMESPACE and/or CREATE_INTERMEDIATE)
      */
-    void add_mapping(const String &name, String &id, int flags=0);
+    void add_mapping(const String &name, String &id, int flags=0, bool ignore_exists=false);
 
     /**
      * @param name name to map
      */
     void drop_mapping(const String &name);
+
+    /**
+     * @param name name to check for mapping
+     * @param is_namespace if mapping exists set to true if is namespace
+     * @return true if mapping exists, false otherwise
+     */
+    bool exists_mapping(const String &name, bool *is_namespace);
 
     /**
      * Rename one entity, it doesn't recursively rename all entities under the path
@@ -92,7 +99,8 @@ namespace Hypertable {
      */
     void rename(const String &old_name, const String &new_name);
 
-    void add_entry(const String &names_parent, const String &names_entry, std::vector<uint64_t> &ids, bool is_namespace);
+    void add_entry(const String &names_parent, const String &names_entry,
+                   std::vector<uint64_t> &ids, bool is_namespace);
 
   protected:
     bool do_mapping(const String &input, bool id_in, String &output, bool *is_namespacep);

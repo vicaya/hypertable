@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,26 +25,27 @@
 #include "Common/StringExt.h"
 #include "Common/Serialization.h"
 
-#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ResponseCallback.h"
 
 #include "Hypertable/Lib/MasterProtocol.h"
 
 #include "ConnectionHandler.h"
-#include "EventHandlerServerLeft.h"
-#include "RequestHandlerClose.h"
-#include "RequestHandlerCreateTable.h"
-#include "RequestHandlerDoMaintenance.h"
-#include "RequestHandlerAlterTable.h"
-#include "RequestHandlerDropTable.h"
-#include "RequestHandlerRenameTable.h"
-#include "RequestHandlerGetSchema.h"
-#include "RequestHandlerStatus.h"
-#include "RequestHandlerRegisterServer.h"
-#include "RequestHandlerRelinquishAcknowledge.h"
-#include "RequestHandlerMoveRange.h"
-#include "RequestHandlerShutdown.h"
-#include "RequestHandlerCreateNamespace.h"
-#include "RequestHandlerDropNamespace.h"
+
+#include "OperationAlterTable.h"
+#include "OperationCollectGarbage.h"
+#include "OperationCreateNamespace.h"
+#include "OperationCreateTable.h"
+#include "OperationDropNamespace.h"
+#include "OperationDropTable.h"
+#include "OperationGatherStatistics.h"
+#include "OperationProcessor.h"
+#include "OperationMoveRange.h"
+#include "OperationRecoverServer.h"
+#include "OperationRegisterServer.h"
+#include "OperationRelinquishAcknowledge.h"
+#include "OperationRenameTable.h"
+#include "OperationStatus.h"
+#include "RangeServerConnection.h"
 
 
 using namespace Hypertable;
@@ -55,11 +56,9 @@ using namespace Error;
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
-                                     MasterPtr &master) : m_comm(comm), m_app_queue(app_queue),
-                                     m_master(master) {
+ConnectionHandler2::ConnectionHandler2(ContextPtr &context) : m_context(context) {
   int error;
-  if ((error = m_comm->set_timer(m_master->get_maintenance_interval(), this)) != Error::OK)
+  if ((error = m_context->comm->set_timer(context->timer_interval, this)) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 }
 
@@ -67,8 +66,8 @@ ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
 /**
  *
  */
-void ConnectionHandler::handle(EventPtr &event) {
-  ApplicationHandler *hp = 0;
+void ConnectionHandler2::handle(EventPtr &event) {
+  OperationPtr operation;
 
   if (event->type == Event::MESSAGE) {
 
@@ -84,73 +83,87 @@ void ConnectionHandler::handle(EventPtr &event) {
 
       switch (event->header.command) {
       case MasterProtocol::COMMAND_CREATE_TABLE:
-        hp = new RequestHandlerCreateTable(m_comm, m_master.get(), event);
+        operation = new OperationCreateTable(m_context, event);
         break;
       case MasterProtocol::COMMAND_DROP_TABLE:
-        hp = new RequestHandlerDropTable(m_comm, m_master.get(), event);
+        operation = new OperationDropTable(m_context, event);
         break;
       case MasterProtocol::COMMAND_ALTER_TABLE:
-        hp = new RequestHandlerAlterTable(m_comm, m_master.get(), event);
+        operation = new OperationAlterTable(m_context, event);
         break;
       case MasterProtocol::COMMAND_RENAME_TABLE:
-        hp = new RequestHandlerRenameTable(m_comm, m_master.get(), event);
-        break;
-      case MasterProtocol::COMMAND_GET_SCHEMA:
-        hp = new RequestHandlerGetSchema(m_comm, m_master.get(), event);
+        operation = new OperationRenameTable(m_context, event);
         break;
       case MasterProtocol::COMMAND_STATUS:
-        hp = new RequestHandlerStatus(m_comm, m_master.get(), event);
+        operation = new OperationStatus(m_context, event);
         break;
       case MasterProtocol::COMMAND_REGISTER_SERVER:
-        hp = new RequestHandlerRegisterServer(m_comm, m_master.get(),
-                                              event);
+        operation = new OperationRegisterServer(m_context, event);
         break;
       case MasterProtocol::COMMAND_MOVE_RANGE:
-        hp = new RequestHandlerMoveRange(m_comm, m_master.get(), event);
+        operation = new OperationMoveRange(m_context, event);
         break;
       case MasterProtocol::COMMAND_RELINQUISH_ACKNOWLEDGE:
-        hp = new RequestHandlerRelinquishAcknowledge(m_comm, m_master.get(), event);
+        operation = new OperationRelinquishAcknowledge(m_context, event);
         break;
       case MasterProtocol::COMMAND_CLOSE:
-        hp = new RequestHandlerClose(m_comm, m_master.get(), event);
+        // TBD
         break;
       case MasterProtocol::COMMAND_SHUTDOWN:
-        hp = new RequestHandlerShutdown(m_comm, m_master.get(), event);
+        // TBD
         break;
       case MasterProtocol::COMMAND_CREATE_NAMESPACE:
-        hp = new RequestHandlerCreateNamespace(m_comm, m_master.get(), event);
+        operation = new OperationCreateNamespace(m_context, event);
         break;
       case MasterProtocol::COMMAND_DROP_NAMESPACE:
-        hp = new RequestHandlerDropNamespace(m_comm, m_master.get(), event);
+        operation = new OperationDropNamespace(m_context, event);
         break;
 
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
                   (Llu)event->header.command);
       }
-      m_app_queue->add(hp);
+      if (operation)
+        m_context->op->add_operation(operation);
+      else
+        HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
+                  (Llu)event->header.command);
     }
     catch (Exception &e) {
-      ResponseCallback cb(m_comm, event);
+      ResponseCallback cb(m_context->comm, event);
       HT_ERROR_OUT << e << HT_END;
-      std::string errmsg = format("%s - %s", e.what(), get_text(e.code()));
-      cb.error(Error::PROTOCOL_ERROR, errmsg);
+      cb.error(Error::PROTOCOL_ERROR, 
+               format("%s - %s", e.what(), get_text(e.code())));
     }
   }
   else if (event->type == Event::DISCONNECT) {
-    String location;
-    if (m_master->handle_disconnect(event->addr, location)) {
-      hp = new EventHandlerServerLeft(m_master, location, event);
-      m_app_queue->add(hp);
+    RangeServerConnectionPtr rsc;
+    if (m_context->find_server_by_local_addr(event->addr, rsc)) {
+      if (m_context->disconnect_server(rsc)) {
+        OperationPtr operation = new OperationRecoverServer(m_context, rsc);
+        m_context->op->add_operation(operation);
+      }
     }
     HT_INFOF("%s", event->to_str().c_str());
   }
   else if (event->type == Hypertable::Event::TIMER) {
+    OperationPtr operation;
     int error;
+    time_t now = time(0);
 
-    m_app_queue->add( new RequestHandlerDoMaintenance(m_comm, m_master.get(), event) );
+    if (m_context->next_monitoring_time <= now) {
+      operation = new OperationGatherStatistics(m_context);
+      m_context->op->add_operation(operation);
+      m_context->next_monitoring_time = now + (m_context->monitoring_interval/1000) - 1;
+    }
 
-    if ((error = m_comm->set_timer(m_master->get_maintenance_interval(), this)) != Error::OK)
+    if (m_context->next_gc_time <= now) {
+      operation = new OperationCollectGarbage(m_context);
+      m_context->op->add_operation(operation);
+      m_context->next_gc_time = now + (m_context->gc_interval/1000) - 1;
+    }
+
+    if ((error = m_context->comm->set_timer(m_context->timer_interval, this)) != Error::OK)
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 
   }

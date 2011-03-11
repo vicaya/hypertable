@@ -77,6 +77,7 @@ namespace Hypertable {
       NAMESPACE_EXISTS                   = 42,
       NO_RESPONSE                        = 43,
       NOT_ALLOWED                        = 44,
+      INDUCED_FAILURE                    = 45,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,
@@ -162,6 +163,7 @@ namespace Hypertable {
       MASTER_BAD_COLUMN_FAMILY               = 0x00040007,
       MASTER_SCHEMA_GENERATION_MISMATCH      = 0x00040008,
       MASTER_LOCATION_ALREADY_ASSIGNED       = 0x00040009,
+      MASTER_LOCATION_INVALID                = 0x0004000A,
 
       RANGESERVER_GENERATION_MISMATCH    = 0x00050001,
       RANGESERVER_RANGE_ALREADY_LOADED   = 0x00050002,

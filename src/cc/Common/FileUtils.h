@@ -46,6 +46,7 @@ namespace Hypertable {
     static ssize_t recv(int fd, void *vptr, size_t n);
     static void set_flags(int fd, int flags);
     static char *file_to_buffer(const String &fname, off_t *lenp);
+    static String file_to_string(const String &fname);
     static bool mkdirs(const String &dirname);
     static bool exists(const String &fname);
     static bool unlink(const String &fname);

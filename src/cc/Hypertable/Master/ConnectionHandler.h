@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,27 +22,22 @@
 #ifndef HYPERTABLE_CONNECTIONHANDLER_H
 #define HYPERTABLE_CONNECTIONHANDLER_H
 
-#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandler.h"
 
-#include "Master.h"
+#include "Context.h"
 
 namespace Hypertable {
 
   /**
    */
-  class ConnectionHandler : public DispatchHandler {
+  class ConnectionHandler2 : public DispatchHandler {
   public:
-    ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
-                      MasterPtr &master);
-
+    ConnectionHandler2(ContextPtr &context);
     virtual void handle(EventPtr &event);
 
   private:
-    Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue;
-    MasterPtr            m_master;
-    int64_t              m_last_maintenance;
+    ContextPtr  m_context;
+    //int64_t m_last_maintenance;
   };
 
 }

@@ -19,7 +19,7 @@
 
 # metalog_dump - program to print a textual representation of the metalog
 add_executable(metalog_dump metalog_dump.cc)
-target_link_libraries(metalog_dump HyperDfsBroker Hypertable HyperRanger)
+target_link_libraries(metalog_dump HyperDfsBroker Hypertable HyperRanger HyperMaster)
 
 if (NOT HT_COMPONENT_INSTALL)
   install(TARGETS metalog_dump RUNTIME DESTINATION bin)
