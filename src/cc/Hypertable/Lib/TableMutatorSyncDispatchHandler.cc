@@ -31,8 +31,8 @@ using namespace Hypertable;
 
 
 TableMutatorSyncDispatchHandler::TableMutatorSyncDispatchHandler(
-    Comm *comm, time_t timeout)
-  : m_outstanding(0), m_client(comm, timeout) {
+    Comm *comm, TableIdentifierManaged &table_id, time_t timeout)
+  : m_outstanding(0), m_client(comm, timeout), m_table_identifier(table_id) {
 }
 
 TableMutatorSyncDispatchHandler::~TableMutatorSyncDispatchHandler() { }
@@ -43,7 +43,7 @@ void TableMutatorSyncDispatchHandler::add(const CommAddress &addr) {
   try {
     pair<CommAddressSet::iterator, bool> res = m_pending.insert(addr);
     HT_ASSERT(res.second);
-    m_client.commit_log_sync(addr, this);
+    m_client.commit_log_sync(addr, m_table_identifier, this);
     m_outstanding++;
   }
   catch (Exception &e) {
@@ -72,7 +72,7 @@ void TableMutatorSyncDispatchHandler::handle(EventPtr &event_ptr) {
     else {
       // Successful response
       if (m_pending.erase(result.addr) == 0) {
-        HT_FATAL_OUT 
+        HT_FATAL_OUT
 	  << "Received 'commit log sync ack' from unexpected address '"
 	  << result.addr.to_str() << "'" << HT_END ;
       }
@@ -96,7 +96,7 @@ void TableMutatorSyncDispatchHandler::retry() {
   m_errors.clear();
   foreach (CommAddress addr, m_pending) {
     try {
-      m_client.commit_log_sync(addr, this);
+      m_client.commit_log_sync(addr, m_table_identifier, this);
     }
     catch (Exception &e) {
       ErrorResult result;

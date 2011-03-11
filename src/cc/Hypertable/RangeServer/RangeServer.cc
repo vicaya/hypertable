@@ -1450,37 +1450,60 @@ RangeServer::transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
 }
 
 void
-RangeServer::commit_log_sync(ResponseCallback *cb) {
+RangeServer::commit_log_sync(ResponseCallback *cb, const TableIdentifier *table) {
   String errmsg;
   int error = Error::OK;
-  CommitLog* commit_log = 0;
+  TableUpdate table_update;
+  StaticBuffer buffer(0);
+  SchemaPtr schema;
+  std::vector<TableUpdate *> table_update_vector;
+  UpdateRequest request;
 
-  HT_DEBUG_OUT <<"received commit_log_sync request"<< HT_END;
+  HT_DEBUG_OUT <<"received commit_log_sync request for table "<< table->id<< HT_END;
 
   if (!m_replay_finished)
     wait_for_recovery_finish();
 
-  // Global commit log is only available after local recovery
-  commit_log = Global::user_log;
+  m_live_map->get(table, table_update.table_info);
 
+  // verify schema
+  schema = table_update.table_info->get_schema();
+  if (schema.get()->get_generation() != table->generation) {
+    if ((error = cb->error(Error::RANGESERVER_GENERATION_MISMATCH,
+        format("Commit log sync schema generation mismatch for table %s (received %u != %u)",
+               table->id, table->generation,
+               table_update.table_info->get_schema()->get_generation()))) != Error::OK)
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
+    return;
+  }
+
+  // Check for group commit
+  if (schema->get_group_commit_interval() > 0) {
+    m_group_commit->add(cb->get_event(), schema, table, 0, buffer, 0, true);
+    return;
+  }
+
+  // normal sync...
   try {
-    commit_log->sync();
-    HT_DEBUG_OUT << "commit log synced" << HT_END;
+    memcpy(&table_update.id, table, sizeof(TableIdentifier));
+    table_update.commit_interval = 0;
+    table_update.total_count = 0;
+    table_update.total_buffer_size = 0;;
+    table_update.flags = 0;
+    table_update.do_sync = true;
+    request.buffer = buffer;
+    request.count = 0;
+    request.event = cb->get_event();
+    table_update.requests.push_back(&request);
+
+    table_update_vector.push_back(&table_update);
+
+    batch_update(table_update_vector);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << "Exception caught: " << e << HT_END;
     error = e.code();
     errmsg = e.what();
-  }
-
-  /**
-   * Send back response
-   */
-  if (error == Error::OK) {
-    if ((error = cb->response_ok()) != Error::OK)
-      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-  }
-  else {
     if ((error = cb->error(error, errmsg)) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
   }
@@ -1533,7 +1556,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
 
   // Check for group commit
   if (schema->get_group_commit_interval() > 0) {
-    m_group_commit->add(cb->get_event(), schema, table, count, buffer, flags);
+    m_group_commit->add(cb->get_event(), schema, table, count, buffer, flags, false);
     return;
   }
 
@@ -1994,7 +2017,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
         HT_ASSERT(!table_update->id.is_metadata());
       }
       else if ((table_update->flags & RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC) ==
-               RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC)
+               RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC && !table_update->do_sync)
         sync = false;
 
       if (table_update->id.is_metadata()) {
@@ -2019,6 +2042,10 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates) {
         table_update->error = error;
         continue;
       }
+    }
+    else {
+      if (table_update->do_sync == true)
+        user_log_needs_syncing = true;
     }
 
     // Iterate through all of the ranges, inserting updates

@@ -215,7 +215,7 @@ namespace {
     };
 
   const char *schema =
-  "<Schema>"
+  "<Schema group_commit_interval=\"100\">"
   "  <AccessGroup name=\"default\">"
   "    <ColumnFamily>"
   "      <Name>Field</Name>"

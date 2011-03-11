@@ -52,7 +52,7 @@ run_test() {
     exit 1
   fi
 
-  $HT_HOME/bin/ht ht_load_generator update --parallel=300 --spec-file=$SCRIPT_DIR/data.spec --max-bytes=$GEN_SIZE
+  $HT_HOME/bin/ht ht_load_generator update --no-log-sync --parallel=300 --spec-file=$SCRIPT_DIR/data.spec --max-bytes=$GEN_SIZE
   if [ $? != 0 ] ; then
     echo "Problem loading table 'LoadTest', exiting ..."
     exit 1

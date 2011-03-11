@@ -320,7 +320,7 @@ void TableMutator::sync() {
     }
 
     if (!unsynced_rangeservers.empty()) {
-      TableMutatorSyncDispatchHandler sync_handler(m_comm, m_timeout_ms);
+      TableMutatorSyncDispatchHandler sync_handler(m_comm, m_table_identifier, m_timeout_ms);
 
       foreach (CommAddress addr, unsynced_rangeservers)
 	sync_handler.add(addr);
@@ -330,12 +330,18 @@ void TableMutator::sync() {
         uint32_t retry_count = 0;
         bool retry_failed;
         do {
+          bool do_refresh = false;
           retry_count++;
           sync_handler.get_errors(errors);
           for (size_t i=0; i<errors.size(); i++) {
-            HT_ERRORF("commit log sync error - %s - %s",
-                errors[i].msg.c_str(), Error::get_text(errors[i].error));
+            if (errors[i].error == Error::RANGESERVER_GENERATION_MISMATCH && m_refresh_schema)
+              do_refresh = true;
+            else
+              HT_ERRORF("commit log sync error - %s - %s", errors[i].msg.c_str(),
+                        Error::get_text(errors[i].error));
           }
+          if (do_refresh)
+            m_table->refresh(m_table_identifier, m_schema);
           sync_handler.retry();
         }
         while ((retry_failed = (!sync_handler.wait_for_completion())) &&

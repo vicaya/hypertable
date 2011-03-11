@@ -31,12 +31,12 @@ using namespace Hypertable::Config;
 GroupCommit::GroupCommit(RangeServer *range_server) : m_range_server(range_server), m_counter(0) {
 
   m_commit_interval = get_i32("Hypertable.RangeServer.CommitInterval");
-  
+
 }
 
 
 void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier *table,
-                      uint32_t count, StaticBuffer &buffer, uint32_t flags) {
+                      uint32_t count, StaticBuffer &buffer, uint32_t flags, bool do_sync) {
   ScopedLock lock(m_mutex);
   TableUpdateMap::iterator iter;
   UpdateRequest *request = new UpdateRequest();
@@ -58,11 +58,12 @@ void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier 
     tu->total_count = count;
     tu->total_buffer_size = buffer.size;
     tu->requests.push_back(request);
-    
+
     m_table_map[tid] = tu;
     return;
   }
 
+  (*iter).second->do_sync = do_sync;
   (*iter).second->total_count += count;
   (*iter).second->total_buffer_size += buffer.size;
   (*iter).second->requests.push_back(request);

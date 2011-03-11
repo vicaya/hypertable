@@ -101,9 +101,12 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_commit_log_sync() {
+  CommBuf *RangeServerProtocol::create_request_commit_log_sync(const TableIdentifier &table) {
     CommHeader header(COMMAND_COMMIT_LOG_SYNC);
-    CommBuf *cbuf = new CommBuf(header);
+    if (table.is_system()) // If system table, set the urgent bit
+      header.flags |= CommHeader::FLAGS_BIT_URGENT;
+    CommBuf *cbuf = new CommBuf(header, table.encoded_length());
+    table.encode(cbuf->get_data_ptr_address());
     return cbuf;
   }
 

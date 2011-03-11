@@ -106,7 +106,7 @@ namespace Hypertable {
     TableUpdate() : flags(0), commit_interval(0), total_count(0),
                     total_buffer_size(0), wait_for_metadata_recovery(false),
                     wait_for_system_recovery(false),
-                    transfer_count(0), total_added(0), error(0) {}
+                    transfer_count(0), total_added(0), error(0), do_sync(false) {}
     TableIdentifier id;
     std::vector<UpdateRequest *> requests;
     uint32_t flags;
@@ -124,12 +124,13 @@ namespace Hypertable {
     uint32_t total_added;
     int error;
     String error_msg;
+    bool do_sync;
   };
 
   class GroupCommitInterface : public ReferenceCount {
   public:
     virtual void add(EventPtr &event, SchemaPtr &schema, const TableIdentifier *table,
-                     uint32_t count, StaticBuffer &buffer, uint32_t flags) = 0;
+                     uint32_t count, StaticBuffer &buffer, uint32_t flags, bool do_sync) = 0;
     virtual void trigger() = 0;
   };
   typedef boost::intrusive_ptr<GroupCommitInterface> GroupCommitInterfacePtr;

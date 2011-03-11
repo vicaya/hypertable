@@ -358,18 +358,21 @@ namespace Hypertable {
     /** Issues a "commit_log_sync" request asynchronously.
      *
      * @param addr address of RangeServer
+     * @param table_id table for which commit log sync is needed
      * @param handler response handler
      */
-    void commit_log_sync(const CommAddress &addr, DispatchHandler *handler);
+    void commit_log_sync(const CommAddress &addr, const TableIdentifier &table_id,
+                         DispatchHandler *handler);
 
     /** Issues a "commit_log_sync" request asynchronously with timer.
      *
      * @param addr address of RangeServer
+     * @param table_id table for which commit log sync is needed
      * @param handler response handler
      * @param timer timer
      */
-    void commit_log_sync(const CommAddress &addr, DispatchHandler *handler,
-                         Timer &timer);
+    void commit_log_sync(const CommAddress &addr, const TableIdentifier &table_id,
+                         DispatchHandler *handler, Timer &timer);
 
     /** Issues a "status" request.  This call blocks until it receives a
      * response from the server.
@@ -576,7 +579,7 @@ namespace Hypertable {
                        const TableIdentifier &table,
                        uint32_t timeout_ms);
     void do_status(const CommAddress &addr, uint32_t timeout_ms);
-    void do_get_statistics(const CommAddress &addr, StatsRangeServer &stats, 
+    void do_get_statistics(const CommAddress &addr, StatsRangeServer &stats,
                            uint32_t timeout_ms);
 
     void send_message(const CommAddress &addr, CommBufPtr &cbp,

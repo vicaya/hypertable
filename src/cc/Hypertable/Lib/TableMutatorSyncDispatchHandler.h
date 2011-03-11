@@ -54,7 +54,7 @@ namespace Hypertable {
     /**
      * Constructor.
      */
-    TableMutatorSyncDispatchHandler(Comm *comm, time_t timeout);
+    TableMutatorSyncDispatchHandler(Comm *comm, TableIdentifierManaged &table_id, time_t timeout);
 
     /**
      * Destructor
@@ -86,6 +86,7 @@ namespace Hypertable {
     RangeServerClient  m_client;
     vector<ErrorResult> m_errors;
     CommAddressSet      m_pending;
+    TableIdentifierManaged &m_table_identifier;
   };
 }
 
