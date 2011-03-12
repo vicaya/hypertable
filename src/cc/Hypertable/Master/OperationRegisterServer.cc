@@ -62,6 +62,7 @@ void OperationRegisterServer::execute() {
     }
     m_rsc = new RangeServerConnection(m_context->mml_writer, m_location);
   }
+  m_context->monitoring->add_server(m_location, m_system_stats);
   m_context->connect_server(m_rsc, m_system_stats.net_info.host_name,
                             m_local_addr, m_public_addr);
 
