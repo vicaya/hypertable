@@ -76,7 +76,7 @@ void OperationGatherStatistics::execute() {
     filename_tmp = monitoring_dir + "/mop.tmp.dot";
     if (FileUtils::write(filename_tmp, graphviz_str) != -1)
       FileUtils::rename(filename_tmp, filename);
-    dot_cmd = format("dot -Tjpg -o%s/mop.tmp.jpg %s/mop.dot",
+    dot_cmd = format("dot -Tjpg:cairo:gd -o%s/mop.tmp.jpg %s/mop.dot",
                      monitoring_dir.c_str(), monitoring_dir.c_str());
     if (system(dot_cmd.c_str()) != -1) {
       filename = monitoring_dir + "/mop.jpg";
@@ -85,7 +85,7 @@ void OperationGatherStatistics::execute() {
     }
 
     dispatch_handler.wait_for_completion();
-    
+
     m_context->monitoring->add(results);
     set_state(OperationState::COMPLETE);
     break;
