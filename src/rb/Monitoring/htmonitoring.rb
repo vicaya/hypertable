@@ -88,10 +88,25 @@ module HTMonitoring
     get '/graphs' do
       @server = params[:server]
       @stype = params[:type]
+      @start_time = params[:start_time]
+      @end_time = params[:end_time]
       if @stype.nil?
         @stype = "RangeServer"
       end
       erb :graphs
+    end
+
+    get '/mop_graph' do
+        file_name = HTMonitoring.config[:data]+"mop.jpg"
+        content_type 'image/jpg'
+        if File.exists?(file_name) 
+           file = File.open(file_name)
+           contents=""
+           file.each {|line|
+             contents << line
+           }
+          contents
+        end
     end
 
     error do

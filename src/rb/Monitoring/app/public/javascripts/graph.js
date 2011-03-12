@@ -41,8 +41,8 @@ var HTMonitoring = new Class({
         this.options.type = type;
         this.options.stat = stat;
         this.options.time_interval = time_interval;
-        this.options.start_time = '';
-        this.options.end_time = '';
+        this.options.start_time = options.start_time;
+        this.options.end_time = options.end_time;
         this.options.sort = 'Name';
         this.options.sort_options = ['Name','Value'];
         this.options.selected_rs = options.selected_rs;
@@ -55,21 +55,20 @@ var HTMonitoring = new Class({
 
 
     dataURL: function() {
-        url = ['data', this.options.type]
+       url = ['data', this.options.type]
         if (this.options.stat) {
             url.push(this.options.stat.replace("/","_"))
 	}
-        if(this.options.time_interval)
+        if(this.options.time_interval && this.options.stat != 'servers')
             url.push(this.options.time_interval)
-        if(this.options.start_time)
-            url.push(this.options.start_time)
-        if(this.options.end_time)
-            url.push(this.options.end_time)
+        if(this.options.start_time && this.options.stat != 'servers')
+            url.push(this.parseGraphDateSecs(this.options.start_time))
+        if(this.options.end_time && this.options.stat != 'servers')
+            url.push(this.parseGraphDateSecs(this.options.end_time))
         if(this.options.sort)
             url.push(this.options.sort)
         if (this.options.resolution)
             url.push(this.options.resolution);
-	console.log(url.join('/'));
         return url.join('/')
     },
 
@@ -196,10 +195,21 @@ var RSGraph = new Class({
             this.options.stat = $('rs').get('value');
         }
 
-        if (this.options.type && this.options.start_time && this.options.end_time && this.options.stat) {
-            this.displayGraphInfo();
+        if (this.validate(this.options.start_time , this.options.end_time)) {
+            if (this.options.type  && this.options.stat ) {
+                this.displayGraphInfo();
+            }
         }
     },
+    
+    parseGraphDate: function(date) {
+            var date_parts = date.split("-");
+            var date = Date.parse(date_parts[1]+"/"+date_parts[2]+"/"+date_parts[0]+"  "+date_parts[3]+":"+date_parts[4]);
+            return date;
+        },
+    parseGraphDateSecs: function(date) {
+            return this.parseGraphDate(date).getTime()/1000;
+        },
 
     displayGraphInfo: function() {
         this.buildGraphContainer();
@@ -209,7 +219,6 @@ var RSGraph = new Class({
             selected_server = this.options.stat + " (" + selected_server + ")";
         }
         this.graphHeader.set('text',"RRD Graphs for "+selected_server);
-	console.log(this.data);
         for (i=0; i < this.data['stats'].length; i++) {
             key = this.data['stats'][i];
             this.buildGraphImageContainer();
@@ -221,14 +230,12 @@ var RSGraph = new Class({
     },
 
     buildGraphImageUrl: function(key) {
-	console.log(this.options.type);
         url = ['/graph'];
 	url.push(this.options.type);
 	url.push(this.options.stat.replace("/","_"))
         url.push(key);
-        url.push(this.options.start_time);
-        url.push(this.options.end_time);
-	console.log("graph image "+url.join('/'));
+        url.push(this.parseGraphDateSecs(this.options.start_time));
+        url.push(this.parseGraphDateSecs(this.options.end_time));
         return url.join('/');
     },
 
@@ -273,6 +280,8 @@ var RSGraph = new Class({
     },
 
     validate: function(start_date,end_date) {
+            start_date = this.parseGraphDateSecs(start_date);
+            end_date = this.parseGraphDateSecs(end_date);
         if (start_date == "" || end_date == "") {
             this.displayError("Please provide both start date and end date");
             return false;
@@ -290,15 +299,10 @@ var RSGraph = new Class({
         var submit_container = $(this.submitContainer);
         var server_container = $(this.serverContainer);
         var form = new Element('form', {
-            'action': this.dataURL(),
+            'action': '/graphs',
             'method': 'get',
             'events': {
                 'submit': function(e, foo) {
-                    e.stop();
-                    this.options.start_time = $('start_time').get('value');
-                    this.options.end_time = $('end_time').get('value');
-                    this.options.stat = $('rs').get('value');
-                    this.options.sort = '';
                     if (this.validate(this.options.start_time,this.options.end_time)) {
                         if (this.errorContainer) {
                             $(this.errorContainer).dispose();
@@ -306,13 +310,15 @@ var RSGraph = new Class({
                         if (this.graphContainer) {
                             $(this.graphContainer).dispose();
                         }
-                        this.displayGraphInfo();
+                        //this.displayGraphInfo();
                     }
+                    console.log(e);
+                    console.log(foo);
                 }.bind(this)
             }
         });
 
-        var rs_select = new Element('select', { 'id': 'rs', 'class': 'rs' });
+        var rs_select = new Element('select', { 'id': 'rs', 'class': 'rs' ,'name':'server'});
         var selected_rs = this.options.stat;
 
         this.servers.sort().each(function(element) {
@@ -326,10 +332,14 @@ var RSGraph = new Class({
                 rs_select.grab(option)
             });
         });
-
-        now = new Date();
-        end_date = parseInt(now.getTime()/1000);
-        start_date = end_date - 3600;
+        
+        if (this.options.start_time == "" || this.options.end_time == "") {
+            end_date = new Date();
+            start_date = end_date.clone().decrement('second',3600);
+        } else {
+            end_date = this.parseGraphDate(this.options.end_time);
+            start_date = this.parseGraphDate(this.options.start_time);
+        }
 
 	var rs_label;
 	if (this.options.type == "table") 
@@ -339,9 +349,9 @@ var RSGraph = new Class({
         var starttime_label = new Element('label', {'for':'start_time','text':'Start Time: '});
         var endtime_label = new Element('label', {'for':'end_time','text':'End Time: '});
 
-        var starttime_select = new Element('input', { 'id':'start_time','class': 'date start_time','type':'text','value':start_date});
-        var endtime_select = new Element('input' , { 'id':'end_time','class':'date end_time','type':'text','value':end_date});
-
+        var starttime_select = new Element('input', { 'name':'start_time','id':'start_time','class': 'date start_time','type':'text','value':start_date.format("%Y-%m-%d-%H-%M")});
+        var endtime_select = new Element('input' , { 'name':'end_time', 'id':'end_time','class':'date end_time','type':'text','value':end_date.format("%Y-%m-%d-%H-%M")});
+        var type_select = new Element('input', {'name':'type','id':'type','type':'hidden','value':this.options.type});
         var submit = new Element('input', { 'type': 'submit', 'value': 'show' });
 
         server_container.grab(rs_label);
@@ -358,11 +368,12 @@ var RSGraph = new Class({
         form.grab(server_container);
         form.grab(start_container);
         form.grab(end_container);
+        form.grab(type_select);
         form.grab(submit_container);
 
         rs_container.grab(form);
 
-        new DatePicker('.start_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'm-d-Y @ H:i' });
-        new DatePicker('.end_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'm-d-Y @ H:i' });
+        new DatePicker('.start_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'Y-m-d-H-i',inputOutputFormat: 'Y-m-d-H-i' });
+        new DatePicker('.end_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'Y-m-d-H-i',inputOutputFormat: 'Y-m-d-H-i' });
     },
 });
