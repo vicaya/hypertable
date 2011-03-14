@@ -219,6 +219,7 @@ void Range::update_schema(SchemaPtr &schema) {
   }
 
   // create new access groups
+  m_metalog_entity->table.generation = schema->get_generation();
   foreach(Schema::AccessGroup *s_ag, new_access_groups) {
     ag = new AccessGroup(&m_metalog_entity->table, schema, s_ag, &m_metalog_entity->spec);
     m_access_group_map[s_ag->name] = ag;
@@ -434,6 +435,8 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->updates = m_updates;
     mdata->bytes_written = m_bytes_written;
     mdata->cells_written = m_cells_written;
+    mdata->schema_generation = m_metalog_entity->table.generation;
+    mdata->soft_limit = m_metalog_entity->state.soft_limit;
   }
 
   mdata->range = this;
@@ -441,7 +444,6 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
   mdata->is_metadata = m_metalog_entity->table.is_metadata();
   mdata->is_system = m_metalog_entity->table.is_system();
   mdata->relinquish = m_relinquish;
-  mdata->schema_generation = m_metalog_entity->table.generation;
 
   // record starting maintenance generation
   {
@@ -568,7 +570,10 @@ void Range::relinquish_install_log() {
   /**
    * Write RelinquishStart MetaLog entry
    */
-  m_metalog_entity->state.state = RangeState::RELINQUISH_LOG_INSTALLED;
+  {
+    ScopedLock lock(m_mutex);
+    m_metalog_entity->state.state = RangeState::RELINQUISH_LOG_INSTALLED;
+  }
   for (int i=0; true; i++) {
     try {
       /**  TBD **/
@@ -618,6 +623,7 @@ void Range::relinquish_compact_and_finish() {
   for (size_t i=0; i<ag_vector.size(); i++)
     ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR);
 
+  // VERIFY
   // update the latest generation, this should probably be protected
   {
     ScopedLock lock(m_schema_mutex);
@@ -1054,7 +1060,7 @@ void Range::split_compact_and_shrink() {
 
 void Range::split_notify_master() {
   RangeSpecManaged range;
-  int64_t soft_limit = (int64_t)m_metalog_entity->state.soft_limit;
+  int64_t soft_limit;
 
   if (cancel_maintenance())
     HT_THROW(Error::CANCELLED, "");
@@ -1072,6 +1078,7 @@ void Range::split_notify_master() {
   {
     ScopedLock lock(m_schema_mutex);
     m_metalog_entity->table.generation = m_schema->get_generation();
+    soft_limit = (int64_t)m_metalog_entity->state.soft_limit;
   }
 
   HT_INFOF("Reporting newly split off range %s[%s..%s] to Master",
@@ -1097,8 +1104,11 @@ void Range::split_notify_master() {
 
   String split_point = m_metalog_entity->state.split_point;
 
-  m_metalog_entity->state.clear();
-  m_metalog_entity->state.soft_limit = soft_limit;
+  {
+    ScopedLock lock(m_schema_mutex);
+    m_metalog_entity->state.clear();
+    m_metalog_entity->state.soft_limit = soft_limit;
+  }
 
   /**
    * Write SplitDone MetaLog entry

@@ -24,6 +24,7 @@
 #include "Common/ScopeGuard.h"
 #include "Common/StringExt.h"
 
+#include <cassert>
 #include <iostream>
 
 #include "Global.h"
@@ -170,9 +171,10 @@ MaintenancePrioritizer::schedule_splits(RangeStatsVector &range_data,
         }
       }
       else {
-        if (disk_total >= Global::range_split_size) {
-          HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",
-                   range_data[i]->range->get_name().c_str(), (int)disk_total, (int)Global::range_split_size);
+        assert(range_data[i]->soft_limit != 0);
+        if (disk_total >= range_data[i]->soft_limit) {
+          HT_INFOF("Adding maintenance for range %s because dist_total %lld exceeds %lld",
+                   range_data[i]->range->get_name().c_str(), (Lld)disk_total, (Lld)range_data[i]->soft_limit);
           memory_state.decrement_needed(mem_total);
           range_data[i]->priority = priority++;
 	  range_data[i]->maintenance_flags |= MaintenanceFlag::SPLIT;

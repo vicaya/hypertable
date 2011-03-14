@@ -77,6 +77,7 @@ namespace Hypertable {
       uint64_t bytes_written;
       int64_t  purgeable_index_memory;
       int64_t  compact_memory;
+      int64_t soft_limit;
       uint32_t schema_generation;
       int32_t  priority;
       int16_t  state;
