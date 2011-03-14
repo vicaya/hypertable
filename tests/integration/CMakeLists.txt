@@ -1,5 +1,6 @@
 # CMake file for integration tests
 
+add_subdirectory(scanner-cancel)
 add_subdirectory(random)
 add_subdirectory(mutator-no-log-sync)
 add_subdirectory(commit-log-gc)
