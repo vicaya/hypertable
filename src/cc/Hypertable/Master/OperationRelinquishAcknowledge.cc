@@ -27,8 +27,6 @@
 #include "Common/System.h"
 #include "Common/md5.h"
 
-#include "AsyncComm/ResponseCallback.h"
-
 #include "OperationMoveRange.h"
 #include "OperationProcessor.h"
 #include "OperationRelinquishAcknowledge.h"
@@ -50,8 +48,13 @@ void OperationRelinquishAcknowledge::execute() {
            (Lld)header.id, m_table.id, m_range.start_row, m_range.end_row,
            OperationState::get_text(m_state));
 
-  m_context->op->remove_operation(Utility::range_hash_code(m_table, m_range, "OperationMoveRange"));
-  response_ok_no_log();
+  m_context->response_manager->remove_operation(Utility::range_hash_code(m_table, m_range, "OperationMoveRange"));
+  complete_ok_no_log();
+  {
+    ScopedLock lock(m_mutex);
+    m_expiration_time.reset();
+    m_state = OperationState::COMPLETE;
+  }
 
   HT_INFOF("Leaving RelinquishAcknowledge-%lld %s[%s..%s]",
            (Lld)header.id, m_table.id, m_range.start_row, m_range.end_row);
@@ -78,11 +81,6 @@ void OperationRelinquishAcknowledge::decode_state(const uint8_t **bufp, size_t *
 void OperationRelinquishAcknowledge::decode_request(const uint8_t **bufp, size_t *remainp) {
   m_table.decode(bufp, remainp);
   m_range.decode(bufp, remainp);
-}
-
-bool OperationRelinquishAcknowledge::removal_ok(time_t now) {
-  ScopedLock lock(m_mutex);
-  return m_state == OperationState::COMPLETE;
 }
 
 const String OperationRelinquishAcknowledge::name() {

@@ -41,7 +41,6 @@ namespace Hypertable {
     virtual void encode_state(uint8_t **bufp) const;
     virtual void decode_state(const uint8_t **bufp, size_t *remainp);
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
-    virtual bool removal_ok(time_t now);
 
   private:
     TableIdentifierManaged m_table;

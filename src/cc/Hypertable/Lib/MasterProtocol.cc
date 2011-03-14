@@ -143,6 +143,13 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::create_fetch_result_request(int64_t id) {
+    CommHeader header(COMMAND_FETCH_RESULT);
+    CommBuf *cbuf = new CommBuf(header, 8);
+    cbuf->append_i64(id);
+    return cbuf;
+  }
+
   CommBuf *MasterProtocol::create_close_request() {
     CommHeader header(COMMAND_CLOSE);
     CommBuf *cbuf = new CommBuf(header, 0);

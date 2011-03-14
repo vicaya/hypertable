@@ -24,20 +24,21 @@
 
 #include "AsyncComm/DispatchHandler.h"
 
+#include "Operation.h"
 #include "Context.h"
 
 namespace Hypertable {
 
   /**
    */
-  class ConnectionHandler2 : public DispatchHandler {
+  class ConnectionHandler : public DispatchHandler {
   public:
-    ConnectionHandler2(ContextPtr &context);
+    ConnectionHandler(ContextPtr &context);
     virtual void handle(EventPtr &event);
 
   private:
+    int32_t send_id_response(EventPtr &event, OperationPtr &operation);
     ContextPtr  m_context;
-    //int64_t m_last_maintenance;
   };
 
 }

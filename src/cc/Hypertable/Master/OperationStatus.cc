@@ -25,28 +25,20 @@
 #include "Common/Serialization.h"
 #include "Common/StringExt.h"
 
-#include "AsyncComm/ResponseCallback.h"
-
-
-#include <boost/algorithm/string.hpp>
-
 #include "OperationStatus.h"
 
 using namespace Hypertable;
 
-
 OperationStatus::OperationStatus(ContextPtr &context, EventPtr &event) 
   : Operation(context, event, MetaLog::EntityType::OPERATION_STATUS) {
-  ResponseCallback cb(context->comm, event);
   HT_INFOF("Status-%lld", (Lld)header.id);
-  cb.response_ok();
   set_state(OperationState::STARTED);
 }
 
-
 void OperationStatus::execute() {
-  set_state(OperationState::COMPLETE);
-  return;
+  ScopedLock lock(m_mutex);
+  m_expiration_time.reset();
+  m_state = OperationState::COMPLETE;
 }
 
 const String OperationStatus::name() {
@@ -56,4 +48,3 @@ const String OperationStatus::name() {
 const String OperationStatus::label() {
   return String("Status");
 }
-

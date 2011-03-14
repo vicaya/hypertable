@@ -44,6 +44,7 @@ OperationStatus.cc
 OperationSystemUpgrade.cc
 OperationWaitForServers.cc
 RangeServerConnection.cc
+ResponseManager.cc
 Utility.cc
 )
 

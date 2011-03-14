@@ -83,14 +83,14 @@ void OperationAlterTable::execute() {
     // Check to see if namespace exists
     if(m_context->namemap->name_to_id(m_name, m_id, &is_namespace)) {
       if (is_namespace) {
-        response_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_name.c_str()));
+        complete_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_name.c_str()));
         return;
       }
       set_state(OperationState::VALIDATE_SCHEMA);
       m_context->mml_writer->record_state(this);
     }
     else {
-      response_error(Error::TABLE_NOT_FOUND, m_name);
+      complete_error(Error::TABLE_NOT_FOUND, m_name);
       return;
     }
     HT_MAYBE_FAIL("alter-table-INITIAL");
@@ -132,7 +132,7 @@ void OperationAlterTable::execute() {
       if (e.code() != Error::MASTER_BAD_SCHEMA &&
           e.code() != Error::MASTER_SCHEMA_GENERATION_MISMATCH)
         HT_ERROR_OUT << e << HT_END;
-      response_error(e);
+      complete_error(e);
       return;
     }
     set_state(OperationState::SCAN_METADATA);
@@ -201,7 +201,7 @@ void OperationAlterTable::execute() {
       m_context->hyperspace->attr_set(handle, "schema", m_schema.c_str(),
                                       m_schema.length());
     }
-    response_ok();
+    complete_ok();
     break;
 
   default:

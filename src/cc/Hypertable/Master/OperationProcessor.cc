@@ -35,10 +35,8 @@ using namespace boost;
 
 
 OperationProcessor::ThreadContext::ThreadContext(ContextPtr &mctx)
-  : master_context(mctx), busy_count(0),
-    need_timed_wait(true), need_order_recompute(false),
+  : master_context(mctx), busy_count(0), need_order_recompute(false),
     shutdown(false), paused(false) {
-  boost::xtime_get(&last_pending_removal_purge, boost::TIME_UTC);
   current_iter = current.end();
   execution_order_iter = execution_order.end();
 }
@@ -47,12 +45,13 @@ OperationProcessor::ThreadContext::~ThreadContext() {
 }
 
 
-OperationProcessor::OperationProcessor(ContextPtr &context, size_t thread_count) : m_context(context) {
+OperationProcessor::OperationProcessor(ContextPtr &context, size_t thread_count) 
+  : m_context(context) {
   m_context.execution_order_iter = m_context.execution_order.end();
   m_context.op = this;
-  Worker Worker(m_context);
+  Worker worker(m_context);
   for (size_t i=0; i<thread_count; ++i)
-    m_threads.create_thread(Worker);
+    m_threads.create_thread(worker);
 }
 
 
@@ -62,7 +61,7 @@ void OperationProcessor::add_operation(OperationPtr &operation) {
   //HT_INFOF("Adding operation %s", operation->label().c_str());
 
   if (operation->is_complete() && !operation->is_perpetual())
-    m_context.pending_removal.push_back(OperationRec(operation));
+    m_context.master_context->response_manager->add_operation(operation);
   else {
     add_operation_internal(operation);
     m_context.need_order_recompute = true;
@@ -83,7 +82,7 @@ void OperationProcessor::add_operations(std::vector<OperationPtr> &operations) {
       added = true;
     }
     else
-      m_context.pending_removal.push_back(OperationRec(operations[i]));
+      m_context.master_context->response_manager->add_operation(operations[i]);
   }
 
   if (added) {
@@ -163,35 +162,12 @@ void OperationProcessor::unblock(const String &name) {
   m_context.cond.notify_all();
 }
 
-void OperationProcessor::remove_operation(int64_t hash_code) {
-  OperationPtr operation;
-  {
-    ScopedLock lock(m_context.mutex);
-    PendingHashIndex &hash_index = m_context.pending_removal.get<1>();
-    PendingHashIndex::iterator iter;
-    HT_ASSERT((iter = hash_index.find(hash_code)) != hash_index.end());
-    operation = iter->op;
-    hash_index.erase(iter);
-  }
-  if (m_context.master_context->mml_writer)
-    m_context.master_context->mml_writer->record_removal(operation.get());
-}
-
-bool OperationProcessor::operation_complete(int64_t hash_code) {
-  ScopedLock lock(m_context.mutex);
-  PendingHashIndex &hash_index = m_context.pending_removal.get<1>();
-  return hash_index.find(hash_code) != hash_index.end();
-}
-
-
 /**
  *
  */
 void OperationProcessor::Worker::operator()() {
   Vertex vertex;
   OperationPtr operation;
-  bool timed_wait = false;
-  boost::xtime expire_time;
   bool current_needs_loading = true;
   
   try {
@@ -219,32 +195,13 @@ void OperationProcessor::Worker::operator()() {
             }
           }
 
-          if (m_context.need_timed_wait && !m_context.pending_removal.empty()) {
-            timed_wait = true;
-            boost::xtime_get(&expire_time, boost::TIME_UTC);
-            int64_t diff = xtime_diff_millis(m_context.last_pending_removal_purge, expire_time) / 1000LL;
-            if (diff < m_context.master_context->request_timeout) {
-              diff = (m_context.master_context->request_timeout - diff) * 1000;
-              xtime_add_millis(expire_time, diff);
-            }
-          }
-          else
-            timed_wait = false;
-
           if (m_context.busy_count == 0)
             m_context.idle_cond.notify_all();
 
           if (m_context.shutdown)
             return;
 
-          if (timed_wait) {
-            m_context.need_timed_wait = false;
-            if (!m_context.cond.timed_wait(lock, expire_time))
-              purge_pending_removals();
-            m_context.need_timed_wait = true;
-          }
-          else
-            m_context.cond.wait(lock);
+          m_context.cond.wait(lock);
 
           if (m_context.shutdown)
             return;
@@ -501,25 +458,6 @@ void OperationProcessor::graphviz_output(String &output) {
 }
 
 
-void OperationProcessor::Worker::purge_pending_removals() {
-  std::vector<MetaLog::Entity *> entities;
-  std::vector<OperationPtr> operations;
-  PendingRemovalList::iterator iter = m_context.pending_removal.begin();
-  time_t now = time(0);
-  while (iter != m_context.pending_removal.end()) {
-    if (iter->op->removal_ok(now)) {
-      operations.push_back(iter->op);
-      entities.push_back(iter->op.get());
-      iter = m_context.pending_removal.erase(iter);
-    }
-    else
-      ++iter;
-  }
-  if (m_context.master_context->mml_writer && !entities.empty())
-    m_context.master_context->mml_writer->record_removal(entities);
-  boost::xtime_get(&m_context.last_pending_removal_purge, boost::TIME_UTC);
-}
-
 void OperationProcessor::Worker::retire_operation(Vertex v, OperationPtr &operation) {
   m_context.op->purge_from_obstruction_index(v);
   m_context.op->purge_from_dependency_index(v);
@@ -532,11 +470,9 @@ void OperationProcessor::Worker::retire_operation(Vertex v, OperationPtr &operat
   //HT_INFOF("Retiring op %p vertex %p", operation.get(), v);
   if (operation->is_perpetual())
     m_context.perpetual_ops.insert(operation);
-  else {
-    PendingHashIndex &hash_index = m_context.pending_removal.get<1>();
-    if (hash_index.find(operation->hash_code()) == hash_index.end())
-      m_context.pending_removal.push_back(OperationRec(operation));
-  }
+  else
+    m_context.master_context->response_manager->add_operation(operation);
+  m_context.master_context->remove_in_progress(operation.get());
 }
 
 

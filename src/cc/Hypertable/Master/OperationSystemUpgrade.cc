@@ -89,11 +89,7 @@ void OperationSystemUpgrade::execute() {
   case OperationState::INITIAL:
     update_schema("/sys/METADATA",   "/conf/METADATA.xml");
     update_schema("/sys/RS_METRICS", "/conf/RS_METRICS.xml");
-    {
-      ScopedLock lock(m_mutex);
-      m_state = OperationState::COMPLETE;
-      m_completion_time = time(0);
-    }
+    set_state(OperationState::COMPLETE);
     break;
 
   default:

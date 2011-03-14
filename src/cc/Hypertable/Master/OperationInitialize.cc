@@ -219,7 +219,7 @@ void OperationInitialize::execute() {
       m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
                                             m_context->hyperspace, m_context->namemap,
                                             TableIdentifier::METADATA_NAME);
-    response_ok();
+    complete_ok();
     break;
 
   default:

@@ -1,10 +1,15 @@
 
 TODO:
-- Add Monitoring
-- Close
-- Shutdown
+- Remove Close
+- Remove Shutdown
+- MasterClient
+- soft_limit
+- add is_split to RSML load_range
+- add state to facilitate balancing?
+- Remove this file
 
 DONE:
+- Add Monitoring
 - Add GC
 - Cache property maps in the context (op)
 - Add COMPLETE operation heap & make sure COMPLETED ops don't get added on restart

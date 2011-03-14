@@ -80,7 +80,7 @@ void OperationCreateTable::execute() {
   case OperationState::INITIAL:
     // Check to see if namespace exists
     if (m_context->namemap->exists_mapping(m_name, &is_namespace))
-      response_error(Error::NAME_ALREADY_IN_USE, "");
+      complete_error(Error::NAME_ALREADY_IN_USE, "");
     set_state(OperationState::ASSIGN_ID);
     m_context->mml_writer->record_state(this);
     HT_MAYBE_FAIL("create-table-INITIAL");
@@ -94,7 +94,7 @@ void OperationCreateTable::execute() {
         throw;
       if (e.code() != Error::NAMESPACE_DOES_NOT_EXIST)
         HT_ERROR_OUT << e << HT_END;
-      response_error(e);
+      complete_error(e);
       return;
     }
     HT_MAYBE_FAIL("create-table-ASSIGN_ID");
@@ -162,7 +162,7 @@ void OperationCreateTable::execute() {
       handle = m_context->hyperspace->open(tablefile, OPEN_FLAG_READ|OPEN_FLAG_WRITE);
       m_context->hyperspace->attr_set(handle, "x", "", 0);
     }
-    response_ok();
+    complete_ok();
     break;
 
   default:

@@ -33,13 +33,11 @@
 
 using namespace Hypertable;
 
-ContextPtr OperationTest::ms_dummy_context = new Context();
 
-
-OperationTest::OperationTest(TestContextPtr &context, const String &name,
+OperationTest::OperationTest(ContextPtr &context, std::vector<String> &results, const String &name,
                              DependencySet &dependencies, DependencySet &exclusivities,
                              DependencySet &obstructions)
-  : Operation(ms_dummy_context, MetaLog::EntityType::OPERATION_TEST), m_context(context), m_name(name), m_is_perpetual(false) {
+  : Operation(context, MetaLog::EntityType::OPERATION_TEST), m_results(results), m_name(name), m_is_perpetual(false) {
   m_dependencies = dependencies;
   m_exclusivities = exclusivities;
   m_obstructions = obstructions;
@@ -47,17 +45,12 @@ OperationTest::OperationTest(TestContextPtr &context, const String &name,
     set_state(OperationState::STARTED);
 }
 
-OperationTest::OperationTest(TestContextPtr &context, const String &name, int32_t state)
-  : Operation(ms_dummy_context, MetaLog::EntityType::OPERATION_TEST),
-    m_context(context), m_name(name), m_is_perpetual(false) {
+OperationTest::OperationTest(ContextPtr &context, std::vector<String> &results,
+                             const String &name, int32_t state) :
+  Operation(context, MetaLog::EntityType::OPERATION_TEST), m_results(results),
+  m_name(name), m_is_perpetual(false) {
   set_state(state);
 }
-
-OperationTest::OperationTest(TestContextPtr &context,
-                             const MetaLog::EntityHeader &header_)
-  : Operation(ms_dummy_context, header_), m_context(context), m_is_perpetual(false) {
-}
-
 
 void OperationTest::execute() {
   int32_t state = get_state();
@@ -73,13 +66,13 @@ void OperationTest::execute() {
       obstructions.insert( sub_node_id );
       m_dependencies.insert( sub_node_id );
       m_sub_ops.clear();
-      m_sub_ops.push_back( new OperationTest(m_context, m_name+"[0]", dependencies, exclusivities, obstructions) );
+      m_sub_ops.push_back( new OperationTest(m_context, m_results, m_name+"[0]", dependencies, exclusivities, obstructions) );
       set_state(OperationState::STARTED);
       return;
     }
     else if (state == OperationState::STARTED) {
       ScopedLock lock(m_context->mutex);
-      m_context->results.push_back(m_name);
+      m_results.push_back(m_name);
       set_state(OperationState::COMPLETE);
     }
     else if (state == OperationState::BLOCKED)

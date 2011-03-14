@@ -35,7 +35,7 @@ using namespace Hyperspace;
 
 
 OperationGetSchema::OperationGetSchema(ContextPtr &context, const String &name)
-  : Operation(context, MetaLog::EntityType::OPERATION_GET_SCHEMA), m_name(name), m_flags(0) {
+  : Operation(context, MetaLog::EntityType::OPERATION_GET_SCHEMA), m_name(name) {
   initialize_dependencies();
 }
 
@@ -45,7 +45,7 @@ OperationGetSchema::OperationGetSchema(ContextPtr &context,
 }
 
 OperationGetSchema::OperationGetSchema(ContextPtr &context, EventPtr &event) 
-  : Operation(context, event, MetaLog::EntityType::OPERATION_GET_SCHEMA), m_flags(0) {
+  : Operation(context, event, MetaLog::EntityType::OPERATION_GET_SCHEMA) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
@@ -58,30 +58,6 @@ void OperationGetSchema::initialize_dependencies() {
   m_exclusivities.insert(m_name);
   m_dependencies.insert(Dependency::INIT);
 }
-
-int OperationGetSchema::response_ok(const char *schema) {
-  int32_t error_code = Error::OK;
-  {
-    ScopedLock lock(m_mutex);
-    m_state = OperationState::COMPLETE;
-    m_error = Error::OK;
-    m_completion_time = time(0);
-  }
-  if (m_event) {
-    CommHeader header;
-    header.initialize_from_request_header(m_event->header);
-    CommBufPtr cbp(new CommBuf(header, 4 + Serialization::encoded_length_vstr(schema)));
-    cbp->append_i32(Error::OK);
-    cbp->append_vstr(schema);
-    error_code = m_context->comm->send_response(m_event->addr, cbp);
-    if (error_code != Error::OK)
-      HT_ERRORF("Problem sending response back for %s operation (id=%u) - %s",
-                label().c_str(), header.id, Error::get_text(error_code));
-  }
-  m_context->mml_writer->record_state(this);
-  return error_code;
-}
-
 
 void OperationGetSchema::execute() {
   uint64_t handle = 0;
@@ -98,13 +74,14 @@ void OperationGetSchema::execute() {
 
   case OperationState::INITIAL:
     if (!Utility::table_exists(m_context, m_name, table_id)) {
-      response_error(Error::TABLE_NOT_FOUND, m_name);
+      complete_error(Error::TABLE_NOT_FOUND, m_name);
       return;
     }
     filename = m_context->toplevel_dir + "/tables/" + table_id;
     handle = m_context->hyperspace->open(filename, OPEN_FLAG_READ);
     m_context->hyperspace->attr_get(handle, "schema", dbuf);
-    response_ok((const char *)dbuf.base);
+    m_schema = String((const char *)dbuf.base);
+    complete_ok_no_log();
     break;
 
   default:
@@ -112,6 +89,26 @@ void OperationGetSchema::execute() {
   }
 
   HT_INFOF("Leaving GetSchema-%lld(%s)", header.id, m_name.c_str());
+}
+
+
+size_t OperationGetSchema::encoded_result_length() const {
+  size_t length = Operation::encoded_result_length();
+  if (m_error == Error::OK)
+    length += Serialization::encoded_length_vstr(m_location);
+  return length;
+}
+
+void OperationGetSchema::encode_result(uint8_t **bufp) const {
+  Operation::encode_result(bufp);
+  if (m_error == Error::OK)
+    Serialization::encode_vstr(bufp, m_location);
+}
+
+void OperationGetSchema::decode_result(const uint8_t **bufp, size_t *remainp) {
+  Operation::decode_result(bufp, remainp);
+  if (m_error == Error::OK)
+    m_location = Serialization::decode_vstr(bufp, remainp);
 }
 
 

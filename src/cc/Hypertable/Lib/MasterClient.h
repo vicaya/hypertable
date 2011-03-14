@@ -134,6 +134,7 @@ namespace Hypertable {
     void hyperspace_disconnected();
     void hyperspace_reconnected();
     void send_message(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer);
+    int64_t initiate_operation(CommBufPtr &cbp, Timer *timer);
     void initialize_hyperspace();
 
     Mutex                  m_mutex;

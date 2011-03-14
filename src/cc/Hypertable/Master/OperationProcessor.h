@@ -38,6 +38,7 @@
 
 #include "Context.h"
 #include "Operation.h"
+#include "ResponseManager.h"
 
 namespace Hypertable {
 
@@ -45,7 +46,7 @@ namespace Hypertable {
    */
   class OperationProcessor : public ReferenceCount {
   public:
-    OperationProcessor(ContextPtr &state, size_t thread_count);
+    OperationProcessor(ContextPtr &context, size_t thread_count);
     void add_operation(OperationPtr &operation);
     void add_operations(std::vector<OperationPtr> &operations);
     void shutdown();
@@ -121,25 +122,6 @@ namespace Hypertable {
     void add_edge(Vertex v, Vertex u);
     void add_edge_permanent(Vertex v, Vertex u);
 
-    class OperationRec {
-    public:
-      OperationRec(OperationPtr &_op) : op(_op) { }
-      OperationPtr op;
-      int64_t hash_code() const { return op->hash_code(); }
-    };
-
-    typedef boost::multi_index_container<
-      OperationRec,
-      indexed_by<
-        sequenced<>,
-        hashed_unique<const_mem_fun<OperationRec, int64_t,
-                                    &OperationRec::hash_code> > 
-        >
-      > PendingRemovalList;
-
-    typedef PendingRemovalList::nth_index<0>::type PendingSequence;
-    typedef PendingRemovalList::nth_index<1>::type PendingHashIndex;
-
     typedef std::set<OperationPtr> PerpetualSet;
 
     class ThreadContext {
@@ -164,13 +146,11 @@ namespace Hypertable {
       DependencyIndex obstruction_index;
       PerpetualSet perpetual_ops;
       size_t busy_count;
-      bool need_timed_wait;
       bool need_order_recompute;
       bool shutdown;
       bool paused;
       VertexSet live;
-      PendingRemovalList pending_removal;
-      boost::xtime last_pending_removal_purge;
+      ResponseManager *response_manager;
       boost::property_map<OperationGraph, execution_time_t>::type exec_time;
       boost::property_map<OperationGraph, operation_t>::type ops;
       boost::property_map<OperationGraph, label_t>::type label;
@@ -201,7 +181,6 @@ namespace Hypertable {
       Worker(ThreadContext &context) : m_context(context) { return; }
       void operator()();
     private:
-      void purge_pending_removals();
       void retire_operation(Vertex v, OperationPtr &operation);
       void update_operation(Vertex v, OperationPtr &operation);
       void recompute_order();

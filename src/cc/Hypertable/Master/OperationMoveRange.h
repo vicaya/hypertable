@@ -46,10 +46,11 @@ namespace Hypertable {
     virtual void encode_state(uint8_t **bufp) const;
     virtual void decode_state(const uint8_t **bufp, size_t *remainp);
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
-    virtual bool removal_ok(time_t now);
     virtual int64_t hash_code() const;
+    virtual bool remove_explicitly() { return m_remove_explicitly; }
 
     String get_location() { return m_location; }
+    void abort_operation();
 
   private:
     TableIdentifierManaged m_table;
@@ -59,7 +60,7 @@ namespace Hypertable {
     bool m_is_split;
     String m_location;
     String m_range_name;
-    bool m_removal_ok;
+    bool m_remove_explicitly;
   };
 
   typedef intrusive_ptr<OperationMoveRange> OperationMoveRangePtr;

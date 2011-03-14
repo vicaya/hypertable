@@ -29,6 +29,7 @@ extern "C" {
 #include "Common/Init.h"
 #include "Common/ScopeGuard.h"
 #include "Common/System.h"
+#include "Common/Thread.h"
 
 #include "AsyncComm/Comm.h"
 
@@ -44,6 +45,7 @@ extern "C" {
 #include "OperationRecoverServer.h"
 #include "OperationSystemUpgrade.h"
 #include "OperationWaitForServers.h"
+#include "ResponseManager.h"
 
 using namespace Hypertable;
 using namespace Config;
@@ -64,7 +66,7 @@ namespace {
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
     HandlerFactory(ContextPtr &context) : m_context(context) {
-      m_handler = new ConnectionHandler2(m_context);
+      m_handler = new ConnectionHandler(m_context);
     }
 
     virtual void get_instance(DispatchHandlerPtr &dhp) {
@@ -143,6 +145,13 @@ int main(int argc, char **argv) {
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
                                               log_dir, entities);
 
+    /**
+     * Create Response Manager
+     */
+    ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
+    context->response_manager = new ResponseManager(rmctx);
+    Thread response_manager_thread(*context->response_manager);
+
     int worker_count  = get_i32("workers");
     context->op = new OperationProcessor(context, worker_count);
 
@@ -187,6 +196,12 @@ int main(int argc, char **argv) {
 
     context->op->join();
     context->comm->close_socket(listen_addr);
+
+    context->response_manager->shutdown();
+    response_manager_thread.join();
+    delete rmctx;
+    delete context->response_manager;
+
     context = 0;
   }
   catch (Exception &e) {

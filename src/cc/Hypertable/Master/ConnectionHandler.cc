@@ -56,7 +56,7 @@ using namespace Error;
 /**
  *
  */
-ConnectionHandler2::ConnectionHandler2(ContextPtr &context) : m_context(context) {
+ConnectionHandler::ConnectionHandler(ContextPtr &context) : m_context(context) {
   int error;
   if ((error = m_context->comm->set_timer(context->timer_interval, this)) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
@@ -66,7 +66,7 @@ ConnectionHandler2::ConnectionHandler2(ContextPtr &context) : m_context(context)
 /**
  *
  */
-void ConnectionHandler2::handle(EventPtr &event) {
+void ConnectionHandler::handle(EventPtr &event) {
   OperationPtr operation;
 
   if (event->type == Event::MESSAGE) {
@@ -102,7 +102,8 @@ void ConnectionHandler2::handle(EventPtr &event) {
         break;
       case MasterProtocol::COMMAND_MOVE_RANGE:
         operation = new OperationMoveRange(m_context, event);
-        break;
+        m_context->op->add_operation(operation);
+        return;
       case MasterProtocol::COMMAND_RELINQUISH_ACKNOWLEDGE:
         operation = new OperationRelinquishAcknowledge(m_context, event);
         break;
@@ -119,12 +120,19 @@ void ConnectionHandler2::handle(EventPtr &event) {
         operation = new OperationDropNamespace(m_context, event);
         break;
 
+      case MasterProtocol::COMMAND_FETCH_RESULT:
+        m_context->response_manager->add_delivery_info(event);
+        return;
+
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
                   (Llu)event->header.command);
       }
-      if (operation)
+      if (operation) {
+        if (send_id_response(event, operation) != Error::OK)
+          return;
         m_context->op->add_operation(operation);
+      }
       else
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
                   (Llu)event->header.command);
@@ -171,4 +179,18 @@ void ConnectionHandler2::handle(EventPtr &event) {
     HT_INFOF("%s", event->to_str().c_str());
   }
 
+}
+
+int32_t ConnectionHandler::send_id_response(EventPtr &event, OperationPtr &operation) {
+  int error = Error::OK;
+  CommHeader header;
+  header.initialize_from_request_header(event->header);
+  CommBufPtr cbp(new CommBuf(header, 12));
+  cbp->append_i32(Error::OK);
+  cbp->append_i64(operation->id());
+  error = m_context->comm->send_response(event->addr, cbp);
+  if (error != Error::OK)
+    HT_ERRORF("Problem sending ID response back for %s operation (id=%lld) - %s",
+              operation->label().c_str(), (Lld)operation->id(), Error::get_text(error));
+  return error;
 }

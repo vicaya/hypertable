@@ -35,12 +35,16 @@ namespace Hypertable {
     virtual void execute();
     virtual const String name();
     virtual const String label();
+
     virtual void display_state(std::ostream &os);
     virtual size_t encoded_state_length() const { return 0; }
     virtual void encode_state(uint8_t **bufp) const { return; }
     virtual void decode_state(const uint8_t **bufp, size_t *remainp) { return; }
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
-    virtual int send_ok_response();
+
+    virtual size_t encoded_result_length() const;
+    virtual void encode_result(uint8_t **bufp) const;
+    virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
   private:
     String m_location;

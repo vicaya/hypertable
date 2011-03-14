@@ -29,6 +29,7 @@
 
 #include "Common/Mutex.h"
 #include "Common/ScopeGuard.h"
+#include "Common/Time.h"
 
 #include "Hypertable/Lib/MetaLogEntity.h"
 
@@ -96,9 +97,10 @@ namespace Hypertable {
     virtual void decode_state(const uint8_t **bufp, size_t *remainp) = 0;
     virtual void display_state(std::ostream &os) = 0;
 
-    virtual size_t encoded_result_length() const { return 0; }
-    virtual void encode_result(uint8_t **bufp) const { }
-    virtual void decode_result(const uint8_t **bufp, size_t *remainp) { }
+    virtual size_t encoded_result_length() const;
+    virtual void encode_result(uint8_t **bufp) const;
+    virtual void decode_result(const uint8_t **bufp, size_t *remainp);
+
     virtual void display_results(std::ostream &os) { }
 
     virtual size_t encoded_length() const;
@@ -107,12 +109,16 @@ namespace Hypertable {
 
     virtual void display(std::ostream &os);
 
-    int response_error(int error, const String &msg);
-    int response_error(Exception &e);
-    int response_ok();
-    int response_ok_no_log();
-    virtual int send_ok_response();
-    virtual bool removal_ok(time_t now);
+    int64_t id() { return header.id; }
+    HiResTime expiration_time() { ScopedLock lock(m_mutex); return m_expiration_time; }
+
+    virtual bool remove_explicitly() { return false; }
+
+    void complete_error(int error, const String &msg);
+    void complete_error(Exception &e);
+    void complete_ok();
+    void complete_ok_no_log();
+
     virtual int64_t hash_code() const;
 
     virtual void exclusivities(DependencySet &exclusivities);
@@ -137,7 +143,7 @@ namespace Hypertable {
     ContextPtr m_context;
     EventPtr m_event;
     int32_t m_state;
-    time_t m_completion_time;
+    HiResTime m_expiration_time;
     int32_t m_error;
     String m_error_msg;
     DependencySet m_exclusivities;

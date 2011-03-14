@@ -45,6 +45,7 @@
 #include "Hypertable/Master/OperationRenameTable.h"
 #include "Hypertable/Master/OperationSystemUpgrade.h"
 #include "Hypertable/Master/OperationMoveRange.h"
+#include "Hypertable/Master/ResponseManager.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -137,6 +138,8 @@ namespace {
     else
       context->op->join();
 
+    context->clear_in_progress();
+
     context->mml_writer = 0;
     MetaLog::ReaderPtr mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition,
                                                         log_dir + "/" + context->mml_definition->name());
@@ -214,6 +217,7 @@ void move_range_test(ContextPtr &context);
 
 int main(int argc, char **argv) {
   ContextPtr context = new Context();
+  std::vector<MetaLog::EntityPtr> entities;
 
   // Register ourselves as the Comm-layer proxy master
   ReactorFactory::proxy_master = true;
@@ -233,11 +237,21 @@ int main(int argc, char **argv) {
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
-    context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
     context->range_split_size = context->props->get_i64("Hypertable.RangeServer.Range.SplitSize");
     context->monitoring = new Monitoring(context->props, context->namemap);
+
+    context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
+    String log_dir = context->toplevel_dir + "/servers/master/log";
+    context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
+                                              log_dir + "/" + context->mml_definition->name(),
+                                              entities);
+
     FailureInducer::instance = new FailureInducer();
     context->request_timeout = 600;
+
+    ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
+    context->response_manager = new ResponseManager(rmctx);
+    Thread response_manager_thread(*context->response_manager);
 
     String testname = get_str("test");
 

@@ -43,18 +43,18 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context, const TableIdentifie
                                        uint64_t soft_limit, bool is_split)
   : Operation(context, MetaLog::EntityType::OPERATION_MOVE_RANGE),
     m_table(table), m_range(range), m_transfer_log(transfer_log),
-    m_soft_limit(soft_limit), m_is_split(is_split), m_removal_ok(false) {
+    m_soft_limit(soft_limit), m_is_split(is_split), m_remove_explicitly(true) {
   m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row, m_range.end_row);
   initialize_dependencies();
 }
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context,
                                        const MetaLog::EntityHeader &header_)
-  : Operation(context, header_), m_removal_ok(false) {
+  : Operation(context, header_), m_remove_explicitly(true) {
 }
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context, EventPtr &event) 
-  : Operation(context, event, MetaLog::EntityType::OPERATION_MOVE_RANGE), m_removal_ok(false) {
+  : Operation(context, event, MetaLog::EntityType::OPERATION_MOVE_RANGE), m_remove_explicitly(true) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
@@ -98,8 +98,10 @@ void OperationMoveRange::execute() {
 
   case OperationState::INITIAL:
     // Check to see if this operation was already executed
-    if (m_context->op->operation_complete(hash_code())) {
-      response_ok_no_log();
+    if (m_context->in_progress(this) ||
+        m_context->response_manager->operation_complete(hash_code())) {
+      HT_INFOF("Aborting %s because already in progress", label().c_str());
+      abort_operation();
       return;
     }
     if (!Utility::next_available_server(m_context, m_location))
@@ -109,8 +111,14 @@ void OperationMoveRange::execute() {
       m_dependencies.insert(m_location);
       m_state = OperationState::STARTED;
     }
+    if (!m_context->add_in_progress(this)) {
+      HT_INFOF("Aborting %s because already in progress", label().c_str());
+      abort_operation();
+      return;
+    }
     m_context->mml_writer->record_state(this);
     HT_MAYBE_FAIL("move-range-INITIAL");
+
     return;
 
   case OperationState::STARTED:
@@ -148,11 +156,7 @@ void OperationMoveRange::execute() {
         if (!Utility::table_exists(m_context, m_table.id)) {
           HT_WARNF("Aborting MoveRange %s because table no longer exists",
                    m_range_name.c_str());
-          {
-            ScopedLock lock(m_mutex);
-            m_removal_ok = true;
-          }
-          response_ok();
+          complete_ok();
           return;
         }
         if (!m_context->is_connected(m_location))
@@ -160,7 +164,7 @@ void OperationMoveRange::execute() {
         HT_THROW2(e.code(), e, format("MoveRange %s to %s", m_range_name.c_str(), m_location.c_str()));
       }
     }
-    response_ok();
+    complete_ok();
     break;
 
   default:
@@ -196,6 +200,9 @@ void OperationMoveRange::encode_state(uint8_t **bufp) const {
 void OperationMoveRange::decode_state(const uint8_t **bufp, size_t *remainp) {
   decode_request(bufp, remainp);
   m_location = Serialization::decode_vstr(bufp, remainp);
+  int32_t state = get_state();
+  if (state != OperationState::INITIAL && state != OperationState::COMPLETE)
+    HT_ASSERT(m_context->add_in_progress(this));
 }
 
 void OperationMoveRange::decode_request(const uint8_t **bufp, size_t *remainp) {
@@ -205,11 +212,6 @@ void OperationMoveRange::decode_request(const uint8_t **bufp, size_t *remainp) {
   m_soft_limit = Serialization::decode_i64(bufp, remainp);
   m_is_split = Serialization::decode_bool(bufp, remainp);
   m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row, m_range.end_row);
-}
-
-bool OperationMoveRange::removal_ok(time_t now) {
-  ScopedLock lock(m_mutex);
-  return m_removal_ok;
 }
 
 int64_t OperationMoveRange::hash_code() const {
@@ -231,8 +233,23 @@ const String OperationMoveRange::graphviz_label() {
   if (start_row.length() > 20)
     start_row = start_row.substr(0, 10) + ".." + start_row.substr(start_row.length()-10, 10);
 
-  if (end_row.length() > 20)
+  if (!strcmp(end_row.c_str(), Key::END_ROW_MARKER))
+    end_row = "END_ROW_MARKER";
+  else if (end_row.length() > 20)
     end_row = end_row.substr(0, 10) + ".." + end_row.substr(end_row.length()-10, 10);
   
   return format("MoveRange %s\\n%s\\n%s", m_table.id, start_row.c_str(), end_row.c_str());
+}
+
+void OperationMoveRange::abort_operation() {
+  ScopedLock lock(m_mutex);
+  m_state = OperationState::COMPLETE;
+  m_remove_explicitly = false;
+  m_expiration_time.reset();
+  int32_t error;
+  ResponseCallback cb(m_context->comm, m_event);
+  if ((error = cb.response_ok()) != Error::OK) {
+    HT_INFOF("Problem sending OK response for %s", m_range_name.c_str());
+    return;
+  }
 }

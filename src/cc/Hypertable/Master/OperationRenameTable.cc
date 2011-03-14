@@ -71,7 +71,7 @@ void OperationRenameTable::execute() {
 
   case OperationState::INITIAL:
     if (!Utility::table_exists(m_context, m_old_name, m_id)) {
-      response_error(Error::TABLE_NOT_FOUND, m_old_name);
+      complete_error(Error::TABLE_NOT_FOUND, m_old_name);
       return;
     }
     set_state(OperationState::STARTED);
@@ -81,7 +81,7 @@ void OperationRenameTable::execute() {
     m_context->namemap->rename(m_old_name, m_new_name);
     m_context->monitoring->change_id_mapping(m_id, m_new_name);
     HT_MAYBE_FAIL("rename-table-STARTED");
-    response_ok();
+    complete_ok();
     break;
 
   default:

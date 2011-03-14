@@ -25,8 +25,6 @@
 #include "Common/Serialization.h"
 #include "Common/StringExt.h"
 
-#include "AsyncComm/ResponseCallback.h"
-
 #include <boost/algorithm/string.hpp>
 
 #include "OperationRegisterServer.h"
@@ -45,16 +43,20 @@ OperationRegisterServer::OperationRegisterServer(ContextPtr &context, EventPtr &
   m_local_addr = InetAddr(event->addr);
   m_public_addr = InetAddr(m_system_stats.net_info.primary_addr, m_listen_port);
 
-  if (m_location == "") {
-    if (!context->find_server_by_hostname(m_system_stats.net_info.host_name, m_rsc))
-      context->find_server_by_public_addr(m_public_addr, m_rsc);
-  }
-  else
-    context->find_server_by_location(m_location, m_rsc);
 }
 
 
 void OperationRegisterServer::execute() {
+
+  if (m_location == "") {
+    if (!m_context->find_server_by_hostname(m_system_stats.net_info.host_name, m_rsc))
+      m_context->find_server_by_public_addr(m_public_addr, m_rsc);
+    if (m_rsc)
+      m_location = m_rsc->location();
+  }
+  else
+    m_context->find_server_by_location(m_location, m_rsc);
+
   if (!m_rsc) {
     if (m_location == "") {
       uint64_t id = m_context->hyperspace->attr_incr(m_context->master_file_handle, "next_server_id");
@@ -62,6 +64,7 @@ void OperationRegisterServer::execute() {
     }
     m_rsc = new RangeServerConnection(m_context->mml_writer, m_location);
   }
+
   m_context->monitoring->add_server(m_location, m_system_stats);
   m_context->connect_server(m_rsc, m_system_stats.net_info.host_name,
                             m_local_addr, m_public_addr);
@@ -70,25 +73,29 @@ void OperationRegisterServer::execute() {
            (Lld)header.id, m_rsc->location().c_str(), m_system_stats.net_info.host_name.c_str(),
            m_local_addr.format().c_str(), m_public_addr.format().c_str());
 
-  m_location = m_rsc->location();
-  response_ok_no_log();
+  complete_ok_no_log();
   m_context->op->unblock(m_location);
   m_context->op->unblock(Dependency::SERVERS);
   HT_INFOF("%lld Leaving RegisterServer %s", (Lld)header.id, m_rsc->location().c_str());
 }
 
-int OperationRegisterServer::send_ok_response() {
-  int error = Error::OK;
-  CommHeader header;
-  header.initialize_from_request_header(m_event->header);
-  CommBufPtr cbp(new CommBuf(header, 4 + Serialization::encoded_length_vstr(m_location)));
-  cbp->append_i32(Error::OK);
-  cbp->append_vstr(m_location);
-  error = m_context->comm->send_response(m_event->addr, cbp);
-  if (error != Error::OK)
-    HT_ERRORF("Problem sending response back for %s operation (id=%lld) - %s",
-              label().c_str(), (Lld)header.id, Error::get_text(error));
-  return error;
+size_t OperationRegisterServer::encoded_result_length() const {
+  size_t length = Operation::encoded_result_length();
+  if (m_error == Error::OK)
+    length += Serialization::encoded_length_vstr(m_location);
+  return length;
+}
+
+void OperationRegisterServer::encode_result(uint8_t **bufp) const {
+  Operation::encode_result(bufp);
+  if (m_error == Error::OK)
+    Serialization::encode_vstr(bufp, m_location);
+}
+
+void OperationRegisterServer::decode_result(const uint8_t **bufp, size_t *remainp) {
+  Operation::decode_result(bufp, remainp);
+  if (m_error == Error::OK)
+    m_location = Serialization::decode_vstr(bufp, remainp);
 }
 
 void OperationRegisterServer::display_state(std::ostream &os) {

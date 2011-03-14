@@ -39,10 +39,17 @@ const char *Dependency::SYSTEM = "SYSTEM";
 const char *OperationState::get_text(int32_t state);
 
 Operation::Operation(ContextPtr &context, int32_t type)
-  : MetaLog::Entity(type), m_context(context), m_state(OperationState::INITIAL), m_error(0) { }
+  : MetaLog::Entity(type), m_context(context), m_state(OperationState::INITIAL), m_error(0) { 
+  int32_t timeout = m_context->props->get_i32("Hypertable.Request.Timeout");
+  m_expiration_time.sec = time(0) + timeout/1000;
+  m_expiration_time.nsec = (timeout%1000) * 1000000LL;
+}
 
 Operation::Operation(ContextPtr &context, EventPtr &event, int32_t type)
-  : MetaLog::Entity(type), m_context(context), m_event(event), m_state(OperationState::INITIAL), m_error(0) { }
+  : MetaLog::Entity(type), m_context(context), m_event(event), m_state(OperationState::INITIAL), m_error(0) {
+  m_expiration_time.sec = time(0) + m_event->header.timeout_ms/1000;
+  m_expiration_time.nsec = (m_event->header.timeout_ms%1000) * 1000000LL;
+}
 
 Operation::Operation(ContextPtr &context, const MetaLog::EntityHeader &header_)
   : MetaLog::Entity(header_), m_context(context), m_state(OperationState::INITIAL), m_error(0) { }
@@ -51,8 +58,7 @@ void Operation::display(std::ostream &os) {
 
   os << " state=" << OperationState::get_text(m_state);
   if (m_state == OperationState::COMPLETE) {
-    os << " completion_time=\"" << ctime(&m_completion_time) << "\" [";
-    os << Error::get_text(m_error) << "] ";
+    os << " [" << Error::get_text(m_error) << "] ";
     if (m_error != Error::OK)
       os << m_error_msg << " ";
   }
@@ -96,14 +102,10 @@ void Operation::display(std::ostream &os) {
 }
 
 size_t Operation::encoded_length() const {
-  size_t length = 4;
+  size_t length = 16;
 
   if (m_state == OperationState::COMPLETE) {
-    length += 8;  // timestamp + error code
-    if (m_error != Error::OK)
-      length += Serialization::encoded_length_vstr(m_error_msg);
-    else
-      length += encoded_result_length();
+    length += encoded_result_length();
   }
   else {
     length += encoded_state_length();
@@ -123,14 +125,10 @@ size_t Operation::encoded_length() const {
 void Operation::encode(uint8_t **bufp) const {
 
   Serialization::encode_i32(bufp, m_state);
-  if (m_state == OperationState::COMPLETE) {
-    Serialization::encode_i32(bufp, m_completion_time);
-    Serialization::encode_i32(bufp, m_error);
-    if (m_error != Error::OK)
-      Serialization::encode_vstr(bufp, m_error_msg);
-    else
-      encode_result(bufp);
-  }
+  Serialization::encode_i64(bufp, m_expiration_time.sec);
+  Serialization::encode_i32(bufp, m_expiration_time.nsec);
+  if (m_state == OperationState::COMPLETE)
+    encode_result(bufp);
   else {
     encode_state(bufp);
     Serialization::encode_vi32(bufp, m_exclusivities.size());
@@ -150,14 +148,10 @@ void Operation::decode(const uint8_t **bufp, size_t *remainp) {
   size_t length;
 
   m_state = Serialization::decode_i32(bufp, remainp);
-  if (m_state == OperationState::COMPLETE) {
-    m_completion_time = Serialization::decode_i32(bufp, remainp);
-    m_error = Serialization::decode_i32(bufp, remainp);
-    if (m_error != Error::OK)
-      m_error_msg = Serialization::decode_vstr(bufp, remainp);
-    else
-      decode_result(bufp, remainp);
-  }
+  m_expiration_time.sec = Serialization::decode_i64(bufp, remainp);
+  m_expiration_time.nsec = Serialization::decode_i32(bufp, remainp);
+  if (m_state == OperationState::COMPLETE)
+    decode_result(bufp, remainp);
   else {
     decode_state(bufp, remainp);
 
@@ -184,77 +178,55 @@ void Operation::decode(const uint8_t **bufp, size_t *remainp) {
   }
 }
 
-int Operation::response_error(int error, const String &msg) {
-  int32_t error_code = Error::OK;
+size_t Operation::encoded_result_length() const {
+  if (m_error == Error::OK)
+    return 4;
+  return 4 + Serialization::encoded_length_vstr(m_error_msg);
+}
+
+void Operation::encode_result(uint8_t **bufp) const { 
+  Serialization::encode_i32(bufp, m_error);
+  if (m_error != Error::OK)
+    Serialization::encode_vstr(bufp, m_error_msg);
+}
+
+void Operation::decode_result(const uint8_t **bufp, size_t *remainp) { 
+  m_error = Serialization::decode_i32(bufp, remainp);
+  if (m_error != Error::OK)
+    m_error_msg = Serialization::decode_vstr(bufp, remainp);
+}
+
+
+void Operation::complete_error(int error, const String &msg) {
   {
     ScopedLock lock(m_mutex); 
     m_state = OperationState::COMPLETE;
     m_error = error;
     m_error_msg = msg;
-    m_completion_time = time(0);
     m_dependencies.clear();
     m_obstructions.clear();
     m_exclusivities.clear();
   }
   HT_INFO_OUT << "Operation failed (" << *this << ") " << Error::get_text(error) << " - " << msg << HT_END;
-  if (m_event) {
-    CommHeader header;
-    header.initialize_from_request_header(m_event->header);
-    CommBufPtr cbp(Protocol::create_error_message(header, error, msg.c_str()));
-    error_code = m_context->comm->send_response(m_event->addr, cbp);
-    if (error_code != Error::OK)
-      HT_ERRORF("Problem sending response back for %s operation (id=%u) - %s",
-                label().c_str(), header.id, Error::get_text(error_code));
-  }
   m_context->mml_writer->record_state(this);
-  return error_code;
 }
 
-int Operation::response_error(Exception &e) {
-  return response_error(e.code(), e.what());
+void Operation::complete_error(Exception &e) {
+  complete_error(e.code(), e.what());
 }
 
-int Operation::response_ok() {
-  int32_t error_code = response_ok_no_log();
+void Operation::complete_ok() {
+  complete_ok_no_log();
   m_context->mml_writer->record_state(this);
-  return error_code;
 }
 
-int Operation::response_ok_no_log() {
-  int32_t error_code = Error::OK;
-  {
-    ScopedLock lock(m_mutex); 
-    m_state = OperationState::COMPLETE;
-    m_error = Error::OK;
-    m_completion_time = time(0);
-    m_dependencies.clear();
-    m_obstructions.clear();
-    m_exclusivities.clear();
-  }
-  if (m_event)
-    error_code = send_ok_response();
-  return error_code;
-}
-
-int Operation::send_ok_response() {
-  int error = Error::OK;
-  CommHeader header;
-  header.initialize_from_request_header(m_event->header);
-  CommBufPtr cbp(new CommBuf(header, 4));
-  cbp->append_i32(Error::OK);
-  error = m_context->comm->send_response(m_event->addr, cbp);
-  if (error != Error::OK)
-    HT_ERRORF("Problem sending response back for %s operation (id=%u) - %s",
-              label().c_str(), header.id, Error::get_text(error));
-  return error;
-}
-
-bool Operation::removal_ok(time_t now) {
-  ScopedLock lock(m_mutex);
-  if (m_state == OperationState::COMPLETE &&
-      (now - m_completion_time) > (m_context->request_timeout*2))
-    return true;
-  return false;
+void Operation::complete_ok_no_log() {
+  ScopedLock lock(m_mutex); 
+  m_state = OperationState::COMPLETE;
+  m_error = Error::OK;
+  m_dependencies.clear();
+  m_obstructions.clear();
+  m_exclusivities.clear();
 }
 
 int64_t Operation::hash_code() const {

@@ -36,19 +36,22 @@ namespace Hypertable {
     virtual void execute();
     virtual const String name();
     virtual const String label();
+
     virtual void display_state(std::ostream &os);
     virtual size_t encoded_state_length() const;
     virtual void encode_state(uint8_t **bufp) const;
     virtual void decode_state(const uint8_t **bufp, size_t *remainp);
+
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
 
-    int response_ok(const char *schema);
+    virtual size_t encoded_result_length() const;
+    virtual void encode_result(uint8_t **bufp) const;
+    virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
   private:
     void initialize_dependencies();
     String m_name;
-    int m_flags;
-    String m_id;
+    String m_schema;
   };
 
 

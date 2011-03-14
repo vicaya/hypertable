@@ -73,7 +73,7 @@ void OperationDropNamespace::execute() {
     // Check to see if namespace exists
     if(m_context->namemap->name_to_id(m_name, m_id, &is_namespace)) {
       if (!is_namespace) {
-        response_error(Error::BAD_NAMESPACE, format("%s is not a namespace", m_name.c_str()));
+        complete_error(Error::BAD_NAMESPACE, format("%s is not a namespace", m_name.c_str()));
         return;
       }
       set_state(OperationState::STARTED);
@@ -81,9 +81,9 @@ void OperationDropNamespace::execute() {
     }
     else {
       if (m_flags & NamespaceFlag::IF_EXISTS)
-        response_ok();
+        complete_ok();
       else
-        response_error(Error::NAMESPACE_DOES_NOT_EXIST, m_name);
+        complete_error(Error::NAMESPACE_DOES_NOT_EXIST, m_name);
       return;
     }
     HT_MAYBE_FAIL("drop-namespace-INITIAL");
@@ -103,10 +103,10 @@ void OperationDropNamespace::execute() {
           e.code() != Error::HYPERSPACE_BAD_PATHNAME &&
           e.code() != Error::HYPERSPACE_DIR_NOT_EMPTY)
         HT_ERROR_OUT << e << HT_END;
-      response_error(e);
+      complete_error(e);
       return;
     }
-    response_ok();
+    complete_ok();
     break;
 
   default:

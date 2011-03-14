@@ -73,11 +73,11 @@ void OperationCreateNamespace::execute() {
     // Check to see if namespace exists
     if (m_context->namemap->exists_mapping(m_name, &is_namespace)) {
       if (m_flags & NamespaceFlag::IF_NOT_EXISTS)
-        response_ok();
+        complete_ok();
       else if (is_namespace)
-        response_error(Error::NAMESPACE_EXISTS, "");
+        complete_error(Error::NAMESPACE_EXISTS, "");
       else
-        response_error(Error::NAME_ALREADY_IN_USE, "");
+        complete_error(Error::NAME_ALREADY_IN_USE, "");
       return;
     }
     set_state(OperationState::ASSIGN_ID);
@@ -101,7 +101,7 @@ void OperationCreateNamespace::execute() {
         HT_THROW2F(e.code(), e, "CreateNamespace %s -> %s", m_name.c_str(), m_id.c_str());
     }
     HT_MAYBE_FAIL("create-namespace-ASSIGN_ID-b");
-    response_ok();
+    complete_ok();
     break;
 
   default:

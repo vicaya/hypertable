@@ -83,7 +83,7 @@ void OperationDropTable::execute() {
     // Check to see if namespace exists
     if(m_context->namemap->name_to_id(m_name, m_id, &is_namespace)) {
       if (is_namespace && !m_if_exists) {
-        response_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_name.c_str()));
+        complete_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_name.c_str()));
         return;
       }
       set_state(OperationState::SCAN_METADATA);
@@ -91,9 +91,9 @@ void OperationDropTable::execute() {
     }
     else {
       if (m_if_exists)
-        response_ok();
+        complete_ok();
       else
-        response_error(Error::TABLE_NOT_FOUND, m_name);
+        complete_error(Error::TABLE_NOT_FOUND, m_name);
       return;
     }
     HT_MAYBE_FAIL("drop-table-INITIAL");
@@ -154,7 +154,7 @@ void OperationDropTable::execute() {
     filename = m_context->toplevel_dir + "/tables/" + m_id;
     m_context->hyperspace->unlink(filename.c_str());
     m_context->monitoring->invalidate_id_mapping(m_id);
-    response_ok();
+    complete_ok();
     break;
 
   default:

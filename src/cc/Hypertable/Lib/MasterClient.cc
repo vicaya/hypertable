@@ -121,26 +121,34 @@ void
 MasterClient::create_namespace(const String &name, int flags, DispatchHandler *handler,
                                Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_create_namespace_request(name, flags));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, handler, timer);
 }
 
 void
 MasterClient::create_namespace(const String &name, int flags, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_create_namespace_request(name, flags));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
 
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROWF(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROWF(MasterProtocol::response_code(event),
               "Master 'create namespace' error, name=%s", name.c_str());
+
+  
 }
 
 void
 MasterClient::drop_namespace(const String &name, bool if_exists,
                              DispatchHandler *handler, Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_drop_namespace_request(name, if_exists));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, handler, timer);
 }
 
@@ -148,12 +156,14 @@ MasterClient::drop_namespace(const String &name, bool if_exists,
 void
 MasterClient::drop_namespace(const String &name, bool if_exists, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_drop_namespace_request(name, if_exists));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROWF(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROWF(MasterProtocol::response_code(event),
               "Master 'drop namespace' error, name=%s", name.c_str());
 }
 
@@ -161,6 +171,8 @@ void
 MasterClient::create_table(const String &tablename, const String &schema,
                            DispatchHandler *handler, Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_create_table_request(tablename, schema));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, handler, timer);
 }
 
@@ -169,13 +181,15 @@ void
 MasterClient::create_table(const String &tablename, const String &schema,
                            Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_create_table_request(tablename, schema));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
 
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROWF(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROWF(MasterProtocol::response_code(event),
               "Master 'create table' error, tablename=%s", tablename.c_str());
 }
 
@@ -184,6 +198,8 @@ MasterClient::alter_table(const String &tablename, const String &schema,
                           DispatchHandler *handler, Timer *timer) {
 
   CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename, schema));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, handler, timer);
 }
 
@@ -192,13 +208,15 @@ void
 MasterClient::alter_table(const String &tablename, const String &schema,
                           Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename, schema));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
 
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROWF(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROWF(MasterProtocol::response_code(event),
               "Master 'alter table' error, tablename=%s", tablename.c_str());
 }
 
@@ -206,6 +224,8 @@ void
 MasterClient::get_schema(const String &tablename, DispatchHandler *handler,
                          Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_get_schema_request(tablename));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, handler, timer);
 }
 
@@ -214,16 +234,18 @@ void
 MasterClient::get_schema(const String &tablename, std::string &schema,
                          Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_get_schema_request(tablename));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, &sync_handler, timer);
-  if (!sync_handler.wait_for_reply(event_ptr)) {
-    HT_THROWF(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event)) {
+    HT_THROWF(MasterProtocol::response_code(event),
               "Master 'get schema' error, tablename=%s", tablename.c_str());
   }
   else {
-    const uint8_t *decode_ptr = event_ptr->payload + 4;
-    size_t decode_remain = event_ptr->payload_len - 4;
+    const uint8_t *decode_ptr = event->payload + 4;
+    size_t decode_remain = event->payload_len - 4;
     schema = decode_vstr(&decode_ptr, &decode_remain);
   }
 
@@ -232,13 +254,15 @@ MasterClient::get_schema(const String &tablename, std::string &schema,
 
 void MasterClient::status(Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_status_request());
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
 
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW(MasterProtocol::response_code(event),
              "Master 'status' error");
 
 }
@@ -249,6 +273,8 @@ MasterClient::register_server(std::string &location, uint16_t listen_port,
                               StatsSystem &system_stats,
                               DispatchHandler *handler, Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_register_server_request(location, listen_port, system_stats));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, handler, timer);
 }
 
@@ -256,18 +282,20 @@ MasterClient::register_server(std::string &location, uint16_t listen_port,
 void MasterClient::register_server(std::string &location, uint16_t listen_port,
                                    StatsSystem &system_stats, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_register_server_request(location, listen_port, system_stats));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
 
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr)) {
-    HT_THROW(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event)) {
+    HT_THROW(MasterProtocol::response_code(event),
              "Master 'register server' error");
   }
   else {
-    const uint8_t *decode_ptr = event_ptr->payload + 4;
-    size_t decode_remain = event_ptr->payload_len - 4;
+    const uint8_t *decode_ptr = event->payload + 4;
+    size_t decode_remain = event->payload_len - 4;
     location = decode_vstr(&decode_ptr, &decode_remain);
   }
 
@@ -289,14 +317,13 @@ MasterClient::move_range(TableIdentifier *table, RangeSpec &range,
                          const String &log_dir, uint64_t soft_limit,
                          bool split, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_move_range_request(table, range, log_dir,
                                                            soft_limit, split));
-
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROWF(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROWF(MasterProtocol::response_code(event),
               "Master 'move_range' error %s[%s..%s]",
               table->id, range.start_row, range.end_row);
 
@@ -306,6 +333,8 @@ void
 MasterClient::relinquish_acknowledge(TableIdentifier *table, RangeSpec &range,
                                      DispatchHandler *handler, Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_relinquish_acknowledge_request(table, range));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, handler, timer);
 }
 
@@ -314,13 +343,15 @@ void
 MasterClient::relinquish_acknowledge(TableIdentifier *table, RangeSpec &range,
                                      Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_relinquish_acknowledge_request(table, range));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
 
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROWF(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROWF(MasterProtocol::response_code(event),
               "Master 'relinquish_acknowledge' error %s[%s..%s]",
               table->id, range.start_row, range.end_row);
 
@@ -331,6 +362,8 @@ void
 MasterClient::rename_table(const String &old_name, const String &new_name,
                            DispatchHandler *handler, Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_rename_table_request(old_name, new_name));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, handler, timer);
 }
 
@@ -338,12 +371,14 @@ MasterClient::rename_table(const String &old_name, const String &new_name,
 void
 MasterClient::rename_table(const String &old_name, const String &new_name, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_rename_table_request(old_name, new_name));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW(MasterProtocol::response_code(event),
              "Master 'rename table' error");
 
 }
@@ -351,6 +386,8 @@ void
 MasterClient::drop_table(const String &table_name, bool if_exists,
                          DispatchHandler *handler, Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_drop_table_request(table_name, if_exists));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, handler, timer);
 }
 
@@ -358,24 +395,28 @@ MasterClient::drop_table(const String &table_name, bool if_exists,
 void
 MasterClient::drop_table(const String &table_name, bool if_exists, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_drop_table_request(table_name, if_exists));
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW(MasterProtocol::response_code(event),
              "Master 'drop table' error");
 
 }
 
 void MasterClient::close(Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_close_request());
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW(MasterProtocol::response_code(event),
              "Master 'close' error");
 
 }
@@ -383,12 +424,14 @@ void MasterClient::close(Timer *timer) {
 
 void MasterClient::shutdown(Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_shutdown_request());
+  int64_t id = initiate_operation(cbp, timer);
+  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW(MasterProtocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW(MasterProtocol::response_code(event),
              "Master 'shutdown' error");
 
 }
@@ -428,6 +471,20 @@ MasterClient::send_message(CommBufPtr &cbp, DispatchHandler *handler,
     break;
   }
 
+}
+
+int64_t MasterClient::initiate_operation(CommBufPtr &cbp, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event;
+  send_message(cbp, &sync_handler, timer);
+
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW(MasterProtocol::response_code(event),
+             "Problem fetching ID for Master operation");  // FIX ME !!!!
+
+  const uint8_t *decode_ptr = event->payload + 4;
+  size_t decode_remain = event->payload_len - 4;
+  return decode_i64(&decode_ptr, &decode_remain);
 }
 
 

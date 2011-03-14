@@ -51,7 +51,9 @@ namespace Hypertable {
 
   using namespace boost::multi_index;
 
+  class Operation;
   class OperationProcessor;
+  class ResponseManager;
 
   class Context : public ReferenceCount {
   public:
@@ -76,6 +78,7 @@ namespace Hypertable {
     MetaLog::DefinitionPtr mml_definition;
     MetaLog::WriterPtr mml_writer;
     MonitoringPtr monitoring;
+    ResponseManager *response_manager;
     TablePtr metadata_table;
     uint64_t range_split_size;
     time_t request_timeout;
@@ -87,6 +90,7 @@ namespace Hypertable {
     size_t conn_count;
     bool test_mode;
     OperationProcessor *op;
+    std::set<int64_t> in_progress_ops;
 
     bool connect_server(RangeServerConnectionPtr &rsc, const String &hostname, InetAddr local_addr, InetAddr public_addr);
     bool disconnect_server(RangeServerConnectionPtr &rsc);
@@ -102,6 +106,10 @@ namespace Hypertable {
     size_t connection_count() { ScopedLock lock(mutex); return conn_count; }
     size_t server_count() { ScopedLock lock(mutex); return m_server_list.size(); }
     void get_servers(std::vector<RangeServerConnectionPtr> &servers);
+    bool in_progress(Operation *operation);
+    bool add_in_progress(Operation *operation);
+    void remove_in_progress(Operation *operation);
+    void clear_in_progress();
 
   private:
 

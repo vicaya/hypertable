@@ -31,21 +31,14 @@ namespace Hypertable {
 
   class OperationProcessor;
 
-  class TestContext : public ReferenceCount {
-  public:
-    Mutex mutex;
-    std::vector<String> results;
-    OperationProcessor *op;
-  };
-  typedef intrusive_ptr<TestContext> TestContextPtr;
-
   class OperationTest : public Operation {
   public:
-    OperationTest(TestContextPtr &context, const String &name,
-                  DependencySet &dependencies, DependencySet &exclusivities,
-                  DependencySet &obstructions);
-    OperationTest(TestContextPtr &context, const String &name, int32_t state);
-    OperationTest(TestContextPtr &context, const MetaLog::EntityHeader &header_);
+    OperationTest(ContextPtr &context, std::vector<String> &results,
+                  const String &name, DependencySet &dependencies,
+                  DependencySet &exclusivities, DependencySet &obstructions);
+    OperationTest(ContextPtr &context, std::vector<String> &results,
+                  const String &name, int32_t state);
+
     virtual ~OperationTest() { }
 
     void set_state(int32_t state) { m_state = state; }
@@ -63,10 +56,8 @@ namespace Hypertable {
 
     void set_is_perpetual(bool b) { m_is_perpetual = b; }
 
-    static ContextPtr ms_dummy_context;
-
   private:
-    TestContextPtr m_context;
+    std::vector<String> &m_results;
     String m_name;
     bool m_is_perpetual;
   };
