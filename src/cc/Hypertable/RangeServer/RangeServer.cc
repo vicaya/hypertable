@@ -403,7 +403,7 @@ namespace {
         if (!rsml_reader->empty()) {
           const OldMetaLog::RangeStates &range_states = rsml_reader->load_range_states(&found_recover_entry);
           foreach(const OldMetaLog::RangeStateInfo *i, range_states) {
-            MetaLog::EntityPtr entity = new MetaLog::EntityRange(i->table, i->range, i->range_state);
+            MetaLog::EntityPtr entity = new MetaLog::EntityRange(i->table, i->range, i->range_state, false);
             entities.push_back(entity);
           }
         }
@@ -1095,7 +1095,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 void
 RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     const RangeSpec *range_spec, const char *transfer_log_dir,
-    const RangeState *range_state) {
+    const RangeState *range_state, bool needs_compaction) {
   int error = Error::OK;
   TableMutatorPtr mutator;
   KeySpec key;
@@ -1129,7 +1129,9 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       is_root = table->is_metadata() && (*range_spec->start_row == 0)
         && !strcmp(range_spec->end_row, Key::END_ROOT_ROW);
 
-      HT_INFO_OUT <<"Loading range: "<< *table <<" "<< *range_spec << " " << *range_state << " transfer_log=" << transfer_log_dir << HT_END;
+      HT_INFO_OUT <<"Loading range: "<< *table <<" "<< *range_spec << " " << *range_state
+          << " transfer_log=" << transfer_log_dir << " needs_compaction="
+          << needs_compaction << HT_END;
 
       if (m_dropped_table_id_cache->contains(table->id)) {
         HT_WARNF("Table %s has been dropped", table->id);
@@ -1236,7 +1238,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     HT_MAYBE_FAIL_X("metadata-load-range-1", table->is_metadata());
 
     range = new Range(m_master_client, table, schema, range_spec,
-                      table_info.get(), range_state);
+                      table_info.get(), range_state, needs_compaction);
 
     HT_MAYBE_FAIL_X("metadata-load-range-2", table->is_metadata());
 

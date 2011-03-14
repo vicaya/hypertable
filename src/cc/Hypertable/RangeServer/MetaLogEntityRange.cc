@@ -19,25 +19,27 @@
  * 02110-1301, USA.
  */
 #include "Common/Compat.h"
-
+#include "Common/Serialization.h"
 #include "MetaLogEntityRange.h"
 
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
 
-EntityRange::EntityRange(int32_t type) : Entity(type) { }
+EntityRange::EntityRange(int32_t type) : Entity(type), needs_compaction(false) { }
 
-EntityRange::EntityRange(const EntityHeader &header_) : Entity(header_) { }
+EntityRange::EntityRange(const EntityHeader &header_) : Entity(header_), needs_compaction(false) { }
 
 EntityRange::EntityRange(const TableIdentifier &identifier,
-                         const RangeSpec &range, const RangeState &state_) 
-  : Entity(EntityType::RANGE), table(identifier), spec(range), state(state_) {
+                         const RangeSpec &range, const RangeState &state_,
+                         bool needs_compaction_)
+  : Entity(EntityType::RANGE), table(identifier), spec(range), state(state_),
+    needs_compaction(needs_compaction_) {
 }
 
 
 size_t EntityRange::encoded_length() const {
   return table.encoded_length() + spec.encoded_length() +
-    state.encoded_length();
+    state.encoded_length() + 1;
 }
 
 
@@ -45,12 +47,14 @@ void EntityRange::encode(uint8_t **bufp) const {
   table.encode(bufp);
   spec.encode(bufp);
   state.encode(bufp);
+  Serialization::encode_bool(bufp, needs_compaction);
 }
 
 void EntityRange::decode(const uint8_t **bufp, size_t *remainp) {
   table.decode(bufp, remainp);
   spec.decode(bufp, remainp);
   state.decode(bufp, remainp);
+  needs_compaction = Serialization::decode_bool(bufp, remainp);
 }
 
 const String EntityRange::name() {
@@ -58,6 +62,6 @@ const String EntityRange::name() {
 }
 
 void EntityRange::display(std::ostream &os) {
-  os << " " << table << " " << spec << " " << state << " ";
+  os << " " << table << " " << spec << " " << state << " " << " " << needs_compaction;
 }
 

@@ -80,11 +80,12 @@ namespace Hypertable {
      * @param range range specification
      * @param transfer_log transfer log to replay
      * @param range_state range state
+     * @param needs_compaction if true the range needs to be compacted after load
      * @return protocol message
      */
     static CommBuf *create_request_load_range(const TableIdentifier &table,
         const RangeSpec &range, const char *transfer_log,
-        const RangeState &range_state);
+        const RangeState &range_state, bool needs_compaction);
 
     /** Creates an "update" request message.  The data argument holds a
      * sequence of key/value pairs.  Each key/value pair is encoded as two

@@ -107,7 +107,7 @@ namespace Hypertable {
     typedef std::vector<AccessGroupPtr> AccessGroupVector;
 
     Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
-          const RangeSpec *, RangeSet *, const RangeState *);
+          const RangeSpec *, RangeSet *, const RangeState *, bool needs_compaction=false);
     Range(MasterClientPtr &, SchemaPtr &, MetaLog::EntityRange *, RangeSet *);
     virtual ~Range() {}
     virtual void add(const Key &key, const ByteString value);
@@ -264,7 +264,7 @@ namespace Hypertable {
       return (String)m_name;
     }
 
-    int get_state() { 
+    int get_state() {
       ScopedLock lock(m_mutex);
       return m_metalog_entity->state.state;
     }
@@ -272,6 +272,15 @@ namespace Hypertable {
     int32_t get_error() { return m_error; }
 
     MetaLog::EntityRange *metalog_entity() { return m_metalog_entity.get(); }
+    void set_needs_compaction(bool needs_compaction) {
+      ScopedLock lock(m_mutex);
+      m_metalog_entity->needs_compaction = needs_compaction;
+    }
+
+    bool get_needs_compaction() {
+      ScopedLock lock(m_mutex);
+      return m_metalog_entity->needs_compaction;
+    }
 
   private:
 

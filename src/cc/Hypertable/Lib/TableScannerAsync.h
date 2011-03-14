@@ -126,14 +126,13 @@ namespace Hypertable {
     /**
      * Returns scanspec for this scanner
      */
-    const ScanSpec &get_scan_spec() const { return m_scan_spec; }
+    const ScanSpec &get_scan_spec() { return m_scan_spec_builder.get(); }
   private:
     void maybe_callback_ok(bool next, bool do_callback, ScanCellsPtr &cells);
     void maybe_callback_error(bool next);
     void wait_for_completion();
 
     std::vector<IntervalScannerAsyncPtr>  m_interval_scanners;
-    Comm               *m_comm;
     uint32_t            m_timeout_ms;
     bool                m_retry_table_not_found;
     int64_t             m_bytes_scanned;
@@ -149,7 +148,7 @@ namespace Hypertable {
     String              m_error_msg;
     String              m_table_name;
     Table              *m_table;
-    ScanSpec            m_scan_spec;
+    ScanSpecBuilder     m_scan_spec_builder;
     bool                m_cancelled;
     bool                m_error_shown;
   };

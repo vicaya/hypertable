@@ -62,16 +62,17 @@ namespace Hypertable {
   CommBuf *
   RangeServerProtocol::create_request_load_range(const TableIdentifier &table,
       const RangeSpec &range, const char *transfer_log,
-      const RangeState &range_state) {
+      const RangeState &range_state, bool needs_compaction) {
     CommHeader header(COMMAND_LOAD_RANGE);
     header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header, table.encoded_length()
         + range.encoded_length() + encoded_length_str16(transfer_log)
-        + range_state.encoded_length());
+        + range_state.encoded_length() + 1);
     table.encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
     encode_str16(cbuf->get_data_ptr_address(), transfer_log);
     range_state.encode(cbuf->get_data_ptr_address());
+    Serialization::encode_bool(cbuf->get_data_ptr_address(), needs_compaction);
     return cbuf;
   }
 

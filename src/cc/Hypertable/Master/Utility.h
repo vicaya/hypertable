@@ -41,7 +41,8 @@ namespace Hypertable {
     extern void create_table_write_metadata(ContextPtr &context, TableIdentifier *table);
     extern bool next_available_server(ContextPtr &context, String &location);
     extern void create_table_load_range(ContextPtr &context, const String &location,
-                                        TableIdentifier *table, RangeSpec &range);
+                                        TableIdentifier *table, RangeSpec &range,
+                                        bool needs_compaction);
     extern int64_t range_hash_code(const TableIdentifier &table, const RangeSpec &range, const char *qualifier=0);
     extern String range_hash_string(const TableIdentifier &table, const RangeSpec &range, const char *qualifier=0);
 

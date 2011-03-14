@@ -66,7 +66,7 @@ void OperationInitialize::execute() {
 
   case OperationState::INITIAL:
 
-    // Initialize Hyperspace DIRECTORIES and FILES 
+    // Initialize Hyperspace DIRECTORIES and FILES
     {
       handle = 0;
       HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_context->hyperspace, &handle);
@@ -135,7 +135,8 @@ void OperationInitialize::execute() {
     try {
       range.start_row = 0;
       range.end_row = Key::END_ROOT_ROW;
-      Utility::create_table_load_range(m_context, m_metadata_root_location, &m_table, range);
+      Utility::create_table_load_range(m_context, m_metadata_root_location, &m_table, range,
+          false);
       HT_MAYBE_FAIL("initialize-LOAD_ROOT_METADATA_RANGE");
     }
     catch (Exception &e) {
@@ -156,7 +157,8 @@ void OperationInitialize::execute() {
     try {
       range.start_row = Key::END_ROOT_ROW;
       range.end_row = Key::END_ROW_MARKER;
-      Utility::create_table_load_range(m_context, m_metadata_secondlevel_location, &m_table, range);
+      Utility::create_table_load_range(m_context, m_metadata_secondlevel_location, &m_table,
+          range, false);
       HT_MAYBE_FAIL("initialize-LOAD_SECOND_METADATA_RANGE");
     }
     catch (Exception &e) {

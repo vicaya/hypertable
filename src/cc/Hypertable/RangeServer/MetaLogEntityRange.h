@@ -34,7 +34,7 @@ namespace Hypertable {
       EntityRange(int32_t type);
       EntityRange(const EntityHeader &header_);
       EntityRange(const TableIdentifier &identifier,
-                  const RangeSpec &range, const RangeState &state_);
+                  const RangeSpec &range, const RangeState &state_, bool needs_compaction_);
       virtual ~EntityRange() { }
       virtual size_t encoded_length() const;
       virtual void encode(uint8_t **bufp) const;
@@ -45,6 +45,7 @@ namespace Hypertable {
       TableIdentifierManaged table;
       RangeSpecManaged spec;
       RangeStateManaged state;
+      bool needs_compaction;
     };
     typedef intrusive_ptr<EntityRange> EntityRangePtr;
 
@@ -53,7 +54,7 @@ namespace Hypertable {
         RANGE = 0x00010001
       };
     }
-    
+
 
   } // namespace MetaLog
 } // namespace Hypertable

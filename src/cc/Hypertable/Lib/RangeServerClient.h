@@ -65,11 +65,13 @@ namespace Hypertable {
      * @param range range specification
      * @param transfer_log transfer log
      * @param range_state range state
+     * @param needs_compaction if true range needs compaction after load
      * @param handler response handler
      */
     void load_range(const CommAddress &addr, const TableIdentifier &table,
                     const RangeSpec &range, const char *transfer_log,
-                    const RangeState &range_state, DispatchHandler *handler);
+                    const RangeState &range_state, bool needs_compaction,
+                    DispatchHandler *handler);
 
     /** Issues a "load range" request asynchronously with timer.
      *
@@ -78,13 +80,14 @@ namespace Hypertable {
      * @param range range specification
      * @param transfer_log transfer log
      * @param range_state range state
+     * @param needs_compaction if true range needs compaction after load
      * @param handler response handler
      * @param timer timer
      */
     void load_range(const CommAddress &addr, const TableIdentifier &table,
                     const RangeSpec &range, const char *transfer_log,
-                    const RangeState &range_state, DispatchHandler *handler,
-                    Timer &timer);
+                    const RangeState &range_state, bool needs_compaction,
+                    DispatchHandler *handler, Timer &timer);
 
     /** Issues a synchronous "load range" request.
      *
@@ -93,10 +96,11 @@ namespace Hypertable {
      * @param range range specification
      * @param transfer_log transfer log
      * @param range_state range state
+     * @param needs_compaction if true range needs compaction after load
      */
     void load_range(const CommAddress &addr, const TableIdentifier &table,
                     const RangeSpec &range, const char *transfer_log,
-                    const RangeState &range_state);
+                    const RangeState &range_state, bool needs_compaction);
 
     /** Issues a synchronous "load range" request with timer.
      *
@@ -105,11 +109,12 @@ namespace Hypertable {
      * @param range range specification
      * @param transfer_log transfer log
      * @param range_state range state
+     * @param needs_compaction if true range needs compaction after load
      * @param timer timer
      */
     void load_range(const CommAddress &addr, const TableIdentifier &table,
                     const RangeSpec &range, const char *transfer_log,
-                    const RangeState &range_state, Timer &timer);
+                    const RangeState &range_state, bool needs_compaction, Timer &timer);
 
     /** Issues an "update" request asynchronously.  The data argument holds a
      * sequence of key/value pairs.  Each key/value pair is encoded as two
@@ -563,7 +568,8 @@ namespace Hypertable {
 
     void do_load_range(const CommAddress &addr, const TableIdentifier &table,
                        const RangeSpec &range, const char *transfer_log,
-                       const RangeState &range_state, uint32_t timeout_ms);
+                       const RangeState &range_state, bool needs_compaction,
+                       uint32_t timeout_ms);
     void do_update(const CommAddress &addr, const TableIdentifier &table,
                    uint32_t count, StaticBuffer &buffer, uint32_t flags,
                    uint32_t timeout_ms);

@@ -56,16 +56,16 @@ using namespace std;
 Range::Range(MasterClientPtr &master_client,
              const TableIdentifier *identifier, SchemaPtr &schema,
              const RangeSpec *range, RangeSet *range_set,
-             const RangeState *state)
+             const RangeState *state, bool needs_compaction)
   : m_scans(0), m_cells_scanned(0), m_cells_returned(0), m_cells_written(0),
     m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
-    m_master_client(master_client), 
+    m_master_client(master_client),
     m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
     m_split_off_high(false), m_added_inserts(0), m_range_set(range_set),
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
     m_relinquish(false), m_maintenance_generation(0),
     m_load_metrics(identifier->id, range->start_row, range->end_row) {
-  m_metalog_entity = new MetaLog::EntityRange(*identifier, *range, *state);
+  m_metalog_entity = new MetaLog::EntityRange(*identifier, *range, *state, needs_compaction);
   initialize();
 }
 

@@ -247,7 +247,7 @@ bool next_available_server(ContextPtr &context, String &location) {
 }
 
 
-void create_table_load_range(ContextPtr &context, const String &location, TableIdentifier *table, RangeSpec &range) {
+void create_table_load_range(ContextPtr &context, const String &location, TableIdentifier *table, RangeSpec &range, bool needs_compaction) {
 
   try {
     RangeServerClient rsc(context->comm);
@@ -269,12 +269,12 @@ void create_table_load_range(ContextPtr &context, const String &location, TableI
         HT_THROW(Error::COMM_NOT_CONNECTED, "");
     }
     else
-      rsc.load_range(addr, *table, range, 0, range_state);
+      rsc.load_range(addr, *table, range, 0, range_state, needs_compaction);
   }
   catch (Exception &e) {
     if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED)
       throw;
-  } 
+  }
 }
 
 int64_t range_hash_code(const TableIdentifier &table, const RangeSpec &range, const char *qualifier) {

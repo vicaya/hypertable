@@ -49,7 +49,7 @@ OperationCreateTable::OperationCreateTable(ContextPtr &context,
     m_range_name = format("%s[..%s]", m_table.id, Key::END_ROW_MARKER);
 }
 
-OperationCreateTable::OperationCreateTable(ContextPtr &context, EventPtr &event) 
+OperationCreateTable::OperationCreateTable(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_CREATE_TABLE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
@@ -137,7 +137,7 @@ void OperationCreateTable::execute() {
     try {
       range.start_row = 0;
       range.end_row = Key::END_ROW_MARKER;
-      Utility::create_table_load_range(m_context, m_location, &m_table, range);
+      Utility::create_table_load_range(m_context, m_location, &m_table, range, false);
       HT_MAYBE_FAIL("create-table-LOAD_RANGE-a");
     }
     catch (Exception &e) {

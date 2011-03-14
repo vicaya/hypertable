@@ -47,49 +47,49 @@ RangeServerClient::~RangeServerClient() {
 void
 RangeServerClient::load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-    const char *transfer_log, const RangeState &range_state,
+    const char *transfer_log, const RangeState &range_state, bool needs_compaction,
     DispatchHandler *handler) {
   CommBufPtr cbp(RangeServerProtocol::create_request_load_range(table, range,
-                 transfer_log, range_state));
+                 transfer_log, range_state, needs_compaction));
   send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
 void
 RangeServerClient::load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-    const char *transfer_log, const RangeState &range_state,
+    const char *transfer_log, const RangeState &range_state, bool needs_compaction,
     DispatchHandler *handler, Timer &timer) {
   CommBufPtr cbp(RangeServerProtocol::create_request_load_range(table, range,
-                 transfer_log, range_state));
+                 transfer_log, range_state, needs_compaction));
   send_message(addr, cbp, handler, timer.remaining());
 }
 
 void
 RangeServerClient::load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-    const char *transfer_log, const RangeState &range_state) {
-  do_load_range(addr, table, range, transfer_log, range_state,
+    const char *transfer_log, const RangeState &range_state, bool needs_compaction) {
+  do_load_range(addr, table, range, transfer_log, range_state, needs_compaction,
                 m_default_timeout_ms);
 }
 
 void
 RangeServerClient::load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-    const char *transfer_log, const RangeState &range_state,
+    const char *transfer_log, const RangeState &range_state, bool needs_compaction,
     Timer &timer) {
-  do_load_range(addr, table, range, transfer_log, range_state,
+  do_load_range(addr, table, range, transfer_log, range_state, needs_compaction,
                 timer.remaining());
 }
 
 void
 RangeServerClient::do_load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-    const char *transfer_log, const RangeState &range_state,
+    const char *transfer_log, const RangeState &range_state, bool needs_compaction,
     uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_load_range(table, range,
-                 transfer_log, range_state));
+                 transfer_log, range_state, needs_compaction));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
   if (!sync_handler.wait_for_reply(event))

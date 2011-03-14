@@ -42,6 +42,7 @@ void RequestHandlerLoadRange::run() {
   TableIdentifier table;
   RangeSpec range;
   RangeState range_state;
+  bool needs_compaction;
   const char *transfer_log_dir;
   const uint8_t *decode_ptr = m_event_ptr->payload;
   size_t decode_remain = m_event_ptr->payload_len;
@@ -51,9 +52,9 @@ void RequestHandlerLoadRange::run() {
     range.decode(&decode_ptr, &decode_remain);
     transfer_log_dir = decode_str16(&decode_ptr, &decode_remain);
     range_state.decode(&decode_ptr, &decode_remain);
-
+    needs_compaction = Serialization::decode_bool(&decode_ptr, &decode_remain);
     m_range_server->load_range(&cb, &table, &range, transfer_log_dir,
-                               &range_state);
+                               &range_state, needs_compaction);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

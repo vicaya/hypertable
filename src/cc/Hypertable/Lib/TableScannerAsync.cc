@@ -42,7 +42,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
     uint32_t timeout_ms, bool retry_table_not_found, ResultCallback *cb)
   : m_bytes_scanned(0), m_cb(cb), m_current_scanner(0),
-    m_outstanding(0), m_error(Error::OK), m_table(table), m_scan_spec(scan_spec),
+    m_outstanding(0), m_error(Error::OK), m_table(table), m_scan_spec_builder(scan_spec),
     m_cancelled(false), m_error_shown(false) {
 
   ScopedLock lock(m_mutex);

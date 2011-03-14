@@ -53,7 +53,7 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context,
   : Operation(context, header_), m_remove_explicitly(true) {
 }
 
-OperationMoveRange::OperationMoveRange(ContextPtr &context, EventPtr &event) 
+OperationMoveRange::OperationMoveRange(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_MOVE_RANGE), m_remove_explicitly(true) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
@@ -147,7 +147,7 @@ void OperationMoveRange::execute() {
       if (m_context->test_mode)
         HT_WARNF("Skipping %s::load_range() because in TEST MODE", m_location.c_str());
       else
-        rsc.load_range(addr, *table, *range, m_transfer_log.c_str(), range_state);
+        rsc.load_range(addr, *table, *range, m_transfer_log.c_str(), range_state, false);
     }
     catch (Exception &e) {
       if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED &&
@@ -171,7 +171,7 @@ void OperationMoveRange::execute() {
     HT_FATALF("Unrecognized state %d", state);
   }
 
-  HT_INFOF("Leaving MoveRange-%lld %s -> %s", 
+  HT_INFOF("Leaving MoveRange-%lld %s -> %s",
            (Lld)header.id, m_range_name.c_str(), m_location.c_str());
 }
 
@@ -183,7 +183,7 @@ void OperationMoveRange::display_state(std::ostream &os) {
 }
 
 size_t OperationMoveRange::encoded_state_length() const {
-  return m_table.encoded_length() + m_range.encoded_length() + 
+  return m_table.encoded_length() + m_range.encoded_length() +
     Serialization::encoded_length_vstr(m_transfer_log) + 9 +
     Serialization::encoded_length_vstr(m_location);
 }
@@ -237,7 +237,7 @@ const String OperationMoveRange::graphviz_label() {
     end_row = "END_ROW_MARKER";
   else if (end_row.length() > 20)
     end_row = end_row.substr(0, 10) + ".." + end_row.substr(end_row.length()-10, 10);
-  
+
   return format("MoveRange %s\\n%s\\n%s", m_table.id, start_row.c_str(), end_row.c_str());
 }
 
