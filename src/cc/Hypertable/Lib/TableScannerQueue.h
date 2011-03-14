@@ -63,24 +63,26 @@ namespace Hypertable {
       cells = 0;
       *error = Error::OK;
       while(true) {
-        ScopedLock lock(m_mutex);
-        if (m_error != Error::OK) {
-          *error = m_error;
-          error_msg = m_error_msg;
-          break;
+        {
+          ScopedLock lock(m_mutex);
+          if (m_error != Error::OK) {
+            *error = m_error;
+            error_msg = m_error_msg;
+            break;
+          }
+          else if (!m_cells_queue.empty()) {
+            cells = m_cells_queue.front();
+            m_cells_queue.pop_front();
+            break;
+          }
+          while (m_work_queue.empty()) {
+            m_cond.wait(lock);
+          }
+          app_handler = m_work_queue.front();
+          HT_ASSERT(app_handler);
+          m_work_queue.pop_front();
         }
-        else if (!m_cells_queue.empty()) {
-          cells = m_cells_queue.front();
-          m_cells_queue.pop_front();
-          break;
-        }
-        while (m_work_queue.empty()) {
-          m_cond.wait(lock);
-        }
-        app_handler = m_work_queue.front();
-        HT_ASSERT(app_handler);
         app_handler->run();
-        m_work_queue.pop_front();
         delete app_handler;
       }
       HT_ASSERT(cells != 0 || *error != Error::OK);
