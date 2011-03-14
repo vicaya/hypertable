@@ -34,6 +34,12 @@ Context::~Context() {
   }
 }
 
+void Context::add_server(RangeServerConnectionPtr &rsc) {
+  ScopedLock lock(mutex);
+  pair<Sequence::iterator, bool> insert_result = m_server_list.push_back( RangeServerConnectionEntry(rsc) );
+  HT_ASSERT(insert_result.second);
+}
+
 bool Context::connect_server(RangeServerConnectionPtr &rsc, const String &hostname,
                              InetAddr local_addr, InetAddr public_addr) {
   ScopedLock lock(mutex);
@@ -53,6 +59,10 @@ bool Context::connect_server(RangeServerConnectionPtr &rsc, const String &hostna
     retval = true;
   }
 
+  if (m_server_list_iter != m_server_list.end() && 
+      m_server_list_iter->location() == rsc->location())
+    ++m_server_list_iter;
+  
   // Remove this connection if already exists
   iter = hash_index.find(rsc->location());
   if (iter != hash_index.end())
@@ -61,7 +71,7 @@ bool Context::connect_server(RangeServerConnectionPtr &rsc, const String &hostna
   // Add it (or re-add it)
   pair<Sequence::iterator, bool> insert_result = m_server_list.push_back( RangeServerConnectionEntry(rsc) );
   HT_ASSERT(insert_result.second);
-  if (m_server_list.size() == 1)
+  if (m_server_list.size() == 1 || m_server_list_iter == m_server_list.end())
     m_server_list_iter = m_server_list.begin();
 
   if (notify)

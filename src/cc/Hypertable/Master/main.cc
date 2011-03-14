@@ -175,6 +175,7 @@ int main(int argc, char **argv) {
         operations.push_back(operation);
       else {
         rsc = dynamic_cast<RangeServerConnection *>(entities[i].get());
+        context->add_server(rsc);
         HT_ASSERT(rsc);
         operations.push_back( new OperationRecoverServer(context, rsc) );
       }
