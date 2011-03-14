@@ -79,6 +79,7 @@ namespace Hypertable {
       COMMAND_FETCH_SCANBLOCK,
       COMMAND_LOAD_RANGE,
       COMMAND_SHUTDOWN,
+      COMMAND_SHUTDOWN_MASTER,
       COMMAND_UPDATE,
       COMMAND_REPLAY_BEGIN,
       COMMAND_REPLAY_LOAD_RANGE,
@@ -1631,6 +1632,7 @@ namespace Hypertable {
           Token SCANBLOCK    = as_lower_d["scanblock"];
           Token CLOSE        = as_lower_d["close"];
           Token SHUTDOWN     = as_lower_d["shutdown"];
+          Token MASTER       = as_lower_d["master"];
           Token REPLAY       = as_lower_d["replay"];
           Token START        = as_lower_d["start"];
           Token COMMIT       = as_lower_d["commit"];
@@ -1718,6 +1720,7 @@ namespace Hypertable {
                 COMMAND_FETCH_SCANBLOCK)]
             | close_statement[set_command(self.state, COMMAND_CLOSE)]
             | shutdown_statement[set_command(self.state, COMMAND_SHUTDOWN)]
+            | shutdown_master_statement[set_command(self.state, COMMAND_SHUTDOWN_MASTER)]
             | drop_range_statement[set_command(self.state, COMMAND_DROP_RANGE)]
             | replay_start_statement[set_command(self.state,
                 COMMAND_REPLAY_BEGIN)]
@@ -1754,6 +1757,10 @@ namespace Hypertable {
 
           shutdown_statement
             = SHUTDOWN
+            ;
+
+          shutdown_master_statement
+            = SHUTDOWN >> MASTER
             ;
 
           fetch_scanblock_statement
@@ -2298,6 +2305,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(fetch_scanblock_statement);
           BOOST_SPIRIT_DEBUG_RULE(close_statement);
           BOOST_SPIRIT_DEBUG_RULE(shutdown_statement);
+          BOOST_SPIRIT_DEBUG_RULE(shutdown_master_statement);
           BOOST_SPIRIT_DEBUG_RULE(drop_range_statement);
           BOOST_SPIRIT_DEBUG_RULE(replay_start_statement);
           BOOST_SPIRIT_DEBUG_RULE(replay_log_statement);
@@ -2336,8 +2344,8 @@ namespace Hypertable {
           dump_table_statement, dump_table_option_spec, range_spec,
 	        exists_table_statement, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
-          close_statement, shutdown_statement, drop_range_statement,
-          replay_start_statement, replay_log_statement,
+          close_statement, shutdown_statement, shutdown_master_statement, 
+          drop_range_statement, replay_start_statement, replay_log_statement,
           replay_commit_statement, cell_interval, cell_predicate,
           cell_spec, wait_for_maintenance_statement;
       };

@@ -137,6 +137,17 @@ void OperationProcessor::wait_for_idle() {
     m_context.idle_cond.wait(lock);
 }
 
+bool OperationProcessor::timed_wait_for_idle(boost::xtime expire_time) {
+  ScopedLock lock(m_context.mutex);
+  while (m_context.busy_count > 0 ||
+         m_context.need_order_recompute ||
+         m_context.execution_order_iter != m_context.execution_order.end()) {
+    if (!m_context.idle_cond.timed_wait(lock, expire_time))
+      return false;
+  }
+  return true;
+}
+
 size_t OperationProcessor::size() {
   return num_vertices(m_context.graph);
 }

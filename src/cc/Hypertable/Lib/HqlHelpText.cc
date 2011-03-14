@@ -50,7 +50,6 @@ namespace {
     "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table",
     "SHOW TABLES ........ Displays only the list of tables in the current namespace",
     "GET LISTING ........ Displays the list of tables and namespace in the current namespace",
-    "SHUTDOWN ........... Shuts servers down gracefully",
     "",
     "Statements must be terminated with ';'.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is from",
@@ -72,6 +71,17 @@ namespace {
     "SHUTDOWN   ............ Shutdown the RangeServer",
     "UPDATE ................ Selects (and display) cells from a table",
     "WAIT FOR MAINTENANCE .. Blocks until maintenance queue is empty",
+    "",
+    "Statements must be terminated with ';'.  For more information on",
+    "a specific statement, type 'help <statement>', where <statement> is from",
+    "the preceeding list.",
+    "",
+    0
+  };
+
+  const char *help_text_master_contents[] = {
+    "",
+    "SHUTDOWN   ............ Shutdown the Master",
     "",
     "Statements must be terminated with ';'.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is from",
@@ -208,6 +218,17 @@ namespace {
     "",
     0
   };
+
+  const char *help_text_shutdown_server[] = {
+    "",
+    "SHUTDOWN",
+    "",
+    "This command causes the server to close open DFS files",
+    "and then terminate.",
+    "",
+    0
+  };
+
 
   const char *help_text_drop_range[] = {
     "",
@@ -1696,6 +1717,7 @@ const char **HqlHelpText::get(const String &subject) {
 
 
 void HqlHelpText::install_range_server_client_text() {
+  text_map.clear();
   text_map[""] = help_text_rsclient_contents;
   text_map["contents"] = help_text_rsclient_contents;
   text_map["select"] = help_text_select;
@@ -1713,4 +1735,12 @@ void HqlHelpText::install_range_server_client_text() {
   text_map["replay log"] = help_text_replay_log;
   text_map["replay commit"] = help_text_replay_commit;
   text_map["shutdown"] = help_text_shutdown_rangeserver;
+}
+
+
+void HqlHelpText::install_master_client_text() {
+  text_map.clear();
+  text_map[""] = help_text_master_contents;
+  text_map["contents"] = help_text_master_contents;
+  text_map["shutdown"] = help_text_shutdown_server;
 }

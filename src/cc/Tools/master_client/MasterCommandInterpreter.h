@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,21 +19,34 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_HQLHELPTEXT_H
-#define HYPERTABLE_HQLHELPTEXT_H
+#ifndef HYPERTABLE_MASTERCOMMANDINTERPRETER_H
+#define HYPERTABLE_MASTERCOMMANDINTERPRETER_H
 
 #include "Common/String.h"
 
+#include "AsyncComm/Comm.h"
+
+#include "Tools/Lib/CommandInterpreter.h"
+
+#include "Hypertable/Lib/MasterClient.h"
+
 namespace Hypertable {
 
-  class HqlHelpText {
+  class MasterCommandInterpreter : public CommandInterpreter {
   public:
-    static const char **get(const String &subject);
-    static void print(const String &subject);
-    static void install_range_server_client_text();
-    static void install_master_client_text();
+    MasterCommandInterpreter(Comm *, const sockaddr_in addr, MasterClientPtr &);
+
+    virtual void execute_line(const String &line);
+
+  private:
+    Comm *m_comm;
+    struct sockaddr_in m_addr;
+    MasterClientPtr m_master;
   };
+
+  typedef intrusive_ptr<MasterCommandInterpreter>
+          MasterCommandInterpreterPtr;
 
 }
 
-#endif // HYPERTABLE_HQLHELPTEXT_H
+#endif // HYPERTABLE_MASTERCOMMANDINTERPRETER_H

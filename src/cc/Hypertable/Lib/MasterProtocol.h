@@ -84,8 +84,6 @@ namespace Hypertable {
 
     static CommBuf *create_fetch_result_request(int64_t id);
 
-    static CommBuf *create_close_request();
-
     static CommBuf *create_shutdown_request();
 
     virtual const char *command_text(uint64_t command);

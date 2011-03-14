@@ -150,12 +150,6 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_close_request() {
-    CommHeader header(COMMAND_CLOSE);
-    CommBuf *cbuf = new CommBuf(header, 0);
-    return cbuf;
-  }
-
   CommBuf *MasterProtocol::create_shutdown_request() {
     CommHeader header(COMMAND_SHUTDOWN);
     CommBuf *cbuf = new CommBuf(header, 0);

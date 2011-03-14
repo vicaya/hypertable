@@ -100,6 +100,7 @@ Writer::~Writer() {
 
 
 void Writer::close() {
+  ScopedLock lock(m_mutex);
   try {
     if (m_fd != -1) {
       m_fs->close(m_fd, (DispatchHandler *)0);

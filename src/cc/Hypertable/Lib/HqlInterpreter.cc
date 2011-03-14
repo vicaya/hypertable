@@ -800,8 +800,7 @@ cmd_drop_table(NamespacePtr &ns, ParserState &state,
   cb.on_finish();
 }
 
-void cmd_shutdown(Client *client, HqlInterpreter::Callback &cb) {
-  client->close();
+void cmd_shutdown_master(Client *client, HqlInterpreter::Callback &cb) {
   client->shutdown();
   cb.on_finish();
 }
@@ -875,8 +874,8 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
                      state, cb);                                   break;
     case COMMAND_CLOSE:
       cmd_close(m_client, cb);                                     break;
-    case COMMAND_SHUTDOWN:
-      cmd_shutdown(m_client, cb);                                  break;
+    case COMMAND_SHUTDOWN_MASTER:
+      cmd_shutdown_master(m_client, cb);                           break;
     case COMMAND_CREATE_NAMESPACE:
       cmd_create_namespace(m_client, m_namespace, state, cb);      break;
     case COMMAND_USE_NAMESPACE:

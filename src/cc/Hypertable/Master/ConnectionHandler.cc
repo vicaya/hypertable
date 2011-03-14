@@ -56,7 +56,7 @@ using namespace Error;
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(ContextPtr &context) : m_context(context) {
+ConnectionHandler::ConnectionHandler(ContextPtr &context) : m_context(context), m_shutdown(false) {
   int error;
   if ((error = m_context->comm->set_timer(context->timer_interval, this)) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
@@ -68,6 +68,15 @@ ConnectionHandler::ConnectionHandler(ContextPtr &context) : m_context(context) {
  */
 void ConnectionHandler::handle(EventPtr &event) {
   OperationPtr operation;
+  boost::xtime expire_time;
+
+  if (m_shutdown &&
+      event->header.command != MasterProtocol::COMMAND_SHUTDOWN &&
+      event->header.command != MasterProtocol::COMMAND_STATUS) {
+    ResponseCallback cb(m_context->comm, event);
+    cb.error(Error::SERVER_SHUTTING_DOWN, "");
+    return;
+  }
 
   if (event->type == Event::MESSAGE) {
 
@@ -107,12 +116,16 @@ void ConnectionHandler::handle(EventPtr &event) {
       case MasterProtocol::COMMAND_RELINQUISH_ACKNOWLEDGE:
         operation = new OperationRelinquishAcknowledge(m_context, event);
         break;
-      case MasterProtocol::COMMAND_CLOSE:
-        // TBD
-        break;
       case MasterProtocol::COMMAND_SHUTDOWN:
-        // TBD
-        break;
+        HT_INFO("Received shutdown command");
+        m_shutdown = true;
+        m_context->op->shutdown();
+        boost::xtime_get(&expire_time, boost::TIME_UTC);
+        expire_time.sec += 15;
+        m_context->op->timed_wait_for_idle(expire_time);
+        m_context->op->shutdown();
+        m_context->mml_writer->close();
+        _exit(0);
       case MasterProtocol::COMMAND_CREATE_NAMESPACE:
         operation = new OperationCreateNamespace(m_context, event);
         break;

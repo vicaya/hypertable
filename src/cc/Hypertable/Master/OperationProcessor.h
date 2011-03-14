@@ -53,6 +53,7 @@ namespace Hypertable {
     void join();
     void wait_for_empty();
     void wait_for_idle();
+    bool timed_wait_for_idle(boost::xtime expire_time);
     void graphviz_output(String &output);
     size_t size();
     bool empty();

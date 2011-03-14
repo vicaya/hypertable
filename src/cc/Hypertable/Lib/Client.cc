@@ -161,7 +161,7 @@ Hyperspace::SessionPtr& Client::get_hyperspace_session()
 }
 
 void Client::close() {
-  m_master_client->close();
+  HT_WARN("close() is no longer supported");
 }
 
 void Client::shutdown() {

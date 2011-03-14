@@ -73,6 +73,8 @@ do_cmd() {
     exec $HYPERTABLE_HOME/bin/$cmd "$@"
   elif [ -x $HYPERTABLE_HOME/bin/$cmd.sh ]; then
     exec $HYPERTABLE_HOME/bin/$cmd.sh "$@"
+  elif [ -x $HYPERTABLE_HOME/bin/ht_$cmd ]; then
+    exec $HYPERTABLE_HOME/bin/ht_$cmd "$@"
   fi
   exec $cmd "$@";
 }

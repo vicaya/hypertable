@@ -285,14 +285,28 @@ void RangeServer::shutdown() {
     Global::maintenance_queue->join();
 #endif
 
-    // delete global objects
     delete Global::block_cache;
-    delete Global::user_log;
-    delete Global::system_log;
-    delete Global::metadata_log;
-    delete Global::root_log;
 
-    Global::rsml_writer = 0;
+    if (Global::rsml_writer) {
+      Global::rsml_writer->close();
+      Global::rsml_writer = 0;
+    }
+    if (Global::root_log) {
+      Global::root_log->close();
+      delete Global::root_log;
+    }
+    if (Global::metadata_log) {
+      Global::metadata_log->close();
+      delete Global::metadata_log;
+    }
+    if (Global::system_log) {
+      Global::metadata_log->close();
+      delete Global::system_log;
+    }
+    if (Global::user_log) {
+      Global::user_log->close();
+      delete Global::user_log;
+    }
 
     delete m_query_cache;
 
@@ -308,6 +322,7 @@ void RangeServer::shutdown() {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+    _exit(1);
   }
 
 }

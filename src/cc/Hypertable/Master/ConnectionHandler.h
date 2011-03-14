@@ -39,6 +39,7 @@ namespace Hypertable {
   private:
     int32_t send_id_response(EventPtr &event, OperationPtr &operation);
     ContextPtr  m_context;
+    bool m_shutdown;
   };
 
 }

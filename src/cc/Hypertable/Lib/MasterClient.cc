@@ -64,10 +64,18 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
   initialize_hyperspace();
 }
 
+
+MasterClient::MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms) 
+  : m_comm(comm), m_master_addr(addr), m_timeout_ms(timeout_ms) {
+}
+
+
 MasterClient::~MasterClient() {
-  if (m_master_file_handle != 0)
-    m_hyperspace->close(m_master_file_handle);
-  m_hyperspace->remove_callback(&m_hyperspace_session_callback);
+  if (m_hyperspace) {
+    if (m_master_file_handle != 0)
+      m_hyperspace->close(m_master_file_handle);
+    m_hyperspace->remove_callback(&m_hyperspace_session_callback);
+  }
 }
 
 
@@ -407,33 +415,18 @@ MasterClient::drop_table(const String &table_name, bool if_exists, Timer *timer)
 
 }
 
-void MasterClient::close(Timer *timer) {
-  DispatchHandlerSynchronizer sync_handler;
-  EventPtr event;
-  CommBufPtr cbp(MasterProtocol::create_close_request());
-  int64_t id = initiate_operation(cbp, timer);
-  cbp = MasterProtocol::create_fetch_result_request(id);
-  send_message(cbp, &sync_handler, timer);
-
-  if (!sync_handler.wait_for_reply(event))
-    HT_THROW(MasterProtocol::response_code(event),
-             "Master 'close' error");
-
-}
-
 
 void MasterClient::shutdown(Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
   CommBufPtr cbp(MasterProtocol::create_shutdown_request());
-  int64_t id = initiate_operation(cbp, timer);
-  cbp = MasterProtocol::create_fetch_result_request(id);
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event))
-    HT_THROW(MasterProtocol::response_code(event),
-             "Master 'shutdown' error");
-
+  if (!sync_handler.wait_for_reply(event)) {
+    int32_t error = MasterProtocol::response_code(event);
+    if (error != Error::COMM_BROKEN_CONNECTION)
+      HT_THROW(error, "Master 'shutdown' error");
+  }
 }
 
 

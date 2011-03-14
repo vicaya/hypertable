@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2011 Hypertable, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,18 +17,18 @@
 # 02110-1301, USA.
 #
 
-add_subdirectory(dfsclient)
-add_subdirectory(dumplog)
-add_subdirectory(hyperspace)
-add_subdirectory(hypertable)
-add_subdirectory(master_client)
-add_subdirectory(merge_diff)
-add_subdirectory(metalog_dump)
-add_subdirectory(prepend_md5)
-add_subdirectory(prune_tsv)
-add_subdirectory(rsclient)
-add_subdirectory(rsstat)
-add_subdirectory(serverup)
-add_subdirectory(Lib)
-add_subdirectory(load_generator)
-add_subdirectory(get_property)
+set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/master_client")
+set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/master_client")
+
+set(master_client_SRCS
+ht_master_client.cc
+MasterCommandInterpreter.cc
+)
+
+# ht_master_client - Master client command interpreter
+add_executable(ht_master_client ${master_client_SRCS})
+target_link_libraries(ht_master_client Hypertable)
+
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS ht_master_client RUNTIME DESTINATION bin)
+endif ()

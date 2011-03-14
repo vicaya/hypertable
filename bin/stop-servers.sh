@@ -83,19 +83,6 @@ done
 
 
 #
-# Stop RangeServer
-#
-if [ $STOP_RANGESERVER == "true" ] ; then
-  echo "Sending shutdown command"
-  echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht_rsclient --batch --no-hyperspace
-  # wait for rangeserver shutdown
-  wait_for_server_shutdown rangeserver "range server" "$@"
-  if [ $FORCE == "true" ] ; then
-      stop_server rangeserver
-  fi
-fi
-
-#
 # Stop TestClient
 #
 if [ $STOP_TESTCLIENT == "true" ] ; then
@@ -117,18 +104,38 @@ if [ $STOP_THRIFTBROKER == "true" ] ; then
 fi
 
 #
+# Stop Master
+#
+if [ $STOP_MASTER == "true" ] ; then
+  echo 'shutdown;quit;' | $HYPERTABLE_HOME/bin/ht master_client --batch
+  # wait for master shutdown
+  wait_for_server_shutdown master "master" "$@"
+  if [ $FORCE == "true" ] ; then
+      stop_server master
+  fi
+fi
+
+#
+# Stop RangeServer
+#
+if [ $STOP_RANGESERVER == "true" ] ; then
+  echo "Sending shutdown command"
+  echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht rsclient --batch --no-hyperspace
+  # wait for rangeserver shutdown
+  wait_for_server_shutdown rangeserver "range server" "$@"
+  if [ $FORCE == "true" ] ; then
+      stop_server rangeserver
+  fi
+fi
+
+
+#
 # Stop DFSBroker
 #
 if [ $STOP_DFSBROKER == "true" ] ; then
   stop_server dfsbroker
 fi
 
-#
-# Stop Master
-#
-if [ $STOP_MASTER == "true" ] ; then
-  stop_server master 
-fi
 
 #
 # Stop Hyperspace
