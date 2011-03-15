@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *

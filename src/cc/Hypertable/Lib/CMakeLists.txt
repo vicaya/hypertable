@@ -171,9 +171,13 @@ target_link_libraries(large_insert_test Hypertable)
 add_executable(scanner_async_test tests/scanner_async_test.cc)
 target_link_libraries(scanner_async_test Hypertable)
 
-# scanner_cancel_test 
-add_executable(scanner_cancel_test tests/scanner_cancel_test.cc)
-target_link_libraries(scanner_cancel_test Hypertable)
+# scanner_abrupt_end_test
+add_executable(scanner_abrupt_end_test tests/scanner_abrupt_end_test.cc)
+target_link_libraries(scanner_abrupt_end_test Hypertable)
+
+# future_abrupt_end_test
+add_executable(future_abrupt_end_test tests/future_abrupt_end_test.cc)
+target_link_libraries(future_abrupt_end_test Hypertable)
 
 # future_cancel_test 
 add_executable(future_cancel_test tests/future_cancel_test.cc)

@@ -140,6 +140,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
 }
 
 TableScannerAsync::~TableScannerAsync() {
+  cancel();
   wait_for_completion();
 }
 
