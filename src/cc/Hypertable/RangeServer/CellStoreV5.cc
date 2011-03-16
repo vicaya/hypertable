@@ -448,6 +448,9 @@ void CellStoreV5::add(const Key &key, const ByteString value) {
       m_trailer.expiration_time = key.timestamp + m_column_ttl[key.column_family_code];
   }
 
+  if (key.flag <= FLAG_DELETE_CELL)
+    m_trailer.delete_count++;
+
   m_buffer.ensure(key_len + value_len);
 
   m_key_compressor->write(m_buffer.ptr);

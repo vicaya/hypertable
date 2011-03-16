@@ -67,6 +67,7 @@ void CellStoreTrailerV5::clear() {
   expiration_time = TIMESTAMP_NULL;
   create_time = 0;
   expirable_data = 0;
+  delete_count = 0;
   key_bytes = 0;
   value_bytes = 0;
   table_id = 0xffffffff;
@@ -105,6 +106,7 @@ void CellStoreTrailerV5::serialize(uint8_t *buf) {
   encode_i64(&buf, expiration_time);
   encode_i64(&buf, create_time);
   encode_i64(&buf, expirable_data);
+  encode_i64(&buf, delete_count);
   encode_i64(&buf, key_bytes);
   encode_i64(&buf, value_bytes);
   encode_i32(&buf, table_id);
@@ -147,6 +149,7 @@ void CellStoreTrailerV5::deserialize(const uint8_t *buf) {
     expiration_time = decode_i64(&buf, &remaining);
     create_time = decode_i64(&buf, &remaining);
     expirable_data = decode_i64(&buf, &remaining);
+    delete_count = decode_i64(&buf, &remaining);
     key_bytes = decode_i64(&buf, &remaining);
     value_bytes = decode_i64(&buf, &remaining);
     table_id = decode_i32(&buf, &remaining);
@@ -185,6 +188,7 @@ void CellStoreTrailerV5::display(std::ostream &os) {
   os << ", expiration_time=" << expiration_time;
   os << ", create_time=" << create_time;
   os << ", expirable_data=" << expirable_data;
+  os << ", delete_count=" << delete_count;
   os << ", key_bytes=" << key_bytes;
   os << ", value_bytes=" << value_bytes;
   os << ", table_id=" << table_id;
@@ -233,6 +237,7 @@ void CellStoreTrailerV5::display_multiline(std::ostream &os) {
   os << "  expiration_time: " << expiration_time << "\n";
   os << "  create_time: " << create_time << "\n";
   os << "  expirable_data: " << expirable_data << "\n";
+  os << "  delete_count: " << delete_count << "\n";
   os << "  key_bytes: " << key_bytes << "\n";
   os << "  value_bytes: " << value_bytes << "\n";
   os << "  table_id: " << table_id << "\n";

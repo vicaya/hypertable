@@ -33,7 +33,7 @@ namespace Hypertable {
     CellStoreTrailerV5();
     virtual ~CellStoreTrailerV5() { return; }
     virtual void clear();
-    virtual size_t size() { return 184; }
+    virtual size_t size() { return 192; }
     virtual void serialize(uint8_t *buf);
     virtual void deserialize(const uint8_t *buf);
     virtual void display(std::ostream &os);
@@ -57,6 +57,7 @@ namespace Hypertable {
     int64_t expiration_time;
     int64_t create_time;
     int64_t expirable_data;
+    int64_t delete_count;
     int64_t key_bytes;
     int64_t value_bytes;
     uint32_t table_id;
@@ -98,6 +99,7 @@ namespace Hypertable {
       else if (prop == "expiration_time")       return expiration_time;
       else if (prop == "create_time")           return create_time;
       else if (prop == "expirable_data")        return expirable_data;
+      else if (prop == "delete_count")          return delete_count;
       else if (prop == "key_bytes")             return key_bytes;
       else if (prop == "value_bytes")           return value_bytes;
       else if (prop == "table_id")              return table_id;

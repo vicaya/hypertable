@@ -1576,9 +1576,10 @@ int main(int argc, char **argv) {
 
     int64_t expiration_time = boost::any_cast<int64_t>(cs->get_trailer()->get("expiration_time"));
     int64_t expirable_data = boost::any_cast<int64_t>(cs->get_trailer()->get("expirable_data"));
-
+    int64_t delete_count = boost::any_cast<int64_t>(cs->get_trailer()->get("delete_count"));
     out << "trailer.expiration_time = " << expiration_time << "\n";
     out << "trailer.expirable_data = " << expirable_data << "\n";
+    out << "trailer.delete_count= " << delete_count << "\n";
 
     out << flush;
 

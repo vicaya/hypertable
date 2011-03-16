@@ -2268,3 +2268,4 @@ control=(AUTO) row='row000275' family=1 qualifier='' ts=-9223372036854775806 rev
 9/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0
 trailer.expiration_time = 18000000000497
 trailer.expirable_data = 14030
+trailer.delete_count= 0
