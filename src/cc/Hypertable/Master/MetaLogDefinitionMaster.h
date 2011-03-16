@@ -32,8 +32,8 @@ namespace Hypertable {
   namespace MetaLog {
     class DefinitionMaster : public Definition {
     public:
-      DefinitionMaster(const char *instance_name) : Definition(instance_name) { }
-      DefinitionMaster(ContextPtr &context, const char *instance_name) : Definition(instance_name)
+      DefinitionMaster(const char *backup_label) : Definition(backup_label) { }
+      DefinitionMaster(ContextPtr &context, const char *backup_label) : Definition(backup_label)
           , m_context(context) { }
       virtual uint16_t version();
       virtual const char *name();

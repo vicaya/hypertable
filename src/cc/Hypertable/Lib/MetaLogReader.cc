@@ -55,8 +55,8 @@ Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition, const String &path)
 
   // Setup local backup path name
   Path data_dir = Config::properties->get_str("Hypertable.DataDirectory");
-  m_backup_path = (data_dir /= String("/run/log_backup/") + String(m_definition->name()) +
-                   String(m_definition->instance_name())).string();
+  m_backup_path = (data_dir /= String("/run/log_backup/") + String(m_definition->name()) + "/" +
+                   String(m_definition->backup_label())).string();
 
   reload();
 }
@@ -127,11 +127,16 @@ bool Reader::verify_backup(int32_t file_num) {
 
   size_t file_length = m_fs->length(fname);
   size_t backup_file_length = FileUtils::size(backup_filename);
-  if (backup_file_length != file_length) {
+  if (backup_file_length > file_length) {
     HT_ERROR_OUT << "MetaLog file '" << fname << "' has length " << file_length
-        << " but backup file '" << backup_filename << "' has length " << backup_file_length
+        << " < backup file '" << backup_filename << "' length " << backup_file_length
         << HT_END;
     return false;
+  }
+  else if (backup_file_length < file_length) {
+     HT_WARN_OUT << "MetaLog file '" << fname << "' has length " << file_length
+        << " > backup file '" << backup_filename << "' length " << backup_file_length
+        << HT_END;
   }
   return true;
 }

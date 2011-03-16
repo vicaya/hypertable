@@ -31,14 +31,14 @@ namespace Hypertable {
   namespace MetaLog {
     class Definition : public ReferenceCount {
     public:
-      Definition(const char* instance_name) : m_instance_name(instance_name) { }
+      Definition(const char* backup_label) : m_backup_label(backup_label) { }
       virtual uint16_t version() = 0;
       virtual const char *name() = 0;
-      virtual const char *instance_name() { return m_instance_name.c_str(); }
+      virtual const char *backup_label() { return m_backup_label.c_str(); }
       virtual Entity *create(const EntityHeader &header) = 0;
 
     private:
-      String m_instance_name;
+      String m_backup_label;
     };
     typedef intrusive_ptr<Definition> DefinitionPtr;
   }

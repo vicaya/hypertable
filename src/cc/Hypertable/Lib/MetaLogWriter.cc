@@ -59,8 +59,8 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
 
   // Setup local backup path name
   Path data_dir = Config::properties->get_str("Hypertable.DataDirectory");
-  m_backup_path = (data_dir /= String("/run/log_backup/") + String(m_definition->name()) +
-                   String(m_definition->instance_name())).string();
+  m_backup_path = (data_dir /= String("/run/log_backup/") + String(m_definition->name()) + "/" +
+                   String(m_definition->backup_label())).string();
   if (!FileUtils::exists(m_backup_path))
     FileUtils::mkdirs(m_backup_path);
 
@@ -156,12 +156,13 @@ void Writer::write_header() {
 
   assert((ptr-buf.base) == Header::LENGTH);
 
-  FileUtils::write(m_backup_fd, buf.base, Header::LENGTH);
 
   if (m_fs->append(m_fd, buf, Filesystem::O_FLUSH) != Header::LENGTH)
     HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error writing %s "
               "metalog header to file: %s", m_definition->name(),
               m_filename.c_str());
+
+  FileUtils::write(m_backup_fd, buf.base, Header::LENGTH);
   m_offset += Header::LENGTH;
 }
 
@@ -176,9 +177,9 @@ void Writer::record_state(Entity *entity) {
 
   HT_ASSERT((ptr-buf.base) == buf.size);
 
+  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
   FileUtils::write(m_backup_fd, buf.base, buf.size);
   m_offset += buf.size;
-  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
 }
 
 void Writer::record_state(std::vector<Entity *> &entities) {
@@ -197,9 +198,9 @@ void Writer::record_state(std::vector<Entity *> &entities) {
 
     HT_ASSERT((ptr-buf.base) == buf.size);
 
+    m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
     FileUtils::write(m_backup_fd, buf.base, buf.size);
     m_offset += buf.size;
-    m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
   }
 }
 
@@ -217,9 +218,10 @@ void Writer::record_removal(Entity *entity) {
 
   HT_ASSERT((ptr-buf.base) == buf.size);
 
+  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
   FileUtils::write(m_backup_fd, buf.base, buf.size);
   m_offset += buf.size;
-  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+
 }
 
 
@@ -240,9 +242,9 @@ void Writer::record_removal(std::vector<Entity *> &entities) {
 
     HT_ASSERT((ptr-buf.base) == buf.size);
 
+    m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
     FileUtils::write(m_backup_fd, buf.base, buf.size);
     m_offset += buf.size;
-    m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
   }
 
 }

@@ -30,7 +30,7 @@ namespace Hypertable {
   namespace MetaLog {
     class DefinitionRangeServer : public Definition {
     public:
-      DefinitionRangeServer(const char *instance_name) : Definition(instance_name) { }
+      DefinitionRangeServer(const char *backup_label) : Definition(backup_label) { }
       virtual uint16_t version();
       virtual const char *name();
       virtual Entity *create(const EntityHeader &header);
