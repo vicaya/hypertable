@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Describes a schema
  * <dl>
@@ -51,17 +45,17 @@ import org.apache.thrift.protocol.*;
  *   <dd>Specifies list of column families in this AG</dd>
  * </dl>
  */
-public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("Schema");
+public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Schema");
 
-  private static final TField ACCESS_GROUPS_FIELD_DESC = new TField("access_groups", TType.MAP, (short)1);
-  private static final TField COLUMN_FAMILIES_FIELD_DESC = new TField("column_families", TType.MAP, (short)2);
+  private static final org.apache.thrift.protocol.TField ACCESS_GROUPS_FIELD_DESC = new org.apache.thrift.protocol.TField("access_groups", org.apache.thrift.protocol.TType.MAP, (short)1);
+  private static final org.apache.thrift.protocol.TField COLUMN_FAMILIES_FIELD_DESC = new org.apache.thrift.protocol.TField("column_families", org.apache.thrift.protocol.TType.MAP, (short)2);
 
   public Map<String,AccessGroup> access_groups;
   public Map<String,ColumnFamily> column_families;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ACCESS_GROUPS((short)1, "access_groups"),
     COLUMN_FAMILIES((short)2, "column_families");
 
@@ -123,19 +117,19 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.ACCESS_GROUPS, new FieldMetaData("access_groups", TFieldRequirementType.OPTIONAL, 
-        new MapMetaData(TType.MAP, 
-            new FieldValueMetaData(TType.STRING), 
-            new StructMetaData(TType.STRUCT, AccessGroup.class))));
-    tmpMap.put(_Fields.COLUMN_FAMILIES, new FieldMetaData("column_families", TFieldRequirementType.OPTIONAL, 
-        new MapMetaData(TType.MAP, 
-            new FieldValueMetaData(TType.STRING), 
-            new StructMetaData(TType.STRUCT, ColumnFamily.class))));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.ACCESS_GROUPS, new org.apache.thrift.meta_data.FieldMetaData("access_groups", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AccessGroup.class))));
+    tmpMap.put(_Fields.COLUMN_FAMILIES, new org.apache.thrift.meta_data.FieldMetaData("column_families", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ColumnFamily.class))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(Schema.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Schema.class, metaDataMap);
   }
 
   public Schema() {
@@ -211,7 +205,7 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     this.access_groups = null;
   }
 
-  /** Returns true if field access_groups is set (has been asigned a value) and false otherwise */
+  /** Returns true if field access_groups is set (has been assigned a value) and false otherwise */
   public boolean isSetAccess_groups() {
     return this.access_groups != null;
   }
@@ -246,7 +240,7 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     this.column_families = null;
   }
 
-  /** Returns true if field column_families is set (has been asigned a value) and false otherwise */
+  /** Returns true if field column_families is set (has been assigned a value) and false otherwise */
   public boolean isSetColumn_families() {
     return this.column_families != null;
   }
@@ -290,7 +284,7 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -357,7 +351,7 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
       return lastComparison;
     }
     if (isSetAccess_groups()) {
-      lastComparison = TBaseHelper.compareTo(this.access_groups, typedOther.access_groups);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.access_groups, typedOther.access_groups);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -367,7 +361,7 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
       return lastComparison;
     }
     if (isSetColumn_families()) {
-      lastComparison = TBaseHelper.compareTo(this.column_families, typedOther.column_families);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.column_families, typedOther.column_families);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -379,20 +373,20 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // ACCESS_GROUPS
-          if (field.type == TType.MAP) {
+          if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              TMap _map28 = iprot.readMapBegin();
+              org.apache.thrift.protocol.TMap _map28 = iprot.readMapBegin();
               this.access_groups = new HashMap<String,AccessGroup>(2*_map28.size);
               for (int _i29 = 0; _i29 < _map28.size; ++_i29)
               {
@@ -406,13 +400,13 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
               iprot.readMapEnd();
             }
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // COLUMN_FAMILIES
-          if (field.type == TType.MAP) {
+          if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              TMap _map32 = iprot.readMapBegin();
+              org.apache.thrift.protocol.TMap _map32 = iprot.readMapBegin();
               this.column_families = new HashMap<String,ColumnFamily>(2*_map32.size);
               for (int _i33 = 0; _i33 < _map32.size; ++_i33)
               {
@@ -426,11 +420,11 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
               iprot.readMapEnd();
             }
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -440,7 +434,7 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -448,7 +442,7 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
       if (isSetAccess_groups()) {
         oprot.writeFieldBegin(ACCESS_GROUPS_FIELD_DESC);
         {
-          oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.access_groups.size()));
+          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, this.access_groups.size()));
           for (Map.Entry<String, AccessGroup> _iter36 : this.access_groups.entrySet())
           {
             oprot.writeString(_iter36.getKey());
@@ -463,7 +457,7 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
       if (isSetColumn_families()) {
         oprot.writeFieldBegin(COLUMN_FAMILIES_FIELD_DESC);
         {
-          oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.column_families.size()));
+          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, this.column_families.size()));
           for (Map.Entry<String, ColumnFamily> _iter37 : this.column_families.entrySet())
           {
             oprot.writeString(_iter37.getKey());
@@ -506,8 +500,24 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

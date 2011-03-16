@@ -20,22 +20,16 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Same as HqlResult except with cell as array
  */
-public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("HqlResult2");
+public class HqlResult2 implements org.apache.thrift.TBase<HqlResult2, HqlResult2._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("HqlResult2");
 
-  private static final TField RESULTS_FIELD_DESC = new TField("results", TType.LIST, (short)1);
-  private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)2);
-  private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)3);
-  private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)4);
+  private static final org.apache.thrift.protocol.TField RESULTS_FIELD_DESC = new org.apache.thrift.protocol.TField("results", org.apache.thrift.protocol.TType.LIST, (short)1);
+  private static final org.apache.thrift.protocol.TField CELLS_FIELD_DESC = new org.apache.thrift.protocol.TField("cells", org.apache.thrift.protocol.TType.LIST, (short)2);
+  private static final org.apache.thrift.protocol.TField SCANNER_FIELD_DESC = new org.apache.thrift.protocol.TField("scanner", org.apache.thrift.protocol.TType.I64, (short)3);
+  private static final org.apache.thrift.protocol.TField MUTATOR_FIELD_DESC = new org.apache.thrift.protocol.TField("mutator", org.apache.thrift.protocol.TType.I64, (short)4);
 
   public List<String> results;
   public List<List<String>> cells;
@@ -43,7 +37,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
   public long mutator;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     RESULTS((short)1, "results"),
     CELLS((short)2, "cells"),
     SCANNER((short)3, "scanner"),
@@ -114,21 +108,21 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
   private static final int __MUTATOR_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.RESULTS, new FieldMetaData("results", TFieldRequirementType.OPTIONAL, 
-        new ListMetaData(TType.LIST, 
-            new FieldValueMetaData(TType.STRING))));
-    tmpMap.put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.OPTIONAL, 
-        new ListMetaData(TType.LIST, 
-            new FieldValueMetaData(TType.LIST            , "CellAsArray"))));
-    tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.RESULTS, new org.apache.thrift.meta_data.FieldMetaData("results", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+    tmpMap.put(_Fields.CELLS, new org.apache.thrift.meta_data.FieldMetaData("cells", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.LIST            , "CellAsArray"))));
+    tmpMap.put(_Fields.SCANNER, new org.apache.thrift.meta_data.FieldMetaData("scanner", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.MUTATOR, new org.apache.thrift.meta_data.FieldMetaData("mutator", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(HqlResult2.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(HqlResult2.class, metaDataMap);
   }
 
   public HqlResult2() {
@@ -200,7 +194,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
     this.results = null;
   }
 
-  /** Returns true if field results is set (has been asigned a value) and false otherwise */
+  /** Returns true if field results is set (has been assigned a value) and false otherwise */
   public boolean isSetResults() {
     return this.results != null;
   }
@@ -239,7 +233,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
     this.cells = null;
   }
 
-  /** Returns true if field cells is set (has been asigned a value) and false otherwise */
+  /** Returns true if field cells is set (has been assigned a value) and false otherwise */
   public boolean isSetCells() {
     return this.cells != null;
   }
@@ -264,7 +258,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
     __isset_bit_vector.clear(__SCANNER_ISSET_ID);
   }
 
-  /** Returns true if field scanner is set (has been asigned a value) and false otherwise */
+  /** Returns true if field scanner is set (has been assigned a value) and false otherwise */
   public boolean isSetScanner() {
     return __isset_bit_vector.get(__SCANNER_ISSET_ID);
   }
@@ -287,7 +281,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
     __isset_bit_vector.clear(__MUTATOR_ISSET_ID);
   }
 
-  /** Returns true if field mutator is set (has been asigned a value) and false otherwise */
+  /** Returns true if field mutator is set (has been assigned a value) and false otherwise */
   public boolean isSetMutator() {
     return __isset_bit_vector.get(__MUTATOR_ISSET_ID);
   }
@@ -351,7 +345,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -440,7 +434,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
       return lastComparison;
     }
     if (isSetResults()) {
-      lastComparison = TBaseHelper.compareTo(this.results, typedOther.results);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.results, typedOther.results);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -450,7 +444,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
       return lastComparison;
     }
     if (isSetCells()) {
-      lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cells, typedOther.cells);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -460,7 +454,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
       return lastComparison;
     }
     if (isSetScanner()) {
-      lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.scanner, typedOther.scanner);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -470,7 +464,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
       return lastComparison;
     }
     if (isSetMutator()) {
-      lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mutator, typedOther.mutator);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -482,20 +476,20 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // RESULTS
-          if (field.type == TType.LIST) {
+          if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              TList _list8 = iprot.readListBegin();
+              org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
               this.results = new ArrayList<String>(_list8.size);
               for (int _i9 = 0; _i9 < _list8.size; ++_i9)
               {
@@ -506,19 +500,19 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
               iprot.readListEnd();
             }
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // CELLS
-          if (field.type == TType.LIST) {
+          if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              TList _list11 = iprot.readListBegin();
+              org.apache.thrift.protocol.TList _list11 = iprot.readListBegin();
               this.cells = new ArrayList<List<String>>(_list11.size);
               for (int _i12 = 0; _i12 < _list11.size; ++_i12)
               {
                 List<String> _elem13;
                 {
-                  TList _list14 = iprot.readListBegin();
+                  org.apache.thrift.protocol.TList _list14 = iprot.readListBegin();
                   _elem13 = new ArrayList<String>(_list14.size);
                   for (int _i15 = 0; _i15 < _list14.size; ++_i15)
                   {
@@ -533,27 +527,27 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
               iprot.readListEnd();
             }
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // SCANNER
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.scanner = iprot.readI64();
             setScannerIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // MUTATOR
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.mutator = iprot.readI64();
             setMutatorIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -563,7 +557,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -571,7 +565,7 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
       if (isSetResults()) {
         oprot.writeFieldBegin(RESULTS_FIELD_DESC);
         {
-          oprot.writeListBegin(new TList(TType.STRING, this.results.size()));
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.results.size()));
           for (String _iter17 : this.results)
           {
             oprot.writeString(_iter17);
@@ -585,11 +579,11 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
       if (isSetCells()) {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
-          oprot.writeListBegin(new TList(TType.LIST, this.cells.size()));
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, this.cells.size()));
           for (List<String> _iter18 : this.cells)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter18.size()));
+              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter18.size()));
               for (String _iter19 : _iter18)
               {
                 oprot.writeString(_iter19);
@@ -656,8 +650,26 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

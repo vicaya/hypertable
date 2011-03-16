@@ -850,8 +850,8 @@ void HqlServiceClient::send_hql_exec(const int64_t ns, const std::string& comman
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void HqlServiceClient::recv_hql_exec(HqlResult& _return)
@@ -873,13 +873,11 @@ void HqlServiceClient::recv_hql_exec(HqlResult& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("hql_exec") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   HqlService_hql_exec_presult result;
   result.success = &_return;
@@ -914,8 +912,8 @@ void HqlServiceClient::send_hql_query(const int64_t ns, const std::string& comma
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void HqlServiceClient::recv_hql_query(HqlResult& _return)
@@ -937,13 +935,11 @@ void HqlServiceClient::recv_hql_query(HqlResult& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("hql_query") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   HqlService_hql_query_presult result;
   result.success = &_return;
@@ -980,8 +976,8 @@ void HqlServiceClient::send_hql_exec2(const int64_t ns, const std::string& comma
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void HqlServiceClient::recv_hql_exec2(HqlResult2& _return)
@@ -1003,13 +999,11 @@ void HqlServiceClient::recv_hql_exec2(HqlResult2& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("hql_exec2") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   HqlService_hql_exec2_presult result;
   result.success = &_return;
@@ -1044,8 +1038,8 @@ void HqlServiceClient::send_hql_query2(const int64_t ns, const std::string& comm
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void HqlServiceClient::recv_hql_query2(HqlResult2& _return)
@@ -1067,13 +1061,11 @@ void HqlServiceClient::recv_hql_query2(HqlResult2& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("hql_query2") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   HqlService_hql_query2_presult result;
   result.success = &_return;
@@ -1091,7 +1083,7 @@ void HqlServiceClient::recv_hql_query2(HqlResult2& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "hql_query2 failed: unknown result");
 }
 
-bool HqlServiceProcessor::process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot) {
+bool HqlServiceProcessor::process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot, void* callContext) {
 
   ::apache::thrift::protocol::TProtocol* iprot = piprot.get();
   ::apache::thrift::protocol::TProtocol* oprot = poprot.get();
@@ -1109,30 +1101,44 @@ bool HqlServiceProcessor::process(boost::shared_ptr< ::apache::thrift::protocol:
     oprot->writeMessageBegin(fname, ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return true;
   }
 
-  return process_fn(iprot, oprot, fname, seqid);
+  return process_fn(iprot, oprot, fname, seqid, callContext);
 }
 
-bool HqlServiceProcessor::process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid) {
-  std::map<std::string, void (HqlServiceProcessor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*)>::iterator pfn;
+bool HqlServiceProcessor::process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid, void* callContext) {
+  std::map<std::string, void (HqlServiceProcessor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*, void*)>::iterator pfn;
   pfn = processMap_.find(fname);
   if (pfn == processMap_.end()) {
-    return Hypertable::ThriftGen::ClientServiceProcessor::process_fn(iprot, oprot, fname, seqid);
+    return Hypertable::ThriftGen::ClientServiceProcessor::process_fn(iprot, oprot, fname, seqid, callContext);
   }
-  (this->*(pfn->second))(seqid, iprot, oprot);
+  (this->*(pfn->second))(seqid, iprot, oprot, callContext);
   return true;
 }
 
-void HqlServiceProcessor::process_hql_exec(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void HqlServiceProcessor::process_hql_exec(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("HqlService.hql_exec", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "HqlService.hql_exec");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "HqlService.hql_exec");
+  }
+
   HqlService_hql_exec_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "HqlService.hql_exec", bytes);
+  }
 
   HqlService_hql_exec_result result;
   try {
@@ -1142,28 +1148,54 @@ void HqlServiceProcessor::process_hql_exec(int32_t seqid, ::apache::thrift::prot
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "HqlService.hql_exec");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("hql_exec", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "HqlService.hql_exec");
   }
 
   oprot->writeMessageBegin("hql_exec", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "HqlService.hql_exec", bytes);
+  }
 }
 
-void HqlServiceProcessor::process_hql_query(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void HqlServiceProcessor::process_hql_query(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("HqlService.hql_query", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "HqlService.hql_query");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "HqlService.hql_query");
+  }
+
   HqlService_hql_query_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "HqlService.hql_query", bytes);
+  }
 
   HqlService_hql_query_result result;
   try {
@@ -1173,28 +1205,54 @@ void HqlServiceProcessor::process_hql_query(int32_t seqid, ::apache::thrift::pro
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "HqlService.hql_query");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("hql_query", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "HqlService.hql_query");
   }
 
   oprot->writeMessageBegin("hql_query", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "HqlService.hql_query", bytes);
+  }
 }
 
-void HqlServiceProcessor::process_hql_exec2(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void HqlServiceProcessor::process_hql_exec2(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("HqlService.hql_exec2", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "HqlService.hql_exec2");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "HqlService.hql_exec2");
+  }
+
   HqlService_hql_exec2_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "HqlService.hql_exec2", bytes);
+  }
 
   HqlService_hql_exec2_result result;
   try {
@@ -1204,28 +1262,54 @@ void HqlServiceProcessor::process_hql_exec2(int32_t seqid, ::apache::thrift::pro
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "HqlService.hql_exec2");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("hql_exec2", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "HqlService.hql_exec2");
   }
 
   oprot->writeMessageBegin("hql_exec2", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "HqlService.hql_exec2", bytes);
+  }
 }
 
-void HqlServiceProcessor::process_hql_query2(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void HqlServiceProcessor::process_hql_query2(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("HqlService.hql_query2", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "HqlService.hql_query2");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "HqlService.hql_query2");
+  }
+
   HqlService_hql_query2_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "HqlService.hql_query2", bytes);
+  }
 
   HqlService_hql_query2_result result;
   try {
@@ -1235,20 +1319,32 @@ void HqlServiceProcessor::process_hql_query2(int32_t seqid, ::apache::thrift::pr
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "HqlService.hql_query2");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("hql_query2", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "HqlService.hql_query2");
   }
 
   oprot->writeMessageBegin("hql_query2", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "HqlService.hql_query2", bytes);
+  }
 }
 
 }} // namespace

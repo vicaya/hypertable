@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Describes a ColumnFamily
  * <dl>
@@ -42,13 +36,13 @@ import org.apache.thrift.protocol.*;
  *   <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
  * </dl>
  */
-public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("ColumnFamily");
+public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, ColumnFamily._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ColumnFamily");
 
-  private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-  private static final TField AG_FIELD_DESC = new TField("ag", TType.STRING, (short)2);
-  private static final TField MAX_VERSIONS_FIELD_DESC = new TField("max_versions", TType.I32, (short)3);
-  private static final TField TTL_FIELD_DESC = new TField("ttl", TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField AG_FIELD_DESC = new org.apache.thrift.protocol.TField("ag", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField MAX_VERSIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("max_versions", org.apache.thrift.protocol.TType.I32, (short)3);
+  private static final org.apache.thrift.protocol.TField TTL_FIELD_DESC = new org.apache.thrift.protocol.TField("ttl", org.apache.thrift.protocol.TType.STRING, (short)4);
 
   public String name;
   public String ag;
@@ -56,7 +50,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
   public String ttl;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     NAME((short)1, "name"),
     AG((short)2, "ag"),
     MAX_VERSIONS((short)3, "max_versions"),
@@ -126,19 +120,19 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
   private static final int __MAX_VERSIONS_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.AG, new FieldMetaData("ag", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.MAX_VERSIONS, new FieldMetaData("max_versions", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I32)));
-    tmpMap.put(_Fields.TTL, new FieldMetaData("ttl", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.AG, new org.apache.thrift.meta_data.FieldMetaData("ag", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.MAX_VERSIONS, new org.apache.thrift.meta_data.FieldMetaData("max_versions", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.TTL, new org.apache.thrift.meta_data.FieldMetaData("ttl", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(ColumnFamily.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ColumnFamily.class, metaDataMap);
   }
 
   public ColumnFamily() {
@@ -188,7 +182,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     this.name = null;
   }
 
-  /** Returns true if field name is set (has been asigned a value) and false otherwise */
+  /** Returns true if field name is set (has been assigned a value) and false otherwise */
   public boolean isSetName() {
     return this.name != null;
   }
@@ -212,7 +206,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     this.ag = null;
   }
 
-  /** Returns true if field ag is set (has been asigned a value) and false otherwise */
+  /** Returns true if field ag is set (has been assigned a value) and false otherwise */
   public boolean isSetAg() {
     return this.ag != null;
   }
@@ -237,7 +231,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     __isset_bit_vector.clear(__MAX_VERSIONS_ISSET_ID);
   }
 
-  /** Returns true if field max_versions is set (has been asigned a value) and false otherwise */
+  /** Returns true if field max_versions is set (has been assigned a value) and false otherwise */
   public boolean isSetMax_versions() {
     return __isset_bit_vector.get(__MAX_VERSIONS_ISSET_ID);
   }
@@ -259,7 +253,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     this.ttl = null;
   }
 
-  /** Returns true if field ttl is set (has been asigned a value) and false otherwise */
+  /** Returns true if field ttl is set (has been assigned a value) and false otherwise */
   public boolean isSetTtl() {
     return this.ttl != null;
   }
@@ -325,7 +319,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -414,7 +408,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
       return lastComparison;
     }
     if (isSetName()) {
-      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.name, typedOther.name);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -424,7 +418,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
       return lastComparison;
     }
     if (isSetAg()) {
-      lastComparison = TBaseHelper.compareTo(this.ag, typedOther.ag);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ag, typedOther.ag);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -434,7 +428,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
       return lastComparison;
     }
     if (isSetMax_versions()) {
-      lastComparison = TBaseHelper.compareTo(this.max_versions, typedOther.max_versions);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.max_versions, typedOther.max_versions);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -444,7 +438,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
       return lastComparison;
     }
     if (isSetTtl()) {
-      lastComparison = TBaseHelper.compareTo(this.ttl, typedOther.ttl);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ttl, typedOther.ttl);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -456,47 +450,47 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // NAME
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.name = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // AG
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.ag = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // MAX_VERSIONS
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.max_versions = iprot.readI32();
             setMax_versionsIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // TTL
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.ttl = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -506,7 +500,7 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -584,8 +578,26 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

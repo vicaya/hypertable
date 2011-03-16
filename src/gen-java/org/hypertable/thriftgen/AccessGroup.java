@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Describes an AccessGroup
  * <dl>
@@ -51,16 +45,16 @@ import org.apache.thrift.protocol.*;
  *   <dd>Specifies list of column families in this AG</dd>
  * </dl>
  */
-public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("AccessGroup");
+public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessGroup._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("AccessGroup");
 
-  private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-  private static final TField IN_MEMORY_FIELD_DESC = new TField("in_memory", TType.BOOL, (short)2);
-  private static final TField REPLICATION_FIELD_DESC = new TField("replication", TType.I16, (short)3);
-  private static final TField BLOCKSIZE_FIELD_DESC = new TField("blocksize", TType.I32, (short)4);
-  private static final TField COMPRESSOR_FIELD_DESC = new TField("compressor", TType.STRING, (short)5);
-  private static final TField BLOOM_FILTER_FIELD_DESC = new TField("bloom_filter", TType.STRING, (short)6);
-  private static final TField COLUMNS_FIELD_DESC = new TField("columns", TType.LIST, (short)7);
+  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField IN_MEMORY_FIELD_DESC = new org.apache.thrift.protocol.TField("in_memory", org.apache.thrift.protocol.TType.BOOL, (short)2);
+  private static final org.apache.thrift.protocol.TField REPLICATION_FIELD_DESC = new org.apache.thrift.protocol.TField("replication", org.apache.thrift.protocol.TType.I16, (short)3);
+  private static final org.apache.thrift.protocol.TField BLOCKSIZE_FIELD_DESC = new org.apache.thrift.protocol.TField("blocksize", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField COMPRESSOR_FIELD_DESC = new org.apache.thrift.protocol.TField("compressor", org.apache.thrift.protocol.TType.STRING, (short)5);
+  private static final org.apache.thrift.protocol.TField BLOOM_FILTER_FIELD_DESC = new org.apache.thrift.protocol.TField("bloom_filter", org.apache.thrift.protocol.TType.STRING, (short)6);
+  private static final org.apache.thrift.protocol.TField COLUMNS_FIELD_DESC = new org.apache.thrift.protocol.TField("columns", org.apache.thrift.protocol.TType.LIST, (short)7);
 
   public String name;
   public boolean in_memory;
@@ -71,7 +65,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
   public List<ColumnFamily> columns;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     NAME((short)1, "name"),
     IN_MEMORY((short)2, "in_memory"),
     REPLICATION((short)3, "replication"),
@@ -152,26 +146,26 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
   private static final int __BLOCKSIZE_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.IN_MEMORY, new FieldMetaData("in_memory", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.BOOL)));
-    tmpMap.put(_Fields.REPLICATION, new FieldMetaData("replication", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I16)));
-    tmpMap.put(_Fields.BLOCKSIZE, new FieldMetaData("blocksize", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I32)));
-    tmpMap.put(_Fields.COMPRESSOR, new FieldMetaData("compressor", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.BLOOM_FILTER, new FieldMetaData("bloom_filter", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.COLUMNS, new FieldMetaData("columns", TFieldRequirementType.OPTIONAL, 
-        new ListMetaData(TType.LIST, 
-            new StructMetaData(TType.STRUCT, ColumnFamily.class))));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.IN_MEMORY, new org.apache.thrift.meta_data.FieldMetaData("in_memory", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.REPLICATION, new org.apache.thrift.meta_data.FieldMetaData("replication", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I16)));
+    tmpMap.put(_Fields.BLOCKSIZE, new org.apache.thrift.meta_data.FieldMetaData("blocksize", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.COMPRESSOR, new org.apache.thrift.meta_data.FieldMetaData("compressor", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.BLOOM_FILTER, new org.apache.thrift.meta_data.FieldMetaData("bloom_filter", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.COLUMNS, new org.apache.thrift.meta_data.FieldMetaData("columns", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ColumnFamily.class))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(AccessGroup.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(AccessGroup.class, metaDataMap);
   }
 
   public AccessGroup() {
@@ -235,7 +229,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     this.name = null;
   }
 
-  /** Returns true if field name is set (has been asigned a value) and false otherwise */
+  /** Returns true if field name is set (has been assigned a value) and false otherwise */
   public boolean isSetName() {
     return this.name != null;
   }
@@ -260,7 +254,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     __isset_bit_vector.clear(__IN_MEMORY_ISSET_ID);
   }
 
-  /** Returns true if field in_memory is set (has been asigned a value) and false otherwise */
+  /** Returns true if field in_memory is set (has been assigned a value) and false otherwise */
   public boolean isSetIn_memory() {
     return __isset_bit_vector.get(__IN_MEMORY_ISSET_ID);
   }
@@ -283,7 +277,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     __isset_bit_vector.clear(__REPLICATION_ISSET_ID);
   }
 
-  /** Returns true if field replication is set (has been asigned a value) and false otherwise */
+  /** Returns true if field replication is set (has been assigned a value) and false otherwise */
   public boolean isSetReplication() {
     return __isset_bit_vector.get(__REPLICATION_ISSET_ID);
   }
@@ -306,7 +300,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     __isset_bit_vector.clear(__BLOCKSIZE_ISSET_ID);
   }
 
-  /** Returns true if field blocksize is set (has been asigned a value) and false otherwise */
+  /** Returns true if field blocksize is set (has been assigned a value) and false otherwise */
   public boolean isSetBlocksize() {
     return __isset_bit_vector.get(__BLOCKSIZE_ISSET_ID);
   }
@@ -328,7 +322,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     this.compressor = null;
   }
 
-  /** Returns true if field compressor is set (has been asigned a value) and false otherwise */
+  /** Returns true if field compressor is set (has been assigned a value) and false otherwise */
   public boolean isSetCompressor() {
     return this.compressor != null;
   }
@@ -352,7 +346,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     this.bloom_filter = null;
   }
 
-  /** Returns true if field bloom_filter is set (has been asigned a value) and false otherwise */
+  /** Returns true if field bloom_filter is set (has been assigned a value) and false otherwise */
   public boolean isSetBloom_filter() {
     return this.bloom_filter != null;
   }
@@ -391,7 +385,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     this.columns = null;
   }
 
-  /** Returns true if field columns is set (has been asigned a value) and false otherwise */
+  /** Returns true if field columns is set (has been assigned a value) and false otherwise */
   public boolean isSetColumns() {
     return this.columns != null;
   }
@@ -490,7 +484,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -612,7 +606,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
       return lastComparison;
     }
     if (isSetName()) {
-      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.name, typedOther.name);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -622,7 +616,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
       return lastComparison;
     }
     if (isSetIn_memory()) {
-      lastComparison = TBaseHelper.compareTo(this.in_memory, typedOther.in_memory);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.in_memory, typedOther.in_memory);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -632,7 +626,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
       return lastComparison;
     }
     if (isSetReplication()) {
-      lastComparison = TBaseHelper.compareTo(this.replication, typedOther.replication);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.replication, typedOther.replication);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -642,7 +636,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
       return lastComparison;
     }
     if (isSetBlocksize()) {
-      lastComparison = TBaseHelper.compareTo(this.blocksize, typedOther.blocksize);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.blocksize, typedOther.blocksize);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -652,7 +646,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
       return lastComparison;
     }
     if (isSetCompressor()) {
-      lastComparison = TBaseHelper.compareTo(this.compressor, typedOther.compressor);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.compressor, typedOther.compressor);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -662,7 +656,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
       return lastComparison;
     }
     if (isSetBloom_filter()) {
-      lastComparison = TBaseHelper.compareTo(this.bloom_filter, typedOther.bloom_filter);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.bloom_filter, typedOther.bloom_filter);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -672,7 +666,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
       return lastComparison;
     }
     if (isSetColumns()) {
-      lastComparison = TBaseHelper.compareTo(this.columns, typedOther.columns);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.columns, typedOther.columns);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -684,65 +678,65 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // NAME
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.name = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // IN_MEMORY
-          if (field.type == TType.BOOL) {
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
             this.in_memory = iprot.readBool();
             setIn_memoryIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // REPLICATION
-          if (field.type == TType.I16) {
+          if (field.type == org.apache.thrift.protocol.TType.I16) {
             this.replication = iprot.readI16();
             setReplicationIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // BLOCKSIZE
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.blocksize = iprot.readI32();
             setBlocksizeIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 5: // COMPRESSOR
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.compressor = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 6: // BLOOM_FILTER
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.bloom_filter = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 7: // COLUMNS
-          if (field.type == TType.LIST) {
+          if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              TList _list24 = iprot.readListBegin();
+              org.apache.thrift.protocol.TList _list24 = iprot.readListBegin();
               this.columns = new ArrayList<ColumnFamily>(_list24.size);
               for (int _i25 = 0; _i25 < _list24.size; ++_i25)
               {
@@ -754,11 +748,11 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
               iprot.readListEnd();
             }
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -768,7 +762,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -812,7 +806,7 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
       if (isSetColumns()) {
         oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
         {
-          oprot.writeListBegin(new TList(TType.STRUCT, this.columns.size()));
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.columns.size()));
           for (ColumnFamily _iter27 : this.columns)
           {
             _iter27.write(oprot);
@@ -892,8 +886,26 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Defines a cell key
  * 
@@ -51,15 +45,15 @@ import org.apache.thrift.protocol.*;
  *   <dd>A 16-bit integer indicating the state of the cell</dd>
  * </dl>
  */
-public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("Key");
+public class Key implements org.apache.thrift.TBase<Key, Key._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Key");
 
-  private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)1);
-  private static final TField COLUMN_FAMILY_FIELD_DESC = new TField("column_family", TType.STRING, (short)2);
-  private static final TField COLUMN_QUALIFIER_FIELD_DESC = new TField("column_qualifier", TType.STRING, (short)3);
-  private static final TField TIMESTAMP_FIELD_DESC = new TField("timestamp", TType.I64, (short)4);
-  private static final TField REVISION_FIELD_DESC = new TField("revision", TType.I64, (short)5);
-  private static final TField FLAG_FIELD_DESC = new TField("flag", TType.I32, (short)6);
+  private static final org.apache.thrift.protocol.TField ROW_FIELD_DESC = new org.apache.thrift.protocol.TField("row", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField COLUMN_FAMILY_FIELD_DESC = new org.apache.thrift.protocol.TField("column_family", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField COLUMN_QUALIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("column_qualifier", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)4);
+  private static final org.apache.thrift.protocol.TField REVISION_FIELD_DESC = new org.apache.thrift.protocol.TField("revision", org.apache.thrift.protocol.TType.I64, (short)5);
+  private static final org.apache.thrift.protocol.TField FLAG_FIELD_DESC = new org.apache.thrift.protocol.TField("flag", org.apache.thrift.protocol.TType.I32, (short)6);
 
   public String row;
   public String column_family;
@@ -73,7 +67,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
   public KeyFlag flag;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ROW((short)1, "row"),
     COLUMN_FAMILY((short)2, "column_family"),
     COLUMN_QUALIFIER((short)3, "column_qualifier"),
@@ -154,27 +148,27 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
   private static final int __REVISION_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.COLUMN_FAMILY, new FieldMetaData("column_family", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.COLUMN_QUALIFIER, new FieldMetaData("column_qualifier", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.REVISION, new FieldMetaData("revision", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.FLAG, new FieldMetaData("flag", TFieldRequirementType.DEFAULT, 
-        new EnumMetaData(TType.ENUM, KeyFlag.class)));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.ROW, new org.apache.thrift.meta_data.FieldMetaData("row", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.COLUMN_FAMILY, new org.apache.thrift.meta_data.FieldMetaData("column_family", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.COLUMN_QUALIFIER, new org.apache.thrift.meta_data.FieldMetaData("column_qualifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.REVISION, new org.apache.thrift.meta_data.FieldMetaData("revision", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.FLAG, new org.apache.thrift.meta_data.FieldMetaData("flag", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, KeyFlag.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(Key.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Key.class, metaDataMap);
   }
 
   public Key() {
-    this.flag = KeyFlag.INSERT;
+    this.flag = org.hypertable.thriftgen.KeyFlag.INSERT;
 
   }
 
@@ -226,7 +220,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     this.timestamp = 0;
     setRevisionIsSet(false);
     this.revision = 0;
-    this.flag = KeyFlag.INSERT;
+    this.flag = org.hypertable.thriftgen.KeyFlag.INSERT;
 
   }
 
@@ -243,7 +237,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     this.row = null;
   }
 
-  /** Returns true if field row is set (has been asigned a value) and false otherwise */
+  /** Returns true if field row is set (has been assigned a value) and false otherwise */
   public boolean isSetRow() {
     return this.row != null;
   }
@@ -267,7 +261,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     this.column_family = null;
   }
 
-  /** Returns true if field column_family is set (has been asigned a value) and false otherwise */
+  /** Returns true if field column_family is set (has been assigned a value) and false otherwise */
   public boolean isSetColumn_family() {
     return this.column_family != null;
   }
@@ -291,7 +285,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     this.column_qualifier = null;
   }
 
-  /** Returns true if field column_qualifier is set (has been asigned a value) and false otherwise */
+  /** Returns true if field column_qualifier is set (has been assigned a value) and false otherwise */
   public boolean isSetColumn_qualifier() {
     return this.column_qualifier != null;
   }
@@ -316,7 +310,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     __isset_bit_vector.clear(__TIMESTAMP_ISSET_ID);
   }
 
-  /** Returns true if field timestamp is set (has been asigned a value) and false otherwise */
+  /** Returns true if field timestamp is set (has been assigned a value) and false otherwise */
   public boolean isSetTimestamp() {
     return __isset_bit_vector.get(__TIMESTAMP_ISSET_ID);
   }
@@ -339,7 +333,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     __isset_bit_vector.clear(__REVISION_ISSET_ID);
   }
 
-  /** Returns true if field revision is set (has been asigned a value) and false otherwise */
+  /** Returns true if field revision is set (has been assigned a value) and false otherwise */
   public boolean isSetRevision() {
     return __isset_bit_vector.get(__REVISION_ISSET_ID);
   }
@@ -369,7 +363,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     this.flag = null;
   }
 
-  /** Returns true if field flag is set (has been asigned a value) and false otherwise */
+  /** Returns true if field flag is set (has been assigned a value) and false otherwise */
   public boolean isSetFlag() {
     return this.flag != null;
   }
@@ -457,7 +451,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -568,7 +562,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       return lastComparison;
     }
     if (isSetRow()) {
-      lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.row, typedOther.row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -578,7 +572,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       return lastComparison;
     }
     if (isSetColumn_family()) {
-      lastComparison = TBaseHelper.compareTo(this.column_family, typedOther.column_family);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.column_family, typedOther.column_family);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -588,7 +582,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       return lastComparison;
     }
     if (isSetColumn_qualifier()) {
-      lastComparison = TBaseHelper.compareTo(this.column_qualifier, typedOther.column_qualifier);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.column_qualifier, typedOther.column_qualifier);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -598,7 +592,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       return lastComparison;
     }
     if (isSetTimestamp()) {
-      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -608,7 +602,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       return lastComparison;
     }
     if (isSetRevision()) {
-      lastComparison = TBaseHelper.compareTo(this.revision, typedOther.revision);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.revision, typedOther.revision);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -618,7 +612,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       return lastComparison;
     }
     if (isSetFlag()) {
-      lastComparison = TBaseHelper.compareTo(this.flag, typedOther.flag);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flag, typedOther.flag);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -630,62 +624,62 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // ROW
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.row = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // COLUMN_FAMILY
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.column_family = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // COLUMN_QUALIFIER
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.column_qualifier = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // TIMESTAMP
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.timestamp = iprot.readI64();
             setTimestampIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 5: // REVISION
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.revision = iprot.readI64();
             setRevisionIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 6: // FLAG
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.flag = KeyFlag.findByValue(iprot.readI32());
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -695,7 +689,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -785,8 +779,26 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

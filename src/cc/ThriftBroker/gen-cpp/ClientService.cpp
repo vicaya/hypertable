@@ -10157,8 +10157,8 @@ void ClientServiceClient::send_create_namespace(const std::string& ns)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_create_namespace()
@@ -10180,13 +10180,11 @@ void ClientServiceClient::recv_create_namespace()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("create_namespace") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_create_namespace_presult result;
   result.read(iprot_);
@@ -10217,8 +10215,8 @@ void ClientServiceClient::send_create_table(const Namespace ns, const std::strin
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_create_table()
@@ -10240,13 +10238,11 @@ void ClientServiceClient::recv_create_table()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("create_table") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_create_table_presult result;
   result.read(iprot_);
@@ -10275,8 +10271,8 @@ void ClientServiceClient::send_open_namespace(const std::string& ns)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 Namespace ClientServiceClient::recv_open_namespace()
@@ -10298,13 +10294,11 @@ Namespace ClientServiceClient::recv_open_namespace()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("open_namespace") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   Namespace _return;
   ClientService_open_namespace_presult result;
@@ -10338,8 +10332,8 @@ void ClientServiceClient::send_close_namespace(const Namespace ns)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_close_namespace()
@@ -10361,13 +10355,11 @@ void ClientServiceClient::recv_close_namespace()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("close_namespace") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_close_namespace_presult result;
   result.read(iprot_);
@@ -10396,8 +10388,8 @@ void ClientServiceClient::send_open_future(const int32_t queue_size)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 Future ClientServiceClient::recv_open_future()
@@ -10419,13 +10411,11 @@ Future ClientServiceClient::recv_open_future()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("open_future") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   Future _return;
   ClientService_open_future_presult result;
@@ -10459,8 +10449,8 @@ void ClientServiceClient::send_cancel_future(const Future ff)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_cancel_future()
@@ -10482,13 +10472,11 @@ void ClientServiceClient::recv_cancel_future()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("cancel_future") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_cancel_future_presult result;
   result.read(iprot_);
@@ -10517,8 +10505,8 @@ void ClientServiceClient::send_get_future_result(const Future ff)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_future_result(Result& _return)
@@ -10540,13 +10528,11 @@ void ClientServiceClient::recv_get_future_result(Result& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_future_result") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_future_result_presult result;
   result.success = &_return;
@@ -10580,8 +10566,8 @@ void ClientServiceClient::send_get_future_result_as_arrays(const Future ff)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_future_result_as_arrays(ResultAsArrays& _return)
@@ -10603,13 +10589,11 @@ void ClientServiceClient::recv_get_future_result_as_arrays(ResultAsArrays& _retu
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_future_result_as_arrays") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_future_result_as_arrays_presult result;
   result.success = &_return;
@@ -10643,8 +10627,8 @@ void ClientServiceClient::send_get_future_result_serialized(const Future ff)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_future_result_serialized(ResultSerialized& _return)
@@ -10666,13 +10650,11 @@ void ClientServiceClient::recv_get_future_result_serialized(ResultSerialized& _r
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_future_result_serialized") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_future_result_serialized_presult result;
   result.success = &_return;
@@ -10706,8 +10688,8 @@ void ClientServiceClient::send_close_future(const Future ff)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_close_future()
@@ -10729,13 +10711,11 @@ void ClientServiceClient::recv_close_future()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("close_future") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_close_future_presult result;
   result.read(iprot_);
@@ -10767,8 +10747,8 @@ void ClientServiceClient::send_open_scanner(const Namespace ns, const std::strin
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 Scanner ClientServiceClient::recv_open_scanner()
@@ -10790,13 +10770,11 @@ Scanner ClientServiceClient::recv_open_scanner()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("open_scanner") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   Scanner _return;
   ClientService_open_scanner_presult result;
@@ -10834,8 +10812,8 @@ void ClientServiceClient::send_open_scanner_async(const Namespace ns, const std:
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 ScannerAsync ClientServiceClient::recv_open_scanner_async()
@@ -10857,13 +10835,11 @@ ScannerAsync ClientServiceClient::recv_open_scanner_async()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("open_scanner_async") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ScannerAsync _return;
   ClientService_open_scanner_async_presult result;
@@ -10897,8 +10873,8 @@ void ClientServiceClient::send_close_scanner(const Scanner scanner)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_close_scanner()
@@ -10920,13 +10896,11 @@ void ClientServiceClient::recv_close_scanner()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("close_scanner") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_close_scanner_presult result;
   result.read(iprot_);
@@ -10955,8 +10929,8 @@ void ClientServiceClient::send_close_scanner_async(const ScannerAsync scanner)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_close_scanner_async()
@@ -10978,13 +10952,11 @@ void ClientServiceClient::recv_close_scanner_async()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("close_scanner_async") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_close_scanner_async_presult result;
   result.read(iprot_);
@@ -11013,8 +10985,8 @@ void ClientServiceClient::send_next_cells(const Scanner scanner)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_cells(std::vector<Cell> & _return)
@@ -11036,13 +11008,11 @@ void ClientServiceClient::recv_next_cells(std::vector<Cell> & _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_cells") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_cells_presult result;
   result.success = &_return;
@@ -11076,8 +11046,8 @@ void ClientServiceClient::send_next_cells_as_arrays(const Scanner scanner)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_cells_as_arrays(std::vector<CellAsArray> & _return)
@@ -11099,13 +11069,11 @@ void ClientServiceClient::recv_next_cells_as_arrays(std::vector<CellAsArray> & _
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_cells_as_arrays") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_cells_as_arrays_presult result;
   result.success = &_return;
@@ -11139,8 +11107,8 @@ void ClientServiceClient::send_next_cells_serialized(const Scanner scanner)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_cells_serialized(CellsSerialized& _return)
@@ -11162,13 +11130,11 @@ void ClientServiceClient::recv_next_cells_serialized(CellsSerialized& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_cells_serialized") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_cells_serialized_presult result;
   result.success = &_return;
@@ -11199,8 +11165,8 @@ void ClientServiceClient::send_next_row(const Scanner scanner)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_row(std::vector<Cell> & _return)
@@ -11222,13 +11188,11 @@ void ClientServiceClient::recv_next_row(std::vector<Cell> & _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_row") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_row_presult result;
   result.success = &_return;
@@ -11262,8 +11226,8 @@ void ClientServiceClient::send_next_row_as_arrays(const Scanner scanner)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_row_as_arrays(std::vector<CellAsArray> & _return)
@@ -11285,13 +11249,11 @@ void ClientServiceClient::recv_next_row_as_arrays(std::vector<CellAsArray> & _re
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_row_as_arrays") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_row_as_arrays_presult result;
   result.success = &_return;
@@ -11325,8 +11287,8 @@ void ClientServiceClient::send_next_row_serialized(const Scanner scanner)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_row_serialized(CellsSerialized& _return)
@@ -11348,13 +11310,11 @@ void ClientServiceClient::recv_next_row_serialized(CellsSerialized& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_row_serialized") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_row_serialized_presult result;
   result.success = &_return;
@@ -11390,8 +11350,8 @@ void ClientServiceClient::send_get_row(const Namespace ns, const std::string& ta
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_row(std::vector<Cell> & _return)
@@ -11413,13 +11373,11 @@ void ClientServiceClient::recv_get_row(std::vector<Cell> & _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_row") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_row_presult result;
   result.success = &_return;
@@ -11455,8 +11413,8 @@ void ClientServiceClient::send_get_row_as_arrays(const Namespace ns, const std::
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_row_as_arrays(std::vector<CellAsArray> & _return)
@@ -11478,13 +11436,11 @@ void ClientServiceClient::recv_get_row_as_arrays(std::vector<CellAsArray> & _ret
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_row_as_arrays") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_row_as_arrays_presult result;
   result.success = &_return;
@@ -11520,8 +11476,8 @@ void ClientServiceClient::send_get_row_serialized(const Namespace ns, const std:
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_row_serialized(CellsSerialized& _return)
@@ -11543,13 +11499,11 @@ void ClientServiceClient::recv_get_row_serialized(CellsSerialized& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_row_serialized") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_row_serialized_presult result;
   result.success = &_return;
@@ -11586,8 +11540,8 @@ void ClientServiceClient::send_get_cell(const Namespace ns, const std::string& t
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_cell(Value& _return)
@@ -11609,13 +11563,11 @@ void ClientServiceClient::recv_get_cell(Value& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_cell") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_cell_presult result;
   result.success = &_return;
@@ -11651,8 +11603,8 @@ void ClientServiceClient::send_get_cells(const Namespace ns, const std::string& 
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_cells(std::vector<Cell> & _return)
@@ -11674,13 +11626,11 @@ void ClientServiceClient::recv_get_cells(std::vector<Cell> & _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_cells") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_cells_presult result;
   result.success = &_return;
@@ -11716,8 +11666,8 @@ void ClientServiceClient::send_get_cells_as_arrays(const Namespace ns, const std
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_cells_as_arrays(std::vector<CellAsArray> & _return)
@@ -11739,13 +11689,11 @@ void ClientServiceClient::recv_get_cells_as_arrays(std::vector<CellAsArray> & _r
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_cells_as_arrays") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_cells_as_arrays_presult result;
   result.success = &_return;
@@ -11781,8 +11729,8 @@ void ClientServiceClient::send_get_cells_serialized(const Namespace ns, const st
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_cells_serialized(CellsSerialized& _return)
@@ -11804,13 +11752,11 @@ void ClientServiceClient::recv_get_cells_serialized(CellsSerialized& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_cells_serialized") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_cells_serialized_presult result;
   result.success = &_return;
@@ -11846,8 +11792,8 @@ void ClientServiceClient::send_refresh_shared_mutator(const Namespace ns, const 
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_refresh_shared_mutator()
@@ -11869,13 +11815,11 @@ void ClientServiceClient::recv_refresh_shared_mutator()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("refresh_shared_mutator") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_refresh_shared_mutator_presult result;
   result.read(iprot_);
@@ -11907,8 +11851,8 @@ void ClientServiceClient::send_offer_cells(const Namespace ns, const std::string
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_offer_cells()
@@ -11930,13 +11874,11 @@ void ClientServiceClient::recv_offer_cells()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("offer_cells") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_offer_cells_presult result;
   result.read(iprot_);
@@ -11968,8 +11910,8 @@ void ClientServiceClient::send_offer_cells_as_arrays(const Namespace ns, const s
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_offer_cells_as_arrays()
@@ -11991,13 +11933,11 @@ void ClientServiceClient::recv_offer_cells_as_arrays()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("offer_cells_as_arrays") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_offer_cells_as_arrays_presult result;
   result.read(iprot_);
@@ -12029,8 +11969,8 @@ void ClientServiceClient::send_offer_cell(const Namespace ns, const std::string&
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_offer_cell()
@@ -12052,13 +11992,11 @@ void ClientServiceClient::recv_offer_cell()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("offer_cell") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_offer_cell_presult result;
   result.read(iprot_);
@@ -12090,8 +12028,8 @@ void ClientServiceClient::send_offer_cell_as_array(const Namespace ns, const std
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_offer_cell_as_array()
@@ -12113,13 +12051,11 @@ void ClientServiceClient::recv_offer_cell_as_array()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("offer_cell_as_array") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_offer_cell_as_array_presult result;
   result.read(iprot_);
@@ -12151,8 +12087,8 @@ void ClientServiceClient::send_open_mutator(const Namespace ns, const std::strin
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 Mutator ClientServiceClient::recv_open_mutator()
@@ -12174,13 +12110,11 @@ Mutator ClientServiceClient::recv_open_mutator()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("open_mutator") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   Mutator _return;
   ClientService_open_mutator_presult result;
@@ -12215,8 +12149,8 @@ void ClientServiceClient::send_close_mutator(const Mutator mutator, const bool f
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_close_mutator()
@@ -12238,13 +12172,11 @@ void ClientServiceClient::recv_close_mutator()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("close_mutator") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_close_mutator_presult result;
   result.read(iprot_);
@@ -12274,8 +12206,8 @@ void ClientServiceClient::send_set_cell(const Mutator mutator, const Cell& cell)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_set_cell()
@@ -12297,13 +12229,11 @@ void ClientServiceClient::recv_set_cell()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cell") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cell_presult result;
   result.read(iprot_);
@@ -12333,8 +12263,8 @@ void ClientServiceClient::send_set_cell_as_array(const Mutator mutator, const Ce
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_set_cell_as_array()
@@ -12356,13 +12286,11 @@ void ClientServiceClient::recv_set_cell_as_array()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cell_as_array") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cell_as_array_presult result;
   result.read(iprot_);
@@ -12392,8 +12320,8 @@ void ClientServiceClient::send_set_cells(const Mutator mutator, const std::vecto
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_set_cells()
@@ -12415,13 +12343,11 @@ void ClientServiceClient::recv_set_cells()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cells") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cells_presult result;
   result.read(iprot_);
@@ -12451,8 +12377,8 @@ void ClientServiceClient::send_set_cells_as_arrays(const Mutator mutator, const 
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_set_cells_as_arrays()
@@ -12474,13 +12400,11 @@ void ClientServiceClient::recv_set_cells_as_arrays()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cells_as_arrays") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cells_as_arrays_presult result;
   result.read(iprot_);
@@ -12511,8 +12435,8 @@ void ClientServiceClient::send_set_cells_serialized(const Mutator mutator, const
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_set_cells_serialized()
@@ -12534,13 +12458,11 @@ void ClientServiceClient::recv_set_cells_serialized()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cells_serialized") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cells_serialized_presult result;
   result.read(iprot_);
@@ -12569,8 +12491,8 @@ void ClientServiceClient::send_flush_mutator(const Mutator mutator)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_flush_mutator()
@@ -12592,13 +12514,11 @@ void ClientServiceClient::recv_flush_mutator()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("flush_mutator") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_flush_mutator_presult result;
   result.read(iprot_);
@@ -12627,8 +12547,8 @@ void ClientServiceClient::send_exists_namespace(const std::string& ns)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 bool ClientServiceClient::recv_exists_namespace()
@@ -12650,13 +12570,11 @@ bool ClientServiceClient::recv_exists_namespace()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("exists_namespace") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   bool _return;
   ClientService_exists_namespace_presult result;
@@ -12691,8 +12609,8 @@ void ClientServiceClient::send_exists_table(const Namespace ns, const std::strin
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 bool ClientServiceClient::recv_exists_table()
@@ -12714,13 +12632,11 @@ bool ClientServiceClient::recv_exists_table()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("exists_table") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   bool _return;
   ClientService_exists_table_presult result;
@@ -12755,8 +12671,8 @@ void ClientServiceClient::send_get_table_id(const Namespace ns, const std::strin
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_table_id(std::string& _return)
@@ -12778,13 +12694,11 @@ void ClientServiceClient::recv_get_table_id(std::string& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_table_id") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_table_id_presult result;
   result.success = &_return;
@@ -12819,8 +12733,8 @@ void ClientServiceClient::send_get_schema_str(const Namespace ns, const std::str
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_schema_str(std::string& _return)
@@ -12842,13 +12756,11 @@ void ClientServiceClient::recv_get_schema_str(std::string& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_schema_str") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_schema_str_presult result;
   result.success = &_return;
@@ -12883,8 +12795,8 @@ void ClientServiceClient::send_get_schema(const Namespace ns, const std::string&
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_schema(Schema& _return)
@@ -12906,13 +12818,11 @@ void ClientServiceClient::recv_get_schema(Schema& _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_schema") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_schema_presult result;
   result.success = &_return;
@@ -12946,8 +12856,8 @@ void ClientServiceClient::send_get_tables(const Namespace ns)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_tables(std::vector<std::string> & _return)
@@ -12969,13 +12879,11 @@ void ClientServiceClient::recv_get_tables(std::vector<std::string> & _return)
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_tables") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_tables_presult result;
   result.success = &_return;
@@ -13009,8 +12917,8 @@ void ClientServiceClient::send_get_listing(const Namespace ns)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_listing(std::vector<NamespaceListing> & _return)
@@ -13032,13 +12940,11 @@ void ClientServiceClient::recv_get_listing(std::vector<NamespaceListing> & _retu
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_listing") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_listing_presult result;
   result.success = &_return;
@@ -13073,8 +12979,8 @@ void ClientServiceClient::send_get_table_splits(const Namespace ns, const std::s
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_table_splits(std::vector<TableSplit> & _return)
@@ -13096,13 +13002,11 @@ void ClientServiceClient::recv_get_table_splits(std::vector<TableSplit> & _retur
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_table_splits") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_table_splits_presult result;
   result.success = &_return;
@@ -13137,8 +13041,8 @@ void ClientServiceClient::send_drop_namespace(const std::string& ns, const bool 
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_drop_namespace()
@@ -13160,13 +13064,11 @@ void ClientServiceClient::recv_drop_namespace()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("drop_namespace") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_drop_namespace_presult result;
   result.read(iprot_);
@@ -13197,8 +13099,8 @@ void ClientServiceClient::send_rename_table(const Namespace ns, const std::strin
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_rename_table()
@@ -13220,13 +13122,11 @@ void ClientServiceClient::recv_rename_table()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("rename_table") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_rename_table_presult result;
   result.read(iprot_);
@@ -13257,8 +13157,8 @@ void ClientServiceClient::send_drop_table(const Namespace ns, const std::string&
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_drop_table()
@@ -13280,13 +13180,11 @@ void ClientServiceClient::recv_drop_table()
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("drop_table") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_drop_table_presult result;
   result.read(iprot_);
@@ -13299,7 +13197,7 @@ void ClientServiceClient::recv_drop_table()
   return;
 }
 
-bool ClientServiceProcessor::process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot) {
+bool ClientServiceProcessor::process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot, void* callContext) {
 
   ::apache::thrift::protocol::TProtocol* iprot = piprot.get();
   ::apache::thrift::protocol::TProtocol* oprot = poprot.get();
@@ -13317,16 +13215,16 @@ bool ClientServiceProcessor::process(boost::shared_ptr< ::apache::thrift::protoc
     oprot->writeMessageBegin(fname, ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return true;
   }
 
-  return process_fn(iprot, oprot, fname, seqid);
+  return process_fn(iprot, oprot, fname, seqid, callContext);
 }
 
-bool ClientServiceProcessor::process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid) {
-  std::map<std::string, void (ClientServiceProcessor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*)>::iterator pfn;
+bool ClientServiceProcessor::process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid, void* callContext) {
+  std::map<std::string, void (ClientServiceProcessor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*, void*)>::iterator pfn;
   pfn = processMap_.find(fname);
   if (pfn == processMap_.end()) {
     iprot->skip(::apache::thrift::protocol::T_STRUCT);
@@ -13336,20 +13234,34 @@ bool ClientServiceProcessor::process_fn(::apache::thrift::protocol::TProtocol* i
     oprot->writeMessageBegin(fname, ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return true;
   }
-  (this->*(pfn->second))(seqid, iprot, oprot);
+  (this->*(pfn->second))(seqid, iprot, oprot, callContext);
   return true;
 }
 
-void ClientServiceProcessor::process_create_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_create_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.create_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.create_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.create_namespace");
+  }
+
   ClientService_create_namespace_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.create_namespace", bytes);
+  }
 
   ClientService_create_namespace_result result;
   try {
@@ -13358,28 +13270,54 @@ void ClientServiceProcessor::process_create_namespace(int32_t seqid, ::apache::t
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.create_namespace");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("create_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.create_namespace");
   }
 
   oprot->writeMessageBegin("create_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.create_namespace", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_create_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_create_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.create_table", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.create_table");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.create_table");
+  }
+
   ClientService_create_table_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.create_table", bytes);
+  }
 
   ClientService_create_table_result result;
   try {
@@ -13388,28 +13326,54 @@ void ClientServiceProcessor::process_create_table(int32_t seqid, ::apache::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.create_table");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("create_table", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.create_table");
   }
 
   oprot->writeMessageBegin("create_table", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.create_table", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_open_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_open_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_namespace");
+  }
+
   ClientService_open_namespace_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_namespace", bytes);
+  }
 
   ClientService_open_namespace_result result;
   try {
@@ -13419,28 +13383,54 @@ void ClientServiceProcessor::process_open_namespace(int32_t seqid, ::apache::thr
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_namespace");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("open_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_namespace");
   }
 
   oprot->writeMessageBegin("open_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_namespace", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_close_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_namespace");
+  }
+
   ClientService_close_namespace_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_namespace", bytes);
+  }
 
   ClientService_close_namespace_result result;
   try {
@@ -13449,28 +13439,54 @@ void ClientServiceProcessor::process_close_namespace(int32_t seqid, ::apache::th
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_namespace");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("close_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_namespace");
   }
 
   oprot->writeMessageBegin("close_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_namespace", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_open_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_open_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_future", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_future");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_future");
+  }
+
   ClientService_open_future_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_future", bytes);
+  }
 
   ClientService_open_future_result result;
   try {
@@ -13480,28 +13496,54 @@ void ClientServiceProcessor::process_open_future(int32_t seqid, ::apache::thrift
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_future");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("open_future", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_future");
   }
 
   oprot->writeMessageBegin("open_future", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_future", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_cancel_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_cancel_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.cancel_future", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.cancel_future");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.cancel_future");
+  }
+
   ClientService_cancel_future_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.cancel_future", bytes);
+  }
 
   ClientService_cancel_future_result result;
   try {
@@ -13510,28 +13552,54 @@ void ClientServiceProcessor::process_cancel_future(int32_t seqid, ::apache::thri
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.cancel_future");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("cancel_future", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.cancel_future");
   }
 
   oprot->writeMessageBegin("cancel_future", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.cancel_future", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_future_result(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_future_result(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_future_result", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_future_result");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_future_result");
+  }
+
   ClientService_get_future_result_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_future_result", bytes);
+  }
 
   ClientService_get_future_result_result result;
   try {
@@ -13541,28 +13609,54 @@ void ClientServiceProcessor::process_get_future_result(int32_t seqid, ::apache::
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_future_result");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_future_result", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_future_result");
   }
 
   oprot->writeMessageBegin("get_future_result", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_future_result", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_future_result_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_future_result_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_future_result_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_future_result_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_future_result_as_arrays");
+  }
+
   ClientService_get_future_result_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_future_result_as_arrays", bytes);
+  }
 
   ClientService_get_future_result_as_arrays_result result;
   try {
@@ -13572,28 +13666,54 @@ void ClientServiceProcessor::process_get_future_result_as_arrays(int32_t seqid, 
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_future_result_as_arrays");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_future_result_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_future_result_as_arrays");
   }
 
   oprot->writeMessageBegin("get_future_result_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_future_result_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_future_result_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_future_result_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_future_result_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_future_result_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_future_result_serialized");
+  }
+
   ClientService_get_future_result_serialized_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_future_result_serialized", bytes);
+  }
 
   ClientService_get_future_result_serialized_result result;
   try {
@@ -13603,28 +13723,54 @@ void ClientServiceProcessor::process_get_future_result_serialized(int32_t seqid,
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_future_result_serialized");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_future_result_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_future_result_serialized");
   }
 
   oprot->writeMessageBegin("get_future_result_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_future_result_serialized", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_close_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_future", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_future");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_future");
+  }
+
   ClientService_close_future_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_future", bytes);
+  }
 
   ClientService_close_future_result result;
   try {
@@ -13633,28 +13779,54 @@ void ClientServiceProcessor::process_close_future(int32_t seqid, ::apache::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_future");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("close_future", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_future");
   }
 
   oprot->writeMessageBegin("close_future", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_future", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_open_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_open_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_scanner", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_scanner");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_scanner");
+  }
+
   ClientService_open_scanner_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_scanner", bytes);
+  }
 
   ClientService_open_scanner_result result;
   try {
@@ -13664,28 +13836,54 @@ void ClientServiceProcessor::process_open_scanner(int32_t seqid, ::apache::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_scanner");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("open_scanner", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_scanner");
   }
 
   oprot->writeMessageBegin("open_scanner", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_scanner", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_open_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_open_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_scanner_async", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_scanner_async");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_scanner_async");
+  }
+
   ClientService_open_scanner_async_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_scanner_async", bytes);
+  }
 
   ClientService_open_scanner_async_result result;
   try {
@@ -13695,28 +13893,54 @@ void ClientServiceProcessor::process_open_scanner_async(int32_t seqid, ::apache:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_scanner_async");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("open_scanner_async", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_scanner_async");
   }
 
   oprot->writeMessageBegin("open_scanner_async", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_scanner_async", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_close_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_scanner", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_scanner");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_scanner");
+  }
+
   ClientService_close_scanner_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_scanner", bytes);
+  }
 
   ClientService_close_scanner_result result;
   try {
@@ -13725,28 +13949,54 @@ void ClientServiceProcessor::process_close_scanner(int32_t seqid, ::apache::thri
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_scanner");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("close_scanner", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_scanner");
   }
 
   oprot->writeMessageBegin("close_scanner", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_scanner", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_close_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_scanner_async", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_scanner_async");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_scanner_async");
+  }
+
   ClientService_close_scanner_async_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_scanner_async", bytes);
+  }
 
   ClientService_close_scanner_async_result result;
   try {
@@ -13755,28 +14005,54 @@ void ClientServiceProcessor::process_close_scanner_async(int32_t seqid, ::apache
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_scanner_async");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("close_scanner_async", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_scanner_async");
   }
 
   oprot->writeMessageBegin("close_scanner_async", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_scanner_async", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_cells", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_cells");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_cells");
+  }
+
   ClientService_next_cells_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_cells", bytes);
+  }
 
   ClientService_next_cells_result result;
   try {
@@ -13786,28 +14062,54 @@ void ClientServiceProcessor::process_next_cells(int32_t seqid, ::apache::thrift:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_cells");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("next_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_cells");
   }
 
   oprot->writeMessageBegin("next_cells", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_cells", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_cells_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_cells_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_cells_as_arrays");
+  }
+
   ClientService_next_cells_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_cells_as_arrays", bytes);
+  }
 
   ClientService_next_cells_as_arrays_result result;
   try {
@@ -13817,56 +14119,108 @@ void ClientServiceProcessor::process_next_cells_as_arrays(int32_t seqid, ::apach
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_cells_as_arrays");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("next_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_cells_as_arrays");
   }
 
   oprot->writeMessageBegin("next_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_cells_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_cells_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_cells_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_cells_serialized");
+  }
+
   ClientService_next_cells_serialized_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_cells_serialized", bytes);
+  }
 
   ClientService_next_cells_serialized_result result;
   try {
     iface_->next_cells_serialized(result.success, args.scanner);
     result.__isset.success = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_cells_serialized");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("next_cells_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_cells_serialized");
   }
 
   oprot->writeMessageBegin("next_cells_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_cells_serialized", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_row", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_row");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_row");
+  }
+
   ClientService_next_row_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_row", bytes);
+  }
 
   ClientService_next_row_result result;
   try {
@@ -13876,28 +14230,54 @@ void ClientServiceProcessor::process_next_row(int32_t seqid, ::apache::thrift::p
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_row");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("next_row", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_row");
   }
 
   oprot->writeMessageBegin("next_row", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_row", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_row_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_row_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_row_as_arrays");
+  }
+
   ClientService_next_row_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_row_as_arrays", bytes);
+  }
 
   ClientService_next_row_as_arrays_result result;
   try {
@@ -13907,28 +14287,54 @@ void ClientServiceProcessor::process_next_row_as_arrays(int32_t seqid, ::apache:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_row_as_arrays");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("next_row_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_row_as_arrays");
   }
 
   oprot->writeMessageBegin("next_row_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_row_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_row_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_row_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_row_serialized");
+  }
+
   ClientService_next_row_serialized_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_row_serialized", bytes);
+  }
 
   ClientService_next_row_serialized_result result;
   try {
@@ -13938,28 +14344,54 @@ void ClientServiceProcessor::process_next_row_serialized(int32_t seqid, ::apache
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_row_serialized");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("next_row_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_row_serialized");
   }
 
   oprot->writeMessageBegin("next_row_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_row_serialized", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_row", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_row");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_row");
+  }
+
   ClientService_get_row_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_row", bytes);
+  }
 
   ClientService_get_row_result result;
   try {
@@ -13969,28 +14401,54 @@ void ClientServiceProcessor::process_get_row(int32_t seqid, ::apache::thrift::pr
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_row");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_row", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_row");
   }
 
   oprot->writeMessageBegin("get_row", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_row", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_row_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_row_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_row_as_arrays");
+  }
+
   ClientService_get_row_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_row_as_arrays", bytes);
+  }
 
   ClientService_get_row_as_arrays_result result;
   try {
@@ -14000,28 +14458,54 @@ void ClientServiceProcessor::process_get_row_as_arrays(int32_t seqid, ::apache::
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_row_as_arrays");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_row_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_row_as_arrays");
   }
 
   oprot->writeMessageBegin("get_row_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_row_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_row_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_row_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_row_serialized");
+  }
+
   ClientService_get_row_serialized_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_row_serialized", bytes);
+  }
 
   ClientService_get_row_serialized_result result;
   try {
@@ -14031,28 +14515,54 @@ void ClientServiceProcessor::process_get_row_serialized(int32_t seqid, ::apache:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_row_serialized");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_row_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_row_serialized");
   }
 
   oprot->writeMessageBegin("get_row_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_row_serialized", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_cell", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_cell");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_cell");
+  }
+
   ClientService_get_cell_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_cell", bytes);
+  }
 
   ClientService_get_cell_result result;
   try {
@@ -14062,28 +14572,54 @@ void ClientServiceProcessor::process_get_cell(int32_t seqid, ::apache::thrift::p
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_cell");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_cell", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_cell");
   }
 
   oprot->writeMessageBegin("get_cell", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_cell", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_cells", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_cells");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_cells");
+  }
+
   ClientService_get_cells_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_cells", bytes);
+  }
 
   ClientService_get_cells_result result;
   try {
@@ -14093,28 +14629,54 @@ void ClientServiceProcessor::process_get_cells(int32_t seqid, ::apache::thrift::
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_cells");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_cells");
   }
 
   oprot->writeMessageBegin("get_cells", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_cells", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_cells_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_cells_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_cells_as_arrays");
+  }
+
   ClientService_get_cells_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_cells_as_arrays", bytes);
+  }
 
   ClientService_get_cells_as_arrays_result result;
   try {
@@ -14124,28 +14686,54 @@ void ClientServiceProcessor::process_get_cells_as_arrays(int32_t seqid, ::apache
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_cells_as_arrays");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_cells_as_arrays");
   }
 
   oprot->writeMessageBegin("get_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_cells_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_cells_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_cells_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_cells_serialized");
+  }
+
   ClientService_get_cells_serialized_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_cells_serialized", bytes);
+  }
 
   ClientService_get_cells_serialized_result result;
   try {
@@ -14155,28 +14743,54 @@ void ClientServiceProcessor::process_get_cells_serialized(int32_t seqid, ::apach
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_cells_serialized");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_cells_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_cells_serialized");
   }
 
   oprot->writeMessageBegin("get_cells_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_cells_serialized", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_refresh_shared_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_refresh_shared_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.refresh_shared_mutator", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.refresh_shared_mutator");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.refresh_shared_mutator");
+  }
+
   ClientService_refresh_shared_mutator_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.refresh_shared_mutator", bytes);
+  }
 
   ClientService_refresh_shared_mutator_result result;
   try {
@@ -14185,28 +14799,54 @@ void ClientServiceProcessor::process_refresh_shared_mutator(int32_t seqid, ::apa
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.refresh_shared_mutator");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("refresh_shared_mutator", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.refresh_shared_mutator");
   }
 
   oprot->writeMessageBegin("refresh_shared_mutator", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.refresh_shared_mutator", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_offer_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_offer_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.offer_cells", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.offer_cells");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.offer_cells");
+  }
+
   ClientService_offer_cells_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.offer_cells", bytes);
+  }
 
   ClientService_offer_cells_result result;
   try {
@@ -14215,28 +14855,54 @@ void ClientServiceProcessor::process_offer_cells(int32_t seqid, ::apache::thrift
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.offer_cells");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("offer_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.offer_cells");
   }
 
   oprot->writeMessageBegin("offer_cells", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.offer_cells", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_offer_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_offer_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.offer_cells_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.offer_cells_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.offer_cells_as_arrays");
+  }
+
   ClientService_offer_cells_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.offer_cells_as_arrays", bytes);
+  }
 
   ClientService_offer_cells_as_arrays_result result;
   try {
@@ -14245,28 +14911,54 @@ void ClientServiceProcessor::process_offer_cells_as_arrays(int32_t seqid, ::apac
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.offer_cells_as_arrays");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("offer_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.offer_cells_as_arrays");
   }
 
   oprot->writeMessageBegin("offer_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.offer_cells_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_offer_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_offer_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.offer_cell", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.offer_cell");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.offer_cell");
+  }
+
   ClientService_offer_cell_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.offer_cell", bytes);
+  }
 
   ClientService_offer_cell_result result;
   try {
@@ -14275,28 +14967,54 @@ void ClientServiceProcessor::process_offer_cell(int32_t seqid, ::apache::thrift:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.offer_cell");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("offer_cell", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.offer_cell");
   }
 
   oprot->writeMessageBegin("offer_cell", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.offer_cell", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_offer_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_offer_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.offer_cell_as_array", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.offer_cell_as_array");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.offer_cell_as_array");
+  }
+
   ClientService_offer_cell_as_array_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.offer_cell_as_array", bytes);
+  }
 
   ClientService_offer_cell_as_array_result result;
   try {
@@ -14305,28 +15023,54 @@ void ClientServiceProcessor::process_offer_cell_as_array(int32_t seqid, ::apache
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.offer_cell_as_array");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("offer_cell_as_array", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.offer_cell_as_array");
   }
 
   oprot->writeMessageBegin("offer_cell_as_array", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.offer_cell_as_array", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_open_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_open_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_mutator", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_mutator");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_mutator");
+  }
+
   ClientService_open_mutator_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_mutator", bytes);
+  }
 
   ClientService_open_mutator_result result;
   try {
@@ -14336,28 +15080,54 @@ void ClientServiceProcessor::process_open_mutator(int32_t seqid, ::apache::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_mutator");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("open_mutator", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_mutator");
   }
 
   oprot->writeMessageBegin("open_mutator", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_mutator", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_close_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_mutator", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_mutator");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_mutator");
+  }
+
   ClientService_close_mutator_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_mutator", bytes);
+  }
 
   ClientService_close_mutator_result result;
   try {
@@ -14366,28 +15136,54 @@ void ClientServiceProcessor::process_close_mutator(int32_t seqid, ::apache::thri
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_mutator");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("close_mutator", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_mutator");
   }
 
   oprot->writeMessageBegin("close_mutator", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_mutator", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_set_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cell", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cell");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cell");
+  }
+
   ClientService_set_cell_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cell", bytes);
+  }
 
   ClientService_set_cell_result result;
   try {
@@ -14396,28 +15192,54 @@ void ClientServiceProcessor::process_set_cell(int32_t seqid, ::apache::thrift::p
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cell");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("set_cell", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cell");
   }
 
   oprot->writeMessageBegin("set_cell", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cell", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_set_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cell_as_array", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cell_as_array");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cell_as_array");
+  }
+
   ClientService_set_cell_as_array_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cell_as_array", bytes);
+  }
 
   ClientService_set_cell_as_array_result result;
   try {
@@ -14426,28 +15248,54 @@ void ClientServiceProcessor::process_set_cell_as_array(int32_t seqid, ::apache::
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cell_as_array");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("set_cell_as_array", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cell_as_array");
   }
 
   oprot->writeMessageBegin("set_cell_as_array", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cell_as_array", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_set_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cells", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cells");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cells");
+  }
+
   ClientService_set_cells_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cells", bytes);
+  }
 
   ClientService_set_cells_result result;
   try {
@@ -14456,28 +15304,54 @@ void ClientServiceProcessor::process_set_cells(int32_t seqid, ::apache::thrift::
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cells");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("set_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cells");
   }
 
   oprot->writeMessageBegin("set_cells", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cells", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_set_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cells_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cells_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cells_as_arrays");
+  }
+
   ClientService_set_cells_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cells_as_arrays", bytes);
+  }
 
   ClientService_set_cells_as_arrays_result result;
   try {
@@ -14486,28 +15360,54 @@ void ClientServiceProcessor::process_set_cells_as_arrays(int32_t seqid, ::apache
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cells_as_arrays");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("set_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cells_as_arrays");
   }
 
   oprot->writeMessageBegin("set_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cells_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_set_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cells_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cells_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cells_serialized");
+  }
+
   ClientService_set_cells_serialized_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cells_serialized", bytes);
+  }
 
   ClientService_set_cells_serialized_result result;
   try {
@@ -14516,28 +15416,54 @@ void ClientServiceProcessor::process_set_cells_serialized(int32_t seqid, ::apach
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cells_serialized");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("set_cells_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cells_serialized");
   }
 
   oprot->writeMessageBegin("set_cells_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cells_serialized", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_flush_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_flush_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.flush_mutator", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.flush_mutator");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.flush_mutator");
+  }
+
   ClientService_flush_mutator_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.flush_mutator", bytes);
+  }
 
   ClientService_flush_mutator_result result;
   try {
@@ -14546,28 +15472,54 @@ void ClientServiceProcessor::process_flush_mutator(int32_t seqid, ::apache::thri
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.flush_mutator");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("flush_mutator", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.flush_mutator");
   }
 
   oprot->writeMessageBegin("flush_mutator", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.flush_mutator", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_exists_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_exists_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.exists_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.exists_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.exists_namespace");
+  }
+
   ClientService_exists_namespace_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.exists_namespace", bytes);
+  }
 
   ClientService_exists_namespace_result result;
   try {
@@ -14577,28 +15529,54 @@ void ClientServiceProcessor::process_exists_namespace(int32_t seqid, ::apache::t
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.exists_namespace");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("exists_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.exists_namespace");
   }
 
   oprot->writeMessageBegin("exists_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.exists_namespace", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_exists_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_exists_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.exists_table", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.exists_table");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.exists_table");
+  }
+
   ClientService_exists_table_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.exists_table", bytes);
+  }
 
   ClientService_exists_table_result result;
   try {
@@ -14608,28 +15586,54 @@ void ClientServiceProcessor::process_exists_table(int32_t seqid, ::apache::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.exists_table");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("exists_table", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.exists_table");
   }
 
   oprot->writeMessageBegin("exists_table", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.exists_table", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_table_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_table_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_table_id", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_table_id");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_table_id");
+  }
+
   ClientService_get_table_id_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_table_id", bytes);
+  }
 
   ClientService_get_table_id_result result;
   try {
@@ -14639,28 +15643,54 @@ void ClientServiceProcessor::process_get_table_id(int32_t seqid, ::apache::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_table_id");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_table_id", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_table_id");
   }
 
   oprot->writeMessageBegin("get_table_id", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_table_id", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_schema_str(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_schema_str(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_schema_str", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_schema_str");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_schema_str");
+  }
+
   ClientService_get_schema_str_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_schema_str", bytes);
+  }
 
   ClientService_get_schema_str_result result;
   try {
@@ -14670,28 +15700,54 @@ void ClientServiceProcessor::process_get_schema_str(int32_t seqid, ::apache::thr
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_schema_str");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_schema_str", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_schema_str");
   }
 
   oprot->writeMessageBegin("get_schema_str", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_schema_str", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_schema", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_schema");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_schema");
+  }
+
   ClientService_get_schema_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_schema", bytes);
+  }
 
   ClientService_get_schema_result result;
   try {
@@ -14701,28 +15757,54 @@ void ClientServiceProcessor::process_get_schema(int32_t seqid, ::apache::thrift:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_schema");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_schema", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_schema");
   }
 
   oprot->writeMessageBegin("get_schema", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_schema", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_tables", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_tables");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_tables");
+  }
+
   ClientService_get_tables_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_tables", bytes);
+  }
 
   ClientService_get_tables_result result;
   try {
@@ -14732,28 +15814,54 @@ void ClientServiceProcessor::process_get_tables(int32_t seqid, ::apache::thrift:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_tables");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_tables", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_tables");
   }
 
   oprot->writeMessageBegin("get_tables", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_tables", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_listing(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_listing(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_listing", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_listing");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_listing");
+  }
+
   ClientService_get_listing_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_listing", bytes);
+  }
 
   ClientService_get_listing_result result;
   try {
@@ -14763,28 +15871,54 @@ void ClientServiceProcessor::process_get_listing(int32_t seqid, ::apache::thrift
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_listing");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_listing", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_listing");
   }
 
   oprot->writeMessageBegin("get_listing", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_listing", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_table_splits(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_table_splits(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_table_splits", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_table_splits");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_table_splits");
+  }
+
   ClientService_get_table_splits_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_table_splits", bytes);
+  }
 
   ClientService_get_table_splits_result result;
   try {
@@ -14794,28 +15928,54 @@ void ClientServiceProcessor::process_get_table_splits(int32_t seqid, ::apache::t
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_table_splits");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("get_table_splits", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_table_splits");
   }
 
   oprot->writeMessageBegin("get_table_splits", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_table_splits", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_drop_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_drop_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.drop_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.drop_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.drop_namespace");
+  }
+
   ClientService_drop_namespace_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.drop_namespace", bytes);
+  }
 
   ClientService_drop_namespace_result result;
   try {
@@ -14824,28 +15984,54 @@ void ClientServiceProcessor::process_drop_namespace(int32_t seqid, ::apache::thr
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.drop_namespace");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("drop_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.drop_namespace");
   }
 
   oprot->writeMessageBegin("drop_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.drop_namespace", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_rename_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_rename_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.rename_table", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.rename_table");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.rename_table");
+  }
+
   ClientService_rename_table_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.rename_table", bytes);
+  }
 
   ClientService_rename_table_result result;
   try {
@@ -14854,28 +16040,54 @@ void ClientServiceProcessor::process_rename_table(int32_t seqid, ::apache::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.rename_table");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("rename_table", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.rename_table");
   }
 
   oprot->writeMessageBegin("rename_table", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.rename_table", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_drop_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_drop_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.drop_table", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.drop_table");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.drop_table");
+  }
+
   ClientService_drop_table_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.drop_table", bytes);
+  }
 
   ClientService_drop_table_result result;
   try {
@@ -14884,20 +16096,32 @@ void ClientServiceProcessor::process_drop_table(int32_t seqid, ::apache::thrift:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.drop_table");
+    }
+
     ::apache::thrift::TApplicationException x(e.what());
     oprot->writeMessageBegin("drop_table", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.drop_table");
   }
 
   oprot->writeMessageBegin("drop_table", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.drop_table", bytes);
+  }
 }
 
 }} // namespace

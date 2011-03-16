@@ -24,7 +24,7 @@ import org.apache.thrift.TEnum;
  * 
  * INSERT: key is an insert/update (default state)
  */
-public enum KeyFlag implements TEnum {
+public enum KeyFlag implements org.apache.thrift.TEnum {
   DELETE_ROW(0),
   DELETE_CF(1),
   DELETE_CELL(2),

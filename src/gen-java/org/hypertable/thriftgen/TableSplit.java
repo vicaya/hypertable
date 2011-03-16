@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Defines a table split
  * 
@@ -43,13 +37,13 @@ import org.apache.thrift.protocol.*;
  *   <dd>The IP address of the split.</dd>
  * </dl>
  */
-public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("TableSplit");
+public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSplit._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TableSplit");
 
-  private static final TField START_ROW_FIELD_DESC = new TField("start_row", TType.STRING, (short)1);
-  private static final TField END_ROW_FIELD_DESC = new TField("end_row", TType.STRING, (short)2);
-  private static final TField LOCATION_FIELD_DESC = new TField("location", TType.STRING, (short)3);
-  private static final TField IP_ADDRESS_FIELD_DESC = new TField("ip_address", TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField START_ROW_FIELD_DESC = new org.apache.thrift.protocol.TField("start_row", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField END_ROW_FIELD_DESC = new org.apache.thrift.protocol.TField("end_row", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField LOCATION_FIELD_DESC = new org.apache.thrift.protocol.TField("location", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField IP_ADDRESS_FIELD_DESC = new org.apache.thrift.protocol.TField("ip_address", org.apache.thrift.protocol.TType.STRING, (short)4);
 
   public String start_row;
   public String end_row;
@@ -57,7 +51,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
   public String ip_address;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     START_ROW((short)1, "start_row"),
     END_ROW((short)2, "end_row"),
     LOCATION((short)3, "location"),
@@ -125,19 +119,19 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.START_ROW, new FieldMetaData("start_row", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.END_ROW, new FieldMetaData("end_row", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.LOCATION, new FieldMetaData("location", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.IP_ADDRESS, new FieldMetaData("ip_address", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.START_ROW, new org.apache.thrift.meta_data.FieldMetaData("start_row", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.END_ROW, new org.apache.thrift.meta_data.FieldMetaData("end_row", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.LOCATION, new org.apache.thrift.meta_data.FieldMetaData("location", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.IP_ADDRESS, new org.apache.thrift.meta_data.FieldMetaData("ip_address", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(TableSplit.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TableSplit.class, metaDataMap);
   }
 
   public TableSplit() {
@@ -186,7 +180,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     this.start_row = null;
   }
 
-  /** Returns true if field start_row is set (has been asigned a value) and false otherwise */
+  /** Returns true if field start_row is set (has been assigned a value) and false otherwise */
   public boolean isSetStart_row() {
     return this.start_row != null;
   }
@@ -210,7 +204,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     this.end_row = null;
   }
 
-  /** Returns true if field end_row is set (has been asigned a value) and false otherwise */
+  /** Returns true if field end_row is set (has been assigned a value) and false otherwise */
   public boolean isSetEnd_row() {
     return this.end_row != null;
   }
@@ -234,7 +228,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     this.location = null;
   }
 
-  /** Returns true if field location is set (has been asigned a value) and false otherwise */
+  /** Returns true if field location is set (has been assigned a value) and false otherwise */
   public boolean isSetLocation() {
     return this.location != null;
   }
@@ -258,7 +252,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     this.ip_address = null;
   }
 
-  /** Returns true if field ip_address is set (has been asigned a value) and false otherwise */
+  /** Returns true if field ip_address is set (has been assigned a value) and false otherwise */
   public boolean isSetIp_address() {
     return this.ip_address != null;
   }
@@ -324,7 +318,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -413,7 +407,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
       return lastComparison;
     }
     if (isSetStart_row()) {
-      lastComparison = TBaseHelper.compareTo(this.start_row, typedOther.start_row);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.start_row, typedOther.start_row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -423,7 +417,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
       return lastComparison;
     }
     if (isSetEnd_row()) {
-      lastComparison = TBaseHelper.compareTo(this.end_row, typedOther.end_row);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.end_row, typedOther.end_row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -433,7 +427,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
       return lastComparison;
     }
     if (isSetLocation()) {
-      lastComparison = TBaseHelper.compareTo(this.location, typedOther.location);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.location, typedOther.location);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -443,7 +437,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
       return lastComparison;
     }
     if (isSetIp_address()) {
-      lastComparison = TBaseHelper.compareTo(this.ip_address, typedOther.ip_address);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ip_address, typedOther.ip_address);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -455,46 +449,46 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // START_ROW
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.start_row = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // END_ROW
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.end_row = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // LOCATION
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.location = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // IP_ADDRESS
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.ip_address = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -504,7 +498,7 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -588,8 +582,24 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

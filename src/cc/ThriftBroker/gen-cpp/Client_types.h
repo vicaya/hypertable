@@ -24,12 +24,16 @@ struct KeyFlag {
   };
 };
 
+extern const std::map<int, const char*> _KeyFlag_VALUES_TO_NAMES;
+
 struct MutatorFlag {
   enum type {
     NO_LOG_SYNC = 1,
     IGNORE_UNKNOWN_CFS = 2
   };
 };
+
+extern const std::map<int, const char*> _MutatorFlag_VALUES_TO_NAMES;
 
 typedef int64_t Future;
 

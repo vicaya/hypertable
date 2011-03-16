@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Specifies options for a shared periodic mutator
  * 
@@ -40,19 +34,19 @@ import org.apache.thrift.protocol.*;
  *   <dd>Mutator flags</dt>
  * </dl>
  */
-public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("MutateSpec");
+public class MutateSpec implements org.apache.thrift.TBase<MutateSpec, MutateSpec._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("MutateSpec");
 
-  private static final TField APPNAME_FIELD_DESC = new TField("appname", TType.STRING, (short)1);
-  private static final TField FLUSH_INTERVAL_FIELD_DESC = new TField("flush_interval", TType.I32, (short)2);
-  private static final TField FLAGS_FIELD_DESC = new TField("flags", TType.I32, (short)3);
+  private static final org.apache.thrift.protocol.TField APPNAME_FIELD_DESC = new org.apache.thrift.protocol.TField("appname", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField FLUSH_INTERVAL_FIELD_DESC = new org.apache.thrift.protocol.TField("flush_interval", org.apache.thrift.protocol.TType.I32, (short)2);
+  private static final org.apache.thrift.protocol.TField FLAGS_FIELD_DESC = new org.apache.thrift.protocol.TField("flags", org.apache.thrift.protocol.TType.I32, (short)3);
 
   public String appname;
   public int flush_interval;
   public int flags;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     APPNAME((short)1, "appname"),
     FLUSH_INTERVAL((short)2, "flush_interval"),
     FLAGS((short)3, "flags");
@@ -120,17 +114,17 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
   private static final int __FLAGS_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.APPNAME, new FieldMetaData("appname", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.FLUSH_INTERVAL, new FieldMetaData("flush_interval", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.I32)));
-    tmpMap.put(_Fields.FLAGS, new FieldMetaData("flags", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.I32)));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.APPNAME, new org.apache.thrift.meta_data.FieldMetaData("appname", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.FLUSH_INTERVAL, new org.apache.thrift.meta_data.FieldMetaData("flush_interval", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.FLAGS, new org.apache.thrift.meta_data.FieldMetaData("flags", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(MutateSpec.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(MutateSpec.class, metaDataMap);
   }
 
   public MutateSpec() {
@@ -195,7 +189,7 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     this.appname = null;
   }
 
-  /** Returns true if field appname is set (has been asigned a value) and false otherwise */
+  /** Returns true if field appname is set (has been assigned a value) and false otherwise */
   public boolean isSetAppname() {
     return this.appname != null;
   }
@@ -220,7 +214,7 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     __isset_bit_vector.clear(__FLUSH_INTERVAL_ISSET_ID);
   }
 
-  /** Returns true if field flush_interval is set (has been asigned a value) and false otherwise */
+  /** Returns true if field flush_interval is set (has been assigned a value) and false otherwise */
   public boolean isSetFlush_interval() {
     return __isset_bit_vector.get(__FLUSH_INTERVAL_ISSET_ID);
   }
@@ -243,7 +237,7 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     __isset_bit_vector.clear(__FLAGS_ISSET_ID);
   }
 
-  /** Returns true if field flags is set (has been asigned a value) and false otherwise */
+  /** Returns true if field flags is set (has been assigned a value) and false otherwise */
   public boolean isSetFlags() {
     return __isset_bit_vector.get(__FLAGS_ISSET_ID);
   }
@@ -296,7 +290,7 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -374,7 +368,7 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
       return lastComparison;
     }
     if (isSetAppname()) {
-      lastComparison = TBaseHelper.compareTo(this.appname, typedOther.appname);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.appname, typedOther.appname);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -384,7 +378,7 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
       return lastComparison;
     }
     if (isSetFlush_interval()) {
-      lastComparison = TBaseHelper.compareTo(this.flush_interval, typedOther.flush_interval);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flush_interval, typedOther.flush_interval);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -394,7 +388,7 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
       return lastComparison;
     }
     if (isSetFlags()) {
-      lastComparison = TBaseHelper.compareTo(this.flags, typedOther.flags);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flags, typedOther.flags);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -406,41 +400,41 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // APPNAME
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.appname = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // FLUSH_INTERVAL
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.flush_interval = iprot.readI32();
             setFlush_intervalIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // FLAGS
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.flags = iprot.readI32();
             setFlagsIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -448,15 +442,15 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
 
     // check for required fields of primitive type, which can't be checked in the validate method
     if (!isSetFlush_interval()) {
-      throw new TProtocolException("Required field 'flush_interval' was not found in serialized data! Struct: " + toString());
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'flush_interval' was not found in serialized data! Struct: " + toString());
     }
     if (!isSetFlags()) {
-      throw new TProtocolException("Required field 'flags' was not found in serialized data! Struct: " + toString());
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'flags' was not found in serialized data! Struct: " + toString());
     }
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -499,13 +493,31 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
     if (appname == null) {
-      throw new TProtocolException("Required field 'appname' was not present! Struct: " + toString());
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'appname' was not present! Struct: " + toString());
     }
     // alas, we cannot check 'flush_interval' because it's a primitive and you chose the non-beans generator.
     // alas, we cannot check 'flags' because it's a primitive and you chose the non-beans generator.
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

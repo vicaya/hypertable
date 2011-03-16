@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Defines a table cell
  * 
@@ -37,17 +31,17 @@ import org.apache.thrift.protocol.*;
  *   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
  * </dl>
  */
-public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("Cell");
+public class Cell implements org.apache.thrift.TBase<Cell, Cell._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Cell");
 
-  private static final TField KEY_FIELD_DESC = new TField("key", TType.STRUCT, (short)1);
-  private static final TField VALUE_FIELD_DESC = new TField("value", TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)2);
 
   public Key key;
   public ByteBuffer value;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     KEY((short)1, "key"),
     VALUE((short)2, "value");
 
@@ -109,15 +103,15 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
-        new StructMetaData(TType.STRUCT, Key.class)));
-    tmpMap.put(_Fields.VALUE, new FieldMetaData("value", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING        , "Value")));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Key.class)));
+    tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , "Value")));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(Cell.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Cell.class, metaDataMap);
   }
 
   public Cell() {
@@ -165,7 +159,7 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     this.key = null;
   }
 
-  /** Returns true if field key is set (has been asigned a value) and false otherwise */
+  /** Returns true if field key is set (has been assigned a value) and false otherwise */
   public boolean isSetKey() {
     return this.key != null;
   }
@@ -177,16 +171,16 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
   }
 
   public byte[] getValue() {
-    setValue(TBaseHelper.rightSize(value));
-    return value.array();
+    setValue(org.apache.thrift.TBaseHelper.rightSize(value));
+    return value == null ? null : value.array();
   }
 
-  public ByteBuffer BufferForValue() {
+  public ByteBuffer bufferForValue() {
     return value;
   }
 
   public Cell setValue(byte[] value) {
-    setValue(ByteBuffer.wrap(value));
+    setValue(value == null ? (ByteBuffer)null : ByteBuffer.wrap(value));
     return this;
   }
 
@@ -199,7 +193,7 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     this.value = null;
   }
 
-  /** Returns true if field value is set (has been asigned a value) and false otherwise */
+  /** Returns true if field value is set (has been assigned a value) and false otherwise */
   public boolean isSetValue() {
     return this.value != null;
   }
@@ -243,7 +237,7 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -310,7 +304,7 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
       return lastComparison;
     }
     if (isSetKey()) {
-      lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.key, typedOther.key);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -320,7 +314,7 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
       return lastComparison;
     }
     if (isSetValue()) {
-      lastComparison = TBaseHelper.compareTo(this.value, typedOther.value);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.value, typedOther.value);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -332,33 +326,33 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // KEY
-          if (field.type == TType.STRUCT) {
+          if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
             this.key = new Key();
             this.key.read(iprot);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // VALUE
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.value = iprot.readBinary();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -368,7 +362,7 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -414,8 +408,24 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

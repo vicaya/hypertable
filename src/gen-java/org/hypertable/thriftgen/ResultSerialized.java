@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Specifies a serialized result object for asynchronous requests.
  * TODO: add support for update results
@@ -53,16 +47,16 @@ import org.apache.thrift.protocol.*;
  *   <dd>Cells returned by asynchronous scanner</dd>
  * </dl>
  */
-public class ResultSerialized implements TBase<ResultSerialized, ResultSerialized._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("ResultSerialized");
+public class ResultSerialized implements org.apache.thrift.TBase<ResultSerialized, ResultSerialized._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ResultSerialized");
 
-  private static final TField IS_EMPTY_FIELD_DESC = new TField("is_empty", TType.BOOL, (short)1);
-  private static final TField ID_FIELD_DESC = new TField("id", TType.I64, (short)2);
-  private static final TField IS_SCAN_FIELD_DESC = new TField("is_scan", TType.BOOL, (short)3);
-  private static final TField IS_ERROR_FIELD_DESC = new TField("is_error", TType.BOOL, (short)4);
-  private static final TField ERROR_FIELD_DESC = new TField("error", TType.I32, (short)5);
-  private static final TField ERROR_MSG_FIELD_DESC = new TField("error_msg", TType.STRING, (short)6);
-  private static final TField CELLS_FIELD_DESC = new TField("cells", TType.STRING, (short)7);
+  private static final org.apache.thrift.protocol.TField IS_EMPTY_FIELD_DESC = new org.apache.thrift.protocol.TField("is_empty", org.apache.thrift.protocol.TType.BOOL, (short)1);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)2);
+  private static final org.apache.thrift.protocol.TField IS_SCAN_FIELD_DESC = new org.apache.thrift.protocol.TField("is_scan", org.apache.thrift.protocol.TType.BOOL, (short)3);
+  private static final org.apache.thrift.protocol.TField IS_ERROR_FIELD_DESC = new org.apache.thrift.protocol.TField("is_error", org.apache.thrift.protocol.TType.BOOL, (short)4);
+  private static final org.apache.thrift.protocol.TField ERROR_FIELD_DESC = new org.apache.thrift.protocol.TField("error", org.apache.thrift.protocol.TType.I32, (short)5);
+  private static final org.apache.thrift.protocol.TField ERROR_MSG_FIELD_DESC = new org.apache.thrift.protocol.TField("error_msg", org.apache.thrift.protocol.TType.STRING, (short)6);
+  private static final org.apache.thrift.protocol.TField CELLS_FIELD_DESC = new org.apache.thrift.protocol.TField("cells", org.apache.thrift.protocol.TType.STRING, (short)7);
 
   public boolean is_empty;
   public long id;
@@ -73,7 +67,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
   public ByteBuffer cells;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     IS_EMPTY((short)1, "is_empty"),
     ID((short)2, "id"),
     IS_SCAN((short)3, "is_scan"),
@@ -156,25 +150,25 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
   private static final int __ERROR_ISSET_ID = 4;
   private BitSet __isset_bit_vector = new BitSet(5);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.IS_EMPTY, new FieldMetaData("is_empty", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.BOOL)));
-    tmpMap.put(_Fields.ID, new FieldMetaData("id", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.IS_SCAN, new FieldMetaData("is_scan", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.BOOL)));
-    tmpMap.put(_Fields.IS_ERROR, new FieldMetaData("is_error", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.BOOL)));
-    tmpMap.put(_Fields.ERROR, new FieldMetaData("error", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I32)));
-    tmpMap.put(_Fields.ERROR_MSG, new FieldMetaData("error_msg", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING        , "CellsSerialized")));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.IS_EMPTY, new org.apache.thrift.meta_data.FieldMetaData("is_empty", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.IS_SCAN, new org.apache.thrift.meta_data.FieldMetaData("is_scan", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.IS_ERROR, new org.apache.thrift.meta_data.FieldMetaData("is_error", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.ERROR, new org.apache.thrift.meta_data.FieldMetaData("error", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.ERROR_MSG, new org.apache.thrift.meta_data.FieldMetaData("error_msg", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.CELLS, new org.apache.thrift.meta_data.FieldMetaData("cells", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , "CellsSerialized")));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(ResultSerialized.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ResultSerialized.class, metaDataMap);
   }
 
   public ResultSerialized() {
@@ -250,7 +244,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     __isset_bit_vector.clear(__IS_EMPTY_ISSET_ID);
   }
 
-  /** Returns true if field is_empty is set (has been asigned a value) and false otherwise */
+  /** Returns true if field is_empty is set (has been assigned a value) and false otherwise */
   public boolean isSetIs_empty() {
     return __isset_bit_vector.get(__IS_EMPTY_ISSET_ID);
   }
@@ -273,7 +267,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     __isset_bit_vector.clear(__ID_ISSET_ID);
   }
 
-  /** Returns true if field id is set (has been asigned a value) and false otherwise */
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
   public boolean isSetId() {
     return __isset_bit_vector.get(__ID_ISSET_ID);
   }
@@ -296,7 +290,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     __isset_bit_vector.clear(__IS_SCAN_ISSET_ID);
   }
 
-  /** Returns true if field is_scan is set (has been asigned a value) and false otherwise */
+  /** Returns true if field is_scan is set (has been assigned a value) and false otherwise */
   public boolean isSetIs_scan() {
     return __isset_bit_vector.get(__IS_SCAN_ISSET_ID);
   }
@@ -319,7 +313,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     __isset_bit_vector.clear(__IS_ERROR_ISSET_ID);
   }
 
-  /** Returns true if field is_error is set (has been asigned a value) and false otherwise */
+  /** Returns true if field is_error is set (has been assigned a value) and false otherwise */
   public boolean isSetIs_error() {
     return __isset_bit_vector.get(__IS_ERROR_ISSET_ID);
   }
@@ -342,7 +336,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     __isset_bit_vector.clear(__ERROR_ISSET_ID);
   }
 
-  /** Returns true if field error is set (has been asigned a value) and false otherwise */
+  /** Returns true if field error is set (has been assigned a value) and false otherwise */
   public boolean isSetError() {
     return __isset_bit_vector.get(__ERROR_ISSET_ID);
   }
@@ -364,7 +358,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     this.error_msg = null;
   }
 
-  /** Returns true if field error_msg is set (has been asigned a value) and false otherwise */
+  /** Returns true if field error_msg is set (has been assigned a value) and false otherwise */
   public boolean isSetError_msg() {
     return this.error_msg != null;
   }
@@ -376,16 +370,16 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
   }
 
   public byte[] getCells() {
-    setCells(TBaseHelper.rightSize(cells));
-    return cells.array();
+    setCells(org.apache.thrift.TBaseHelper.rightSize(cells));
+    return cells == null ? null : cells.array();
   }
 
-  public ByteBuffer BufferForCells() {
+  public ByteBuffer bufferForCells() {
     return cells;
   }
 
   public ResultSerialized setCells(byte[] cells) {
-    setCells(ByteBuffer.wrap(cells));
+    setCells(cells == null ? (ByteBuffer)null : ByteBuffer.wrap(cells));
     return this;
   }
 
@@ -398,7 +392,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     this.cells = null;
   }
 
-  /** Returns true if field cells is set (has been asigned a value) and false otherwise */
+  /** Returns true if field cells is set (has been assigned a value) and false otherwise */
   public boolean isSetCells() {
     return this.cells != null;
   }
@@ -497,7 +491,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -619,7 +613,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
       return lastComparison;
     }
     if (isSetIs_empty()) {
-      lastComparison = TBaseHelper.compareTo(this.is_empty, typedOther.is_empty);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.is_empty, typedOther.is_empty);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -629,7 +623,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
       return lastComparison;
     }
     if (isSetId()) {
-      lastComparison = TBaseHelper.compareTo(this.id, typedOther.id);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -639,7 +633,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
       return lastComparison;
     }
     if (isSetIs_scan()) {
-      lastComparison = TBaseHelper.compareTo(this.is_scan, typedOther.is_scan);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.is_scan, typedOther.is_scan);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -649,7 +643,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
       return lastComparison;
     }
     if (isSetIs_error()) {
-      lastComparison = TBaseHelper.compareTo(this.is_error, typedOther.is_error);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.is_error, typedOther.is_error);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -659,7 +653,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
       return lastComparison;
     }
     if (isSetError()) {
-      lastComparison = TBaseHelper.compareTo(this.error, typedOther.error);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.error, typedOther.error);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -669,7 +663,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
       return lastComparison;
     }
     if (isSetError_msg()) {
-      lastComparison = TBaseHelper.compareTo(this.error_msg, typedOther.error_msg);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.error_msg, typedOther.error_msg);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -679,7 +673,7 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
       return lastComparison;
     }
     if (isSetCells()) {
-      lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cells, typedOther.cells);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -691,72 +685,72 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // IS_EMPTY
-          if (field.type == TType.BOOL) {
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
             this.is_empty = iprot.readBool();
             setIs_emptyIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // ID
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.id = iprot.readI64();
             setIdIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // IS_SCAN
-          if (field.type == TType.BOOL) {
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
             this.is_scan = iprot.readBool();
             setIs_scanIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // IS_ERROR
-          if (field.type == TType.BOOL) {
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
             this.is_error = iprot.readBool();
             setIs_errorIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 5: // ERROR
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.error = iprot.readI32();
             setErrorIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 6: // ERROR_MSG
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.error_msg = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 7: // CELLS
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.cells = iprot.readBinary();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -764,21 +758,21 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
 
     // check for required fields of primitive type, which can't be checked in the validate method
     if (!isSetIs_empty()) {
-      throw new TProtocolException("Required field 'is_empty' was not found in serialized data! Struct: " + toString());
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'is_empty' was not found in serialized data! Struct: " + toString());
     }
     if (!isSetId()) {
-      throw new TProtocolException("Required field 'id' was not found in serialized data! Struct: " + toString());
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'id' was not found in serialized data! Struct: " + toString());
     }
     if (!isSetIs_scan()) {
-      throw new TProtocolException("Required field 'is_scan' was not found in serialized data! Struct: " + toString());
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'is_scan' was not found in serialized data! Struct: " + toString());
     }
     if (!isSetIs_error()) {
-      throw new TProtocolException("Required field 'is_error' was not found in serialized data! Struct: " + toString());
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'is_error' was not found in serialized data! Struct: " + toString());
     }
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -867,12 +861,30 @@ public class ResultSerialized implements TBase<ResultSerialized, ResultSerialize
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
     // alas, we cannot check 'is_empty' because it's a primitive and you chose the non-beans generator.
     // alas, we cannot check 'id' because it's a primitive and you chose the non-beans generator.
     // alas, we cannot check 'is_scan' because it's a primitive and you chose the non-beans generator.
     // alas, we cannot check 'is_error' because it's a primitive and you chose the non-beans generator.
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

@@ -7,6 +7,30 @@
 
 namespace Hypertable { namespace ThriftGen {
 
+int _kKeyFlagValues[] = {
+  KeyFlag::DELETE_ROW,
+  KeyFlag::DELETE_CF,
+  KeyFlag::DELETE_CELL,
+  KeyFlag::INSERT
+};
+const char* _kKeyFlagNames[] = {
+  "DELETE_ROW",
+  "DELETE_CF",
+  "DELETE_CELL",
+  "INSERT"
+};
+const std::map<int, const char*> _KeyFlag_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(4, _kKeyFlagValues, _kKeyFlagNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
+
+int _kMutatorFlagValues[] = {
+  MutatorFlag::NO_LOG_SYNC,
+  MutatorFlag::IGNORE_UNKNOWN_CFS
+};
+const char* _kMutatorFlagNames[] = {
+  "NO_LOG_SYNC",
+  "IGNORE_UNKNOWN_CFS"
+};
+const std::map<int, const char*> _MutatorFlag_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(2, _kMutatorFlagValues, _kMutatorFlagNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
+
 const char* RowInterval::ascii_fingerprint = "E1A4BCD94F003EFF8636F1C98591705A";
 const uint8_t RowInterval::binary_fingerprint[16] = {0xE1,0xA4,0xBC,0xD9,0x4F,0x00,0x3E,0xFF,0x86,0x36,0xF1,0xC9,0x85,0x91,0x70,0x5A};
 

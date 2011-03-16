@@ -16,7 +16,7 @@ import org.apache.thrift.TEnum;
  * NO_LOG_SYNC: Do not sync the commit log
  * IGNORE_UNKNOWN_CFS: Don't throw exception if mutator writes to unknown column family
  */
-public enum MutatorFlag implements TEnum {
+public enum MutatorFlag implements org.apache.thrift.TEnum {
   NO_LOG_SYNC(1),
   IGNORE_UNKNOWN_CFS(2);
 

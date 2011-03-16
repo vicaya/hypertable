@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 public class HqlService {
 
   /**
@@ -51,7 +45,7 @@ public class HqlService {
      * @param noflush
      * @param unbuffered
      */
-    public HqlResult hql_exec(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException;
+    public HqlResult hql_exec(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException;
 
     /**
      * Convenience method for executing an buffered and flushed query
@@ -65,7 +59,7 @@ public class HqlService {
      * @param ns
      * @param command
      */
-    public HqlResult hql_query(long ns, String command) throws org.hypertable.thriftgen.ClientException, TException;
+    public HqlResult hql_query(long ns, String command) throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException;
 
     /**
      * @see hql_exec
@@ -75,7 +69,7 @@ public class HqlService {
      * @param noflush
      * @param unbuffered
      */
-    public HqlResult2 hql_exec2(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException;
+    public HqlResult2 hql_exec2(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException;
 
     /**
      * @see hql_query
@@ -83,52 +77,52 @@ public class HqlService {
      * @param ns
      * @param command
      */
-    public HqlResult2 hql_query2(long ns, String command) throws org.hypertable.thriftgen.ClientException, TException;
+    public HqlResult2 hql_query2(long ns, String command) throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface extends org.hypertable.thriftgen.ClientService .AsyncIface {
 
-    public void hql_exec(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<AsyncClient.hql_exec_call> resultHandler) throws TException;
+    public void hql_exec(long ns, String command, boolean noflush, boolean unbuffered, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.hql_exec_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void hql_query(long ns, String command, AsyncMethodCallback<AsyncClient.hql_query_call> resultHandler) throws TException;
+    public void hql_query(long ns, String command, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.hql_query_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void hql_exec2(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<AsyncClient.hql_exec2_call> resultHandler) throws TException;
+    public void hql_exec2(long ns, String command, boolean noflush, boolean unbuffered, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.hql_exec2_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void hql_query2(long ns, String command, AsyncMethodCallback<AsyncClient.hql_query2_call> resultHandler) throws TException;
+    public void hql_query2(long ns, String command, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.hql_query2_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
-  public static class Client extends org.hypertable.thriftgen.ClientService.Client implements TServiceClient, Iface {
-    public static class Factory implements TServiceClientFactory<Client> {
+  public static class Client extends org.hypertable.thriftgen.ClientService.Client implements org.apache.thrift.TServiceClient, Iface {
+    public static class Factory implements org.apache.thrift.TServiceClientFactory<Client> {
       public Factory() {}
-      public Client getClient(TProtocol prot) {
+      public Client getClient(org.apache.thrift.protocol.TProtocol prot) {
         return new Client(prot);
       }
-      public Client getClient(TProtocol iprot, TProtocol oprot) {
+      public Client getClient(org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) {
         return new Client(iprot, oprot);
       }
     }
 
-    public Client(TProtocol prot)
+    public Client(org.apache.thrift.protocol.TProtocol prot)
     {
       this(prot, prot);
     }
 
-    public Client(TProtocol iprot, TProtocol oprot)
+    public Client(org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot)
     {
       super(iprot, oprot);
     }
 
-    public HqlResult hql_exec(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult hql_exec(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException
     {
       send_hql_exec(ns, command, noflush, unbuffered);
       return recv_hql_exec();
     }
 
-    public void send_hql_exec(long ns, String command, boolean noflush, boolean unbuffered) throws TException
+    public void send_hql_exec(long ns, String command, boolean noflush, boolean unbuffered) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("hql_exec", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       hql_exec_args args = new hql_exec_args();
       args.setNs(ns);
       args.setCommand(command);
@@ -139,16 +133,16 @@ public class HqlService {
       oprot_.getTransport().flush();
     }
 
-    public HqlResult recv_hql_exec() throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult recv_hql_exec() throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "hql_exec failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "hql_exec failed: out of sequence response");
       }
       hql_exec_result result = new hql_exec_result();
       result.read(iprot_);
@@ -159,18 +153,18 @@ public class HqlService {
       if (result.e != null) {
         throw result.e;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "hql_exec failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "hql_exec failed: unknown result");
     }
 
-    public HqlResult hql_query(long ns, String command) throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult hql_query(long ns, String command) throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException
     {
       send_hql_query(ns, command);
       return recv_hql_query();
     }
 
-    public void send_hql_query(long ns, String command) throws TException
+    public void send_hql_query(long ns, String command) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("hql_query", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       hql_query_args args = new hql_query_args();
       args.setNs(ns);
       args.setCommand(command);
@@ -179,16 +173,16 @@ public class HqlService {
       oprot_.getTransport().flush();
     }
 
-    public HqlResult recv_hql_query() throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult recv_hql_query() throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "hql_query failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "hql_query failed: out of sequence response");
       }
       hql_query_result result = new hql_query_result();
       result.read(iprot_);
@@ -199,18 +193,18 @@ public class HqlService {
       if (result.e != null) {
         throw result.e;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "hql_query failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "hql_query failed: unknown result");
     }
 
-    public HqlResult2 hql_exec2(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult2 hql_exec2(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException
     {
       send_hql_exec2(ns, command, noflush, unbuffered);
       return recv_hql_exec2();
     }
 
-    public void send_hql_exec2(long ns, String command, boolean noflush, boolean unbuffered) throws TException
+    public void send_hql_exec2(long ns, String command, boolean noflush, boolean unbuffered) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("hql_exec2", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec2", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       hql_exec2_args args = new hql_exec2_args();
       args.setNs(ns);
       args.setCommand(command);
@@ -221,16 +215,16 @@ public class HqlService {
       oprot_.getTransport().flush();
     }
 
-    public HqlResult2 recv_hql_exec2() throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult2 recv_hql_exec2() throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "hql_exec2 failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "hql_exec2 failed: out of sequence response");
       }
       hql_exec2_result result = new hql_exec2_result();
       result.read(iprot_);
@@ -241,18 +235,18 @@ public class HqlService {
       if (result.e != null) {
         throw result.e;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "hql_exec2 failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "hql_exec2 failed: unknown result");
     }
 
-    public HqlResult2 hql_query2(long ns, String command) throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult2 hql_query2(long ns, String command) throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException
     {
       send_hql_query2(ns, command);
       return recv_hql_query2();
     }
 
-    public void send_hql_query2(long ns, String command) throws TException
+    public void send_hql_query2(long ns, String command) throws org.apache.thrift.TException
     {
-      oprot_.writeMessageBegin(new TMessage("hql_query2", TMessageType.CALL, ++seqid_));
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query2", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       hql_query2_args args = new hql_query2_args();
       args.setNs(ns);
       args.setCommand(command);
@@ -261,16 +255,16 @@ public class HqlService {
       oprot_.getTransport().flush();
     }
 
-    public HqlResult2 recv_hql_query2() throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult2 recv_hql_query2() throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException
     {
-      TMessage msg = iprot_.readMessageBegin();
-      if (msg.type == TMessageType.EXCEPTION) {
-        TApplicationException x = TApplicationException.read(iprot_);
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "hql_query2 failed: out of sequence response");
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "hql_query2 failed: out of sequence response");
       }
       hql_query2_result result = new hql_query2_result();
       result.read(iprot_);
@@ -281,39 +275,40 @@ public class HqlService {
       if (result.e != null) {
         throw result.e;
       }
-      throw new TApplicationException(TApplicationException.MISSING_RESULT, "hql_query2 failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "hql_query2 failed: unknown result");
     }
 
   }
   public static class AsyncClient extends org.hypertable.thriftgen.ClientService.AsyncClient implements AsyncIface {
-    public static class Factory implements TAsyncClientFactory<AsyncClient> {
-      private TAsyncClientManager clientManager;
-      private TProtocolFactory protocolFactory;
-      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+    public static class Factory implements org.apache.thrift.async.TAsyncClientFactory<AsyncClient> {
+      private org.apache.thrift.async.TAsyncClientManager clientManager;
+      private org.apache.thrift.protocol.TProtocolFactory protocolFactory;
+      public Factory(org.apache.thrift.async.TAsyncClientManager clientManager, org.apache.thrift.protocol.TProtocolFactory protocolFactory) {
         this.clientManager = clientManager;
         this.protocolFactory = protocolFactory;
       }
-      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+      public AsyncClient getAsyncClient(org.apache.thrift.transport.TNonblockingTransport transport) {
         return new AsyncClient(protocolFactory, clientManager, transport);
       }
     }
 
-    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+    public AsyncClient(org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.async.TAsyncClientManager clientManager, org.apache.thrift.transport.TNonblockingTransport transport) {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void hql_exec(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<hql_exec_call> resultHandler) throws TException {
+    public void hql_exec(long ns, String command, boolean noflush, boolean unbuffered, org.apache.thrift.async.AsyncMethodCallback<hql_exec_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       hql_exec_call method_call = new hql_exec_call(ns, command, noflush, unbuffered, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class hql_exec_call extends TAsyncMethodCall {
+    public static class hql_exec_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ns;
       private String command;
       private boolean noflush;
       private boolean unbuffered;
-      public hql_exec_call(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<hql_exec_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public hql_exec_call(long ns, String command, boolean noflush, boolean unbuffered, org.apache.thrift.async.AsyncMethodCallback<hql_exec_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.command = command;
@@ -321,8 +316,8 @@ public class HqlService {
         this.unbuffered = unbuffered;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("hql_exec", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec", org.apache.thrift.protocol.TMessageType.CALL, 0));
         hql_exec_args args = new hql_exec_args();
         args.setNs(ns);
         args.setCommand(command);
@@ -332,33 +327,34 @@ public class HqlService {
         prot.writeMessageEnd();
       }
 
-      public HqlResult getResult() throws org.hypertable.thriftgen.ClientException, TException {
-        if (getState() != State.RESPONSE_READ) {
+      public HqlResult getResult() throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_hql_exec();
       }
     }
 
-    public void hql_query(long ns, String command, AsyncMethodCallback<hql_query_call> resultHandler) throws TException {
+    public void hql_query(long ns, String command, org.apache.thrift.async.AsyncMethodCallback<hql_query_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       hql_query_call method_call = new hql_query_call(ns, command, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class hql_query_call extends TAsyncMethodCall {
+    public static class hql_query_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ns;
       private String command;
-      public hql_query_call(long ns, String command, AsyncMethodCallback<hql_query_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public hql_query_call(long ns, String command, org.apache.thrift.async.AsyncMethodCallback<hql_query_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.command = command;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("hql_query", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query", org.apache.thrift.protocol.TMessageType.CALL, 0));
         hql_query_args args = new hql_query_args();
         args.setNs(ns);
         args.setCommand(command);
@@ -366,28 +362,29 @@ public class HqlService {
         prot.writeMessageEnd();
       }
 
-      public HqlResult getResult() throws org.hypertable.thriftgen.ClientException, TException {
-        if (getState() != State.RESPONSE_READ) {
+      public HqlResult getResult() throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_hql_query();
       }
     }
 
-    public void hql_exec2(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<hql_exec2_call> resultHandler) throws TException {
+    public void hql_exec2(long ns, String command, boolean noflush, boolean unbuffered, org.apache.thrift.async.AsyncMethodCallback<hql_exec2_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       hql_exec2_call method_call = new hql_exec2_call(ns, command, noflush, unbuffered, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class hql_exec2_call extends TAsyncMethodCall {
+    public static class hql_exec2_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ns;
       private String command;
       private boolean noflush;
       private boolean unbuffered;
-      public hql_exec2_call(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<hql_exec2_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public hql_exec2_call(long ns, String command, boolean noflush, boolean unbuffered, org.apache.thrift.async.AsyncMethodCallback<hql_exec2_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.command = command;
@@ -395,8 +392,8 @@ public class HqlService {
         this.unbuffered = unbuffered;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("hql_exec2", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec2", org.apache.thrift.protocol.TMessageType.CALL, 0));
         hql_exec2_args args = new hql_exec2_args();
         args.setNs(ns);
         args.setCommand(command);
@@ -406,33 +403,34 @@ public class HqlService {
         prot.writeMessageEnd();
       }
 
-      public HqlResult2 getResult() throws org.hypertable.thriftgen.ClientException, TException {
-        if (getState() != State.RESPONSE_READ) {
+      public HqlResult2 getResult() throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_hql_exec2();
       }
     }
 
-    public void hql_query2(long ns, String command, AsyncMethodCallback<hql_query2_call> resultHandler) throws TException {
+    public void hql_query2(long ns, String command, org.apache.thrift.async.AsyncMethodCallback<hql_query2_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       hql_query2_call method_call = new hql_query2_call(ns, command, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
       manager.call(method_call);
     }
 
-    public static class hql_query2_call extends TAsyncMethodCall {
+    public static class hql_query2_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ns;
       private String command;
-      public hql_query2_call(long ns, String command, AsyncMethodCallback<hql_query2_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public hql_query2_call(long ns, String command, org.apache.thrift.async.AsyncMethodCallback<hql_query2_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.command = command;
       }
 
-      public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("hql_query2", TMessageType.CALL, 0));
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query2", org.apache.thrift.protocol.TMessageType.CALL, 0));
         hql_query2_args args = new hql_query2_args();
         args.setNs(ns);
         args.setCommand(command);
@@ -440,19 +438,19 @@ public class HqlService {
         prot.writeMessageEnd();
       }
 
-      public HqlResult2 getResult() throws org.hypertable.thriftgen.ClientException, TException {
-        if (getState() != State.RESPONSE_READ) {
+      public HqlResult2 getResult() throws org.hypertable.thriftgen.ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
-        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_hql_query2();
       }
     }
 
   }
 
-  public static class Processor extends org.hypertable.thriftgen.ClientService.Processor implements TProcessor {
+  public static class Processor extends org.hypertable.thriftgen.ClientService.Processor implements org.apache.thrift.TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
     {
@@ -466,15 +464,15 @@ public class HqlService {
 
     private Iface iface_;
 
-    public boolean process(TProtocol iprot, TProtocol oprot) throws TException
+    public boolean process(org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
     {
-      TMessage msg = iprot.readMessageBegin();
+      org.apache.thrift.protocol.TMessage msg = iprot.readMessageBegin();
       ProcessFunction fn = processMap_.get(msg.name);
       if (fn == null) {
-        TProtocolUtil.skip(iprot, TType.STRUCT);
+        org.apache.thrift.protocol.TProtocolUtil.skip(iprot, org.apache.thrift.protocol.TType.STRUCT);
         iprot.readMessageEnd();
-        TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
-        oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
+        org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage(msg.name, org.apache.thrift.protocol.TMessageType.EXCEPTION, msg.seqid));
         x.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -485,15 +483,15 @@ public class HqlService {
     }
 
     private class hql_exec implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         hql_exec_args args = new hql_exec_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("hql_exec", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -507,14 +505,14 @@ public class HqlService {
           result.e = e;
         } catch (Throwable th) {
           LOGGER.error("Internal error processing hql_exec", th);
-          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing hql_exec");
-          oprot.writeMessageBegin(new TMessage("hql_exec", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.INTERNAL_ERROR, "Internal error processing hql_exec");
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
-        oprot.writeMessageBegin(new TMessage("hql_exec", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -523,15 +521,15 @@ public class HqlService {
     }
 
     private class hql_query implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         hql_query_args args = new hql_query_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("hql_query", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -545,14 +543,14 @@ public class HqlService {
           result.e = e;
         } catch (Throwable th) {
           LOGGER.error("Internal error processing hql_query", th);
-          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing hql_query");
-          oprot.writeMessageBegin(new TMessage("hql_query", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.INTERNAL_ERROR, "Internal error processing hql_query");
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
-        oprot.writeMessageBegin(new TMessage("hql_query", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -561,15 +559,15 @@ public class HqlService {
     }
 
     private class hql_exec2 implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         hql_exec2_args args = new hql_exec2_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("hql_exec2", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec2", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -583,14 +581,14 @@ public class HqlService {
           result.e = e;
         } catch (Throwable th) {
           LOGGER.error("Internal error processing hql_exec2", th);
-          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing hql_exec2");
-          oprot.writeMessageBegin(new TMessage("hql_exec2", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.INTERNAL_ERROR, "Internal error processing hql_exec2");
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec2", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
-        oprot.writeMessageBegin(new TMessage("hql_exec2", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_exec2", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -599,15 +597,15 @@ public class HqlService {
     }
 
     private class hql_query2 implements ProcessFunction {
-      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
       {
         hql_query2_args args = new hql_query2_args();
         try {
           args.read(iprot);
-        } catch (TProtocolException e) {
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
           iprot.readMessageEnd();
-          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("hql_query2", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query2", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
@@ -621,14 +619,14 @@ public class HqlService {
           result.e = e;
         } catch (Throwable th) {
           LOGGER.error("Internal error processing hql_query2", th);
-          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing hql_query2");
-          oprot.writeMessageBegin(new TMessage("hql_query2", TMessageType.EXCEPTION, seqid));
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.INTERNAL_ERROR, "Internal error processing hql_query2");
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query2", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
-        oprot.writeMessageBegin(new TMessage("hql_query2", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("hql_query2", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -638,13 +636,13 @@ public class HqlService {
 
   }
 
-  public static class hql_exec_args implements TBase<hql_exec_args, hql_exec_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hql_exec_args");
+  public static class hql_exec_args implements org.apache.thrift.TBase<hql_exec_args, hql_exec_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hql_exec_args");
 
-    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
-    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)2);
-    private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)3);
-    private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)4);
+    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField COMMAND_FIELD_DESC = new org.apache.thrift.protocol.TField("command", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField NOFLUSH_FIELD_DESC = new org.apache.thrift.protocol.TField("noflush", org.apache.thrift.protocol.TType.BOOL, (short)3);
+    private static final org.apache.thrift.protocol.TField UNBUFFERED_FIELD_DESC = new org.apache.thrift.protocol.TField("unbuffered", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
     public long ns;
     public String command;
@@ -652,7 +650,7 @@ public class HqlService {
     public boolean unbuffered;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       NS((short)1, "ns"),
       COMMAND((short)2, "command"),
       NOFLUSH((short)3, "noflush"),
@@ -724,19 +722,19 @@ public class HqlService {
     private static final int __UNBUFFERED_ISSET_ID = 2;
     private BitSet __isset_bit_vector = new BitSet(3);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      tmpMap.put(_Fields.NOFLUSH, new FieldMetaData("noflush", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
-      tmpMap.put(_Fields.UNBUFFERED, new FieldMetaData("unbuffered", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.COMMAND, new org.apache.thrift.meta_data.FieldMetaData("command", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.NOFLUSH, new org.apache.thrift.meta_data.FieldMetaData("noflush", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.UNBUFFERED, new org.apache.thrift.meta_data.FieldMetaData("unbuffered", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hql_exec_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hql_exec_args.class, metaDataMap);
     }
 
     public hql_exec_args() {
@@ -805,7 +803,7 @@ public class HqlService {
       __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
     public boolean isSetNs() {
       return __isset_bit_vector.get(__NS_ISSET_ID);
     }
@@ -827,7 +825,7 @@ public class HqlService {
       this.command = null;
     }
 
-    /** Returns true if field command is set (has been asigned a value) and false otherwise */
+    /** Returns true if field command is set (has been assigned a value) and false otherwise */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -852,7 +850,7 @@ public class HqlService {
       __isset_bit_vector.clear(__NOFLUSH_ISSET_ID);
     }
 
-    /** Returns true if field noflush is set (has been asigned a value) and false otherwise */
+    /** Returns true if field noflush is set (has been assigned a value) and false otherwise */
     public boolean isSetNoflush() {
       return __isset_bit_vector.get(__NOFLUSH_ISSET_ID);
     }
@@ -875,7 +873,7 @@ public class HqlService {
       __isset_bit_vector.clear(__UNBUFFERED_ISSET_ID);
     }
 
-    /** Returns true if field unbuffered is set (has been asigned a value) and false otherwise */
+    /** Returns true if field unbuffered is set (has been assigned a value) and false otherwise */
     public boolean isSetUnbuffered() {
       return __isset_bit_vector.get(__UNBUFFERED_ISSET_ID);
     }
@@ -939,7 +937,7 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -1028,7 +1026,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetNs()) {
-        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1038,7 +1036,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetCommand()) {
-        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1048,7 +1046,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetNoflush()) {
-        lastComparison = TBaseHelper.compareTo(this.noflush, typedOther.noflush);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.noflush, typedOther.noflush);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1058,7 +1056,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetUnbuffered()) {
-        lastComparison = TBaseHelper.compareTo(this.unbuffered, typedOther.unbuffered);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.unbuffered, typedOther.unbuffered);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1070,49 +1068,49 @@ public class HqlService {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // NS
-            if (field.type == TType.I64) {
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.ns = iprot.readI64();
               setNsIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 2: // COMMAND
-            if (field.type == TType.STRING) {
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.command = iprot.readString();
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 3: // NOFLUSH
-            if (field.type == TType.BOOL) {
+            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
               this.noflush = iprot.readBool();
               setNoflushIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 4: // UNBUFFERED
-            if (field.type == TType.BOOL) {
+            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
               this.unbuffered = iprot.readBool();
               setUnbufferedIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -1122,7 +1120,7 @@ public class HqlService {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -1172,23 +1170,39 @@ public class HqlService {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class hql_exec_result implements TBase<hql_exec_result, hql_exec_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hql_exec_result");
+  public static class hql_exec_result implements org.apache.thrift.TBase<hql_exec_result, hql_exec_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hql_exec_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
-    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     public HqlResult success;
     public org.hypertable.thriftgen.ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
@@ -1250,15 +1264,15 @@ public class HqlService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, HqlResult.class)));
-      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, HqlResult.class)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hql_exec_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hql_exec_result.class, metaDataMap);
     }
 
     public hql_exec_result() {
@@ -1308,7 +1322,7 @@ public class HqlService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -1332,7 +1346,7 @@ public class HqlService {
       this.e = null;
     }
 
-    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
     public boolean isSetE() {
       return this.e != null;
     }
@@ -1376,7 +1390,7 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -1443,7 +1457,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1453,7 +1467,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetE()) {
-        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1465,34 +1479,34 @@ public class HqlService {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.success = new HqlResult();
               this.success.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 1: // E
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.e = new org.hypertable.thriftgen.ClientException();
               this.e.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -1502,7 +1516,7 @@ public class HqlService {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
@@ -1542,23 +1556,39 @@ public class HqlService {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class hql_query_args implements TBase<hql_query_args, hql_query_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hql_query_args");
+  public static class hql_query_args implements org.apache.thrift.TBase<hql_query_args, hql_query_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hql_query_args");
 
-    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
-    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField COMMAND_FIELD_DESC = new org.apache.thrift.protocol.TField("command", org.apache.thrift.protocol.TType.STRING, (short)2);
 
     public long ns;
     public String command;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       NS((short)1, "ns"),
       COMMAND((short)2, "command");
 
@@ -1622,15 +1652,15 @@ public class HqlService {
     private static final int __NS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.COMMAND, new org.apache.thrift.meta_data.FieldMetaData("command", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hql_query_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hql_query_args.class, metaDataMap);
     }
 
     public hql_query_args() {
@@ -1683,7 +1713,7 @@ public class HqlService {
       __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
     public boolean isSetNs() {
       return __isset_bit_vector.get(__NS_ISSET_ID);
     }
@@ -1705,7 +1735,7 @@ public class HqlService {
       this.command = null;
     }
 
-    /** Returns true if field command is set (has been asigned a value) and false otherwise */
+    /** Returns true if field command is set (has been assigned a value) and false otherwise */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -1749,7 +1779,7 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -1816,7 +1846,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetNs()) {
-        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1826,7 +1856,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetCommand()) {
-        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1838,33 +1868,33 @@ public class HqlService {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // NS
-            if (field.type == TType.I64) {
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.ns = iprot.readI64();
               setNsIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 2: // COMMAND
-            if (field.type == TType.STRING) {
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.command = iprot.readString();
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -1874,7 +1904,7 @@ public class HqlService {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -1910,23 +1940,39 @@ public class HqlService {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class hql_query_result implements TBase<hql_query_result, hql_query_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hql_query_result");
+  public static class hql_query_result implements org.apache.thrift.TBase<hql_query_result, hql_query_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hql_query_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
-    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     public HqlResult success;
     public org.hypertable.thriftgen.ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
@@ -1988,15 +2034,15 @@ public class HqlService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, HqlResult.class)));
-      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, HqlResult.class)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hql_query_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hql_query_result.class, metaDataMap);
     }
 
     public hql_query_result() {
@@ -2046,7 +2092,7 @@ public class HqlService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -2070,7 +2116,7 @@ public class HqlService {
       this.e = null;
     }
 
-    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
     public boolean isSetE() {
       return this.e != null;
     }
@@ -2114,7 +2160,7 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -2181,7 +2227,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2191,7 +2237,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetE()) {
-        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2203,34 +2249,34 @@ public class HqlService {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.success = new HqlResult();
               this.success.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 1: // E
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.e = new org.hypertable.thriftgen.ClientException();
               this.e.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -2240,7 +2286,7 @@ public class HqlService {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
@@ -2280,19 +2326,35 @@ public class HqlService {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class hql_exec2_args implements TBase<hql_exec2_args, hql_exec2_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hql_exec2_args");
+  public static class hql_exec2_args implements org.apache.thrift.TBase<hql_exec2_args, hql_exec2_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hql_exec2_args");
 
-    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
-    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)2);
-    private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)3);
-    private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)4);
+    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField COMMAND_FIELD_DESC = new org.apache.thrift.protocol.TField("command", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField NOFLUSH_FIELD_DESC = new org.apache.thrift.protocol.TField("noflush", org.apache.thrift.protocol.TType.BOOL, (short)3);
+    private static final org.apache.thrift.protocol.TField UNBUFFERED_FIELD_DESC = new org.apache.thrift.protocol.TField("unbuffered", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
     public long ns;
     public String command;
@@ -2300,7 +2362,7 @@ public class HqlService {
     public boolean unbuffered;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       NS((short)1, "ns"),
       COMMAND((short)2, "command"),
       NOFLUSH((short)3, "noflush"),
@@ -2372,19 +2434,19 @@ public class HqlService {
     private static final int __UNBUFFERED_ISSET_ID = 2;
     private BitSet __isset_bit_vector = new BitSet(3);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      tmpMap.put(_Fields.NOFLUSH, new FieldMetaData("noflush", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
-      tmpMap.put(_Fields.UNBUFFERED, new FieldMetaData("unbuffered", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.COMMAND, new org.apache.thrift.meta_data.FieldMetaData("command", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.NOFLUSH, new org.apache.thrift.meta_data.FieldMetaData("noflush", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.UNBUFFERED, new org.apache.thrift.meta_data.FieldMetaData("unbuffered", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hql_exec2_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hql_exec2_args.class, metaDataMap);
     }
 
     public hql_exec2_args() {
@@ -2453,7 +2515,7 @@ public class HqlService {
       __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
     public boolean isSetNs() {
       return __isset_bit_vector.get(__NS_ISSET_ID);
     }
@@ -2475,7 +2537,7 @@ public class HqlService {
       this.command = null;
     }
 
-    /** Returns true if field command is set (has been asigned a value) and false otherwise */
+    /** Returns true if field command is set (has been assigned a value) and false otherwise */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -2500,7 +2562,7 @@ public class HqlService {
       __isset_bit_vector.clear(__NOFLUSH_ISSET_ID);
     }
 
-    /** Returns true if field noflush is set (has been asigned a value) and false otherwise */
+    /** Returns true if field noflush is set (has been assigned a value) and false otherwise */
     public boolean isSetNoflush() {
       return __isset_bit_vector.get(__NOFLUSH_ISSET_ID);
     }
@@ -2523,7 +2585,7 @@ public class HqlService {
       __isset_bit_vector.clear(__UNBUFFERED_ISSET_ID);
     }
 
-    /** Returns true if field unbuffered is set (has been asigned a value) and false otherwise */
+    /** Returns true if field unbuffered is set (has been assigned a value) and false otherwise */
     public boolean isSetUnbuffered() {
       return __isset_bit_vector.get(__UNBUFFERED_ISSET_ID);
     }
@@ -2587,7 +2649,7 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -2676,7 +2738,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetNs()) {
-        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2686,7 +2748,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetCommand()) {
-        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2696,7 +2758,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetNoflush()) {
-        lastComparison = TBaseHelper.compareTo(this.noflush, typedOther.noflush);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.noflush, typedOther.noflush);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2706,7 +2768,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetUnbuffered()) {
-        lastComparison = TBaseHelper.compareTo(this.unbuffered, typedOther.unbuffered);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.unbuffered, typedOther.unbuffered);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2718,49 +2780,49 @@ public class HqlService {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // NS
-            if (field.type == TType.I64) {
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.ns = iprot.readI64();
               setNsIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 2: // COMMAND
-            if (field.type == TType.STRING) {
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.command = iprot.readString();
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 3: // NOFLUSH
-            if (field.type == TType.BOOL) {
+            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
               this.noflush = iprot.readBool();
               setNoflushIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 4: // UNBUFFERED
-            if (field.type == TType.BOOL) {
+            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
               this.unbuffered = iprot.readBool();
               setUnbufferedIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -2770,7 +2832,7 @@ public class HqlService {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -2820,23 +2882,41 @@ public class HqlService {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class hql_exec2_result implements TBase<hql_exec2_result, hql_exec2_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hql_exec2_result");
+  public static class hql_exec2_result implements org.apache.thrift.TBase<hql_exec2_result, hql_exec2_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hql_exec2_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
-    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     public HqlResult2 success;
     public org.hypertable.thriftgen.ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
@@ -2898,15 +2978,15 @@ public class HqlService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, HqlResult2.class)));
-      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, HqlResult2.class)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hql_exec2_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hql_exec2_result.class, metaDataMap);
     }
 
     public hql_exec2_result() {
@@ -2956,7 +3036,7 @@ public class HqlService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -2980,7 +3060,7 @@ public class HqlService {
       this.e = null;
     }
 
-    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
     public boolean isSetE() {
       return this.e != null;
     }
@@ -3024,7 +3104,7 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -3091,7 +3171,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3101,7 +3181,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetE()) {
-        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3113,34 +3193,34 @@ public class HqlService {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.success = new HqlResult2();
               this.success.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 1: // E
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.e = new org.hypertable.thriftgen.ClientException();
               this.e.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -3150,7 +3230,7 @@ public class HqlService {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
@@ -3190,23 +3270,39 @@ public class HqlService {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class hql_query2_args implements TBase<hql_query2_args, hql_query2_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hql_query2_args");
+  public static class hql_query2_args implements org.apache.thrift.TBase<hql_query2_args, hql_query2_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hql_query2_args");
 
-    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
-    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField COMMAND_FIELD_DESC = new org.apache.thrift.protocol.TField("command", org.apache.thrift.protocol.TType.STRING, (short)2);
 
     public long ns;
     public String command;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       NS((short)1, "ns"),
       COMMAND((short)2, "command");
 
@@ -3270,15 +3366,15 @@ public class HqlService {
     private static final int __NS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.COMMAND, new org.apache.thrift.meta_data.FieldMetaData("command", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hql_query2_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hql_query2_args.class, metaDataMap);
     }
 
     public hql_query2_args() {
@@ -3331,7 +3427,7 @@ public class HqlService {
       __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
     public boolean isSetNs() {
       return __isset_bit_vector.get(__NS_ISSET_ID);
     }
@@ -3353,7 +3449,7 @@ public class HqlService {
       this.command = null;
     }
 
-    /** Returns true if field command is set (has been asigned a value) and false otherwise */
+    /** Returns true if field command is set (has been assigned a value) and false otherwise */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -3397,7 +3493,7 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -3464,7 +3560,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetNs()) {
-        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3474,7 +3570,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetCommand()) {
-        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3486,33 +3582,33 @@ public class HqlService {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 1: // NS
-            if (field.type == TType.I64) {
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.ns = iprot.readI64();
               setNsIsSet(true);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 2: // COMMAND
-            if (field.type == TType.STRING) {
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.command = iprot.readString();
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -3522,7 +3618,7 @@ public class HqlService {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -3558,23 +3654,41 @@ public class HqlService {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }
 
-  public static class hql_query2_result implements TBase<hql_query2_result, hql_query2_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("hql_query2_result");
+  public static class hql_query2_result implements org.apache.thrift.TBase<hql_query2_result, hql_query2_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("hql_query2_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
-    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     public HqlResult2 success;
     public org.hypertable.thriftgen.ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements TFieldIdEnum {
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
@@ -3636,15 +3750,15 @@ public class HqlService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
-      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, HqlResult2.class)));
-      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, HqlResult2.class)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(hql_query2_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(hql_query2_result.class, metaDataMap);
     }
 
     public hql_query2_result() {
@@ -3694,7 +3808,7 @@ public class HqlService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -3718,7 +3832,7 @@ public class HqlService {
       this.e = null;
     }
 
-    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
     public boolean isSetE() {
       return this.e != null;
     }
@@ -3762,7 +3876,7 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -3829,7 +3943,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3839,7 +3953,7 @@ public class HqlService {
         return lastComparison;
       }
       if (isSetE()) {
-        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3851,34 +3965,34 @@ public class HqlService {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(TProtocol iprot) throws TException {
-      TField field;
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
       while (true)
       {
         field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.success = new HqlResult2();
               this.success.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 1: // E
-            if (field.type == TType.STRUCT) {
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.e = new org.hypertable.thriftgen.ClientException();
               this.e.read(iprot);
             } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           default:
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
         iprot.readFieldEnd();
       }
@@ -3888,7 +4002,7 @@ public class HqlService {
       validate();
     }
 
-    public void write(TProtocol oprot) throws TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       oprot.writeStructBegin(STRUCT_DESC);
 
       if (this.isSetSuccess()) {
@@ -3928,8 +4042,24 @@ public class HqlService {
       return sb.toString();
     }
 
-    public void validate() throws TException {
+    public void validate() throws org.apache.thrift.TException {
       // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
     }
 
   }

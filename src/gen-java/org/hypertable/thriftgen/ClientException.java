@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Exception for thrift clients.
  * 
@@ -37,17 +31,17 @@ import org.apache.thrift.protocol.*;
  * Note: some languages (like php) don't have adequate namespace, so Exception
  * would conflict with language builtins.
  */
-public class ClientException extends Exception implements TBase<ClientException, ClientException._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("ClientException");
+public class ClientException extends Exception implements org.apache.thrift.TBase<ClientException, ClientException._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ClientException");
 
-  private static final TField CODE_FIELD_DESC = new TField("code", TType.I32, (short)1);
-  private static final TField MESSAGE_FIELD_DESC = new TField("message", TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField CODE_FIELD_DESC = new org.apache.thrift.protocol.TField("code", org.apache.thrift.protocol.TType.I32, (short)1);
+  private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)2);
 
   public int code;
   public String message;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     CODE((short)1, "code"),
     MESSAGE((short)2, "message");
 
@@ -111,15 +105,15 @@ public class ClientException extends Exception implements TBase<ClientException,
   private static final int __CODE_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.CODE, new FieldMetaData("code", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I32)));
-    tmpMap.put(_Fields.MESSAGE, new FieldMetaData("message", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.CODE, new org.apache.thrift.meta_data.FieldMetaData("code", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(ClientException.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ClientException.class, metaDataMap);
   }
 
   public ClientException() {
@@ -172,7 +166,7 @@ public class ClientException extends Exception implements TBase<ClientException,
     __isset_bit_vector.clear(__CODE_ISSET_ID);
   }
 
-  /** Returns true if field code is set (has been asigned a value) and false otherwise */
+  /** Returns true if field code is set (has been assigned a value) and false otherwise */
   public boolean isSetCode() {
     return __isset_bit_vector.get(__CODE_ISSET_ID);
   }
@@ -194,7 +188,7 @@ public class ClientException extends Exception implements TBase<ClientException,
     this.message = null;
   }
 
-  /** Returns true if field message is set (has been asigned a value) and false otherwise */
+  /** Returns true if field message is set (has been assigned a value) and false otherwise */
   public boolean isSetMessage() {
     return this.message != null;
   }
@@ -238,7 +232,7 @@ public class ClientException extends Exception implements TBase<ClientException,
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -305,7 +299,7 @@ public class ClientException extends Exception implements TBase<ClientException,
       return lastComparison;
     }
     if (isSetCode()) {
-      lastComparison = TBaseHelper.compareTo(this.code, typedOther.code);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.code, typedOther.code);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -315,7 +309,7 @@ public class ClientException extends Exception implements TBase<ClientException,
       return lastComparison;
     }
     if (isSetMessage()) {
-      lastComparison = TBaseHelper.compareTo(this.message, typedOther.message);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.message, typedOther.message);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -327,33 +321,33 @@ public class ClientException extends Exception implements TBase<ClientException,
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // CODE
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.code = iprot.readI32();
             setCodeIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // MESSAGE
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.message = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -363,7 +357,7 @@ public class ClientException extends Exception implements TBase<ClientException,
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -399,8 +393,24 @@ public class ClientException extends Exception implements TBase<ClientException,
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

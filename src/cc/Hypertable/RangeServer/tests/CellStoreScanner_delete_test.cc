@@ -554,7 +554,7 @@ int main(int argc, char **argv) {
     uint8_t valuebuf[128];
     uint8_t *uptr;
     ByteString bsvalue;
-    size_t num_deletes=0;
+    int64_t num_deletes=0;
 
     uptr = valuebuf;
     Serialization::encode_vi32(&uptr,value.length());

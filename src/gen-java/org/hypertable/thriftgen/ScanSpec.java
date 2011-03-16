@@ -20,12 +20,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.thrift.*;
-import org.apache.thrift.async.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.protocol.*;
-
 /**
  * Specifies options for a scan
  * 
@@ -70,22 +64,22 @@ import org.apache.thrift.protocol.*;
  *   <dd>Indicates whether table scan filters the rows specified instead of individual look up</dd>
  * </dl>
  */
-public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("ScanSpec");
+public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ScanSpec");
 
-  private static final TField ROW_INTERVALS_FIELD_DESC = new TField("row_intervals", TType.LIST, (short)1);
-  private static final TField CELL_INTERVALS_FIELD_DESC = new TField("cell_intervals", TType.LIST, (short)2);
-  private static final TField RETURN_DELETES_FIELD_DESC = new TField("return_deletes", TType.BOOL, (short)3);
-  private static final TField REVS_FIELD_DESC = new TField("revs", TType.I32, (short)4);
-  private static final TField ROW_LIMIT_FIELD_DESC = new TField("row_limit", TType.I32, (short)5);
-  private static final TField START_TIME_FIELD_DESC = new TField("start_time", TType.I64, (short)6);
-  private static final TField END_TIME_FIELD_DESC = new TField("end_time", TType.I64, (short)7);
-  private static final TField COLUMNS_FIELD_DESC = new TField("columns", TType.LIST, (short)8);
-  private static final TField KEYS_ONLY_FIELD_DESC = new TField("keys_only", TType.BOOL, (short)9);
-  private static final TField CELL_LIMIT_FIELD_DESC = new TField("cell_limit", TType.I32, (short)10);
-  private static final TField ROW_REGEXP_FIELD_DESC = new TField("row_regexp", TType.STRING, (short)11);
-  private static final TField VALUE_REGEXP_FIELD_DESC = new TField("value_regexp", TType.STRING, (short)12);
-  private static final TField SCAN_AND_FILTER_ROWS_FIELD_DESC = new TField("scan_and_filter_rows", TType.BOOL, (short)13);
+  private static final org.apache.thrift.protocol.TField ROW_INTERVALS_FIELD_DESC = new org.apache.thrift.protocol.TField("row_intervals", org.apache.thrift.protocol.TType.LIST, (short)1);
+  private static final org.apache.thrift.protocol.TField CELL_INTERVALS_FIELD_DESC = new org.apache.thrift.protocol.TField("cell_intervals", org.apache.thrift.protocol.TType.LIST, (short)2);
+  private static final org.apache.thrift.protocol.TField RETURN_DELETES_FIELD_DESC = new org.apache.thrift.protocol.TField("return_deletes", org.apache.thrift.protocol.TType.BOOL, (short)3);
+  private static final org.apache.thrift.protocol.TField REVS_FIELD_DESC = new org.apache.thrift.protocol.TField("revs", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField ROW_LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("row_limit", org.apache.thrift.protocol.TType.I32, (short)5);
+  private static final org.apache.thrift.protocol.TField START_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("start_time", org.apache.thrift.protocol.TType.I64, (short)6);
+  private static final org.apache.thrift.protocol.TField END_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("end_time", org.apache.thrift.protocol.TType.I64, (short)7);
+  private static final org.apache.thrift.protocol.TField COLUMNS_FIELD_DESC = new org.apache.thrift.protocol.TField("columns", org.apache.thrift.protocol.TType.LIST, (short)8);
+  private static final org.apache.thrift.protocol.TField KEYS_ONLY_FIELD_DESC = new org.apache.thrift.protocol.TField("keys_only", org.apache.thrift.protocol.TType.BOOL, (short)9);
+  private static final org.apache.thrift.protocol.TField CELL_LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("cell_limit", org.apache.thrift.protocol.TType.I32, (short)10);
+  private static final org.apache.thrift.protocol.TField ROW_REGEXP_FIELD_DESC = new org.apache.thrift.protocol.TField("row_regexp", org.apache.thrift.protocol.TType.STRING, (short)11);
+  private static final org.apache.thrift.protocol.TField VALUE_REGEXP_FIELD_DESC = new org.apache.thrift.protocol.TField("value_regexp", org.apache.thrift.protocol.TType.STRING, (short)12);
+  private static final org.apache.thrift.protocol.TField SCAN_AND_FILTER_ROWS_FIELD_DESC = new org.apache.thrift.protocol.TField("scan_and_filter_rows", org.apache.thrift.protocol.TType.BOOL, (short)13);
 
   public List<RowInterval> row_intervals;
   public List<CellInterval> cell_intervals;
@@ -102,7 +96,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   public boolean scan_and_filter_rows;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-  public enum _Fields implements TFieldIdEnum {
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ROW_INTERVALS((short)1, "row_intervals"),
     CELL_INTERVALS((short)2, "cell_intervals"),
     RETURN_DELETES((short)3, "return_deletes"),
@@ -206,40 +200,40 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   private static final int __SCAN_AND_FILTER_ROWS_ISSET_ID = 7;
   private BitSet __isset_bit_vector = new BitSet(8);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.ROW_INTERVALS, new FieldMetaData("row_intervals", TFieldRequirementType.OPTIONAL, 
-        new ListMetaData(TType.LIST, 
-            new StructMetaData(TType.STRUCT, RowInterval.class))));
-    tmpMap.put(_Fields.CELL_INTERVALS, new FieldMetaData("cell_intervals", TFieldRequirementType.OPTIONAL, 
-        new ListMetaData(TType.LIST, 
-            new StructMetaData(TType.STRUCT, CellInterval.class))));
-    tmpMap.put(_Fields.RETURN_DELETES, new FieldMetaData("return_deletes", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.BOOL)));
-    tmpMap.put(_Fields.REVS, new FieldMetaData("revs", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I32)));
-    tmpMap.put(_Fields.ROW_LIMIT, new FieldMetaData("row_limit", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I32)));
-    tmpMap.put(_Fields.START_TIME, new FieldMetaData("start_time", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.END_TIME, new FieldMetaData("end_time", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
-    tmpMap.put(_Fields.COLUMNS, new FieldMetaData("columns", TFieldRequirementType.OPTIONAL, 
-        new ListMetaData(TType.LIST, 
-            new FieldValueMetaData(TType.STRING))));
-    tmpMap.put(_Fields.KEYS_ONLY, new FieldMetaData("keys_only", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.BOOL)));
-    tmpMap.put(_Fields.CELL_LIMIT, new FieldMetaData("cell_limit", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I32)));
-    tmpMap.put(_Fields.ROW_REGEXP, new FieldMetaData("row_regexp", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.VALUE_REGEXP, new FieldMetaData("value_regexp", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    tmpMap.put(_Fields.SCAN_AND_FILTER_ROWS, new FieldMetaData("scan_and_filter_rows", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.BOOL)));
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.ROW_INTERVALS, new org.apache.thrift.meta_data.FieldMetaData("row_intervals", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, RowInterval.class))));
+    tmpMap.put(_Fields.CELL_INTERVALS, new org.apache.thrift.meta_data.FieldMetaData("cell_intervals", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, CellInterval.class))));
+    tmpMap.put(_Fields.RETURN_DELETES, new org.apache.thrift.meta_data.FieldMetaData("return_deletes", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.REVS, new org.apache.thrift.meta_data.FieldMetaData("revs", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.ROW_LIMIT, new org.apache.thrift.meta_data.FieldMetaData("row_limit", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.START_TIME, new org.apache.thrift.meta_data.FieldMetaData("start_time", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.END_TIME, new org.apache.thrift.meta_data.FieldMetaData("end_time", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.COLUMNS, new org.apache.thrift.meta_data.FieldMetaData("columns", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+    tmpMap.put(_Fields.KEYS_ONLY, new org.apache.thrift.meta_data.FieldMetaData("keys_only", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.CELL_LIMIT, new org.apache.thrift.meta_data.FieldMetaData("cell_limit", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.ROW_REGEXP, new org.apache.thrift.meta_data.FieldMetaData("row_regexp", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.VALUE_REGEXP, new org.apache.thrift.meta_data.FieldMetaData("value_regexp", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.SCAN_AND_FILTER_ROWS, new org.apache.thrift.meta_data.FieldMetaData("scan_and_filter_rows", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    FieldMetaData.addStructMetaDataMap(ScanSpec.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ScanSpec.class, metaDataMap);
   }
 
   public ScanSpec() {
@@ -357,7 +351,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     this.row_intervals = null;
   }
 
-  /** Returns true if field row_intervals is set (has been asigned a value) and false otherwise */
+  /** Returns true if field row_intervals is set (has been assigned a value) and false otherwise */
   public boolean isSetRow_intervals() {
     return this.row_intervals != null;
   }
@@ -396,7 +390,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     this.cell_intervals = null;
   }
 
-  /** Returns true if field cell_intervals is set (has been asigned a value) and false otherwise */
+  /** Returns true if field cell_intervals is set (has been assigned a value) and false otherwise */
   public boolean isSetCell_intervals() {
     return this.cell_intervals != null;
   }
@@ -421,7 +415,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.clear(__RETURN_DELETES_ISSET_ID);
   }
 
-  /** Returns true if field return_deletes is set (has been asigned a value) and false otherwise */
+  /** Returns true if field return_deletes is set (has been assigned a value) and false otherwise */
   public boolean isSetReturn_deletes() {
     return __isset_bit_vector.get(__RETURN_DELETES_ISSET_ID);
   }
@@ -444,7 +438,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.clear(__REVS_ISSET_ID);
   }
 
-  /** Returns true if field revs is set (has been asigned a value) and false otherwise */
+  /** Returns true if field revs is set (has been assigned a value) and false otherwise */
   public boolean isSetRevs() {
     return __isset_bit_vector.get(__REVS_ISSET_ID);
   }
@@ -467,7 +461,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.clear(__ROW_LIMIT_ISSET_ID);
   }
 
-  /** Returns true if field row_limit is set (has been asigned a value) and false otherwise */
+  /** Returns true if field row_limit is set (has been assigned a value) and false otherwise */
   public boolean isSetRow_limit() {
     return __isset_bit_vector.get(__ROW_LIMIT_ISSET_ID);
   }
@@ -490,7 +484,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.clear(__START_TIME_ISSET_ID);
   }
 
-  /** Returns true if field start_time is set (has been asigned a value) and false otherwise */
+  /** Returns true if field start_time is set (has been assigned a value) and false otherwise */
   public boolean isSetStart_time() {
     return __isset_bit_vector.get(__START_TIME_ISSET_ID);
   }
@@ -513,7 +507,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.clear(__END_TIME_ISSET_ID);
   }
 
-  /** Returns true if field end_time is set (has been asigned a value) and false otherwise */
+  /** Returns true if field end_time is set (has been assigned a value) and false otherwise */
   public boolean isSetEnd_time() {
     return __isset_bit_vector.get(__END_TIME_ISSET_ID);
   }
@@ -550,7 +544,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     this.columns = null;
   }
 
-  /** Returns true if field columns is set (has been asigned a value) and false otherwise */
+  /** Returns true if field columns is set (has been assigned a value) and false otherwise */
   public boolean isSetColumns() {
     return this.columns != null;
   }
@@ -575,7 +569,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.clear(__KEYS_ONLY_ISSET_ID);
   }
 
-  /** Returns true if field keys_only is set (has been asigned a value) and false otherwise */
+  /** Returns true if field keys_only is set (has been assigned a value) and false otherwise */
   public boolean isSetKeys_only() {
     return __isset_bit_vector.get(__KEYS_ONLY_ISSET_ID);
   }
@@ -598,7 +592,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.clear(__CELL_LIMIT_ISSET_ID);
   }
 
-  /** Returns true if field cell_limit is set (has been asigned a value) and false otherwise */
+  /** Returns true if field cell_limit is set (has been assigned a value) and false otherwise */
   public boolean isSetCell_limit() {
     return __isset_bit_vector.get(__CELL_LIMIT_ISSET_ID);
   }
@@ -620,7 +614,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     this.row_regexp = null;
   }
 
-  /** Returns true if field row_regexp is set (has been asigned a value) and false otherwise */
+  /** Returns true if field row_regexp is set (has been assigned a value) and false otherwise */
   public boolean isSetRow_regexp() {
     return this.row_regexp != null;
   }
@@ -644,7 +638,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     this.value_regexp = null;
   }
 
-  /** Returns true if field value_regexp is set (has been asigned a value) and false otherwise */
+  /** Returns true if field value_regexp is set (has been assigned a value) and false otherwise */
   public boolean isSetValue_regexp() {
     return this.value_regexp != null;
   }
@@ -669,7 +663,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.clear(__SCAN_AND_FILTER_ROWS_ISSET_ID);
   }
 
-  /** Returns true if field scan_and_filter_rows is set (has been asigned a value) and false otherwise */
+  /** Returns true if field scan_and_filter_rows is set (has been assigned a value) and false otherwise */
   public boolean isSetScan_and_filter_rows() {
     return __isset_bit_vector.get(__SCAN_AND_FILTER_ROWS_ISSET_ID);
   }
@@ -832,7 +826,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -1020,7 +1014,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetRow_intervals()) {
-      lastComparison = TBaseHelper.compareTo(this.row_intervals, typedOther.row_intervals);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.row_intervals, typedOther.row_intervals);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1030,7 +1024,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetCell_intervals()) {
-      lastComparison = TBaseHelper.compareTo(this.cell_intervals, typedOther.cell_intervals);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cell_intervals, typedOther.cell_intervals);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1040,7 +1034,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetReturn_deletes()) {
-      lastComparison = TBaseHelper.compareTo(this.return_deletes, typedOther.return_deletes);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.return_deletes, typedOther.return_deletes);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1050,7 +1044,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetRevs()) {
-      lastComparison = TBaseHelper.compareTo(this.revs, typedOther.revs);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.revs, typedOther.revs);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1060,7 +1054,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetRow_limit()) {
-      lastComparison = TBaseHelper.compareTo(this.row_limit, typedOther.row_limit);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.row_limit, typedOther.row_limit);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1070,7 +1064,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetStart_time()) {
-      lastComparison = TBaseHelper.compareTo(this.start_time, typedOther.start_time);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.start_time, typedOther.start_time);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1080,7 +1074,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetEnd_time()) {
-      lastComparison = TBaseHelper.compareTo(this.end_time, typedOther.end_time);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.end_time, typedOther.end_time);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1090,7 +1084,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetColumns()) {
-      lastComparison = TBaseHelper.compareTo(this.columns, typedOther.columns);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.columns, typedOther.columns);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1100,7 +1094,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetKeys_only()) {
-      lastComparison = TBaseHelper.compareTo(this.keys_only, typedOther.keys_only);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.keys_only, typedOther.keys_only);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1110,7 +1104,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetCell_limit()) {
-      lastComparison = TBaseHelper.compareTo(this.cell_limit, typedOther.cell_limit);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cell_limit, typedOther.cell_limit);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1120,7 +1114,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetRow_regexp()) {
-      lastComparison = TBaseHelper.compareTo(this.row_regexp, typedOther.row_regexp);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.row_regexp, typedOther.row_regexp);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1130,7 +1124,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetValue_regexp()) {
-      lastComparison = TBaseHelper.compareTo(this.value_regexp, typedOther.value_regexp);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.value_regexp, typedOther.value_regexp);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1140,7 +1134,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetScan_and_filter_rows()) {
-      lastComparison = TBaseHelper.compareTo(this.scan_and_filter_rows, typedOther.scan_and_filter_rows);
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.scan_and_filter_rows, typedOther.scan_and_filter_rows);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1152,20 +1146,20 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // ROW_INTERVALS
-          if (field.type == TType.LIST) {
+          if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              TList _list0 = iprot.readListBegin();
+              org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
               this.row_intervals = new ArrayList<RowInterval>(_list0.size);
               for (int _i1 = 0; _i1 < _list0.size; ++_i1)
               {
@@ -1177,13 +1171,13 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
               iprot.readListEnd();
             }
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // CELL_INTERVALS
-          if (field.type == TType.LIST) {
+          if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              TList _list3 = iprot.readListBegin();
+              org.apache.thrift.protocol.TList _list3 = iprot.readListBegin();
               this.cell_intervals = new ArrayList<CellInterval>(_list3.size);
               for (int _i4 = 0; _i4 < _list3.size; ++_i4)
               {
@@ -1195,53 +1189,53 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
               iprot.readListEnd();
             }
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // RETURN_DELETES
-          if (field.type == TType.BOOL) {
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
             this.return_deletes = iprot.readBool();
             setReturn_deletesIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // REVS
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.revs = iprot.readI32();
             setRevsIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 5: // ROW_LIMIT
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.row_limit = iprot.readI32();
             setRow_limitIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 6: // START_TIME
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.start_time = iprot.readI64();
             setStart_timeIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 7: // END_TIME
-          if (field.type == TType.I64) {
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.end_time = iprot.readI64();
             setEnd_timeIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 8: // COLUMNS
-          if (field.type == TType.LIST) {
+          if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              TList _list6 = iprot.readListBegin();
+              org.apache.thrift.protocol.TList _list6 = iprot.readListBegin();
               this.columns = new ArrayList<String>(_list6.size);
               for (int _i7 = 0; _i7 < _list6.size; ++_i7)
               {
@@ -1252,49 +1246,49 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
               iprot.readListEnd();
             }
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 9: // KEYS_ONLY
-          if (field.type == TType.BOOL) {
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
             this.keys_only = iprot.readBool();
             setKeys_onlyIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 10: // CELL_LIMIT
-          if (field.type == TType.I32) {
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.cell_limit = iprot.readI32();
             setCell_limitIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 11: // ROW_REGEXP
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.row_regexp = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 12: // VALUE_REGEXP
-          if (field.type == TType.STRING) {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.value_regexp = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 13: // SCAN_AND_FILTER_ROWS
-          if (field.type == TType.BOOL) {
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
             this.scan_and_filter_rows = iprot.readBool();
             setScan_and_filter_rowsIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
@@ -1304,7 +1298,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -1312,7 +1306,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       if (isSetRow_intervals()) {
         oprot.writeFieldBegin(ROW_INTERVALS_FIELD_DESC);
         {
-          oprot.writeListBegin(new TList(TType.STRUCT, this.row_intervals.size()));
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.row_intervals.size()));
           for (RowInterval _iter9 : this.row_intervals)
           {
             _iter9.write(oprot);
@@ -1326,7 +1320,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       if (isSetCell_intervals()) {
         oprot.writeFieldBegin(CELL_INTERVALS_FIELD_DESC);
         {
-          oprot.writeListBegin(new TList(TType.STRUCT, this.cell_intervals.size()));
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.cell_intervals.size()));
           for (CellInterval _iter10 : this.cell_intervals)
           {
             _iter10.write(oprot);
@@ -1365,7 +1359,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       if (isSetColumns()) {
         oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
         {
-          oprot.writeListBegin(new TList(TType.STRING, this.columns.size()));
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.columns.size()));
           for (String _iter11 : this.columns)
           {
             oprot.writeString(_iter11);
@@ -1514,8 +1508,26 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }
