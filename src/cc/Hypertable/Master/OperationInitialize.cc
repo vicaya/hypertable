@@ -44,10 +44,6 @@ OperationInitialize::OperationInitialize(ContextPtr &context)
 OperationInitialize::OperationInitialize(ContextPtr &context,
                                          const MetaLog::EntityHeader &header_)
   : Operation(context, header_) {
-  if (m_table.id && *m_table.id != 0) {
-    m_root_range_name = format("%s[%s..%s]", m_table.id, "", Key::END_ROOT_ROW);
-    m_metadata_range_name = format("%s[%s..%s]", m_table.id, Key::END_ROOT_ROW, Key::END_ROW_MARKER);
-  }
 }
 
 
@@ -255,7 +251,23 @@ void OperationInitialize::decode_state(const uint8_t **bufp, size_t *remainp) {
   m_metadata_root_location = Serialization::decode_vstr(bufp, remainp);
   m_metadata_secondlevel_location = Serialization::decode_vstr(bufp, remainp);
   m_table.decode(bufp, remainp);
+  if (m_table.id && *m_table.id != 0) {
+    m_root_range_name = format("%s[%s..%s]", m_table.id, "", Key::END_ROOT_ROW);
+    m_metadata_range_name = format("%s[%s..%s]", m_table.id, Key::END_ROOT_ROW, Key::END_ROW_MARKER);
+  }
 }
+
+void OperationInitialize::decode_result(const uint8_t **bufp, size_t *remainp) {
+  // We need to do this here because we don't know the
+  // state until we're decoding and if the state is COMPLETE,
+  // this method is called instead of decode_state
+  if (is_complete())
+    m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
+                                          m_context->hyperspace, m_context->namemap,
+                                          TableIdentifier::METADATA_NAME);
+  Operation::decode_result(bufp, remainp);
+}
+
 
 const String OperationInitialize::name() {
   return "OperationInitialize";

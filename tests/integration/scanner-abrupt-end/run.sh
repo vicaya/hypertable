@@ -12,7 +12,7 @@ set -v
 $HT_HOME/bin/clean-database.sh
 $HT_HOME/bin/start-all-servers.sh local
 
-cmd="$HT_HOME/bin/ht hypertable --no-prompt --command-file='$SCRIPT_DIR/create-table.hql'"
+cmd="$HT_HOME/bin/ht hypertable --no-prompt --command-file=$SCRIPT_DIR/create-table.hql"
 echo "$cmd"
 ${cmd}
 

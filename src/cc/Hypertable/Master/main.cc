@@ -162,14 +162,6 @@ int main(int argc, char **argv) {
 
     // Then reconstruct state and start execution
     for (size_t i=0; i<entities.size(); i++) {
-
-      // Create metadata_table
-      OperationInitialize *init_op = dynamic_cast<OperationInitialize *>(entities[i].get());
-      if (init_op && init_op->is_complete())
-        context->metadata_table = new Table(context->props, context->conn_manager,
-                                            context->hyperspace, context->namemap,
-                                            TableIdentifier::METADATA_NAME);
-
       operation = dynamic_cast<Operation *>(entities[i].get());
       if (operation)
         operations.push_back(operation);
