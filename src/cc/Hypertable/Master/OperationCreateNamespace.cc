@@ -102,6 +102,7 @@ void OperationCreateNamespace::execute() {
     }
     HT_MAYBE_FAIL("create-namespace-ASSIGN_ID-b");
     complete_ok();
+    HT_MAYBE_FAIL("create-namespace-ASSIGN_ID-c");
     break;
 
   default:

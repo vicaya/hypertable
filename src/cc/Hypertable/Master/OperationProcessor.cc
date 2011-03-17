@@ -248,6 +248,7 @@ void OperationProcessor::Worker::operator()() {
         if (e.code() == Error::INDUCED_FAILURE) {
           m_context.shutdown = true;
           m_context.cond.notify_all();
+          m_context.master_context->mml_writer->close();
           break;
         }
         HT_ERROR_OUT << e << HT_END;

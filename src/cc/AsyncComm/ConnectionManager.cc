@@ -182,15 +182,16 @@ bool ConnectionManager::wait_for_connection(ConnectionState *conn_state,
     boost::mutex::scoped_lock conn_lock(conn_state->mutex);
     boost::xtime drop_time;
 
-    if (conn_state->decomissioned)
-      return false;
-
-    while (!conn_state->connected) {
+    while (!conn_state->connected && !conn_state->decomissioned) {
       boost::xtime_get(&drop_time, boost::TIME_UTC);
       xtime_add_millis(drop_time, timer.remaining());
       if (!conn_state->cond.timed_wait(conn_lock, drop_time))
         return false;
     }
+
+    if (conn_state->decomissioned)
+      return false;
+
   }
 
   return true;
@@ -271,6 +272,7 @@ int ConnectionManager::remove(const CommAddress &addr) {
 	  check_inet_addr = true;
 	  inet_addr = (*iter).second->inet_addr;
 	  (*iter).second->decomissioned = true;
+          (*iter).second->cond.notify_all();
 	  if ((*iter).second->connected)
 	    do_close = true;
 	  else
@@ -291,6 +293,7 @@ int ConnectionManager::remove(const CommAddress &addr) {
 	{
 	  ScopedLock conn_lock((*iter).second->mutex);
 	  (*iter).second->decomissioned = true;
+          (*iter).second->cond.notify_all();
 	  if ((*iter).second->connected)
 	    do_close = true;
 	  else

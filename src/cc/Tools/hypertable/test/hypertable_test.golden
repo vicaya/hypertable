@@ -28,18 +28,18 @@ CREATE TABLE foo (
 
 DROP TABLE foo;
 DROP NAMESPACE "/test";
-Error: Master 'drop namespace' error, name=test - HYPERSPACE directory not empty
+Error: MasterClient operation drop_namespace('test', if_exists=false) failed - HYPERSPACE directory not empty
 USE "/test";
 DROP NAMESPACE "subtest";
 RENAME TABLE foo TO foo_renamed;
 GET LISTING;
 foo_renamed
 DROP TABLE foo;
-Error: Master 'drop table' error - HYPERTABLE table does not exist
+Error: MasterClient operation drop_table('test/foo', if_exists=false) failed - HYPERTABLE table does not exist
 DROP TABLE foo_renamed;
 DROP NAMESPACE "/test";
 CREATE TABLE foo('test');
-Error: Master 'create table' error, tablename=test/foo - HYPERTABLE namespace does not exist
+Error: MasterClient operation create_table('test/foo') failed - HYPERTABLE namespace does not exist
 CREATE NAMESPACE "/test";
 USE "/test";
 DROP TABLE IF EXISTS hypertable;

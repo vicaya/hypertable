@@ -45,8 +45,10 @@ const char *DefinitionMaster::name() {
 
 Entity *DefinitionMaster::create(const EntityHeader &header) {
 
-  if (header.type == EntityType::RANGE_SERVER_CONNECTION)
-    return new RangeServerConnection(m_context->mml_writer, header);
+  if (header.type == EntityType::RANGE_SERVER_CONNECTION) {
+    MetaLog::WriterPtr mml_writer = m_context ? m_context->mml_writer : 0;
+    return new RangeServerConnection(mml_writer, header);
+  }
   else if (header.type == EntityType::OPERATION_INITIALIZE)
     return new OperationInitialize(m_context, header);
   else if (header.type == EntityType::OPERATION_ALTER_TABLE)

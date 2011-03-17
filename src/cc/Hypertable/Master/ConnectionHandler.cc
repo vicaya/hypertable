@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/Config.h"
 #include "Common/Error.h"
+#include "Common/FailureInducer.h"
 #include "Common/StringExt.h"
 #include "Common/Serialization.h"
 
@@ -142,6 +143,8 @@ void ConnectionHandler::handle(EventPtr &event) {
                   (Llu)event->header.command);
       }
       if (operation) {
+        if (event->header.command != MasterProtocol::COMMAND_STATUS)
+          HT_MAYBE_FAIL("connection-handler-before-id-response");
         if (send_id_response(event, operation) != Error::OK)
           return;
         m_context->op->add_operation(operation);

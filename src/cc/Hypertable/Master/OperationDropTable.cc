@@ -172,13 +172,14 @@ void OperationDropTable::display_state(std::ostream &os) {
 
 size_t OperationDropTable::encoded_state_length() const {
   size_t length = Serialization::encoded_length_vstr(m_name) +
-    Serialization::encoded_length_vstr(m_id) + 4;
+    Serialization::encoded_length_vstr(m_id) + 5;
   for (StringSet::iterator iter = m_completed.begin(); iter != m_completed.end(); ++iter)
     length += Serialization::encoded_length_vstr(*iter);
   return length;
 }
 
 void OperationDropTable::encode_state(uint8_t **bufp) const {
+  Serialization::encode_bool(bufp, m_if_exists);
   Serialization::encode_vstr(bufp, m_name);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());

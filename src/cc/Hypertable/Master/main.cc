@@ -242,6 +242,7 @@ void obtain_master_lock(ContextPtr &context) {
       uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
       LockSequencer sequencer;
       bool reported = false;
+      uint32_t retry_interval = context->props->get_i32("Hypertable.Connection.Retry.Interval");
 
       context->master_file_handle = context->hyperspace->open(context->toplevel_dir + "/master", oflags);
 
@@ -256,9 +257,11 @@ void obtain_master_lock(ContextPtr &context) {
                      context->toplevel_dir.c_str());
             reported = true;
           }
-          poll(0, 0, 15000);
+          poll(0, 0, retry_interval);
         }
       }
+
+      HT_INFOF("Obtained lock on '%s/master'", context->toplevel_dir.c_str());
 
       /**
        * Write master location in 'address' attribute, format is IP:port

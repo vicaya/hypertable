@@ -172,6 +172,8 @@ void DefaultPolicy::init_options() {
         "Number of client worker threads created")
     ("Hypertable.Client.RefreshSchema", boo()->default_value(true),
         "Refresh client version of schema automatically")
+    ("Hypertable.Connection.Retry.Interval", i32()->default_value(10000),
+        "Average time, in milliseconds, between connection retry atempts")
     ("Hypertable.LoadMetrics.Interval", i32()->default_value(3600), "Period of "
         "time, in seconds, between writing metrics to sys/RS_METRICS")
     ("Hypertable.Request.Timeout", i32()->default_value(600000), "Length of "

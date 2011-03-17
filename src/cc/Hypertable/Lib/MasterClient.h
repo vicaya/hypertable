@@ -132,28 +132,31 @@ namespace Hypertable {
 
     void hyperspace_disconnected();
     void hyperspace_reconnected();
-    void send_message(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer);
-    int64_t initiate_operation(CommBufPtr &cbp, Timer *timer);
+    void send_message_async(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer, const String &label);
+    bool send_message(CommBufPtr &cbp, Timer *timer, EventPtr &event, const String &label);
+    void fetch_result(int64_t id, Timer *timer, EventPtr &event, const String &label);
     void initialize_hyperspace();
+    void initialize(Timer *&timer, Timer &tmp_timer);
 
     Mutex                  m_mutex;
     boost::condition       m_cond;
     bool                   m_verbose;
     Comm                  *m_comm;
-    ConnectionManagerPtr   m_conn_manager_ptr;
+    ConnectionManagerPtr   m_conn_manager;
     Hyperspace::SessionPtr m_hyperspace;
-    ApplicationQueuePtr    m_app_queue_ptr;
+    ApplicationQueuePtr    m_app_queue;
     uint64_t               m_master_file_handle;
-    Hyperspace::HandleCallbackPtr m_master_file_callback_ptr;
+    Hyperspace::HandleCallbackPtr m_master_file_callback;
     InetAddr               m_master_addr;
     String                 m_master_addr_string;
-    DispatchHandlerPtr     m_dispatcher_handler_ptr;
+    DispatchHandlerPtr     m_dispatcher_handler;
     bool                   m_hyperspace_init;
     bool                   m_hyperspace_connected;
     Mutex                  m_hyperspace_mutex;
     uint32_t               m_timeout_ms;
     MasterClientHyperspaceSessionCallback m_hyperspace_session_callback;
     String                 m_toplevel_dir;
+    uint32_t               m_retry_interval;
   };
 
   typedef intrusive_ptr<MasterClient> MasterClientPtr;

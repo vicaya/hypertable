@@ -162,6 +162,9 @@ bool Context::next_available_server(RangeServerConnectionPtr &rsc) {
   if (m_server_list.empty())
     return false;
 
+  if (m_server_list_iter == m_server_list.end())
+    m_server_list_iter = m_server_list.begin();
+
   ServerList::iterator saved_iter = m_server_list_iter;
 
   do {

@@ -300,7 +300,7 @@ void RangeServer::shutdown() {
       delete Global::metadata_log;
     }
     if (Global::system_log) {
-      Global::metadata_log->close();
+      Global::system_log->close();
       delete Global::system_log;
     }
     if (Global::user_log) {
@@ -2970,7 +2970,7 @@ void RangeServer::close(ResponseCallback *cb) {
       Global::metadata_log->close();
 
     if (Global::system_log)
-      Global::metadata_log->close();
+      Global::system_log->close();
 
     if (Global::user_log)
       Global::user_log->close();

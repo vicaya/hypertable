@@ -100,11 +100,11 @@ void OperationDropNamespace::execute() {
       if (e.code() == Error::INDUCED_FAILURE)
         throw;
       if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND &&
-          e.code() != Error::HYPERSPACE_BAD_PATHNAME &&
-          e.code() != Error::HYPERSPACE_DIR_NOT_EMPTY)
+          e.code() != Error::HYPERSPACE_BAD_PATHNAME) {
         HT_ERROR_OUT << e << HT_END;
-      complete_error(e);
-      return;
+        complete_error(e);
+        return;
+      }
     }
     complete_ok();
     break;
