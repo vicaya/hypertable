@@ -41,12 +41,33 @@ void ResponseManager::operator()() {
     {
       ScopedLock lock(m_context->mutex);
 
+      timed_wait = false;
+      if (!op_expiration_time_index.empty()) {
+        expire_time = op_expiration_time_index.begin()->expiration_time();
+        timed_wait = true;
+      }
+
+      if (!delivery_expiration_time_index.empty()) {
+        if (!timed_wait || delivery_expiration_time_index.begin()->expiration_time < expire_time)
+          expire_time = delivery_expiration_time_index.begin()->expiration_time;
+        timed_wait = true;
+      }
+
+      if (timed_wait) {
+        boost::xtime xt = expire_time;
+        m_context->cond.timed_wait(lock, xt);
+      }
+      else
+        m_context->cond.wait(lock);
+
+      shutdown = m_context->shutdown;
+
       now.reset();
 
       op_iter = op_expiration_time_index.begin();
       while (op_iter != op_expiration_time_index.end()) {
         if (op_iter->expiration_time() < now) {
-          m_context->mml_writer->record_removal(op_iter->op.get());
+          m_context->removal_queue.push_back(op_iter->op);
           op_iter = op_expiration_time_index.erase(op_iter);
         }
         else
@@ -60,29 +81,6 @@ void ResponseManager::operator()() {
         else
           break;
       }
-
-      timed_wait = false;
-      if (op_iter != op_expiration_time_index.end()) {
-        expire_time = op_iter->expiration_time();
-        if (delivery_iter != delivery_expiration_time_index.end()) {
-          if (delivery_iter->expiration_time < expire_time)
-            expire_time = delivery_iter->expiration_time;
-        }
-        timed_wait = true;
-      }
-      else if (delivery_iter != delivery_expiration_time_index.end()) {
-        expire_time = delivery_iter->expiration_time;
-        timed_wait = true;
-      }
-
-      if (timed_wait) {
-        boost::xtime xt = expire_time;
-        m_context->cond.timed_wait(lock, xt);
-      }
-      else
-        m_context->cond.wait(lock);
-
-      shutdown = m_context->shutdown;
 
       operations.clear();
       entities.clear();
