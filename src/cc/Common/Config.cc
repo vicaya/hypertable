@@ -335,12 +335,12 @@ void DefaultPolicy::init_options() {
         "Host of DFS Broker to use for Commit Log")
     ("Hypertable.RangeServer.CommitLog.DfsBroker.Port", i16(),
         "Port of DFS Broker to use for Commit Log")
-    ("Hypertable.RangeServer.CommitLog.PruneThreshold.Min", i64(),
+    ("Hypertable.RangeServer.CommitLog.PruneThreshold.Min", i64()->default_value(1*G),
         "Lower threshold for amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.PruneThreshold.Max", i64(),
         "Upper threshold for amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.PruneThreshold.Max.MemoryPercentage",
-        i32()->default_value(75), "Upper threshold in terms of % RAM for "
+        i32()->default_value(50), "Upper threshold in terms of % RAM for "
         "amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
