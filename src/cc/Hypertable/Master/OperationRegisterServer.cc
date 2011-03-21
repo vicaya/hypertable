@@ -73,6 +73,18 @@ void OperationRegisterServer::execute() {
            (Lld)header.id, m_rsc->location().c_str(), m_system_stats.net_info.host_name.c_str(),
            m_local_addr.format().c_str(), m_public_addr.format().c_str());
 
+  /** Send back Response **/
+  {
+    CommHeader header;
+    header.initialize_from_request_header(m_event->header);
+    CommBufPtr cbp(new CommBuf(header, encoded_result_length()));
+    encode_result(cbp->get_data_ptr_address());
+    int error = m_context->comm->send_response(m_event->addr, cbp);
+    if (error != Error::OK)
+      HT_ERRORF("Problem sending response (location=%s) back to %s",
+                m_location.c_str(), m_event->addr.format().c_str());
+  }
+
   complete_ok_no_log();
   m_context->op->unblock(m_location);
   m_context->op->unblock(Dependency::SERVERS);

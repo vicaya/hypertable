@@ -195,6 +195,7 @@ namespace {
     { Error::MASTER_LOCATION_ALREADY_ASSIGNED,
       "MASTER location already assigned" },
     { Error::MASTER_LOCATION_INVALID, "MASTER location invalid" },
+    { Error::MASTER_OPERATION_IN_PROGRESS, "MASTER operation in progress" },
 
     { Error::RANGESERVER_GENERATION_MISMATCH,
         "RANGE SERVER generation mismatch" },

@@ -69,7 +69,8 @@ void get_table_server_set(ContextPtr &context, const String &id, StringSet &serv
   while (scanner->next(cell)) {
     location = String((const char *)cell.value, cell.value_len);
     boost::trim(location);
-    servers.insert(location);
+    if (location != "!")
+      servers.insert(location);
   }
 }
 
@@ -248,33 +249,44 @@ bool next_available_server(ContextPtr &context, String &location) {
 
 
 void create_table_load_range(ContextPtr &context, const String &location, TableIdentifier *table, RangeSpec &range, bool needs_compaction) {
+  RangeServerClient rsc(context->comm);
+  CommAddress addr;
+
+  if (context->test_mode) {
+    RangeServerConnectionPtr rsc;
+    HT_WARNF("Skipping %s::load_range() because in TEST MODE", location.c_str());
+    HT_ASSERT(context->find_server_by_location(location, rsc));
+    if (!rsc->connected())
+      HT_THROW(Error::COMM_NOT_CONNECTED, "");
+    return;
+  }
+
+  addr.set_proxy(location);
 
   try {
-    RangeServerClient rsc(context->comm);
-    CommAddress addr;
     RangeState range_state;
-
-    addr.set_proxy(location);
 
     if (table->is_metadata())
       range_state.soft_limit = context->range_split_size;
     else
       range_state.soft_limit = context->range_split_size / std::min(64, (int)context->server_count()*2);
 
-    if (context->test_mode) {
-      RangeServerConnectionPtr rsc;
-      HT_WARNF("Skipping %s::load_range() because in TEST MODE", location.c_str());
-      HT_ASSERT(context->find_server_by_location(location, rsc));
-      if (!rsc->connected())
-        HT_THROW(Error::COMM_NOT_CONNECTED, "");
-    }
-    else
-      rsc.load_range(addr, *table, range, 0, range_state, needs_compaction);
+    rsc.load_range(addr, *table, range, 0, range_state, needs_compaction);
   }
   catch (Exception &e) {
     if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED)
-      throw;
+      HT_THROW2F(e.code(), e, "Problem loading range %s[%s..%s] in %s",
+                 table->id, range.start_row, range.end_row, location.c_str());
   }
+
+  try {
+    rsc.acknowledge_load(addr, *table, range);
+  }
+  catch (Exception &e) {
+    HT_THROW2F(e.code(), e, "Problem acknowledging load for %s[%s..%s] in %s",
+               table->id, range.start_row, range.end_row, location.c_str());
+  }
+
 }
 
 int64_t range_hash_code(const TableIdentifier &table, const RangeSpec &range, const char *qualifier) {

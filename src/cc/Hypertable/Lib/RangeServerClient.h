@@ -58,37 +58,6 @@ namespace Hypertable {
     }
     uint32_t default_timeout() const { return m_default_timeout_ms; }
 
-    /** Issues a "load range" request asynchronously.
-     *
-     * @param addr address of RangeServer
-     * @param table table identifier
-     * @param range range specification
-     * @param transfer_log transfer log
-     * @param range_state range state
-     * @param needs_compaction if true range needs compaction after load
-     * @param handler response handler
-     */
-    void load_range(const CommAddress &addr, const TableIdentifier &table,
-                    const RangeSpec &range, const char *transfer_log,
-                    const RangeState &range_state, bool needs_compaction,
-                    DispatchHandler *handler);
-
-    /** Issues a "load range" request asynchronously with timer.
-     *
-     * @param addr address of RangeServer
-     * @param table table identifier
-     * @param range range specification
-     * @param transfer_log transfer log
-     * @param range_state range state
-     * @param needs_compaction if true range needs compaction after load
-     * @param handler response handler
-     * @param timer timer
-     */
-    void load_range(const CommAddress &addr, const TableIdentifier &table,
-                    const RangeSpec &range, const char *transfer_log,
-                    const RangeState &range_state, bool needs_compaction,
-                    DispatchHandler *handler, Timer &timer);
-
     /** Issues a synchronous "load range" request.
      *
      * @param addr address of RangeServer
@@ -115,6 +84,25 @@ namespace Hypertable {
     void load_range(const CommAddress &addr, const TableIdentifier &table,
                     const RangeSpec &range, const char *transfer_log,
                     const RangeState &range_state, bool needs_compaction, Timer &timer);
+
+    /** Issues a synchronous "acknowledge load" request.
+     *
+     * @param addr address of RangeServer
+     * @param table table identifier
+     * @param range range specification
+     */
+    void acknowledge_load(const CommAddress &addr, const TableIdentifier &table,
+                          const RangeSpec &range);
+
+    /** Issues a synchronous "load range" request with timer.
+     *
+     * @param addr address of RangeServer
+     * @param table table identifier
+     * @param range range specification
+     * @param timer timer
+     */
+    void acknowledge_load(const CommAddress &addr, const TableIdentifier &table,
+                          const RangeSpec &range, Timer &timer);
 
     /** Issues an "update" request asynchronously.  The data argument holds a
      * sequence of key/value pairs.  Each key/value pair is encoded as two

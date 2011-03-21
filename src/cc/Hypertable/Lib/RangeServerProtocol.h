@@ -56,7 +56,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_COMMIT_LOG_SYNC      = 17;
     static const uint64_t COMMAND_CLOSE                = 18;
     static const uint64_t COMMAND_WAIT_FOR_MAINTENANCE = 19;
-    static const uint64_t COMMAND_MAX                  = 20;
+    static const uint64_t COMMAND_ACKNOWLEDGE_LOAD     = 20;
+    static const uint64_t COMMAND_MAX                  = 21;
 
     static const char *m_command_strings[];
 
@@ -218,6 +219,15 @@ namespace Hypertable {
      */
     static CommBuf *create_request_drop_range(const TableIdentifier &table,
                                               const RangeSpec &range);
+
+    /** Creates a "acknowledge load" request message.
+     *
+     * @param table table identifier
+     * @param range range specification
+     * @return protocol message
+     */
+    static CommBuf *create_request_acknowledge_load(const TableIdentifier &table,
+                                                    const RangeSpec &range);
 
     /** Creates a "get statistics" request message.
      *

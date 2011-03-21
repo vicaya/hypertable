@@ -43,16 +43,20 @@ Operation::Operation(ContextPtr &context, int32_t type)
   int32_t timeout = m_context->props->get_i32("Hypertable.Request.Timeout");
   m_expiration_time.sec = time(0) + timeout/1000;
   m_expiration_time.nsec = (timeout%1000) * 1000000LL;
+  m_hash_code = (int64_t)header.id;
 }
 
 Operation::Operation(ContextPtr &context, EventPtr &event, int32_t type)
   : MetaLog::Entity(type), m_context(context), m_event(event), m_state(OperationState::INITIAL), m_error(0) {
   m_expiration_time.sec = time(0) + m_event->header.timeout_ms/1000;
   m_expiration_time.nsec = (m_event->header.timeout_ms%1000) * 1000000LL;
+  m_hash_code = (int64_t)header.id;
 }
 
 Operation::Operation(ContextPtr &context, const MetaLog::EntityHeader &header_)
-  : MetaLog::Entity(header_), m_context(context), m_state(OperationState::INITIAL), m_error(0) { }
+  : MetaLog::Entity(header_), m_context(context), m_state(OperationState::INITIAL), m_error(0) {
+  m_hash_code = (int64_t)header.id;
+}
 
 void Operation::display(std::ostream &os) {
 
@@ -105,7 +109,7 @@ size_t Operation::encoded_length() const {
   size_t length = 16;
 
   if (m_state == OperationState::COMPLETE) {
-    length += encoded_result_length();
+    length += 8 + encoded_result_length();
   }
   else {
     length += encoded_state_length();
@@ -127,8 +131,10 @@ void Operation::encode(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_state);
   Serialization::encode_i64(bufp, m_expiration_time.sec);
   Serialization::encode_i32(bufp, m_expiration_time.nsec);
-  if (m_state == OperationState::COMPLETE)
+  if (m_state == OperationState::COMPLETE) {
+    Serialization::encode_i64(bufp, m_hash_code);
     encode_result(bufp);
+  }
   else {
     encode_state(bufp);
     Serialization::encode_vi32(bufp, m_exclusivities.size());
@@ -150,8 +156,10 @@ void Operation::decode(const uint8_t **bufp, size_t *remainp) {
   m_state = Serialization::decode_i32(bufp, remainp);
   m_expiration_time.sec = Serialization::decode_i64(bufp, remainp);
   m_expiration_time.nsec = Serialization::decode_i32(bufp, remainp);
-  if (m_state == OperationState::COMPLETE)
+  if (m_state == OperationState::COMPLETE) {
+    m_hash_code = Serialization::decode_i64(bufp, remainp);
     decode_result(bufp, remainp);
+  }
   else {
     decode_state(bufp, remainp);
 
@@ -229,10 +237,6 @@ void Operation::complete_ok_no_log() {
   m_exclusivities.clear();
 }
 
-int64_t Operation::hash_code() const {
-  return (int64_t)header.id;
-}
-
 void Operation::exclusivities(DependencySet &exclusivities) {
   ScopedLock lock(m_mutex);
   exclusivities = m_exclusivities;
@@ -276,6 +280,7 @@ namespace {
     { OperationState::SCAN_METADATA, "SCAN_METADATA" },
     { OperationState::ISSUE_REQUESTS, "ISSUE_REQUESTS" },
     { OperationState::UPDATE_HYPERSPACE, "UPDATE_HYPERSPACE" },
+    { OperationState::ACKNOWLEDGE, "ACKNOWLEDGE" },
     { OperationState::FINALIZE, "FINALIZE" },
     { 0, 0 }
   };

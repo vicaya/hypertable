@@ -1,12 +1,12 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
- * License, or any later version.
+ * License.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,31 +19,38 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_EVENTHANDLERMASTERCONNECTION_H
-#define HYPERTABLE_EVENTHANDLERMASTERCONNECTION_H
+#ifndef HYPERTABLE_LOCATIONINITIALIZER_H
+#define HYPERTABLE_LOCATIONINITIALIZER_H
 
-#include "Common/InetAddr.h"
+#include "Common/String.h"
+#include "Common/Mutex.h"
 
-#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/ConnectionInitializer.h"
 
+#include <boost/thread/condition.hpp>
 
 namespace Hypertable {
 
-  class MasterClient;
+  class LocationInitializer : public ConnectionInitializer {
 
-  class EventHandlerMasterConnection : public ApplicationHandler {
   public:
-    EventHandlerMasterConnection(MasterClientPtr &master_client, EventPtr &event_ptr);
-
-    virtual void run();
+    LocationInitializer(PropertiesPtr &props);
+    virtual CommBuf *create_initialization_request();
+    virtual bool process_initialization_response(Event *event);
+    String get();
+    void wait_until_assigned();
 
   private:
-    MasterClientPtr m_master;
+    Mutex m_mutex;
+    boost::condition m_cond;
+    PropertiesPtr m_props;
+    String m_location;
     String m_location_file;
     bool m_location_persisted;
   };
+  typedef boost::intrusive_ptr<LocationInitializer> LocationInitializerPtr;
 
 }
 
-#endif // HYPERTABLE_EVENTHANDLERMASTERCONNECTION_H
 
+#endif // HYPERTABLE_LOCATIONINITIALIZER_H

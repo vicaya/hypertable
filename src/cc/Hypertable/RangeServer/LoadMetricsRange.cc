@@ -25,7 +25,6 @@
 
 #include "Global.h"
 #include "LoadMetricsRange.h"
-#include "Location.h"
 
 using namespace Hypertable;
 
@@ -78,7 +77,7 @@ void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
                         byte_read_rate, byte_write_rate);
 
   KeySpec key;
-  String row = Location::get() + ":" + m_table_id;
+  String row = Global::location_initializer->get() + ":" + m_table_id;
 
   key.row = row.c_str();
   key.row_len = row.length();

@@ -68,7 +68,7 @@ namespace Hypertable {
     MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms);
     ~MasterClient();
 
-    void initiate_connection(DispatchHandlerPtr dhp);
+    void initiate_connection(DispatchHandlerPtr dhp=0, ConnectionInitializerPtr init=0);
 
     bool wait_for_connection(uint32_t max_wait_ms);
     bool wait_for_connection(Timer &timer);
@@ -150,6 +150,7 @@ namespace Hypertable {
     InetAddr               m_master_addr;
     String                 m_master_addr_string;
     DispatchHandlerPtr     m_dispatcher_handler;
+    ConnectionInitializerPtr m_connection_initializer;
     bool                   m_hyperspace_init;
     bool                   m_hyperspace_connected;
     Mutex                  m_hyperspace_mutex;

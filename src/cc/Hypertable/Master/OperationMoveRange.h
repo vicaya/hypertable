@@ -46,11 +46,9 @@ namespace Hypertable {
     virtual void encode_state(uint8_t **bufp) const;
     virtual void decode_state(const uint8_t **bufp, size_t *remainp);
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
-    virtual int64_t hash_code() const;
     virtual bool remove_explicitly() { return m_remove_explicitly; }
 
     String get_location() { return m_location; }
-    void abort_operation();
 
   private:
     TableIdentifierManaged m_table;

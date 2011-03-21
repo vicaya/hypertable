@@ -654,7 +654,7 @@ void move_range_test(ContextPtr &context) {
 
   expected_operations.clear();
   expected_operations.insert( std::pair<String, int32_t>("OperationMoveRange", OperationState::STARTED) );
-  run_test(context, log_dir, entities, "move-range-INITIAL:throw:0",
+  run_test(context, log_dir, entities, "move-range-INITIAL-b:throw:0",
            expected_operations, expected_servers);
 
   String initial_location = move_range_operation->get_location();

@@ -83,13 +83,15 @@ MasterClient::~MasterClient() {
 }
 
 
-void MasterClient::initiate_connection(DispatchHandlerPtr dhp) {
+void MasterClient::initiate_connection(DispatchHandlerPtr dhp, ConnectionInitializerPtr init) {
+  m_connection_initializer = init;
   m_dispatcher_handler = dhp;
   if (m_master_file_handle == 0)
     HT_THROW(Error::MASTER_NOT_RUNNING,
              "MasterClient unable to connect to Master");
   reload_master();
 }
+
 
 void MasterClient::hyperspace_disconnected()
 {
@@ -418,22 +420,11 @@ MasterClient::register_server(std::string &location, uint16_t listen_port,
   Timer tmp_timer(m_timeout_ms);
   CommBufPtr cbp;
   EventPtr event;
-  int64_t id;
   String label = format("register_server('%s', listen_port=%u)", location.c_str(), listen_port);
 
   initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-    cbp = MasterProtocol::create_register_server_request(location, listen_port, system_stats);
-    if (!send_message(cbp, timer, event, label))
-      continue;
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    id = decode_i64(&ptr, &remain);
-    break;
-  }
-
-  cbp = MasterProtocol::create_fetch_result_request(id);
+  
+  cbp = MasterProtocol::create_register_server_request(location, listen_port, system_stats);
   send_message_async(cbp, handler, timer, label);
 }
 
@@ -443,7 +434,6 @@ void MasterClient::register_server(std::string &location, uint16_t listen_port,
   Timer tmp_timer(m_timeout_ms);
   CommBufPtr cbp;
   EventPtr event;
-  int64_t id;
   String label = format("register_server('%s', listen_port=%u)", location.c_str(), listen_port);
 
   initialize(timer, tmp_timer);
@@ -452,13 +442,13 @@ void MasterClient::register_server(std::string &location, uint16_t listen_port,
     cbp = MasterProtocol::create_register_server_request(location, listen_port, system_stats);
     if (!send_message(cbp, timer, event, label))
       continue;
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    id = decode_i64(&ptr, &remain);
     break;
   }
 
-  fetch_result(id, timer, event, label);
+  if (timer->expired())
+    HT_THROWF(Error::REQUEST_TIMEOUT,
+              "MasterClient operation %s to master %s failed", label.c_str(),
+              m_master_addr.format().c_str());
 
   const uint8_t *ptr = event->payload + 4;
   size_t remain = event->payload_len - 4;
@@ -498,12 +488,19 @@ MasterClient::move_range(TableIdentifier *table, RangeSpec &range,
 
   initialize(timer, tmp_timer);
 
-  while (!timer->expired()) {
-    cbp = MasterProtocol::create_move_range_request(table, range, log_dir,
-                                                    soft_limit, split);
-    if (!send_message(cbp, timer, event, label))
-      continue;
-    break;
+  try {
+    while (!timer->expired()) {
+      cbp = MasterProtocol::create_move_range_request(table, range, log_dir,
+                                                      soft_limit, split);
+      if (!send_message(cbp, timer, event, label))
+        continue;
+      break;
+    }
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::MASTER_OPERATION_IN_PROGRESS)
+      return;
+    HT_THROW2(e.code(), e, label);
   }
 }
 
@@ -781,9 +778,9 @@ void MasterClient::reload_master() {
       m_master_addr_string = addr_str;
 
       InetAddr::initialize(&m_master_addr, m_master_addr_string.c_str());
-
-      m_conn_manager->add(m_master_addr, m_retry_interval, "Master",
-                          m_dispatcher_handler);
+      
+      m_conn_manager->add_with_initializer(m_master_addr, m_retry_interval, "Master",
+                                           m_dispatcher_handler, m_connection_initializer);
     }
     master_addr = m_master_addr;
   }

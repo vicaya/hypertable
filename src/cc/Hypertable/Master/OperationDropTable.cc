@@ -150,9 +150,16 @@ void OperationDropTable::execute() {
       return;
     }
 
-    m_context->namemap->drop_mapping(m_name);
-    filename = m_context->toplevel_dir + "/tables/" + m_id;
-    m_context->hyperspace->unlink(filename.c_str());
+    try {
+      m_context->namemap->drop_mapping(m_name);
+      filename = m_context->toplevel_dir + "/tables/" + m_id;
+      m_context->hyperspace->unlink(filename.c_str());
+    }
+    catch (Exception &e) {
+      if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND &&
+          e.code() != Error::HYPERSPACE_BAD_PATHNAME)
+        HT_THROW2F(e.code(), e, "Error executing DropTable %s", m_name.c_str());
+    }
     m_context->monitoring->invalidate_id_mapping(m_id);
     complete_ok();
     break;

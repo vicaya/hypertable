@@ -282,6 +282,21 @@ namespace Hypertable {
       return m_metalog_entity->needs_compaction;
     }
 
+    void acknowledge_load() {
+      ScopedLock lock(m_mutex);
+      m_metalog_entity->load_acknowledged = true;
+    }
+
+    bool load_acknowledged() {
+      // Not locking this mutex for performance reasons.  Ranges start out
+      // in life unacknowledged and then quickly become acknowledged.
+      // There is a potential race condition at the brief time this variable
+      // is set, but it should not cause any logic problems and saves
+      // us the lock cost every time this method is called.
+      //ScopedLock lock(m_mutex);
+      return m_metalog_entity->load_acknowledged;
+    }
+
   private:
 
     void initialize();

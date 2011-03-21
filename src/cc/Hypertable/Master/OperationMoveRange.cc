@@ -46,6 +46,7 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context, const TableIdentifie
     m_soft_limit(soft_limit), m_is_split(is_split), m_remove_explicitly(true) {
   m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row, m_range.end_row);
   initialize_dependencies();
+  m_hash_code = Utility::range_hash_code(m_table, m_range, "OperationMoveRange");
 }
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context,
@@ -97,13 +98,6 @@ void OperationMoveRange::execute() {
   switch (state) {
 
   case OperationState::INITIAL:
-    // Check to see if this operation was already executed
-    if (m_context->in_progress(this) ||
-        m_context->response_manager->operation_complete(hash_code())) {
-      HT_INFOF("Aborting %s because already in progress", label().c_str());
-      abort_operation();
-      return;
-    }
     if (!Utility::next_available_server(m_context, m_location))
       return;
     {
@@ -111,14 +105,9 @@ void OperationMoveRange::execute() {
       m_dependencies.insert(m_location);
       m_state = OperationState::STARTED;
     }
-    if (!m_context->add_in_progress(this)) {
-      HT_INFOF("Aborting %s because already in progress", label().c_str());
-      abort_operation();
-      return;
-    }
+    HT_MAYBE_FAIL("move-range-INITIAL-a");
     m_context->mml_writer->record_state(this);
-    HT_MAYBE_FAIL("move-range-INITIAL");
-
+    HT_MAYBE_FAIL("move-range-INITIAL-b");
     return;
 
   case OperationState::STARTED:
@@ -133,6 +122,7 @@ void OperationMoveRange::execute() {
     }
     m_event = 0;
     set_state(OperationState::LOAD_RANGE);
+    HT_MAYBE_FAIL("move-range-STARTED");
 
   case OperationState::LOAD_RANGE:
     try {
@@ -150,19 +140,36 @@ void OperationMoveRange::execute() {
         rsc.load_range(addr, *table, *range, m_transfer_log.c_str(), range_state, false);
     }
     catch (Exception &e) {
-      if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED &&
-          e.code() != Error::RANGESERVER_TABLE_DROPPED &&
-          !m_context->reassigned(&m_table, m_range, m_location)) {
-        if (!Utility::table_exists(m_context, m_table.id)) {
-          HT_WARNF("Aborting MoveRange %s because table no longer exists",
-                   m_range_name.c_str());
-          complete_ok();
-          return;
+      if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED) {
+        if (e.code() != Error::RANGESERVER_TABLE_DROPPED &&
+            !m_context->reassigned(&m_table, m_range, m_location)) {
+          if (!Utility::table_exists(m_context, m_table.id)) {
+            HT_WARNF("Aborting MoveRange %s because table no longer exists",
+                     m_range_name.c_str());
+            complete_ok();
+            return;
+          }
+          if (!m_context->is_connected(m_location))
+            return;
+          HT_THROW2(e.code(), e, format("MoveRange %s to %s", m_range_name.c_str(), m_location.c_str()));
         }
-        if (!m_context->is_connected(m_location))
-          return;
-        HT_THROW2(e.code(), e, format("MoveRange %s to %s", m_range_name.c_str(), m_location.c_str()));
+        complete_ok();
+        return;
       }
+    }
+    HT_MAYBE_FAIL("move-range-LOAD_RANGE");
+    set_state(OperationState::ACKNOWLEDGE);
+    m_context->mml_writer->record_state(this);
+
+  case OperationState::ACKNOWLEDGE:
+    {
+      RangeServerClient rsc(m_context->comm);
+      CommAddress addr;
+      TableIdentifier *table = &m_table;
+      RangeSpec *range = &m_range;
+
+      addr.set_proxy(m_location);
+      rsc.acknowledge_load(addr, *table, *range);
     }
     complete_ok();
     break;
@@ -200,9 +207,6 @@ void OperationMoveRange::encode_state(uint8_t **bufp) const {
 void OperationMoveRange::decode_state(const uint8_t **bufp, size_t *remainp) {
   decode_request(bufp, remainp);
   m_location = Serialization::decode_vstr(bufp, remainp);
-  int32_t state = get_state();
-  if (state != OperationState::INITIAL && state != OperationState::COMPLETE)
-    HT_ASSERT(m_context->add_in_progress(this));
 }
 
 void OperationMoveRange::decode_request(const uint8_t **bufp, size_t *remainp) {
@@ -212,10 +216,7 @@ void OperationMoveRange::decode_request(const uint8_t **bufp, size_t *remainp) {
   m_soft_limit = Serialization::decode_i64(bufp, remainp);
   m_is_split = Serialization::decode_bool(bufp, remainp);
   m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row, m_range.end_row);
-}
-
-int64_t OperationMoveRange::hash_code() const {
-  return Utility::range_hash_code(m_table, m_range, "OperationMoveRange");
+  m_hash_code = Utility::range_hash_code(m_table, m_range, "OperationMoveRange");
 }
 
 const String OperationMoveRange::name() {
@@ -239,17 +240,4 @@ const String OperationMoveRange::graphviz_label() {
     end_row = end_row.substr(0, 10) + ".." + end_row.substr(end_row.length()-10, 10);
 
   return format("MoveRange %s\\n%s\\n%s", m_table.id, start_row.c_str(), end_row.c_str());
-}
-
-void OperationMoveRange::abort_operation() {
-  ScopedLock lock(m_mutex);
-  m_state = OperationState::COMPLETE;
-  m_remove_explicitly = false;
-  m_expiration_time.reset();
-  int32_t error;
-  ResponseCallback cb(m_context->comm, m_event);
-  if ((error = cb.response_ok()) != Error::OK) {
-    HT_INFOF("Problem sending OK response for %s", m_range_name.c_str());
-    return;
-  }
 }

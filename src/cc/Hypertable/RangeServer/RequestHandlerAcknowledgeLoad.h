@@ -19,35 +19,32 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-#define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
+#ifndef HYPERTABLE_REQUESTHANDLERACKNOWLEDGELOAD_H
+#define HYPERTABLE_REQUESTHANDLERACKNOWLEDGELOAD_H
 
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/DispatchHandler.h"
+#include "Common/Runnable.h"
 
-#include "RangeServer.h"
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
+
 
 namespace Hypertable {
 
-  class Comm;
+  class RangeServer;
 
-  /**
-   */
-  class ConnectionHandler : public DispatchHandler {
+  class RequestHandlerAcknowledgeLoad : public ApplicationHandler {
   public:
+    RequestHandlerAcknowledgeLoad(Comm *comm, RangeServer *rs, EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) { }
 
-    ConnectionHandler(Comm *, ApplicationQueuePtr &, RangeServerPtr);
-
-    virtual void handle(EventPtr &event_ptr);
+    virtual void run();
 
   private:
-    Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue_ptr;
-    RangeServerPtr       m_range_server_ptr;
-    bool                 m_shutdown;
+    Comm        *m_comm;
+    RangeServer *m_range_server;
   };
 
 }
 
-#endif // HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-
+#endif // HYPERTABLE_REQUESTHANDLERACKNOWLEDGELOAD_H

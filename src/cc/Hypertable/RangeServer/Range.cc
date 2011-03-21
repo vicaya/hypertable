@@ -43,7 +43,6 @@ extern "C" {
 
 #include "CellStoreFactory.h"
 #include "Global.h"
-#include "Location.h"
 #include "MergeScanner.h"
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
@@ -395,6 +394,8 @@ bool Range::need_maintenance() {
   ScopedLock lock(m_schema_mutex);
   bool needed = false;
   int64_t mem, disk, disk_total = 0;
+  if (!m_metalog_entity->load_acknowledged)
+    return false;
   for (size_t i=0; i<m_access_group_vector.size(); ++i) {
     m_access_group_vector[i]->space_usage(&mem, &disk);
     disk_total += disk;
@@ -497,7 +498,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
       m_capacity_exceeded_throttle = true;
   }
 
-  mdata->busy = m_maintenance_guard.in_progress();
+  mdata->busy = m_maintenance_guard.in_progress() || !m_metalog_entity->load_acknowledged;
 
   if (mutator)
     m_load_metrics.compute_and_store(mutator, now,
@@ -647,7 +648,7 @@ void Range::relinquish_compact_and_finish() {
   if (Global::rs_metrics_table) {
     TableMutatorPtr mutator = Global::rs_metrics_table->create_mutator();
     KeySpec key;
-    String row = Location::get() + ":" + m_metalog_entity->table.id;
+    String row = Global::location_initializer->get() + ":" + m_metalog_entity->table.id;
     key.row = row.c_str();
     key.row_len = row.length();
     key.column_family = "range_move";
@@ -952,7 +953,7 @@ void Range::split_compact_and_shrink() {
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
       key.column_family = "Location";
-      String location = Location::get();
+      String location = Global::location_initializer->get();
       mutator->set(key, location.c_str(), location.length());
     }
 

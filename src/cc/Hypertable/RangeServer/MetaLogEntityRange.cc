@@ -25,21 +25,21 @@
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
 
-EntityRange::EntityRange(int32_t type) : Entity(type), needs_compaction(false) { }
+EntityRange::EntityRange(int32_t type) : Entity(type), needs_compaction(false), load_acknowledged(false) { }
 
-EntityRange::EntityRange(const EntityHeader &header_) : Entity(header_), needs_compaction(false) { }
+EntityRange::EntityRange(const EntityHeader &header_) : Entity(header_) { }
 
 EntityRange::EntityRange(const TableIdentifier &identifier,
                          const RangeSpec &range, const RangeState &state_,
                          bool needs_compaction_)
   : Entity(EntityType::RANGE), table(identifier), spec(range), state(state_),
-    needs_compaction(needs_compaction_) {
+    needs_compaction(needs_compaction_), load_acknowledged(false) {
 }
 
 
 size_t EntityRange::encoded_length() const {
   return table.encoded_length() + spec.encoded_length() +
-    state.encoded_length() + 1;
+    state.encoded_length() + 2;
 }
 
 
@@ -48,6 +48,7 @@ void EntityRange::encode(uint8_t **bufp) const {
   spec.encode(bufp);
   state.encode(bufp);
   Serialization::encode_bool(bufp, needs_compaction);
+  Serialization::encode_bool(bufp, load_acknowledged);
 }
 
 void EntityRange::decode(const uint8_t **bufp, size_t *remainp) {
@@ -55,6 +56,7 @@ void EntityRange::decode(const uint8_t **bufp, size_t *remainp) {
   spec.decode(bufp, remainp);
   state.decode(bufp, remainp);
   needs_compaction = Serialization::decode_bool(bufp, remainp);
+  load_acknowledged = Serialization::decode_bool(bufp, remainp);
 }
 
 const String EntityRange::name() {

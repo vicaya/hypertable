@@ -84,6 +84,8 @@ namespace Hypertable {
     void load_range(ResponseCallback *, const TableIdentifier *,
                     const RangeSpec *, const char *transfer_log_dir,
                     const RangeState *, bool needs_compaction);
+    void acknowledge_load(ResponseCallback *, const TableIdentifier *,
+                          const RangeSpec *);
     void update_schema(ResponseCallback *, const TableIdentifier *,
                        const char *);
     void update(ResponseCallbackUpdate *, const TableIdentifier *,

@@ -59,7 +59,7 @@ extern "C" {
 #include "Global.h"
 #include "GroupCommit.h"
 #include "HandlerFactory.h"
-#include "Location.h"
+#include "LocationInitializer.h"
 #include "MaintenanceQueue.h"
 #include "MaintenanceScheduler.h"
 #include "MaintenanceTaskCompaction.h"
@@ -238,11 +238,11 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_master_client = new MasterClient(m_conn_manager, m_hyperspace,
                                      Global::toplevel_dir,
                                      timeout, m_app_queue);
-  m_master_connection_handler = new ConnectionHandler(m_comm, m_app_queue,
-                                    this, m_master_client);
-  m_master_client->initiate_connection(m_master_connection_handler);
+  m_master_connection_handler = new ConnectionHandler(m_comm, m_app_queue, this);
+  Global::location_initializer = new LocationInitializer(m_props);
+  m_master_client->initiate_connection(m_master_connection_handler, Global::location_initializer);
 
-  Location::wait_until_assigned();
+  Global::location_initializer->wait_until_assigned();
 
   initialize(props);
 
@@ -346,7 +346,7 @@ void RangeServer::initialize(PropertiesPtr &props) {
   }
 
   String top_dir = Global::toplevel_dir + "/servers/";
-  top_dir += Location::get();
+  top_dir += Global::location_initializer->get();
 
   /**
    * Create "server existence" file in Hyperspace and lock it exclusively
@@ -421,7 +421,7 @@ namespace {
 
 void RangeServer::local_recover() {
   MetaLog::DefinitionPtr rsml_definition =
-      new MetaLog::DefinitionRangeServer(Location::get().c_str());
+      new MetaLog::DefinitionRangeServer(Global::location_initializer->get().c_str());
   MetaLog::ReaderPtr rsml_reader;
   CommitLogReaderPtr root_log_reader;
   CommitLogReaderPtr system_log_reader;
@@ -1205,7 +1205,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         if (m_pending_metrics_updates == 0)
           m_pending_metrics_updates = new CellsBuilder();
 
-        String row = Location::get() + ":" + table->id;
+        String row = Global::location_initializer->get() + ":" + table->id;
         cell.row_key = row.c_str();
         cell.column_family = "range_start_row";
         cell.column_qualifier = range_spec->end_row;
@@ -1326,7 +1326,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       key.column_family = "Location";
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
-      location = Location::get();
+      location = Global::location_initializer->get();
       mutator->set(key, location.c_str(), location.length());
       mutator->flush();
     }
@@ -1338,7 +1338,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
       try {
         handle = m_hyperspace->open(Global::toplevel_dir + "/root", oflags);
-	location = Location::get();
+	location = Global::location_initializer->get();
         m_hyperspace->attr_set(handle, "Location", location.c_str(),
                                location.length());
         m_hyperspace->close(handle);
@@ -1388,6 +1388,63 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
   }
 
 }
+
+void RangeServer::acknowledge_load(ResponseCallback *cb, const TableIdentifier *table,
+                                   const RangeSpec *range_spec) {
+  TableInfoPtr table_info;
+  RangePtr range;
+
+  // this needs to be here to avoid a race condition with drop_table
+  if (m_dropped_table_id_cache->contains(table->id)) {
+    HT_WARNF("Table %s has been dropped", table->id);
+    cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
+    return;
+  }
+
+  if (!m_replay_finished)
+    wait_for_recovery_finish(table, range_spec);
+
+  {
+    ScopedLock lock(m_drop_table_mutex);
+
+    HT_INFO_OUT <<"Acknowledging range: "<< table->id <<"["<< range_spec->start_row 
+                << ".." << range_spec->end_row << "]" << HT_END;
+
+    if (m_dropped_table_id_cache->contains(table->id)) {
+      HT_WARNF("Table %s has been dropped", table->id);
+      cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
+      return;
+    }
+
+    {
+      ScopedLock lock(m_mutex);
+      if (!m_live_map->get(table->id, table_info)) {
+        cb->error(Error::TABLE_NOT_FOUND, table->id);
+        return;
+      }
+    }
+
+    if (!table_info->get_range(range_spec, range)) {
+      cb->error(Error::RANGESERVER_RANGE_NOT_FOUND,
+                format("%s[%s..%s]", table->id, range_spec->start_row,
+                       range_spec->end_row));
+      return;
+    }
+
+    if (range->load_acknowledged()) {
+      cb->response_ok();
+      return;
+    }
+
+    range->acknowledge_load();
+
+    if (Global::rsml_writer)
+      Global::rsml_writer->record_state( range->metalog_entity() );
+  }
+
+  cb->response_ok();
+}
+
 
 void
 RangeServer::update_schema(ResponseCallback *cb,
@@ -2405,7 +2462,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   m_page_out_accum += m_stats->system.swap_stat.page_out;
   m_metric_samples++;
 
-  m_stats->set_location(Location::get());
+  m_stats->set_location(Global::location_initializer->get());
   m_stats->timestamp = timestamp;
   m_stats->scan_count = m_server_stats->get_scan_count(collector_id);
   m_stats->scanned_cells = m_server_stats->get_scan_cells(collector_id);
@@ -2557,7 +2614,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
                           m_loadavg_accum / (double)(m_metric_samples * m_cores),
                           (double)m_page_in_accum / (double)m_metric_samples,
                           (double)m_page_out_accum / (double)m_metric_samples);
-    String location = Location::get();
+    String location = Global::location_initializer->get();
     KeySpec key;
     key.row = location.c_str();
     key.row_len = location.length();
@@ -2593,7 +2650,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
 
 
 void RangeServer::replay_begin(ResponseCallback *cb, uint16_t group) {
-  String replay_log_dir = Global::toplevel_dir + ("/servers/") + Location::get() + "/log/replay";
+  String replay_log_dir = Global::toplevel_dir + ("/servers/") + Global::location_initializer->get() + "/log/replay";
 
   m_replay_group = group;
 

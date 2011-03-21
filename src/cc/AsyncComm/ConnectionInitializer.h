@@ -1,12 +1,12 @@
-/** -*- c++ -*-
- * Copyright (C) 2010 Doug Judd (Hypertable, Inc.)
+/**
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; version 2 of the
- * License.
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,20 +19,24 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_LOCATION_H
-#define HYPERTABLE_LOCATION_H
+#ifndef HYPERTABLE_CONNECTIONINITIALIZER_H
+#define HYPERTABLE_CONNECTIONINITIALIZER_H
 
-#include "Common/String.h"
+#include "Common/ReferenceCount.h"
+
+#include "CommBuf.h"
 
 namespace Hypertable {
 
-  class Location {
+  class Event;
+
+  class ConnectionInitializer : public ReferenceCount {
   public:
-    static void set(const String &str);
-    static String get();
-    static void wait_until_assigned();
+    virtual CommBuf *create_initialization_request() = 0;
+    virtual bool process_initialization_response(Event *event) = 0;
   };
+  typedef boost::intrusive_ptr<ConnectionInitializer> ConnectionInitializerPtr;
+
 }
 
-
-#endif // HYPERTABLE_LOCATION_H
+#endif // HYPERTABLE_CONNECTIONINITIALIZER_H

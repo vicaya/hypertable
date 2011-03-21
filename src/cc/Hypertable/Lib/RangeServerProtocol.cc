@@ -50,6 +50,7 @@ namespace Hypertable {
     "commit log sync",
     "close",
     "wait for maintenance",
+    "acknowledge load",
     (const char *)0
   };
 
@@ -225,6 +226,17 @@ namespace Hypertable {
   RangeServerProtocol::create_request_drop_range(const TableIdentifier &table,
                                                  const RangeSpec &range) {
     CommHeader header(COMMAND_DROP_RANGE);
+    CommBuf *cbuf = new CommBuf(header, table.encoded_length()
+                                + range.encoded_length());
+    table.encode(cbuf->get_data_ptr_address());
+    range.encode(cbuf->get_data_ptr_address());
+    return cbuf;
+  }
+
+  CommBuf *
+  RangeServerProtocol::create_request_acknowledge_load(const TableIdentifier &table,
+                                                       const RangeSpec &range) {
+    CommHeader header(COMMAND_ACKNOWLEDGE_LOAD);
     CommBuf *cbuf = new CommBuf(header, table.encoded_length()
                                 + range.encoded_length());
     table.encode(cbuf->get_data_ptr_address());

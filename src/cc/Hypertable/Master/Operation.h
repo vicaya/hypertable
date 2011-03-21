@@ -55,7 +55,8 @@ namespace Hypertable {
       SCAN_METADATA = 13,
       ISSUE_REQUESTS = 14,
       UPDATE_HYPERSPACE = 15,
-      FINALIZE = 16
+      ACKNOWLEDGE = 16,
+      FINALIZE = 17
     };
     const char *get_text(int state);
   }
@@ -119,7 +120,7 @@ namespace Hypertable {
     void complete_ok();
     void complete_ok_no_log();
 
-    virtual int64_t hash_code() const;
+    virtual int64_t hash_code() const { return m_hash_code; }
 
     virtual void exclusivities(DependencySet &exclusivities);
     virtual void dependencies(DependencySet &dependencies);
@@ -143,9 +144,10 @@ namespace Hypertable {
     ContextPtr m_context;
     EventPtr m_event;
     int32_t m_state;
-    HiResTime m_expiration_time;
     int32_t m_error;
     String m_error_msg;
+    HiResTime m_expiration_time;
+    int64_t m_hash_code;
     DependencySet m_exclusivities;
     DependencySet m_dependencies;
     DependencySet m_obstructions;

@@ -50,7 +50,6 @@ CellStoreV4.cc
 CellStoreV5.cc
 Config.cc
 ConnectionHandler.cc
-EventHandlerMasterConnection.cc
 FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
@@ -63,7 +62,7 @@ KeyDecompressorNone.cc
 KeyDecompressorPrefix.cc
 LiveFileTracker.cc
 LoadMetricsRange.cc
-Location.cc
+LocationInitializer.cc
 MaintenancePrioritizer.cc
 MaintenancePrioritizerLogCleanup.cc
 MaintenancePrioritizerLowMemory.cc
@@ -82,6 +81,7 @@ QueryCache.cc
 Range.cc
 RangeServer.cc
 RangeStatsGatherer.cc
+RequestHandlerAcknowledgeLoad.cc
 RequestHandlerCompact.cc
 RequestHandlerCreateScanner.cc
 RequestHandlerDestroyScanner.cc

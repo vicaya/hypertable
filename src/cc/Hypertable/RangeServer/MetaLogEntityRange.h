@@ -46,6 +46,7 @@ namespace Hypertable {
       RangeSpecManaged spec;
       RangeStateManaged state;
       bool needs_compaction;
+      bool load_acknowledged;
     };
     typedef intrusive_ptr<EntityRange> EntityRangePtr;
 

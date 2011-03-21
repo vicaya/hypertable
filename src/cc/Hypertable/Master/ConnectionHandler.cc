@@ -109,9 +109,16 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case MasterProtocol::COMMAND_REGISTER_SERVER:
         operation = new OperationRegisterServer(m_context, event);
-        break;
+        m_context->op->add_operation(operation);
+        return;
       case MasterProtocol::COMMAND_MOVE_RANGE:
         operation = new OperationMoveRange(m_context, event);
+        if (m_context->response_manager->operation_complete(operation->hash_code()) ||
+            !m_context->add_in_progress(operation.get())) {
+          HT_INFOF("Skipping %s because already in progress", operation->label().c_str());
+          send_error_response(event, Error::MASTER_OPERATION_IN_PROGRESS, "");
+          return;
+        }
         m_context->op->add_operation(operation);
         return;
       case MasterProtocol::COMMAND_RELINQUISH_ACKNOWLEDGE:
@@ -143,8 +150,10 @@ void ConnectionHandler::handle(EventPtr &event) {
                   (Llu)event->header.command);
       }
       if (operation) {
-        if (event->header.command != MasterProtocol::COMMAND_STATUS)
-          HT_MAYBE_FAIL("connection-handler-before-id-response");
+        HT_INFOF("About to load %u", (unsigned)event->header.command);
+        HT_MAYBE_FAIL_X("connection-handler-before-id-response",
+                        event->header.command != MasterProtocol::COMMAND_STATUS &&
+                        event->header.command != MasterProtocol::COMMAND_RELINQUISH_ACKNOWLEDGE);
         if (send_id_response(event, operation) != Error::OK)
           return;
         m_context->op->add_operation(operation);
@@ -208,5 +217,19 @@ int32_t ConnectionHandler::send_id_response(EventPtr &event, OperationPtr &opera
   if (error != Error::OK)
     HT_ERRORF("Problem sending ID response back for %s operation (id=%lld) - %s",
               operation->label().c_str(), (Lld)operation->id(), Error::get_text(error));
+  return error;
+}
+
+
+int32_t ConnectionHandler::send_error_response(EventPtr &event, int32_t error, const String &msg) {
+  CommHeader header;
+  header.initialize_from_request_header(event->header);
+  CommBufPtr cbp(new CommBuf(header, 4 + Serialization::encoded_length_vstr(msg)));
+  cbp->append_i32(error);
+  cbp->append_vstr(msg);
+  int ret = m_context->comm->send_response(event->addr, cbp);
+  if (ret != Error::OK)
+    HT_ERRORF("Problem sending error response back to %s - %s",
+              event->addr.format().c_str(), Error::get_text(error));
   return error;
 }
