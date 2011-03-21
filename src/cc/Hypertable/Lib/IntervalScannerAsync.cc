@@ -182,6 +182,9 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
 
 IntervalScannerAsync::~IntervalScannerAsync() {
   HT_ASSERT(!has_outstanding_requests());
+  // destroy dangling scanner
+  if (m_cur_scanner_id && !m_cur_scanner_finished)
+    m_range_server.destroy_scanner(m_range_info.addr, m_cur_scanner_id, 0);
 }
 
 // caller is responsible for state of m_create_timer
@@ -416,6 +419,7 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
   if (m_eos && !m_cur_scanner_finished) {
     HT_ASSERT(m_fetch_outstanding);
     m_range_server.destroy_scanner(m_range_info.addr, m_cur_scanner_id, 0);
+    m_cur_scanner_id = 0;
     m_fetch_outstanding = false;
   }
   return;

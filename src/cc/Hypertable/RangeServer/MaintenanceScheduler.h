@@ -58,7 +58,6 @@ namespace Hypertable {
       return m_prioritizer == &m_prioritizer_low_memory;
     }
 
-    Mutex m_mutex;
     bool m_initialized;
     bool m_scheduling_needed;
     ApplicationQueuePtr m_app_queue;
