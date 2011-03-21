@@ -169,7 +169,10 @@ void OperationMoveRange::execute() {
       RangeSpec *range = &m_range;
 
       addr.set_proxy(m_location);
-      rsc.acknowledge_load(addr, *table, *range);
+      if (m_context->test_mode)
+        HT_WARNF("Skipping %s::acknowledge_load() because in TEST MODE", m_location.c_str());
+      else
+        rsc.acknowledge_load(addr, *table, *range);
     }
     complete_ok();
     break;

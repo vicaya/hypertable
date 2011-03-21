@@ -248,8 +248,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   local_recover();
 
-  Global::log_prune_threshold_min = cfg.get_i64("CommitLog.PruneThreshold.Min",
-      5 * Global::user_log->get_max_fragment_size());
+  Global::log_prune_threshold_min = cfg.get_i64("CommitLog.PruneThreshold.Min");
 
   uint32_t max_memory_percentage =
     cfg.get_i32("CommitLog.PruneThreshold.Max.MemoryPercentage");
@@ -260,11 +259,12 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   int64_t threshold_max = (int64_t)((double)System::mem_stat().ram *
                                     max_memory_ratio * (double)MiB);
-  // cap at 4GB
-  if (threshold_max > (int64_t)(4LL * GiB))
-    threshold_max = 4LL * GiB;
 
   Global::log_prune_threshold_max = cfg.get_i64("CommitLog.PruneThreshold.Max", threshold_max);
+
+  HT_INFOF("Prune thresholds - min=%lld, max=%lld", (Lld)Global::log_prune_threshold_min,
+           (Lld)Global::log_prune_threshold_max);
+  
 }
 
 void RangeServer::shutdown() {
