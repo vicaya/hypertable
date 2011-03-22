@@ -44,6 +44,4 @@ used to create a table
 
 [`SHOW TABLES`](show-tables.html) - Display all existing table names
 
-[`SHUTDOWN`](shutdown.html) - Gracefully shutdown the Hypertable service
-
 [`USE`](use.html) - Use a namespace

@@ -21,7 +21,7 @@ echo "Running '${cmd}'"
 echo "================="
 ${cmd}
 
-cmd="$HT_HOME/bin/ht ht_load_generator update --no-log-sync --parallel=300 --spec-file=${SCRIPT_DIR}/data.spec --max-bytes=${DATA_SIZE}"
+cmd="$HT_HOME/bin/ht ht_load_generator update --no-log-sync --parallel=10 --spec-file=${SCRIPT_DIR}/data.spec --max-bytes=${DATA_SIZE}"
 echo "================="
 echo "Running '${cmd}'"
 echo "================="
