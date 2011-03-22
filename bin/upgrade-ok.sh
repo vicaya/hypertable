@@ -76,16 +76,10 @@ if [ "$MAJOR" == "" ] ||
   exit 1
 fi
 
-let FROM_MAJOR=$MAJOR*10000000
-
-let FROM_MINOR=$FROM_MAJOR
-let FROM_MINOR+=$MINOR*100000
-
-let FROM_MICRO=$FROM_MINOR
-let FROM_MICRO+=$MICRO*1000
-
-let FROM_PATCH=$FROM_MICRO
-let FROM_PATCH+=$PATCH
+let FROM_PATCH=$PATCH
+let FROM_MICRO=($MICRO*1000)+$FROM_PATCH
+let FROM_MINOR=($MINOR*100000)+$FROM_MICRO
+let FROM_MAJOR=($MAJOR*10000000)+$FROM_MINOR
 
 MAJOR=`echo $TO | cut -d'.' -f1`
 MINOR=`echo $TO | cut -d'.' -f2`
@@ -100,22 +94,16 @@ if [ "$MAJOR" == "" ] ||
   exit 1
 fi
 
-let TO_MAJOR=$MAJOR*10000000
-
-let TO_MINOR=$TO_MAJOR
-let TO_MINOR+=$MINOR*100000
-
-let TO_MICRO=$TO_MINOR
-let TO_MICRO+=$MICRO*1000
-
-let TO_PATCH=$TO_MICRO
-let TO_PATCH+=$PATCH
+let TO_PATCH=$PATCH
+let TO_MICRO=($MICRO*1000)+$TO_PATCH
+let TO_MINOR=($MINOR*100000)+$TO_MICRO
+let TO_MAJOR=($MAJOR*10000000)+$TO_MINOR
 
 if [ $TO_MINOR -le 1000000 ] && [ $TO_MINOR -ge 904000 ] ; then
     if [ $FROM_MINOR -le 1000000 ] && [ $FROM_MINOR -ge 904000 ] ; then
         exit 0
     fi
-    echo "Incompatible upgrade: $FROM -> $TO"
+    echo "Incompatible upgrade a: $FROM -> $TO"
     exit 1
 elif [ $TO_MAJOR -ge 1000000 ] ; then
     if [ $FROM_MAJOR -ge 1000000 ] ; then
@@ -123,7 +111,7 @@ elif [ $TO_MAJOR -ge 1000000 ] ; then
             exit 0
         fi
     fi
-    echo "Incompatible upgrade: $FROM -> $TO"
+    echo "Incompatible upgrade b: $FROM -> $TO"
     exit 1
 elif [ $TO_MAJOR -lt 1000000 ] ; then
     if [ $FROM_MAJOR -lt 1000000 ] ; then
@@ -131,7 +119,7 @@ elif [ $TO_MAJOR -lt 1000000 ] ; then
             exit 0
         fi
     fi
-    echo "Incompatible upgrade: $FROM -> $TO"
+    echo "Incompatible upgrade c: $FROM -> $TO"
     exit 1
 fi
 
