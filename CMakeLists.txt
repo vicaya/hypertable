@@ -24,6 +24,7 @@ set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
 set(VERSION_MICRO "5")
 set(VERSION_PATCH "0")
+set(VERSION_MISC_SUFFIX  "pre")
 
 # cmake behavior compatibility
 cmake_minimum_required(VERSION 2.6.0)

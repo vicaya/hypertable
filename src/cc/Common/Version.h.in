@@ -23,12 +23,14 @@
 #define HYPERTABLE_VERSION_H
 
 #include <cstdio>
+#include <string>
 
 // version macros for detecting header/library mismatch
 #define HT_VERSION_MAJOR        ${VERSION_MAJOR}
 #define HT_VERSION_MINOR        ${VERSION_MINOR}
 #define HT_VERSION_MICRO        ${VERSION_MICRO}
 #define HT_VERSION_PATCH        ${VERSION_PATCH}
+#define HT_VERSION_MISC_SUFFIX  "${VERSION_MISC_SUFFIX}"
 #define HT_VERSION              "${VERSION_STRING}"
 
 namespace Hypertable {
@@ -36,7 +38,7 @@ namespace Hypertable {
   extern const int version_minor;
   extern const int version_micro;
   extern const int version_patch;
-
+  extern const std::string version_misc_suffix;
   extern const char *version();
 
   // must be inlined for version check
@@ -44,7 +46,8 @@ namespace Hypertable {
     if (version_major != HT_VERSION_MAJOR ||
         version_minor != HT_VERSION_MINOR ||
         version_micro != HT_VERSION_MICRO ||
-        version_patch != HT_VERSION_PATCH) {
+        version_patch != HT_VERSION_PATCH ||
+        version_misc_suffix != HT_VERSION_MISC_SUFFIX) {
       std::fprintf(stderr, "Hypertable header/library version mismatch:\n"
                    " header: %s\nlibrary: %s\n", HT_VERSION, version());
       exit(1);

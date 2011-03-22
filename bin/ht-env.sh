@@ -198,9 +198,9 @@ start_server_no_check() {
 
 # Sanity check
 [ "$HYPERTABLE_HOME" ] || die "ERROR: HYPERTABLE_HOME is not set"
-versionre='/([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(\.[a-fA-F0-9]+)?|current)$'
+versionre='/([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(\.([a-fA-F0-9]+|pre))?|current)$'
 [[ $HYPERTABLE_HOME =~ $versionre ]] ||
-    die "ERROR: Invalid HYPERTABLE_HOME: $HYPERTABLE_HOME"
+  die "ERROR: Invalid HYPERTABLE_HOME: $HYPERTABLE_HOME doesnt match regex ${versionre}"
 
 # Make sure log and run directories exist
 [ -d $RUNTIME_ROOT/run ] || mkdir $RUNTIME_ROOT/run
