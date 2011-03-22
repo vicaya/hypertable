@@ -128,8 +128,8 @@ namespace Hypertable {
      */
     const ScanSpec &get_scan_spec() { return m_scan_spec_builder.get(); }
   private:
-    void maybe_callback_ok(bool next, bool do_callback, ScanCellsPtr &cells);
-    void maybe_callback_error(bool next);
+    void maybe_callback_ok(int scanner_id, bool next, bool do_callback, ScanCellsPtr &cells);
+    void maybe_callback_error(int scanner_id, bool next);
     void wait_for_completion();
 
     std::vector<IntervalScannerAsyncPtr>  m_interval_scanners;

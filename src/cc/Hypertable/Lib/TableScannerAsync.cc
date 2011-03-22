@@ -135,7 +135,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
       m_outstanding++;
     }
     if (m_outstanding == 0)
-      maybe_callback_error(false);
+      maybe_callback_error(0, false);
   }
 }
 
@@ -201,7 +201,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
 
   // if we've seen an error before then don't bother with callback
   if (m_error != Error::OK || cancelled) {
-    maybe_callback_error(next);
+    maybe_callback_error(scanner_id, next);
     return;
   }
   else if (abort) {
@@ -209,7 +209,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
     m_error = error;
     m_error_msg = error_msg;
     HT_ERROR_OUT << e << HT_END;
-    maybe_callback_error(next);
+    maybe_callback_error(scanner_id, next);
   }
 }
 
@@ -221,14 +221,14 @@ void TableScannerAsync::handle_timeout(int scanner_id, const String &error_msg, 
   next = m_interval_scanners[scanner_id]->abort(is_create);
   // if we've seen an error before or scanner has been cancelled then don't bother with callback
   if (m_error != Error::OK || cancelled) {
-   maybe_callback_error(next);
+   maybe_callback_error(scanner_id, next);
    return;
   }
 
   HT_ERROR_OUT << "Unable to complete scan request within " << m_timeout_ms
                << " - " << error_msg << HT_END;
   m_error = Error::REQUEST_TIMEOUT;
-  maybe_callback_error(next);
+  maybe_callback_error(scanner_id, next);
 }
 
 void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_create) {
@@ -257,23 +257,32 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
         }
         else
           do_callback = false;
-        maybe_callback_ok(next, do_callback, cells);
+        maybe_callback_ok(scanner_id, next, do_callback, cells);
       }
       else
-        maybe_callback_error(next);
+        maybe_callback_error(scanner_id, next);
     }
     else {
       // send results to interval scanner
       next = m_interval_scanners[scanner_id]->handle_result(&do_callback, cells, event, is_create);
-      maybe_callback_ok(next, do_callback, cells);
+      maybe_callback_ok(scanner_id, next, do_callback, cells);
     }
 
-    while (next && m_outstanding) {
+    while (next && m_outstanding && current_scanner < ((int)m_interval_scanners.size())-1) {
       current_scanner++;
+      // unless the scan has been aborted we should be going through scanners in order
+      HT_ASSERT(abort || current_scanner == m_current_scanner+1 );
       m_current_scanner = current_scanner;
-      next = m_interval_scanners[current_scanner]->set_current(&do_callback, cells, abort);
-      HT_ASSERT(do_callback || !next || abort);
-      maybe_callback_ok(next, do_callback, cells);
+      if (m_interval_scanners[current_scanner] !=0) {
+        next = m_interval_scanners[current_scanner]->set_current(&do_callback, cells, abort);
+        HT_ASSERT(do_callback || !next || abort);
+
+        if (next && m_outstanding==1 && cancelled && m_error == Error::OK) {
+          do_callback = true;
+          cells = new ScanCells;
+        }
+        maybe_callback_ok(scanner_id, next, do_callback, cells);
+      }
     }
   }
   catch (Exception &e) {
@@ -281,16 +290,17 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
     m_error = e.code();
     m_error_msg = e.what();
     next = m_interval_scanners[current_scanner]->has_outstanding_requests();
-    maybe_callback_error(next);
+    maybe_callback_error(current_scanner, next);
     throw;
   }
 }
 
-void TableScannerAsync::maybe_callback_error(bool next) {
+void TableScannerAsync::maybe_callback_error(int scanner_id, bool next) {
   bool eos = false;
   // ok to update m_outstanding since caller has locked mutex
   if (next) {
     m_outstanding--;
+    m_interval_scanners[scanner_id] = 0;
   }
 
   if (m_outstanding == 0) {
@@ -310,12 +320,13 @@ void TableScannerAsync::maybe_callback_error(bool next) {
   }
 }
 
-void TableScannerAsync::maybe_callback_ok(bool next, bool do_callback, ScanCellsPtr &cells) {
+void TableScannerAsync::maybe_callback_ok(int scanner_id, bool next, bool do_callback, ScanCellsPtr &cells) {
   bool eos = false;
   // ok to update m_outstanding since caller has locked mutex
-  if (next)
+  if (next) {
     m_outstanding--;
-
+    m_interval_scanners[scanner_id] = 0;
+  }
 
   if (m_outstanding == 0) {
     eos = true;
