@@ -550,14 +550,14 @@ namespace {
 
     const vector<String> &replaced_files_read = cs->get_replaced_files();
     if (replaced_files_read.size() != replaced_files_write.size()) {
-      HT_ERRORF("Wrote %lu replaced_files read %lu", replaced_files_write.size(),
-          replaced_files_read.size());
+      HT_ERRORF("Wrote %lu replaced_files read %lu", (unsigned long)replaced_files_write.size(),
+		(unsigned long)replaced_files_read.size());
       exit(1);
     }
     for (size_t ii=0; ii < replaced_files_read.size(); ++ii) {
       if (replaced_files_read[ii] != replaced_files_write[ii]) {
         HT_ERRORF("Wrote %s as %luth replaced file read %s", replaced_files_write[ii].c_str(),
-            ii,  replaced_files_read[ii].c_str());
+		  (unsigned long)ii,  replaced_files_read[ii].c_str());
         exit(1);
       }
       out << replaced_files_read[ii] << "\n";

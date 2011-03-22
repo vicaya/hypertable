@@ -11,7 +11,7 @@ int main(int ac, char *av[]) {
                          {"QUJDREVGR0hJSktM"}, {"P2t3Pz9scj8_0Jk_"}};
   int64_t golden_hashes[5] = { 7891606660087872089LL, 241383655341626916LL,
                                -2486747253553136565LL, 7702431781597023531LL,
-                               -8752389877473518803 };
+                               -8752389877473518803LL };
 
   char output[17];
 

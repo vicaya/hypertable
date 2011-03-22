@@ -286,7 +286,7 @@ void CellStoreV5::load_replaced_files() {
     String filename;
     const uint8_t *ptr = buf.base;
     for (uint32_t ii=0; ii < m_trailer.replaced_files_entries; ++ii) {
-      if (ptr - buf.base >= (unsigned) m_trailer.replaced_files_length)
+      if (ptr - buf.base >= (ptrdiff_t) m_trailer.replaced_files_length)
         HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
             "Bad replaced_files_offset in CellStore trailer fd=%u replaced_files_offset=%lld, "
             "length=%llu, entries=%u, file='%s'", (unsigned)m_fd,

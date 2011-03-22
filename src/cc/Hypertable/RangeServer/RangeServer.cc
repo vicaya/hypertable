@@ -2639,7 +2639,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     StaticBuffer ext(m_stats->encoded_length());
     uint8_t *ptr = ext.base;
     m_stats->encode(&ptr);
-    HT_ASSERT((ptr-ext.base) == ext.size);
+    HT_ASSERT((ptr-ext.base) == (ptrdiff_t)ext.size);
     cb->response(ext);
   }
 

@@ -417,7 +417,7 @@ LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
     return;
   }
 
-  if ((nread = FileUtils::pread(fdata->fd, buf.base, amount, (off_t)offset)) != amount) {
+  if ((nread = FileUtils::pread(fdata->fd, buf.base, amount, (off_t)offset)) != (ssize_t)amount) {
     report_error(cb);
     HT_ERRORF("pread failed: fd=%d amount=%d offset=%llu - %s", fdata->fd,
               amount, (Llu)offset, strerror(errno));

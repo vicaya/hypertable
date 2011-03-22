@@ -177,7 +177,7 @@ void Writer::record_state(Entity *entity) {
 
   entity->encode_entry( &ptr );
 
-  HT_ASSERT((ptr-buf.base) == buf.size);
+  HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
   memcpy(backup_buf.get(), buf.base, buf.size);
 
   m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
@@ -200,7 +200,7 @@ void Writer::record_state(std::vector<Entity *> &entities) {
     for (size_t i=0; i<entities.size(); i++)
       entities[i]->encode_entry( &ptr );
 
-    HT_ASSERT((ptr-buf.base) == buf.size);
+    HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
     memcpy(backup_buf.get(), buf.base, buf.size);
 
     m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
@@ -222,7 +222,7 @@ void Writer::record_removal(Entity *entity) {
 
   entity->header.encode( &ptr );
 
-  HT_ASSERT((ptr-buf.base) == buf.size);
+  HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
   memcpy(backup_buf, buf.base, buf.size);
 
   m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
@@ -248,7 +248,7 @@ void Writer::record_removal(std::vector<Entity *> &entities) {
       entities[i]->header.encode( &ptr );
     }
 
-    HT_ASSERT((ptr-buf.base) == buf.size);
+    HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
     memcpy(backup_buf.get(), buf.base, buf.size);
     
     m_fs->append(m_fd, buf, Filesystem::O_FLUSH);

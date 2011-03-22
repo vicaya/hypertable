@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
   Config::init(0, 0);
 
   ReactorFactory::initialize(2);
-  String format_str = (String)"%0" + format("%lulu", key_size);
+  String format_str = (String)"%0" + format("%lulu", (unsigned long)key_size);
 
   try {
     hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]), "./hypertable.cfg");
