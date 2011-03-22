@@ -116,8 +116,11 @@ void StatsSystem::add_categories(int32_t categories, std::vector<String> &dirs) 
   add_categories(categories);
 
   // strip trailing '/'
-  for (size_t i=0; i<dirs.size(); i++)
+  for (size_t i=0; i<dirs.size(); i++) {
     boost::trim_right_if(dirs[i], boost::is_any_of("/"));
+    if (dirs[i] == "")
+      dirs[i] = "/";
+  }
 
   if (categories & DISK) {
     group_ids[group_count++] = DISK_GROUP;

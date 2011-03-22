@@ -43,7 +43,7 @@ StatsRangeServer::StatsRangeServer(PropertiesPtr &props) : StatsSerializable(RAN
   String dir;
   std::vector<String> dirs;
 
-  boost::trim_if(datadirs, boost::is_any_of(" \t\""));
+  boost::trim_if(datadirs, boost::is_any_of(" \t\"'"));
 
   base = datadirs.c_str();
   while ((ptr = strchr(base, ',')) != 0) {

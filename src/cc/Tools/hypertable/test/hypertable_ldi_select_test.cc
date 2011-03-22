@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 
   if (argc != 2) {
     HT_ERRORF("Usage: %s $INSTALL_DIR", argv[0]);
-    return 1;
+    _exit(1);
   }
   String install_dir = argv[1];
   System::initialize(argv[0]);
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
   for (int i=0; required_files[i]; i++) {
     if (!FileUtils::exists(required_files[i])) {
       HT_ERRORF("Unable to find '%s'", required_files[i]);
-      return 1;
+      _exit(1);
     }
   }
 
@@ -75,12 +75,12 @@ int main(int argc, char **argv) {
   cmd_str = "./hypertable --test-mode --config hypertable.cfg "
       "< hypertable_ldi_stdin_test_load.hql > hypertable_ldi_select_test.output 2>&1";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   cmd_str = "./hypertable --test-mode --config hypertable.cfg "
       "< hypertable_ldi_stdin_test_select.hql >> hypertable_ldi_select_test.output 2>&1";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   /**
    * LDI and Select using DfsBroker
@@ -90,13 +90,13 @@ int main(int argc, char **argv) {
 
   cmd_str = "rm -rf " + test_dir;
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
   cmd_str = "mkdir " + test_dir;
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
   cmd_str = "cp hypertable_test.tsv.gz " + test_dir;
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   String hql = (String)" USE \"/test\";" +
                 " DROP TABLE IF EXISTS hypertable;" +
@@ -108,33 +108,33 @@ int main(int argc, char **argv) {
   // load from dfs zipped file
   cmd_str = "./hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
   // select into dfs zipped file
   hql = "USE \"/test\"; SELECT * FROM hypertable INTO FILE \"dfs:///ldi_test/dfs_select.gz\";";
   cmd_str = "./hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   // cp from dfs dir
   cmd_str = "cp " + test_dir + "dfs_select.gz .";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   cmd_str = "rm -rf " + test_dir;
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   cmd_str = "gunzip -f dfs_select.gz";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   cmd_str = "cat dfs_select >> hypertable_ldi_select_test.output ";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   cmd_str = "diff hypertable_ldi_select_test.output hypertable_ldi_select_test.golden";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   hql = (String)" USE \"/test\";" +
     " DROP TABLE IF EXISTS hypertable;" +
@@ -146,11 +146,11 @@ int main(int argc, char **argv) {
   // load from dfs zipped file
   cmd_str = "./hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
   cmd_str = "diff hypertable_escape_test.output hypertable_escape_test.golden";
   if (system(cmd_str.c_str()) != 0)
-    return 1;
+    _exit(1);
 
-  return 0;
+  _exit(0);
 }

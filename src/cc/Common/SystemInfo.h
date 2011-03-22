@@ -93,6 +93,7 @@ namespace Hypertable {
   };
 
   struct DiskStat {
+    DiskStat() : reads_rate(0.0), writes_rate(0.0), read_rate(0.0), write_rate(0.0) { }
     DiskStat &refresh(const char *dir_prefix = "/");
     bool operator==(const DiskStat &other) const;
     bool operator!=(const DiskStat &other) const {
@@ -216,6 +217,9 @@ namespace Hypertable {
   };
 
   struct FsStat {
+    FsStat() : use_pct(0.0), total(0), free(0),
+               used(0), avail(0), files(0), free_files(0) { }
+
     FsStat &refresh(const char *prefix = "/");
     bool operator==(const FsStat &other) const;
     bool operator!=(const FsStat &other) const {
