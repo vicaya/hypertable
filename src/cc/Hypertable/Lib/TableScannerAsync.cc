@@ -271,7 +271,10 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
     while (next && m_outstanding && current_scanner < ((int)m_interval_scanners.size())-1) {
       current_scanner++;
       // unless the scan has been aborted we should be going through scanners in order
-      HT_ASSERT(abort || current_scanner == m_current_scanner+1 );
+      if (current_scanner != m_current_scanner+1) {
+        HT_ASSERT(abort);
+        break;
+      }
       m_current_scanner = current_scanner;
       if (m_interval_scanners[current_scanner] !=0) {
         next = m_interval_scanners[current_scanner]->set_current(&do_callback, cells, abort);
@@ -299,6 +302,7 @@ void TableScannerAsync::maybe_callback_error(int scanner_id, bool next) {
   bool eos = false;
   // ok to update m_outstanding since caller has locked mutex
   if (next) {
+    HT_ASSERT(m_outstanding>0);
     m_outstanding--;
     m_interval_scanners[scanner_id] = 0;
   }
@@ -324,6 +328,7 @@ void TableScannerAsync::maybe_callback_ok(int scanner_id, bool next, bool do_cal
   bool eos = false;
   // ok to update m_outstanding since caller has locked mutex
   if (next) {
+    HT_ASSERT(m_outstanding>0);
     m_outstanding--;
     m_interval_scanners[scanner_id] = 0;
   }

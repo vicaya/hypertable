@@ -427,7 +427,7 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
 
 bool IntervalScannerAsync::set_current(bool *show_results, ScanCellsPtr &cells, bool abort) {
 
-  HT_ASSERT(!m_fetch_outstanding && (!m_current || abort));
+  HT_ASSERT(!m_fetch_outstanding && !m_current);
   m_current = true;
   *show_results = false;
   if (m_create_outstanding)
