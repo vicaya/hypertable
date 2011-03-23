@@ -384,8 +384,8 @@ void create_table_test(ContextPtr &context) {
                                             log_dir + "/" + context->mml_definition->name(),
                                             entities);
 
-  rsc1 = new RangeServerConnection(context->mml_writer, "rs1");
-  rsc2 = new RangeServerConnection(context->mml_writer, "rs2");
+  rsc1 = new RangeServerConnection(context->mml_writer, "rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+  rsc2 = new RangeServerConnection(context->mml_writer, "rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
 
   context->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
   context->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
@@ -492,10 +492,10 @@ void master_initialize_test(ContextPtr &context) {
                                             log_dir + "/" + context->mml_definition->name(),
                                             entities);
 
-  rsc1 = new RangeServerConnection(context->mml_writer, "rs1");
-  rsc2 = new RangeServerConnection(context->mml_writer, "rs2");
-  rsc3 = new RangeServerConnection(context->mml_writer, "rs3");
-  rsc4 = new RangeServerConnection(context->mml_writer, "rs4");
+  rsc1 = new RangeServerConnection(context->mml_writer, "rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+  rsc2 = new RangeServerConnection(context->mml_writer, "rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+  rsc3 = new RangeServerConnection(context->mml_writer, "rs3", "how.hypertable.com", InetAddr("72.14.204.98", 38060));
+  rsc4 = new RangeServerConnection(context->mml_writer, "rs4", "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
 
   context->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
   context->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
@@ -623,10 +623,10 @@ void move_range_test(ContextPtr &context) {
                                             log_dir + "/" + context->mml_definition->name(),
                                             entities);
 
-  rsc1 = new RangeServerConnection(context->mml_writer, "rs1");
-  rsc2 = new RangeServerConnection(context->mml_writer, "rs2");
-  rsc3 = new RangeServerConnection(context->mml_writer, "rs3");
-  rsc4 = new RangeServerConnection(context->mml_writer, "rs4");
+  rsc1 = new RangeServerConnection(context->mml_writer, "rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+  rsc2 = new RangeServerConnection(context->mml_writer, "rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+  rsc3 = new RangeServerConnection(context->mml_writer, "rs3", "how.hypertable.com", InetAddr("72.14.204.98", 38060));
+  rsc4 = new RangeServerConnection(context->mml_writer, "rs4", "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
 
   context->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
   context->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));

@@ -37,7 +37,17 @@ Context::~Context() {
 void Context::add_server(RangeServerConnectionPtr &rsc) {
   ScopedLock lock(mutex);
   pair<Sequence::iterator, bool> insert_result = m_server_list.push_back( RangeServerConnectionEntry(rsc) );
-  HT_ASSERT(insert_result.second);
+  if (!insert_result.second) {
+    HT_INFOF("Tried to insert %s host=%s local=%s public=%s", rsc->location().c_str(),
+             rsc->hostname().c_str(), rsc->local_addr().format().c_str(), 
+             rsc->public_addr().format().c_str());
+    for (Sequence::iterator iter = m_server_list.begin(); iter != m_server_list.end(); ++iter) {
+      HT_INFOF("Contains %s host=%s local=%s public=%s", iter->location().c_str(),
+               iter->hostname().c_str(), iter->local_addr().format().c_str(),
+               iter->public_addr().format().c_str());
+    }
+    HT_ASSERT(insert_result.second);
+  }
 }
 
 bool Context::connect_server(RangeServerConnectionPtr &rsc, const String &hostname,

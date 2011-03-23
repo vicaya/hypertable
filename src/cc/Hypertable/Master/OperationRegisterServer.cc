@@ -62,7 +62,8 @@ void OperationRegisterServer::execute() {
       uint64_t id = m_context->hyperspace->attr_incr(m_context->master_file_handle, "next_server_id");
       m_location = String("rs") + id;
     }
-    m_rsc = new RangeServerConnection(m_context->mml_writer, m_location);
+    m_rsc = new RangeServerConnection(m_context->mml_writer, m_location, 
+                                      m_system_stats.net_info.host_name, m_public_addr);
   }
 
   m_context->monitoring->add_server(m_location, m_system_stats);

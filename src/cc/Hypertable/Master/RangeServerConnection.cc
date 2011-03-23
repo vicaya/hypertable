@@ -28,10 +28,11 @@
 
 using namespace Hypertable;
 
-RangeServerConnection::RangeServerConnection(MetaLog::WriterPtr &mml_writer, const String &location)
+RangeServerConnection::RangeServerConnection(MetaLog::WriterPtr &mml_writer, const String &location,
+                                             const String &hostname, InetAddr public_addr) 
   : MetaLog::Entity(MetaLog::EntityType::RANGE_SERVER_CONNECTION), m_mml_writer(mml_writer),
-    m_location(location), m_state(RangeServerConnectionState::REGISTERED), m_removal_time(0),
-    m_connected(false) {
+    m_location(location), m_hostname(hostname), m_state(RangeServerConnectionState::REGISTERED), m_removal_time(0),
+    m_public_addr(public_addr), m_connected(false) {
   m_comm_addr.set_proxy(m_location);
   m_mml_writer->record_state(this);
 }

@@ -48,7 +48,8 @@ namespace Hypertable {
 
   class RangeServerConnection : public MetaLog::Entity {
   public:
-    RangeServerConnection(MetaLog::WriterPtr &mml_writer, const String &location);
+    RangeServerConnection(MetaLog::WriterPtr &mml_writer, const String &location,
+                          const String &hostname, InetAddr public_addr);
     RangeServerConnection(MetaLog::WriterPtr &mml_writer, const MetaLog::EntityHeader &header_);
     virtual ~RangeServerConnection() { }
 
