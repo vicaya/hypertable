@@ -1,3 +1,134 @@
+Version 0.9.5.0.pre:
+(2011-03-22)
+
+    Master overhaul
+    MetaLog overhaul
+    Asynchronous Scanner API
+    Upgraded to Thrift 0.6.0
+    Upgraded to CDH3B4
+    Added sys/RS_METRICS
+    Fixed bug in monitoring system that was calculating buggy Cell and Byte read/write rates.
+    Added METADATA-split master failover tests
+    Added MasterClient-TransparentFailover test; fix bugs that turned up
+    Added VERSION_MISC_SUFFIX to version string for 0.9.5.0.pre release.
+    Added delete_count to CellStoreV5Trailer which stores the number of delete records in the CS.
+    Added list of replaced files to CellStoreV5.
+    Fixed soft_limit regression
+    Fixed intermittent test failues due to exit(); Got rid of valgrind warnings
+    Added two-phase master requests
+    Fixed warnings
+    Upgraded version number to 0.9.5.0
+    Cleaned up prune threshold limits; Got rid of warnings
+    Fixed deadlock in ResponseManager
+    Fixed data loss bug - made CommitLog close synchronous; fixed async scanner bug
+    [Issue 579]  metalog backup verification causing intermittent test failures. Fixed
+    Added regression tests for stopping synchronous and asynchronous scanners abruptly before scan completes.
+    Fixed deadlock in TableScannerAsync code.
+    Added needs_compaction flag to RangeServer::load_range method.
+    [Issue 578]  Deadlock in async scanner. Fixed
+    Added ht_master_client shell program with shutdown command
+    Fixed hyperspace-reconnect test
+    Fixed monitoring server initialization problem
+    Minor fix to dot jpg file generation.
+    added start_time,end_time as http query params
+    Close cell store file before removing directory
+    Create <data dir>/run folder if required
+    Fixed a bunch of minor issues.
+    [Issue 577]  RangeServer::commit_log_sync should respect group commit. Fixed
+    Added regression tests and bug fixes for Future API.
+    Performance and functional bug fixes to TableScanner class.
+    Implemented changes to C++ and Thrift clients to support asynchronous scanners. -TODO: add tests for Php and Python 
+    Fixed a bug that was causing the METADATA-split-recovery test to fail intermittently.
+    issue 552: Ensure Hyperspace handles get closed; Naming cleanup
+    Fixed incorrect CellStoreTrailerV5 version check caught by assert
+    Added CellStoreV5; Monitoring system improvements (avg. key & value size)
+    added new column to table stats
+    Added file_count to StatsTable; Fixed compression ratio computation
+    Got rid of read_ids flag in Schema parse API
+    "changes to header labels"
+    Monitoring UI Changes, Sorting options for stats summary
+    Updated clean-database.sh script to reflect new rsml backup location
+    added invalidate methods for table name changes
+    bunch of changes to Monitoring UI changes (reading from json and got rid google graphs which gives summary) Added Ta
+    Fixes to monitoring & stats gathering
+    Fixed bugs caught by Andy Thalmann (ScanContext copy ctor bug)
+    added table names to json , removing unnecessary code
+    Fixed minor monitoring/stats gathering bugs
+    issue 563: fixed METADATA split test
+    bunch of changes to Monitoring UI changes (reading from json and got rid google graphs which gives summary) Added Ta
+    Added Hypertable.RangeServer.CellStore.SkipNotFound
+    issue 559: Prevent transfer log from getting linked in twice
+    issue 552: Ensure Hyperspace handles get closed; Naming cleanup
+    [Issue 505] Client-no-log-sync regression failure
+    issue 537: Fixed RangeServer shutdown hang
+    issue 542: Only write last-dfs file if it doesn't exist
+    issue 544: Set default RangeServer memory limit to 50%
+    issue 553: Schema HQL render wrap table name in quotes if necessary
+    issue 545: Reduced random-write-read test to 1/5 the size
+    [Issue 551] Upgraded to QuickLZ 1.5
+    Fixed bugs related to MasterGc and live file tracking
+    Renamed MoveStart and MoveDone RSML operations to RelinquishStart and RelinquishDone.
+    Made changes to BalanceStarted/Done and RangeMoveLoaded/Acknowledged MML entries.
+    Added code for additional MML entries.
+    Changed MasterMetaLog to garbage collect entries during recovery.
+    Added MoveStart and MoveDone RSML entries.
+    Changed RangeServerMetaLog to garbage collect entries during recovery.
+    Fixed rare bug that caused root range corruption
+    issue 547: Found and fixed more race conditions
+    Fixed excessive maintenance scheduling during low memory condition
+    Fixed deadlocks uncovered recently
+    Fixed race cond in drop_table; Fixed RangeServer::update bug
+    Changed DfsBroker.Local.DirectIO default to false
+    Fixed some stats gathering issues discovered in sys/RS_METRICS
+    issue 531: Fixed bug in load_generator that caused intermittent drop of last cells
+    Added RangeServer::relinquish_range() (with RSML update code stubbed out)
+    Added Hyperspace::Session::open() method with no callback; code cleanup
+    Use "scanned" cells/bytes for load metrics; Added paging info to load metrics
+    Fixed recently introduced "bad ProxyName" problem
+    Do not reduce the limit below the minimum
+    Scan and filter rows fix and optimization
+    Config property "Hypertable.RangeServer.LowMemoryLimit.Percentage" has been added
+    Added disk_used, disk_estimate, and compression_ratio to StatsTable
+    Fixed revision number problem in CommitLogReader with link entries
+    Renamed Master::report_split() to Master::move_range()
+    Added MML
+    Fixed monitoring stats; fixed JSON output for RS summary
+    Monitoring overhaul part 1
+    new rangeserver stats
+    changes to use new rangeserver summary data
+    Destroy comm has been fixed
+    HQL scan and filter rows option added
+    Logic changed to setup row intervals in case of scan and filter rows
+    Optimization for scan and filter rows
+    Scan and filter rows has been implemented (Issue 525)
+    check for negative resolution
+    issues with config
+    Added resolution param to rrd page
+    Fixed monitoring stats; fixed JSON output for RS summary
+    Monitoring overhaul part 1
+    Check for zero-lengthed row and skip in LoadDataSource
+    Allow NULL strings to be passed into FlyweightString
+    Fixed bad memory reference in RangeServer::FillScanBlock
+    cleanup has been added
+    Added prepend_md5 tool
+    Redirect thrift output to HT logger
+    Assignment operator added
+    Support empty qualifier filtering
+    Recursive option added to the hyperspace readdirattr command
+    Recursivly option added to the hyperspace readdirattr command
+    Include sub entries for get_listing/NamespaceListing, readdir_attr/DirEntryAttr
+    Fixed syntax error recently intoduced into Ceph broker code
+    Added StrictHostKeyChecking=no to rsync
+    Added regexp filtering to DUMP TABLE command.
+    Added optimization for row and qualifier regex matching.
+    Added script to compare test runs times and detect potential performance regressions.
+    Cleaned up SELECT [CELLS] Hql command.
+    Removed DfsBroker.Host from default hypertable.cfg; Cleaned up DFS Port properties
+    Fixed bug in Hyperspace caused by Reactor thread directly calling BerkeleyDbFilesystem on disconnect.
+    Improved Master handling of already assigned location in register_server
+    Fixed performance regression in ScanContext by using set instead of hash_set for exact qualifiers
+
+
 Version 0.9.4.3:
 (2010-11-15)
 
