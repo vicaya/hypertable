@@ -251,23 +251,31 @@ end
 desc "Stops all servers."
 task :stop do
   transaction do
-    stop_slaves
     stop_master
+    stop_slaves
     stop_hyperspace
+    stop_dfsbrokers
   end
+end
+
+desc "Stops DFS brokers."
+task :stop_dfsbrokers, :roles => [:master, :slave] do
+  run <<-CMD
+  #{install_dir}/current/bin/stop-servers.sh #{additional_args}
+  CMD
 end
 
 desc "Stops slave processes."
 task :stop_slaves, :roles => :slave do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master #{additional_args}
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master --no-dfsbroker #{additional_args}
   CMD
 end
 
 desc "Stops master processes."
 task :stop_master, :roles => :master do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver #{additional_args} &&
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver --no-dfsbroker #{additional_args} &&
   #{install_dir}/current/bin/stop-monitoring.sh
   CMD
 end
