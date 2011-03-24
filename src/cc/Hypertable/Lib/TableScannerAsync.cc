@@ -202,6 +202,8 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
   // if we've seen an error before then don't bother with callback
   if (m_error != Error::OK || cancelled) {
     maybe_callback_error(scanner_id, next);
+    if (next && scanner_id == m_current_scanner)
+      move_to_next_interval_scanner(scanner_id, cancelled);
     return;
   }
   else if (abort) {
@@ -210,6 +212,8 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
     m_error_msg = error_msg;
     HT_ERROR_OUT << e << HT_END;
     maybe_callback_error(scanner_id, next);
+    if (next && scanner_id == m_current_scanner)
+      move_to_next_interval_scanner(scanner_id, cancelled);
   }
 }
 
@@ -229,6 +233,9 @@ void TableScannerAsync::handle_timeout(int scanner_id, const String &error_msg, 
                << " - " << error_msg << HT_END;
   m_error = Error::REQUEST_TIMEOUT;
   maybe_callback_error(scanner_id, next);
+  if (next && scanner_id == m_current_scanner)
+    move_to_next_interval_scanner(scanner_id, cancelled);
+
 }
 
 void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_create) {
@@ -268,25 +275,8 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
       maybe_callback_ok(scanner_id, next, do_callback, cells);
     }
 
-    while (next && m_outstanding && current_scanner < ((int)m_interval_scanners.size())-1) {
-      current_scanner++;
-      // unless the scan has been aborted we should be going through scanners in order
-      if (current_scanner != m_current_scanner+1) {
-        HT_ASSERT(abort);
-        break;
-      }
-      m_current_scanner = current_scanner;
-      if (m_interval_scanners[current_scanner] !=0) {
-        next = m_interval_scanners[current_scanner]->set_current(&do_callback, cells, abort);
-        HT_ASSERT(do_callback || !next || abort);
-
-        if (next && m_outstanding==1 && cancelled && m_error == Error::OK) {
-          do_callback = true;
-          cells = new ScanCells;
-        }
-        maybe_callback_ok(scanner_id, next, do_callback, cells);
-      }
-    }
+    if (next)
+      move_to_next_interval_scanner(current_scanner, cancelled);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -302,7 +292,7 @@ void TableScannerAsync::maybe_callback_error(int scanner_id, bool next) {
   bool eos = false;
   // ok to update m_outstanding since caller has locked mutex
   if (next) {
-    HT_ASSERT(m_outstanding>0);
+    HT_ASSERT(m_outstanding>0 && m_interval_scanners[scanner_id] != 0);
     m_outstanding--;
     m_interval_scanners[scanner_id] = 0;
   }
@@ -328,7 +318,7 @@ void TableScannerAsync::maybe_callback_ok(int scanner_id, bool next, bool do_cal
   bool eos = false;
   // ok to update m_outstanding since caller has locked mutex
   if (next) {
-    HT_ASSERT(m_outstanding>0);
+    HT_ASSERT(m_outstanding>0 && m_interval_scanners[scanner_id] != 0);
     m_outstanding--;
     m_interval_scanners[scanner_id] = 0;
   }
@@ -362,4 +352,32 @@ String TableScannerAsync::get_table_name() const {
   return m_table->get_name();
 }
 
+void TableScannerAsync::move_to_next_interval_scanner(int current_scanner, bool cancelled) {
+
+  bool next=true;
+  bool do_callback;
+  ScanCellsPtr cells;
+  bool abort = cancelled || (m_error != Error::OK);
+
+  while (next && m_outstanding && current_scanner < ((int)m_interval_scanners.size())-1) {
+    current_scanner++;
+    // unless the scan has been aborted we should be going through scanners in order
+    if (current_scanner != m_current_scanner+1) {
+      HT_ASSERT(abort);
+      break;
+    }
+    m_current_scanner = current_scanner;
+    if (m_interval_scanners[current_scanner] !=0) {
+      next = m_interval_scanners[current_scanner]->set_current(&do_callback, cells, abort);
+      HT_ASSERT(do_callback || !next || abort);
+
+      // scan was cancelled and this is the last outstanding scanner
+      if (next && m_outstanding==1 && cancelled && m_error == Error::OK) {
+        do_callback = true;
+        cells = new ScanCells;
+      }
+      maybe_callback_ok(m_current_scanner, next, do_callback, cells);
+    }
+  }
+}
 
