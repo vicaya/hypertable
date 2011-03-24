@@ -47,12 +47,17 @@ void DispatchHandlerOperation::start(StringSet &locations) {
   m_locations = locations;
 
   for (StringSet::iterator iter = m_locations.begin(); iter != m_locations.end(); ++iter) {
-    try {
-      start(*iter);
+    {
+      ScopedLock lock(m_mutex);
       m_outstanding++;
     }
+    try {
+      start(*iter);
+    }
     catch (Exception &e) {
+      ScopedLock lock(m_mutex);
       Result result;
+      m_outstanding--;
       result.location = *iter;
       result.error = e.code();
       result.msg = "Send error";
