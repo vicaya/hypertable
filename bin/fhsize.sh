@@ -44,6 +44,9 @@ mkdir -p $etchome
 nfiles=`ls -1 $etchome | wc -l`
 if [ $nfiles -eq 0 ] ; then
   cp $HYPERTABLE_HOME/conf/* $etchome
+else
+  cp $HYPERTABLE_HOME/conf/METADATA.xml $etchome
+  cp $HYPERTABLE_HOME/conf/RS_METRICS.xml $etchome
 fi
 rm -rf $HYPERTABLE_HOME/conf && ln -s $etchome $HYPERTABLE_HOME/conf
 
