@@ -145,7 +145,7 @@ void verify_table_name_availability(ContextPtr &context, const String &name, Str
   if (context->hyperspace->exists(tablefile)) {
     handle = context->hyperspace->open(tablefile, Hyperspace::OPEN_FLAG_READ);
     if (context->hyperspace->attr_exists(handle, "x"))
-      HT_THROW(Error::MASTER_TABLE_EXISTS, "");
+      HT_THROW(Error::MASTER_TABLE_EXISTS, name);
   }
 
 }

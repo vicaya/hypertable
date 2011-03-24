@@ -173,8 +173,12 @@ int main(int argc, char **argv) {
       }
     }
 
-    if (operations.empty())
-      operations.push_back( new OperationInitialize(context) );
+    if (operations.empty()) {
+      OperationInitializePtr init_op = new OperationInitialize(context);
+      if (context->namemap->exists_mapping("/sys/METADATA", 0))
+	init_op->set_state(OperationState::CREATE_RS_METRICS);
+      operations.push_back( init_op );
+    }
 
     // Add PERPETUAL operations
     operation = new OperationWaitForServers(context);
