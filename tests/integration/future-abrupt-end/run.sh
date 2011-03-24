@@ -39,7 +39,7 @@ for((ii=0; $ii<${ITERATIONS}; ii=$ii+1)) do
   echo "================="
   `${cmd}  2>&1 >> future_abrupt_end_test.out`
   if [ $? != 0 ] ; then
-    echo "${cmd} failed got error %?" 
+    echo "${cmd} failed got error $?" 
     exit 1
   fi
 done
