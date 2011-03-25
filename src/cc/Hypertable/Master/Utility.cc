@@ -283,8 +283,12 @@ void create_table_load_range(ContextPtr &context, const String &location, TableI
     rsc.acknowledge_load(addr, *table, range);
   }
   catch (Exception &e) {
-    HT_THROW2F(e.code(), e, "Problem acknowledging load for %s[%s..%s] in %s",
-               table->id, range.start_row, range.end_row, location.c_str());
+    if (e.code() != Error::RANGESERVER_TABLE_DROPPED &&
+        e.code() != Error::TABLE_NOT_FOUND &&
+        e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)
+      HT_THROW2F(e.code(), e, "Problem acknowledging load for %s[%s..%s] in %s",
+                 table->id, range.start_row, range.end_row, location.c_str());
+    HT_WARNF("Problem acknowledging load range - %s - %s", Error::get_text(e.code()), e.what());
   }
 
 }

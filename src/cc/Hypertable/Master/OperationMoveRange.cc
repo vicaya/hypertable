@@ -171,8 +171,18 @@ void OperationMoveRange::execute() {
       addr.set_proxy(m_location);
       if (m_context->test_mode)
         HT_WARNF("Skipping %s::acknowledge_load() because in TEST MODE", m_location.c_str());
-      else
-        rsc.acknowledge_load(addr, *table, *range);
+      else {
+        try {
+          rsc.acknowledge_load(addr, *table, *range);
+        }
+        catch (Exception &e) {
+          if (e.code() != Error::RANGESERVER_TABLE_DROPPED &&
+              e.code() != Error::TABLE_NOT_FOUND &&
+              e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)
+            HT_THROW2F(e.code(), e, "Problem acknowleding load range %s", m_range_name.c_str());
+          HT_WARNF("Problem acknowledging load range - %s - %s", Error::get_text(e.code()), e.what());
+        }
+      }
     }
     complete_ok();
     break;
