@@ -80,10 +80,7 @@ public:
   key_alloc() { return m_alloc; }
 
   void
-  clear() {
-    Base::clear();
-    m_alloc.free();
-  }
+  clear() { Base::clear(); }
 };
 
 } // namespace Hypertable

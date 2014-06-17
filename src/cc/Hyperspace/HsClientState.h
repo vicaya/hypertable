@@ -26,9 +26,8 @@
 #include "Common/StringExt.h"
 #include "Common/HashMap.h"
 
-using namespace Hypertable;
 namespace Hyperspace {
-
+using namespace Hypertable;
   namespace HsClientState {
     extern int exit_status;
     extern String cwd;

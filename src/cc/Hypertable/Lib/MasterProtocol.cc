@@ -30,8 +30,36 @@ namespace Hypertable {
   using namespace Serialization;
 
   CommBuf *
-  MasterProtocol::create_create_table_request(const char *tablename,
-                                              const char *schemastr) {
+  MasterProtocol::create_create_namespace_request(const String &name, int flags) {
+    CommHeader header(COMMAND_CREATE_NAMESPACE);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(name) + 4);
+    cbuf->append_vstr(name);
+    cbuf->append_i32(flags);
+    return cbuf;
+  }
+
+  CommBuf *
+  MasterProtocol::create_drop_namespace_request(const String &name, bool if_exists) {
+    CommHeader header(COMMAND_DROP_NAMESPACE);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(name)+1);
+    cbuf->append_vstr(name);
+    cbuf->append_bool(if_exists);
+    return cbuf;
+  }
+
+  CommBuf *
+  MasterProtocol::create_rename_table_request(const String &old_name, const String &new_name) {
+    CommHeader header(COMMAND_RENAME_TABLE);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(old_name) +
+                                        encoded_length_vstr(new_name));
+    cbuf->append_vstr(old_name);
+    cbuf->append_vstr(new_name);
+    return cbuf;
+  }
+
+  CommBuf *
+  MasterProtocol::create_create_table_request(const String &tablename,
+                                              const String &schemastr) {
     CommHeader header(COMMAND_CREATE_TABLE);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename)
         + encoded_length_vstr(schemastr));
@@ -41,8 +69,8 @@ namespace Hypertable {
   }
 
   CommBuf *
-  MasterProtocol::create_alter_table_request(const char *tablename,
-      const char *schemastr) {
+  MasterProtocol::create_alter_table_request(const String &tablename,
+      const String &schemastr) {
     CommHeader header(COMMAND_ALTER_TABLE);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename)
         + encoded_length_vstr(schemastr));
@@ -51,7 +79,7 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_get_schema_request(const char *tablename) {
+  CommBuf *MasterProtocol::create_get_schema_request(const String &tablename) {
     CommHeader header(COMMAND_GET_SCHEMA);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename));
     cbuf->append_vstr(tablename);
@@ -65,29 +93,48 @@ namespace Hypertable {
   }
 
   CommBuf *
-  MasterProtocol::create_register_server_request(const String &location) {
+  MasterProtocol::create_register_server_request(const String &location,
+                                                 uint16_t listen_port,
+                                                 StatsSystem &system_stats) {
     CommHeader header(COMMAND_REGISTER_SERVER);
-    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location));
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location) + 2 + system_stats.encoded_length());
     cbuf->append_vstr(location);
+    cbuf->append_i16(listen_port);
+    system_stats.encode(cbuf->get_data_ptr_address());
     return cbuf;
   }
 
   CommBuf *
-  MasterProtocol::create_report_split_request(const TableIdentifier *table,
-      const RangeSpec &range, const char *transfer_log_dir,
-      uint64_t soft_limit) {
-    CommHeader header(COMMAND_REPORT_SPLIT);
+  MasterProtocol::create_move_range_request(const TableIdentifier *table,
+      const RangeSpec &range, const String &transfer_log_dir,
+      uint64_t soft_limit, bool split) {
+    CommHeader header(COMMAND_MOVE_RANGE);
     CommBuf *cbuf = new CommBuf(header, table->encoded_length()
-        + range.encoded_length() + encoded_length_vstr(transfer_log_dir) + 8);
+        + range.encoded_length() + encoded_length_vstr(transfer_log_dir) + 9);
     table->encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
     cbuf->append_vstr(transfer_log_dir);
     cbuf->append_i64(soft_limit);
+    if (split)
+      cbuf->append_byte(1);
+    else
+      cbuf->append_byte(0);
     return cbuf;
   }
 
   CommBuf *
-  MasterProtocol::create_drop_table_request(const char *table_name,
+  MasterProtocol::create_relinquish_acknowledge_request(const TableIdentifier *table,
+                                                        const RangeSpec &range) {
+    CommHeader header(COMMAND_RELINQUISH_ACKNOWLEDGE);
+    CommBuf *cbuf = new CommBuf(header, table->encoded_length()
+                                + range.encoded_length());
+    table->encode(cbuf->get_data_ptr_address());
+    range.encode(cbuf->get_data_ptr_address());
+    return cbuf;
+  }
+
+  CommBuf *
+  MasterProtocol::create_drop_table_request(const String &table_name,
                                             bool if_exists) {
     CommHeader header(COMMAND_DROP_TABLE);
     CommBuf *cbuf = new CommBuf(header, 1 + encoded_length_vstr(table_name));
@@ -96,9 +143,10 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_close_request() {
-    CommHeader header(COMMAND_CLOSE);
-    CommBuf *cbuf = new CommBuf(header, 0);
+  CommBuf *MasterProtocol::create_fetch_result_request(int64_t id) {
+    CommHeader header(COMMAND_FETCH_RESULT);
+    CommBuf *cbuf = new CommBuf(header, 8);
+    cbuf->append_i64(id);
     return cbuf;
   }
 
@@ -115,6 +163,7 @@ namespace Hypertable {
     "register server",
     "report split",
     "drop table",
+    "alter table",
     "shutdown",
     "close"
   };

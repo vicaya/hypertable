@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/StringExt.h"
 
@@ -28,6 +29,7 @@
 #include "Protocol.h"
 #include "RequestHandlerAttrSet.h"
 #include "RequestHandlerAttrGet.h"
+#include "RequestHandlerAttrIncr.h"
 #include "RequestHandlerAttrDel.h"
 #include "RequestHandlerAttrExists.h"
 #include "RequestHandlerAttrList.h"
@@ -37,15 +39,28 @@
 #include "RequestHandlerClose.h"
 #include "RequestHandlerExists.h"
 #include "RequestHandlerReaddir.h"
+#include "RequestHandlerReaddirAttr.h"
+#include "RequestHandlerReadpathAttr.h"
 #include "RequestHandlerLock.h"
 #include "RequestHandlerRelease.h"
 #include "RequestHandlerStatus.h"
+#include "RequestHandlerHandshake.h"
+#include "RequestHandlerDoMaintenance.h"
+#include "RequestHandlerDestroySession.h"
 #include "ServerConnectionHandler.h"
 
 using namespace std;
 using namespace Hypertable;
 using namespace Hyperspace;
 using namespace Serialization;
+using namespace Error;
+
+ServerConnectionHandler::ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
+    MasterPtr &master) : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master),
+    m_session_id(0) {
+  m_maintenance_interval = Config::properties->get_i32("Hyperspace.Maintenance.Interval");
+}
+
 
 
 /**
@@ -57,8 +72,6 @@ void ServerConnectionHandler::handle(EventPtr &event) {
 
   if (event->type == Hypertable::Event::MESSAGE) {
     ApplicationHandler *handler = 0;
-    const uint8_t *decode_ptr = event->payload;
-    size_t decode_remain = event->payload_len;
 
     try {
 
@@ -67,16 +80,26 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
                   (Llu)event->header.command);
 
-      switch (event->header.command) {
-      case Protocol::COMMAND_HANDSHAKE: {
-          ResponseCallback cb(m_comm, event);
-          m_session_id = decode_i64(&decode_ptr, &decode_remain);
-          if (m_session_id == 0)
-            HT_THROW(Error::PROTOCOL_ERROR, "Bad session id: 0");
+      // if this is not the current replication master then try to return
+      // addr of current master
+      if (!m_master_ptr->is_master())
+        HT_THROW(Error::HYPERSPACE_NOT_MASTER_LOCATION, (String) "Current master=" +
+            m_master_ptr->get_current_master());
 
-          cb.response_ok();
-        }
-        return;
+      switch (event->header.command) {
+         case Protocol::COMMAND_HANDSHAKE:
+           {
+             const uint8_t *decode_ptr = event->payload;
+             size_t decode_remain = event->payload_len;
+
+             m_session_id = decode_i64(&decode_ptr, &decode_remain);
+             if (m_session_id == 0)
+             HT_THROW(Error::PROTOCOL_ERROR, "Bad session id: 0");
+             handler = new RequestHandlerHandshake(m_comm, m_master_ptr.get(),
+                                                   m_session_id, event);
+
+          }
+          break;
       case Protocol::COMMAND_OPEN:
         handler = new RequestHandlerOpen(m_comm, m_master_ptr.get(),
                                          m_session_id, event);
@@ -101,6 +124,10 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         handler = new RequestHandlerAttrGet(m_comm, m_master_ptr.get(),
                                             m_session_id, event);
         break;
+      case Protocol::COMMAND_ATTRINCR:
+        handler = new RequestHandlerAttrIncr(m_comm, m_master_ptr.get(),
+                                             m_session_id, event);
+        break;
       case Protocol::COMMAND_ATTREXISTS:
         handler = new RequestHandlerAttrExists(m_comm, m_master_ptr.get(),
                                                m_session_id, event);
@@ -120,6 +147,14 @@ void ServerConnectionHandler::handle(EventPtr &event) {
       case Protocol::COMMAND_READDIR:
         handler = new RequestHandlerReaddir(m_comm, m_master_ptr.get(),
                                             m_session_id, event);
+        break;
+      case Protocol::COMMAND_READDIRATTR:
+        handler = new RequestHandlerReaddirAttr(m_comm, m_master_ptr.get(),
+                                                m_session_id, event);
+        break;
+      case Protocol::COMMAND_READPATHATTR:
+        handler = new RequestHandlerReadpathAttr(m_comm, m_master_ptr.get(),
+                                                 m_session_id, event);
         break;
       case Protocol::COMMAND_LOCK:
         handler = new RequestHandlerLock(m_comm, m_master_ptr.get(),
@@ -150,9 +185,24 @@ void ServerConnectionHandler::handle(EventPtr &event) {
     HT_INFOF("%s", event->to_str().c_str());
   }
   else if (event->type == Hypertable::Event::DISCONNECT) {
-    m_master_ptr->destroy_session(m_session_id);
+    m_app_queue_ptr->add( new RequestHandlerDestroySession(m_comm, m_master_ptr.get(), m_session_id) );
     cout << flush;
   }
+  else if (event->type == Hypertable::Event::TIMER) {
+    int error;
+    try {
+      m_app_queue_ptr->add(new Hyperspace::RequestHandlerDoMaintenance(m_comm,
+          m_master_ptr.get(), event) );
+    }
+    catch (Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
+    }
+
+    if ((error = m_comm->set_timer(m_maintenance_interval, this)) != Error::OK)
+       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
+
+  }
+
   else {
     HT_INFOF("%s", event->to_str().c_str());
   }

@@ -24,6 +24,8 @@
 
 #include <boost/any.hpp>
 
+#include "Hypertable/Lib/Schema.h"
+
 #include "CellStoreTrailer.h"
 
 namespace Hypertable {
@@ -86,6 +88,7 @@ namespace Hypertable {
       else if (prop == "flags")                 return flags;
       else if (prop == "compression_ratio")     return compression_ratio;
       else if (prop == "compression_type")      return compression_type;
+      else if (prop == "bloom_filter_mode")     return BLOOM_FILTER_DISABLED;
       else                                      return boost::any();
     }
 

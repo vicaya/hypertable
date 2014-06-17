@@ -19,7 +19,6 @@
 
 # We should be able to run the test even if we didn't build jars
 if (JAVAC_VERSION)
-  add_test(ThriftClient-java env java -cp
-          ${INSTALL_DIR}/lib/java/hypertable-${VERSION}.jar:${INSTALL_DIR}/lib/java/log4j-1.2.13.jar:${INSTALL_DIR}/lib/java/libthrift.jar
-          org.hypertable.thrift.BasicClientTest)
+  add_test(ThriftClient-java ${INSTALL_DIR}/bin/java-thrift.sh
+           org.hypertable.thrift.BasicClientTest)
 endif ()

@@ -20,7 +20,6 @@ if (defined $ENV{'GPP_DEBUG'}) {
 sub cleanup {
   local($_) = shift;
   s/^#.*//mg;   # remove preprocessing directives
-  s/;/;\n/g;    # add a newline after ; to workaround a problem in bcpp
   return $_;
 }
 

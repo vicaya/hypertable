@@ -24,6 +24,8 @@
 
 #include "AsyncComm/Protocol.h"
 
+#include "Common/StaticBuffer.h"
+
 #include "RangeState.h"
 #include "ScanSpec.h"
 #include "Types.h"
@@ -34,39 +36,43 @@ namespace Hypertable {
   class RangeServerProtocol : public Protocol {
 
   public:
-    static const uint64_t COMMAND_LOAD_RANGE        = 0;
-    static const uint64_t COMMAND_UPDATE            = 1;
-    static const uint64_t COMMAND_CREATE_SCANNER    = 2;
-    static const uint64_t COMMAND_FETCH_SCANBLOCK   = 3;
-    static const uint64_t COMMAND_COMPACT           = 4;
-    static const uint64_t COMMAND_STATUS            = 5;
-    static const uint64_t COMMAND_SHUTDOWN          = 6;
-    static const uint64_t COMMAND_DUMP              = 7;
-    static const uint64_t COMMAND_DESTROY_SCANNER   = 8;
-    static const uint64_t COMMAND_DROP_TABLE        = 9;
-    static const uint64_t COMMAND_DROP_RANGE        = 10;
-    static const uint64_t COMMAND_REPLAY_BEGIN      = 11;
-    static const uint64_t COMMAND_REPLAY_LOAD_RANGE = 12;
-    static const uint64_t COMMAND_REPLAY_UPDATE     = 13;
-    static const uint64_t COMMAND_REPLAY_COMMIT     = 14;
-    static const uint64_t COMMAND_GET_STATISTICS    = 15;
-    static const uint64_t COMMAND_UPDATE_SCHEMA     = 16;
-    static const uint64_t COMMAND_COMMIT_LOG_SYNC   = 17;
-    static const uint64_t COMMAND_CLOSE             = 18;
-    static const uint64_t COMMAND_MAX               = 19;
+    static const uint64_t COMMAND_LOAD_RANGE           = 0;
+    static const uint64_t COMMAND_UPDATE               = 1;
+    static const uint64_t COMMAND_CREATE_SCANNER       = 2;
+    static const uint64_t COMMAND_FETCH_SCANBLOCK      = 3;
+    static const uint64_t COMMAND_COMPACT              = 4;
+    static const uint64_t COMMAND_STATUS               = 5;
+    static const uint64_t COMMAND_SHUTDOWN             = 6;
+    static const uint64_t COMMAND_DUMP                 = 7;
+    static const uint64_t COMMAND_DESTROY_SCANNER      = 8;
+    static const uint64_t COMMAND_DROP_TABLE           = 9;
+    static const uint64_t COMMAND_DROP_RANGE           = 10;
+    static const uint64_t COMMAND_REPLAY_BEGIN         = 11;
+    static const uint64_t COMMAND_REPLAY_LOAD_RANGE    = 12;
+    static const uint64_t COMMAND_REPLAY_UPDATE        = 13;
+    static const uint64_t COMMAND_REPLAY_COMMIT        = 14;
+    static const uint64_t COMMAND_GET_STATISTICS       = 15;
+    static const uint64_t COMMAND_UPDATE_SCHEMA        = 16;
+    static const uint64_t COMMAND_COMMIT_LOG_SYNC      = 17;
+    static const uint64_t COMMAND_CLOSE                = 18;
+    static const uint64_t COMMAND_WAIT_FOR_MAINTENANCE = 19;
+    static const uint64_t COMMAND_ACKNOWLEDGE_LOAD     = 20;
+    static const uint64_t COMMAND_MAX                  = 21;
 
     static const char *m_command_strings[];
 
     enum RangeGroup {
       GROUP_METADATA_ROOT,
       GROUP_METADATA,
+      GROUP_SYSTEM,
       GROUP_USER
     };
 
     // The flags shd be the same as in Hypertable::TableMutator.
     enum {
       /* Don't force a commit log sync on update */
-      UPDATE_FLAG_NO_LOG_SYNC = 0x0001
+      UPDATE_FLAG_NO_LOG_SYNC        = 0x0001,
+      UPDATE_FLAG_IGNORE_UNKNOWN_CFS = 0x0002
     };
 
     /** Creates a "load range" request message
@@ -75,11 +81,12 @@ namespace Hypertable {
      * @param range range specification
      * @param transfer_log transfer log to replay
      * @param range_state range state
+     * @param needs_compaction if true the range needs to be compacted after load
      * @return protocol message
      */
     static CommBuf *create_request_load_range(const TableIdentifier &table,
         const RangeSpec &range, const char *transfer_log,
-        const RangeState &range_state);
+        const RangeState &range_state, bool needs_compaction);
 
     /** Creates an "update" request message.  The data argument holds a
      * sequence of key/value pairs.  Each key/value pair is encoded as two
@@ -103,14 +110,14 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_update_schema(
-        const TableIdentifier &table, const char *schema);
+        const TableIdentifier &table, const String &schema);
 
     /** Creates an "commit_log_sync" message. Used to make previous range server updates
      * are syncd to the commit log
-     *
+     * @param table table identifier
      * @return protocol message
      */
-    static CommBuf *create_request_commit_log_sync();
+    static CommBuf *create_request_commit_log_sync(const TableIdentifier &table);
 
     /** Creates a "create scanner" request message.
      *
@@ -147,6 +154,12 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_close();
+
+    /** Creates a "wait_for_maintenance" request message.
+     *
+     * @return protocol message
+     */
+    static CommBuf *create_request_wait_for_maintenance();
 
     /** Creates a "shutdown" request message.
      *
@@ -206,6 +219,15 @@ namespace Hypertable {
      */
     static CommBuf *create_request_drop_range(const TableIdentifier &table,
                                               const RangeSpec &range);
+
+    /** Creates a "acknowledge load" request message.
+     *
+     * @param table table identifier
+     * @param range range specification
+     * @return protocol message
+     */
+    static CommBuf *create_request_acknowledge_load(const TableIdentifier &table,
+                                                    const RangeSpec &range);
 
     /** Creates a "get statistics" request message.
      *

@@ -7,6 +7,7 @@
 #define Client_TYPES_H
 
 #include <Thrift.h>
+#include <TApplicationException.h>
 #include <protocol/TProtocol.h>
 #include <transport/TTransport.h>
 
@@ -14,24 +15,49 @@
 
 namespace Hypertable { namespace ThriftGen {
 
-enum CellFlag {
-  DELETE_ROW = 0,
-  DELETE_CF = 1,
-  DELETE_CELL = 2,
-  INSERT = 255
+struct KeyFlag {
+  enum type {
+    DELETE_ROW = 0,
+    DELETE_CF = 1,
+    DELETE_CELL = 2,
+    INSERT = 255
+  };
 };
 
-enum MutatorFlag {
-  NO_LOG_SYNC = 1
+extern const std::map<int, const char*> _KeyFlag_VALUES_TO_NAMES;
+
+struct MutatorFlag {
+  enum type {
+    NO_LOG_SYNC = 1,
+    IGNORE_UNKNOWN_CFS = 2
+  };
 };
+
+extern const std::map<int, const char*> _MutatorFlag_VALUES_TO_NAMES;
+
+typedef int64_t Future;
+
+typedef int64_t Namespace;
 
 typedef int64_t Scanner;
+
+typedef int64_t ScannerAsync;
 
 typedef int64_t Mutator;
 
 typedef std::string Value;
 
 typedef std::vector<std::string>  CellAsArray;
+
+typedef std::string CellsSerialized;
+
+typedef struct _RowInterval__isset {
+  _RowInterval__isset() : start_row(false), start_inclusive(false), end_row(false), end_inclusive(false) {}
+  bool start_row;
+  bool start_inclusive;
+  bool end_row;
+  bool end_inclusive;
+} _RowInterval__isset;
 
 class RowInterval {
  public:
@@ -49,13 +75,7 @@ class RowInterval {
   std::string end_row;
   bool end_inclusive;
 
-  struct __isset {
-    __isset() : start_row(false), start_inclusive(false), end_row(false), end_inclusive(false) {}
-    bool start_row;
-    bool start_inclusive;
-    bool end_row;
-    bool end_inclusive;
-  } __isset;
+  _RowInterval__isset __isset;
 
   bool operator == (const RowInterval & rhs) const
   {
@@ -83,10 +103,20 @@ class RowInterval {
 
   bool operator < (const RowInterval & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
+
+typedef struct _CellInterval__isset {
+  _CellInterval__isset() : start_row(false), start_column(false), start_inclusive(false), end_row(false), end_column(false), end_inclusive(false) {}
+  bool start_row;
+  bool start_column;
+  bool start_inclusive;
+  bool end_row;
+  bool end_column;
+  bool end_inclusive;
+} _CellInterval__isset;
 
 class CellInterval {
  public:
@@ -106,15 +136,7 @@ class CellInterval {
   std::string end_column;
   bool end_inclusive;
 
-  struct __isset {
-    __isset() : start_row(false), start_column(false), start_inclusive(false), end_row(false), end_column(false), end_inclusive(false) {}
-    bool start_row;
-    bool start_column;
-    bool start_inclusive;
-    bool end_row;
-    bool end_column;
-    bool end_inclusive;
-  } __isset;
+  _CellInterval__isset __isset;
 
   bool operator == (const CellInterval & rhs) const
   {
@@ -150,18 +172,35 @@ class CellInterval {
 
   bool operator < (const CellInterval & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
+
+typedef struct _ScanSpec__isset {
+  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false) {}
+  bool row_intervals;
+  bool cell_intervals;
+  bool return_deletes;
+  bool revs;
+  bool row_limit;
+  bool start_time;
+  bool end_time;
+  bool columns;
+  bool keys_only;
+  bool cell_limit;
+  bool row_regexp;
+  bool value_regexp;
+  bool scan_and_filter_rows;
+} _ScanSpec__isset;
 
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "AAC6EAC7CCF976D9159BC1D44D2DABF3";
-  static const uint8_t binary_fingerprint[16]; // = {0xAA,0xC6,0xEA,0xC7,0xCC,0xF9,0x76,0xD9,0x15,0x9B,0xC1,0xD4,0x4D,0x2D,0xAB,0xF3};
+  static const char* ascii_fingerprint; // = "05B8915B6E6CD581FE75B14AA5F06EB0";
+  static const uint8_t binary_fingerprint[16]; // = {0x05,0xB8,0x91,0x5B,0x6E,0x6C,0xD5,0x81,0xFE,0x75,0xB1,0x4A,0xA5,0xF0,0x6E,0xB0};
 
-  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0) {
+  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false) {
   }
 
   virtual ~ScanSpec() throw() {}
@@ -174,18 +213,13 @@ class ScanSpec {
   int64_t start_time;
   int64_t end_time;
   std::vector<std::string>  columns;
+  bool keys_only;
+  int32_t cell_limit;
+  std::string row_regexp;
+  std::string value_regexp;
+  bool scan_and_filter_rows;
 
-  struct __isset {
-    __isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false) {}
-    bool row_intervals;
-    bool cell_intervals;
-    bool return_deletes;
-    bool revs;
-    bool row_limit;
-    bool start_time;
-    bool end_time;
-    bool columns;
-  } __isset;
+  _ScanSpec__isset __isset;
 
   bool operator == (const ScanSpec & rhs) const
   {
@@ -221,6 +255,26 @@ class ScanSpec {
       return false;
     else if (__isset.columns && !(columns == rhs.columns))
       return false;
+    if (__isset.keys_only != rhs.__isset.keys_only)
+      return false;
+    else if (__isset.keys_only && !(keys_only == rhs.keys_only))
+      return false;
+    if (__isset.cell_limit != rhs.__isset.cell_limit)
+      return false;
+    else if (__isset.cell_limit && !(cell_limit == rhs.cell_limit))
+      return false;
+    if (__isset.row_regexp != rhs.__isset.row_regexp)
+      return false;
+    else if (__isset.row_regexp && !(row_regexp == rhs.row_regexp))
+      return false;
+    if (__isset.value_regexp != rhs.__isset.value_regexp)
+      return false;
+    else if (__isset.value_regexp && !(value_regexp == rhs.value_regexp))
+      return false;
+    if (__isset.scan_and_filter_rows != rhs.__isset.scan_and_filter_rows)
+      return false;
+    else if (__isset.scan_and_filter_rows && !(scan_and_filter_rows == rhs.scan_and_filter_rows))
+      return false;
     return true;
   }
   bool operator != (const ScanSpec &rhs) const {
@@ -229,58 +283,50 @@ class ScanSpec {
 
   bool operator < (const ScanSpec & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-class Cell {
+typedef struct _Key__isset {
+  _Key__isset() : row(false), column_family(false), column_qualifier(false), timestamp(false), revision(false), flag(false) {}
+  bool row;
+  bool column_family;
+  bool column_qualifier;
+  bool timestamp;
+  bool revision;
+  bool flag;
+} _Key__isset;
+
+class Key {
  public:
 
-  static const char* ascii_fingerprint; // = "7D0933CA0766D7C3EAFC61FC083091CE";
-  static const uint8_t binary_fingerprint[16]; // = {0x7D,0x09,0x33,0xCA,0x07,0x66,0xD7,0xC3,0xEA,0xFC,0x61,0xFC,0x08,0x30,0x91,0xCE};
+  static const char* ascii_fingerprint; // = "17134A3D4B5435B7D4FA71A5B3905382";
+  static const uint8_t binary_fingerprint[16]; // = {0x17,0x13,0x4A,0x3D,0x4B,0x54,0x35,0xB7,0xD4,0xFA,0x71,0xA5,0xB3,0x90,0x53,0x82};
 
-  Cell() : row_key(""), column_family(""), column_qualifier(""), value(""), timestamp(0), revision(0), flag(255) {
+  Key() : row(""), column_family(""), column_qualifier(""), timestamp(0), revision(0) {
+    flag = (KeyFlag::type)255;
+
   }
 
-  virtual ~Cell() throw() {}
+  virtual ~Key() throw() {}
 
-  std::string row_key;
+  std::string row;
   std::string column_family;
   std::string column_qualifier;
-  Value value;
   int64_t timestamp;
   int64_t revision;
-  int16_t flag;
+  KeyFlag::type flag;
 
-  struct __isset {
-    __isset() : row_key(false), column_family(false), column_qualifier(false), value(false), timestamp(false), revision(false), flag(false) {}
-    bool row_key;
-    bool column_family;
-    bool column_qualifier;
-    bool value;
-    bool timestamp;
-    bool revision;
-    bool flag;
-  } __isset;
+  _Key__isset __isset;
 
-  bool operator == (const Cell & rhs) const
+  bool operator == (const Key & rhs) const
   {
-    if (__isset.row_key != rhs.__isset.row_key)
+    if (!(row == rhs.row))
       return false;
-    else if (__isset.row_key && !(row_key == rhs.row_key))
+    if (!(column_family == rhs.column_family))
       return false;
-    if (__isset.column_family != rhs.__isset.column_family)
-      return false;
-    else if (__isset.column_family && !(column_family == rhs.column_family))
-      return false;
-    if (__isset.column_qualifier != rhs.__isset.column_qualifier)
-      return false;
-    else if (__isset.column_qualifier && !(column_qualifier == rhs.column_qualifier))
-      return false;
-    if (__isset.value != rhs.__isset.value)
-      return false;
-    else if (__isset.value && !(value == rhs.value))
+    if (!(column_qualifier == rhs.column_qualifier))
       return false;
     if (__isset.timestamp != rhs.__isset.timestamp)
       return false;
@@ -290,9 +336,87 @@ class Cell {
       return false;
     else if (__isset.revision && !(revision == rhs.revision))
       return false;
-    if (__isset.flag != rhs.__isset.flag)
+    if (!(flag == rhs.flag))
       return false;
-    else if (__isset.flag && !(flag == rhs.flag))
+    return true;
+  }
+  bool operator != (const Key &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const Key & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class MutateSpec {
+ public:
+
+  static const char* ascii_fingerprint; // = "28C2ECC89260BADB9C70330FBF47BFA8";
+  static const uint8_t binary_fingerprint[16]; // = {0x28,0xC2,0xEC,0xC8,0x92,0x60,0xBA,0xDB,0x9C,0x70,0x33,0x0F,0xBF,0x47,0xBF,0xA8};
+
+  MutateSpec() : appname(""), flush_interval(1000), flags(2) {
+  }
+
+  virtual ~MutateSpec() throw() {}
+
+  std::string appname;
+  int32_t flush_interval;
+  int32_t flags;
+
+  bool operator == (const MutateSpec & rhs) const
+  {
+    if (!(appname == rhs.appname))
+      return false;
+    if (!(flush_interval == rhs.flush_interval))
+      return false;
+    if (!(flags == rhs.flags))
+      return false;
+    return true;
+  }
+  bool operator != (const MutateSpec &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const MutateSpec & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _Cell__isset {
+  _Cell__isset() : key(false), value(false) {}
+  bool key;
+  bool value;
+} _Cell__isset;
+
+class Cell {
+ public:
+
+  static const char* ascii_fingerprint; // = "DC051ACCFBB8C1A7B6D15A530DEBC267";
+  static const uint8_t binary_fingerprint[16]; // = {0xDC,0x05,0x1A,0xCC,0xFB,0xB8,0xC1,0xA7,0xB6,0xD1,0x5A,0x53,0x0D,0xEB,0xC2,0x67};
+
+  Cell() : value("") {
+  }
+
+  virtual ~Cell() throw() {}
+
+  Key key;
+  Value value;
+
+  _Cell__isset __isset;
+
+  bool operator == (const Cell & rhs) const
+  {
+    if (!(key == rhs.key))
+      return false;
+    if (__isset.value != rhs.__isset.value)
+      return false;
+    else if (__isset.value && !(value == rhs.value))
       return false;
     return true;
   }
@@ -302,12 +426,475 @@ class Cell {
 
   bool operator < (const Cell & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-class ClientException : public apache::thrift::TException {
+typedef struct _Result__isset {
+  _Result__isset() : error(false), error_msg(false), cells(false) {}
+  bool error;
+  bool error_msg;
+  bool cells;
+} _Result__isset;
+
+class Result {
+ public:
+
+  static const char* ascii_fingerprint; // = "3961071AF9F0CD494C023BDE4BE15710";
+  static const uint8_t binary_fingerprint[16]; // = {0x39,0x61,0x07,0x1A,0xF9,0xF0,0xCD,0x49,0x4C,0x02,0x3B,0xDE,0x4B,0xE1,0x57,0x10};
+
+  Result() : is_empty(0), id(0), is_scan(0), is_error(0), error(0), error_msg("") {
+  }
+
+  virtual ~Result() throw() {}
+
+  bool is_empty;
+  int64_t id;
+  bool is_scan;
+  bool is_error;
+  int32_t error;
+  std::string error_msg;
+  std::vector<Cell>  cells;
+
+  _Result__isset __isset;
+
+  bool operator == (const Result & rhs) const
+  {
+    if (!(is_empty == rhs.is_empty))
+      return false;
+    if (!(id == rhs.id))
+      return false;
+    if (!(is_scan == rhs.is_scan))
+      return false;
+    if (!(is_error == rhs.is_error))
+      return false;
+    if (__isset.error != rhs.__isset.error)
+      return false;
+    else if (__isset.error && !(error == rhs.error))
+      return false;
+    if (__isset.error_msg != rhs.__isset.error_msg)
+      return false;
+    else if (__isset.error_msg && !(error_msg == rhs.error_msg))
+      return false;
+    if (__isset.cells != rhs.__isset.cells)
+      return false;
+    else if (__isset.cells && !(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const Result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const Result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ResultAsArrays__isset {
+  _ResultAsArrays__isset() : error(false), error_msg(false), cells(false) {}
+  bool error;
+  bool error_msg;
+  bool cells;
+} _ResultAsArrays__isset;
+
+class ResultAsArrays {
+ public:
+
+  static const char* ascii_fingerprint; // = "E386C86852D0BFBEDC152386E212771F";
+  static const uint8_t binary_fingerprint[16]; // = {0xE3,0x86,0xC8,0x68,0x52,0xD0,0xBF,0xBE,0xDC,0x15,0x23,0x86,0xE2,0x12,0x77,0x1F};
+
+  ResultAsArrays() : is_empty(0), id(0), is_scan(0), is_error(0), error(0), error_msg("") {
+  }
+
+  virtual ~ResultAsArrays() throw() {}
+
+  bool is_empty;
+  int64_t id;
+  bool is_scan;
+  bool is_error;
+  int32_t error;
+  std::string error_msg;
+  std::vector<CellAsArray>  cells;
+
+  _ResultAsArrays__isset __isset;
+
+  bool operator == (const ResultAsArrays & rhs) const
+  {
+    if (!(is_empty == rhs.is_empty))
+      return false;
+    if (!(id == rhs.id))
+      return false;
+    if (!(is_scan == rhs.is_scan))
+      return false;
+    if (!(is_error == rhs.is_error))
+      return false;
+    if (__isset.error != rhs.__isset.error)
+      return false;
+    else if (__isset.error && !(error == rhs.error))
+      return false;
+    if (__isset.error_msg != rhs.__isset.error_msg)
+      return false;
+    else if (__isset.error_msg && !(error_msg == rhs.error_msg))
+      return false;
+    if (__isset.cells != rhs.__isset.cells)
+      return false;
+    else if (__isset.cells && !(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ResultAsArrays &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ResultAsArrays & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ResultSerialized__isset {
+  _ResultSerialized__isset() : error(false), error_msg(false), cells(false) {}
+  bool error;
+  bool error_msg;
+  bool cells;
+} _ResultSerialized__isset;
+
+class ResultSerialized {
+ public:
+
+  static const char* ascii_fingerprint; // = "8D7BAC5AE63452BB4EA65AE73E2331A7";
+  static const uint8_t binary_fingerprint[16]; // = {0x8D,0x7B,0xAC,0x5A,0xE6,0x34,0x52,0xBB,0x4E,0xA6,0x5A,0xE7,0x3E,0x23,0x31,0xA7};
+
+  ResultSerialized() : is_empty(0), id(0), is_scan(0), is_error(0), error(0), error_msg(""), cells("") {
+  }
+
+  virtual ~ResultSerialized() throw() {}
+
+  bool is_empty;
+  int64_t id;
+  bool is_scan;
+  bool is_error;
+  int32_t error;
+  std::string error_msg;
+  CellsSerialized cells;
+
+  _ResultSerialized__isset __isset;
+
+  bool operator == (const ResultSerialized & rhs) const
+  {
+    if (!(is_empty == rhs.is_empty))
+      return false;
+    if (!(id == rhs.id))
+      return false;
+    if (!(is_scan == rhs.is_scan))
+      return false;
+    if (!(is_error == rhs.is_error))
+      return false;
+    if (__isset.error != rhs.__isset.error)
+      return false;
+    else if (__isset.error && !(error == rhs.error))
+      return false;
+    if (__isset.error_msg != rhs.__isset.error_msg)
+      return false;
+    else if (__isset.error_msg && !(error_msg == rhs.error_msg))
+      return false;
+    if (__isset.cells != rhs.__isset.cells)
+      return false;
+    else if (__isset.cells && !(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ResultSerialized &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ResultSerialized & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class NamespaceListing {
+ public:
+
+  static const char* ascii_fingerprint; // = "7D61C9AA00102AB4D8F72A1DA58297DC";
+  static const uint8_t binary_fingerprint[16]; // = {0x7D,0x61,0xC9,0xAA,0x00,0x10,0x2A,0xB4,0xD8,0xF7,0x2A,0x1D,0xA5,0x82,0x97,0xDC};
+
+  NamespaceListing() : name(""), is_namespace(0) {
+  }
+
+  virtual ~NamespaceListing() throw() {}
+
+  std::string name;
+  bool is_namespace;
+
+  bool operator == (const NamespaceListing & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    if (!(is_namespace == rhs.is_namespace))
+      return false;
+    return true;
+  }
+  bool operator != (const NamespaceListing &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const NamespaceListing & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _TableSplit__isset {
+  _TableSplit__isset() : start_row(false), end_row(false), location(false), ip_address(false) {}
+  bool start_row;
+  bool end_row;
+  bool location;
+  bool ip_address;
+} _TableSplit__isset;
+
+class TableSplit {
+ public:
+
+  static const char* ascii_fingerprint; // = "7F96769A10DED7E9839D38968220F75A";
+  static const uint8_t binary_fingerprint[16]; // = {0x7F,0x96,0x76,0x9A,0x10,0xDE,0xD7,0xE9,0x83,0x9D,0x38,0x96,0x82,0x20,0xF7,0x5A};
+
+  TableSplit() : start_row(""), end_row(""), location(""), ip_address("") {
+  }
+
+  virtual ~TableSplit() throw() {}
+
+  std::string start_row;
+  std::string end_row;
+  std::string location;
+  std::string ip_address;
+
+  _TableSplit__isset __isset;
+
+  bool operator == (const TableSplit & rhs) const
+  {
+    if (__isset.start_row != rhs.__isset.start_row)
+      return false;
+    else if (__isset.start_row && !(start_row == rhs.start_row))
+      return false;
+    if (__isset.end_row != rhs.__isset.end_row)
+      return false;
+    else if (__isset.end_row && !(end_row == rhs.end_row))
+      return false;
+    if (__isset.location != rhs.__isset.location)
+      return false;
+    else if (__isset.location && !(location == rhs.location))
+      return false;
+    if (__isset.ip_address != rhs.__isset.ip_address)
+      return false;
+    else if (__isset.ip_address && !(ip_address == rhs.ip_address))
+      return false;
+    return true;
+  }
+  bool operator != (const TableSplit &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const TableSplit & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ColumnFamily__isset {
+  _ColumnFamily__isset() : name(false), ag(false), max_versions(false), ttl(false) {}
+  bool name;
+  bool ag;
+  bool max_versions;
+  bool ttl;
+} _ColumnFamily__isset;
+
+class ColumnFamily {
+ public:
+
+  static const char* ascii_fingerprint; // = "0EDE17B70FBE0133B4243A5167158E5C";
+  static const uint8_t binary_fingerprint[16]; // = {0x0E,0xDE,0x17,0xB7,0x0F,0xBE,0x01,0x33,0xB4,0x24,0x3A,0x51,0x67,0x15,0x8E,0x5C};
+
+  ColumnFamily() : name(""), ag(""), max_versions(0), ttl("") {
+  }
+
+  virtual ~ColumnFamily() throw() {}
+
+  std::string name;
+  std::string ag;
+  int32_t max_versions;
+  std::string ttl;
+
+  _ColumnFamily__isset __isset;
+
+  bool operator == (const ColumnFamily & rhs) const
+  {
+    if (__isset.name != rhs.__isset.name)
+      return false;
+    else if (__isset.name && !(name == rhs.name))
+      return false;
+    if (__isset.ag != rhs.__isset.ag)
+      return false;
+    else if (__isset.ag && !(ag == rhs.ag))
+      return false;
+    if (__isset.max_versions != rhs.__isset.max_versions)
+      return false;
+    else if (__isset.max_versions && !(max_versions == rhs.max_versions))
+      return false;
+    if (__isset.ttl != rhs.__isset.ttl)
+      return false;
+    else if (__isset.ttl && !(ttl == rhs.ttl))
+      return false;
+    return true;
+  }
+  bool operator != (const ColumnFamily &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ColumnFamily & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _AccessGroup__isset {
+  _AccessGroup__isset() : name(false), in_memory(false), replication(false), blocksize(false), compressor(false), bloom_filter(false), columns(false) {}
+  bool name;
+  bool in_memory;
+  bool replication;
+  bool blocksize;
+  bool compressor;
+  bool bloom_filter;
+  bool columns;
+} _AccessGroup__isset;
+
+class AccessGroup {
+ public:
+
+  static const char* ascii_fingerprint; // = "17108017AF8680A78499DB15024EC92B";
+  static const uint8_t binary_fingerprint[16]; // = {0x17,0x10,0x80,0x17,0xAF,0x86,0x80,0xA7,0x84,0x99,0xDB,0x15,0x02,0x4E,0xC9,0x2B};
+
+  AccessGroup() : name(""), in_memory(0), replication(0), blocksize(0), compressor(""), bloom_filter("") {
+  }
+
+  virtual ~AccessGroup() throw() {}
+
+  std::string name;
+  bool in_memory;
+  int16_t replication;
+  int32_t blocksize;
+  std::string compressor;
+  std::string bloom_filter;
+  std::vector<ColumnFamily>  columns;
+
+  _AccessGroup__isset __isset;
+
+  bool operator == (const AccessGroup & rhs) const
+  {
+    if (__isset.name != rhs.__isset.name)
+      return false;
+    else if (__isset.name && !(name == rhs.name))
+      return false;
+    if (__isset.in_memory != rhs.__isset.in_memory)
+      return false;
+    else if (__isset.in_memory && !(in_memory == rhs.in_memory))
+      return false;
+    if (__isset.replication != rhs.__isset.replication)
+      return false;
+    else if (__isset.replication && !(replication == rhs.replication))
+      return false;
+    if (__isset.blocksize != rhs.__isset.blocksize)
+      return false;
+    else if (__isset.blocksize && !(blocksize == rhs.blocksize))
+      return false;
+    if (__isset.compressor != rhs.__isset.compressor)
+      return false;
+    else if (__isset.compressor && !(compressor == rhs.compressor))
+      return false;
+    if (__isset.bloom_filter != rhs.__isset.bloom_filter)
+      return false;
+    else if (__isset.bloom_filter && !(bloom_filter == rhs.bloom_filter))
+      return false;
+    if (__isset.columns != rhs.__isset.columns)
+      return false;
+    else if (__isset.columns && !(columns == rhs.columns))
+      return false;
+    return true;
+  }
+  bool operator != (const AccessGroup &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const AccessGroup & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _Schema__isset {
+  _Schema__isset() : access_groups(false), column_families(false) {}
+  bool access_groups;
+  bool column_families;
+} _Schema__isset;
+
+class Schema {
+ public:
+
+  static const char* ascii_fingerprint; // = "69B5DA4C91BFF355857D905B1B5A3A03";
+  static const uint8_t binary_fingerprint[16]; // = {0x69,0xB5,0xDA,0x4C,0x91,0xBF,0xF3,0x55,0x85,0x7D,0x90,0x5B,0x1B,0x5A,0x3A,0x03};
+
+  Schema() {
+  }
+
+  virtual ~Schema() throw() {}
+
+  std::map<std::string, AccessGroup>  access_groups;
+  std::map<std::string, ColumnFamily>  column_families;
+
+  _Schema__isset __isset;
+
+  bool operator == (const Schema & rhs) const
+  {
+    if (__isset.access_groups != rhs.__isset.access_groups)
+      return false;
+    else if (__isset.access_groups && !(access_groups == rhs.access_groups))
+      return false;
+    if (__isset.column_families != rhs.__isset.column_families)
+      return false;
+    else if (__isset.column_families && !(column_families == rhs.column_families))
+      return false;
+    return true;
+  }
+  bool operator != (const Schema &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const Schema & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientException__isset {
+  _ClientException__isset() : code(false), message(false) {}
+  bool code;
+  bool message;
+} _ClientException__isset;
+
+class ClientException : public ::apache::thrift::TException {
  public:
 
   static const char* ascii_fingerprint; // = "3F5FC93B338687BC7235B1AB103F47B3";
@@ -321,11 +908,7 @@ class ClientException : public apache::thrift::TException {
   int32_t code;
   std::string message;
 
-  struct __isset {
-    __isset() : code(false), message(false) {}
-    bool code;
-    bool message;
-  } __isset;
+  _ClientException__isset __isset;
 
   bool operator == (const ClientException & rhs) const
   {
@@ -341,8 +924,8 @@ class ClientException : public apache::thrift::TException {
 
   bool operator < (const ClientException & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 

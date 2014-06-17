@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+### Todos ###
+
+## make it a module with methods ##
+## implement restart ##
+
+require 'pathname'
+require 'socket'
+require 'optparse'
+
+host = Socket.gethostname
+
+@root = Pathname.new(File.dirname(__FILE__)).expand_path
+
+# Parse options
+options = {
+  :port           =>  38090,
+  :pidfile        => File.dirname(__FILE__) + "/MonitoringServer.pid"
+}
+
+script_name = File.basename($0)
+ARGV.options do|opts|
+  opts.set_summary_indent('  ')
+  opts.banner = "Usage: #{script_name} [OPTIONS] <start|stop>"
+  opts.on("-f", "--pidfile FILE", String, "Store server pid in this file",
+      "Default: #{options[:pidfile]}") { |options[:pidfile]| }
+  opts.on("-p", "--port PORT", Integer, "Server port",
+          "Default: #{options[:port]}") { |options[:port]| }
+  opts.separator ""
+
+  opts.on_tail("-h", "--help", "Show this message") {puts opts; exit}
+  opts.parse!
+end
+
+action     = ARGV[0]
+port       = options[:port]
+pidfile    = options[:pidfile]
+
+case action
+when "start"
+  require 'rubygems'
+  require 'rack'
+  if File.file?(pidfile)
+    puts "Pid file exits (#{pidfile}). If server is not running please delete #{pidfile} and retry"
+    exit
+  end
+  puts "Starting monitoring server accessible at http://#{host}:#{port}/"
+  config = @root.join('config.ru').to_s
+  server = Rack::Server.new(:config => config, :Port => port, :daemonize => true, :pid => File.expand_path(pidfile) )
+  server.start
+when "stop"
+  require 'fileutils'
+  if !File.file?(pidfile)
+    puts "Pid file not found. is the daemon started?"
+    exit
+  end
+  pid = IO.read(pidfile).to_i rescue nil
+  if pid && Process.kill("SIGKILL",pid)
+    FileUtils.rm(pidfile)
+  end
+else
+puts "Invalid command try help with: #{script_name} -h"
+end

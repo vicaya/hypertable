@@ -21,7 +21,10 @@
 
 #include "Common/Compat.h"
 #include "Common/Error.h"
+#include "Common/Filesystem.h"
 #include "Common/Logger.h"
+
+#include "AsyncComm/CommHeader.h"
 
 #include "Common/Serialization.h"
 
@@ -48,6 +51,8 @@ void RequestHandlerAppend::run() {
 
     if (decode_remain < amount)
       HT_THROW_INPUT_OVERRUN(decode_remain, amount);
+
+    decode_ptr += HT_DIRECT_IO_ALIGNMENT - 9;
 
     m_broker->append(&cb, fd, amount, decode_ptr, flush);
   }

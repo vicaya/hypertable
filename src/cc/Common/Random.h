@@ -38,6 +38,9 @@ namespace Hypertable {
 
     static uint32_t number32() { return ms_rng(); }
 
+    static int64_t number64() {
+      return ( (((int64_t)ms_rng())<<32) | ((int64_t)ms_rng()) );
+    }
     static double uniform01();
 
     static boost::mt19937 ms_rng;

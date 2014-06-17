@@ -41,6 +41,7 @@ void RequestHandlerOpen::run() {
   size_t decode_remain = m_event_ptr->payload_len;
 
   try {
+    uint32_t flags = decode_i32(&decode_ptr, &decode_remain);
     uint32_t bufsz = decode_i32(&decode_ptr, &decode_remain);
     const char *fname = decode_str16(&decode_ptr, &decode_remain);
 
@@ -48,7 +49,7 @@ void RequestHandlerOpen::run() {
     if (fname[strlen(fname)-1] == '/')
       HT_THROWF(Error::DFSBROKER_BAD_FILENAME, "bad filename: %s", fname);
 
-    m_broker->open(&cb, fname, bufsz);
+    m_broker->open(&cb, fname, flags, bufsz);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

@@ -1,0 +1,8 @@
+<% @stat_types.each_with_index do |stat_name, index| %>
+	<% if RangeServer::STAT_TO_RRD_KEY[:"#{stat_name}"] %>
+		<div id='<%= stat_name %>'><%= image_tag @rs_rrd_graphs[index] %></div>
+		<br /><%= link_to "top", "#top"%>
+		<br /><br />
+	<% end %>
+	
+<% end %>

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright (C) 2009  Luke Lu (llu@hypertable.org)
 #
@@ -20,6 +20,11 @@
 
 ulimit -c unlimited
 
+if [ "e$RUNTIME_ROOT" == "e" ]; then
+  RUNTIME_ROOT=$HYPERTABLE_HOME
+fi
+
+
 die() {
   echo "$@"
   exit 1
@@ -27,12 +32,14 @@ die() {
 
 server_pidfile() {
   case $1 in
-    hyperspace)         echo $HYPERTABLE_HOME/run/Hyperspace.pid;;
-    dfsbroker)          echo $HYPERTABLE_HOME/run/DfsBroker.*.pid;;
-    master)             echo $HYPERTABLE_HOME/run/Hypertable.Master.pid;;
-    rangeserver)        echo $HYPERTABLE_HOME/run/Hypertable.RangeServer.pid;;
-    thriftbroker)       echo $HYPERTABLE_HOME/run/ThriftBroker.pid;;
-    *)                  echo "ERROR: unknown service: $1"; return 1
+    hyperspace)         echo $RUNTIME_ROOT/run/Hyperspace.pid;;
+    dfsbroker)          echo $RUNTIME_ROOT/run/DfsBroker.*.pid | grep -v "*";;
+    master)             echo $RUNTIME_ROOT/run/Hypertable.Master.pid;;
+    rangeserver)        echo $RUNTIME_ROOT/run/Hypertable.RangeServer.pid;;
+    thriftbroker)       echo $RUNTIME_ROOT/run/ThriftBroker.pid;;
+    testclient)         echo $RUNTIME_ROOT/run/Hypertable.TestClient*.pid | grep -v "*";;
+    testdispatcher)     echo $RUNTIME_ROOT/run/Hypertable.TestDispatcher.pid;;
+    *) echo "unknown";  echo "ERROR: unknown service: $1" >&2; return 1
   esac
 }
 
@@ -45,29 +52,32 @@ check_pidfile() {
       [ $? != 0 ] && return 1
       echo "$service appears to be running ($pid):"
     else
-      name=`basename $f`
-      ret=`ps -ef | grep -v grep | grep $name`
-      [ $? != 0 ] && return 1
-      echo "$service seems to be running:"
+      return 1
     fi
     echo $ret
   done
+}
+
+kill_from_pidfiles() {
+    for i do
+        if [ -f "$i" ] ; then
+            pid=`cat $i`
+            echo "Killing `basename $i` $pid"
+            kill -9 $pid
+            rm $i
+        fi
+    done
 }
 
 stop_server() {
   pidre='.pid$'
   for server in $@; do
     if [[ $server =~ $pidre ]]; then
-      pidfile=$server
+      pidfiles=$server
     else
-      pidfile=`server_pidfile $server`
+      pidfiles=`server_pidfile $server`
     fi
-    if [ -f $pidfile ] ; then
-      pid=`cat $pidfile`
-      echo "Killing `basename $pidfile` $pid"
-      kill -9 $pid
-      rm $pidfile
-    fi
+    kill_from_pidfiles $pidfiles
   done
 }
 
@@ -93,17 +103,17 @@ show_success() {
 }
 
 check_server() {
-  $HYPERTABLE_HOME/bin/serverup --silent "$@"
+  $HYPERTABLE_HOME/bin/serverup --silent "$@" >& /dev/null
 }
 
 wait_for_server() {
   become=$1; shift
   server=$1; shift
   server_desc=$1; shift
-  max_retries=${max_retries:-20}
-  report_interval=${report_interval:-3}
+  max_retries=${max_retries:-40}
+  report_interval=${report_interval:-5}
 
-  check_server $server "$@"
+  check_server "$@" $server
   ret=$?
   retries=0
   while should_wait $ret "$become" && [ $retries -lt $max_retries ]; do
@@ -111,7 +121,7 @@ wait_for_server() {
     let report=retries%$report_interval
     [ $report == 0 ] && echo "Waiting for $server_desc to $become..."
     sleep 1
-    check_server $server "$@"
+    check_server "$@" $server
     ret=$?
   done
   if should_wait $ret "$become"; then
@@ -133,12 +143,12 @@ wait_for_server_shutdown() {
 }
 
 set_start_vars() {
-  pidfile=$HYPERTABLE_HOME/run/$1.pid
-  logfile=$HYPERTABLE_HOME/log/$1.log
+  pidfile=$RUNTIME_ROOT/run/$1.pid
+  logfile=$RUNTIME_ROOT/log/$1.log
   startlog=/tmp/start-$1$$.log
   if type cronolog > /dev/null 2>&1; then
     logger="cronolog --link $logfile \
-      $HYPERTABLE_HOME/log/archive/%Y-%m/%d/$1.log"
+      $RUNTIME_ROOT/log/archive/%Y-%m/%d/$1.log"
   else
     logger=
   fi
@@ -153,10 +163,10 @@ check_startlog() {
 exec_server() {
   servercmd=$1; shift
   if [ "$logger" ]; then
-    ($VALGRIND $HYPERTABLE_HOME/bin/$servercmd --pidfile $pidfile "$@" 2>&1 |
+    ($HEAPCHECK $VALGRIND $HYPERTABLE_HOME/bin/$servercmd --pidfile $pidfile "$@" 2>&1 |
         $logger) &> $startlog &
   else
-    $VALGRIND $HYPERTABLE_HOME/bin/$servercmd --pidfile $pidfile "$@" \
+    $HEAPCHECK $VALGRIND $HYPERTABLE_HOME/bin/$servercmd --pidfile $pidfile "$@" \
         &> $logfile &
   fi
 }
@@ -168,24 +178,33 @@ start_server() {
   set_start_vars $pidname
   check_pidfile $pidfile && return 0
 
-  check_server $server "$@"
+  check_server "$@" $server
   if [ $? != 0 ] ; then
     exec_server $servercmd --verbose "$@"
-    wait_for_server_up $server "$pidname" "$@"
+    wait_for_server_up $server "$pidname" $@
   else
     echo "WARNING: $pidname already running."
   fi
 }
 
+start_server_no_check() {
+  server=$1; shift
+  servercmd=$1; shift
+  pidname=$1; shift
+  set_start_vars $pidname
+  check_pidfile $pidfile && return 0
+  exec_server $servercmd --verbose "$@"
+}
+
 # Sanity check
 [ "$HYPERTABLE_HOME" ] || die "ERROR: HYPERTABLE_HOME is not set"
-versionre='/([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|current)$'
+versionre='/([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(\.([a-fA-F0-9]+|pre))?|current)$'
 [[ $HYPERTABLE_HOME =~ $versionre ]] ||
-    die "ERROR: Invalid HYPERTABLE_HOME: $HYPERTABLE_HOME"
+  die "ERROR: Invalid HYPERTABLE_HOME: $HYPERTABLE_HOME doesnt match regex ${versionre}"
 
 # Make sure log and run directories exist
-[ -d $HYPERTABLE_HOME/run ] || mkdir $HYPERTABLE_HOME/run
-[ -d $HYPERTABLE_HOME/log ] || mkdir $HYPERTABLE_HOME/log
+[ -d $RUNTIME_ROOT/run ] || mkdir $RUNTIME_ROOT/run
+[ -d $RUNTIME_ROOT/log ] || mkdir $RUNTIME_ROOT/log
 
 # Runtime libraries
 export LD_LIBRARY_PATH="$HYPERTABLE_HOME/lib:$LD_LIBRARY_PATH"

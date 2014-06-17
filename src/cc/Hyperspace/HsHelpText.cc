@@ -37,16 +37,22 @@ namespace {
     "close ............. Close previously opened file/directory",
     "attrset ........... Set an attribute (key/value pair) for a file/directory",
     "attrget ........... Retrieve an attribute for a file/directory",
+    "attrincr........... Atomically increment the value of an attribute (assumed uint64)",
     "attrexists ........ Check if a particular attribute is set for a file/directory",
     "attrlist .......... Retrieve all attributes (keys only) for a file/directory",
     "attrdel ........... Delete an attribure for a file/directory",
     "exists ............ Check if a file/directory exists",
     "readdir ........... List the contents of a previously opened directory",
+    "readdirattr ....... List the contents of a previously opened directory which has",
+    "            ....... the named attribute set and the value of the attribute",
+    "readpathattr ...... List the values of an attribute for each path component of a",
+    "            ....... previously opened file/directory",
     "lock .............. Lock access to a file/directory",
     "trylock ........... Check whether a lock on file/directory would succeed",
     "release ........... Release previously acquired lock",
     "getseq ............ Get a lock sequencer for a file/directory",
     "echo .............. Echo user input",
+    "locate ............ Get the location of Hyperspace Master or all Replicas",
     "",
     "Statements must be terminated with ';' to execute.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is one from",
@@ -106,6 +112,13 @@ namespace {
     (const char *)0
   };
 
+  const char *help_attrincr[] = {
+    "attrincr <file> <name> ",
+    "  This command issues a ATTRINCR request to Hyperspace.",
+    (const char *)0
+  };
+
+
   const char *help_attrexists[] = {
     "attrexists <file> <name>",
     "  This command issues a ATTREXISTS request to Hyperspace.",
@@ -136,6 +149,19 @@ namespace {
     (const char *)0
   };
 
+  const char *help_readdirattr[] = {
+    "readdirattr [-r] <dir> <name>",
+    "  This command issues a READDIRATTR request to Hyperspace.",
+    (const char *)0
+  };
+
+  const char *help_readpathattr[] = {
+    "readpathattr <dir> <name>",
+    "  This command issues a READPATHATTR request to Hyperspace.",
+    (const char *)0
+  };
+
+
   const char *help_lock[] = {
     "lock <file> <mode>",
     "  This command issues a LOCK request to Hyperspace.  The <mode> argument",
@@ -163,6 +189,13 @@ namespace {
     (const char *)0
   };
 
+  const char *help_locate[] = {
+    "locate master|replicas",
+    "  This command prints out either the location of the Hyperspace replica "
+    "  which is the current replication master or the locations of all Hyperspace replicas",
+    (const char *)0
+  };
+
   typedef Hypertable::hash_map<std::string, const char **>  HelpTextMap;
 
   HelpTextMap &build_help_text_map() {
@@ -175,15 +208,19 @@ namespace {
     (*map)["close"] = help_close;
     (*map)["attrset"] = help_attrset;
     (*map)["attrget"] = help_attrget;
+    (*map)["attrincr"] = help_attrincr;
     (*map)["attrexists"] = help_attrexists;
     (*map)["attrlist"] = help_attrlist;
     (*map)["attrdel"] = help_attrdel;
     (*map)["exists"] = help_exists;
     (*map)["readdir"] = help_readdir;
+    (*map)["readdirattr"] = help_readdirattr;
+    (*map)["readpathattr"] = help_readpathattr;
     (*map)["lock"] = help_lock;
     (*map)["trylock"] = help_trylock;
     (*map)["release"] = help_release;
     (*map)["getseq"] = help_getsequencer;
+    (*map)["locate"] = help_locate;
     return *map;
   }
 

@@ -29,19 +29,19 @@ namespace Hypertable {
 
 class SockAddrHash {
  public:
-  size_t operator () (const sockaddr_in &addr) const {
+  size_t operator () (const InetAddr &addr) const {
     return (size_t)(addr.sin_addr.s_addr ^ addr.sin_port);
   }
 };
 
 struct SockAddrEqual {
-  bool operator()(const sockaddr_in &addr1, const sockaddr_in &addr2) const {
+  bool operator()(const InetAddr &addr1, const InetAddr &addr2) const {
     return (addr1.sin_addr.s_addr == addr2.sin_addr.s_addr)
            && (addr1.sin_port == addr2.sin_port);
   }
 };
 
-template<typename TypeT, typename addr=struct sockaddr_in>
+template<typename TypeT, typename addr=InetAddr>
 class SockAddrMap : public hash_map<addr, TypeT, SockAddrHash, SockAddrEqual> {
 };
 

@@ -23,6 +23,7 @@
 #define HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
 
 #include <cassert>
+#include <vector>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
@@ -49,7 +50,6 @@ namespace Hyperspace {
 
   public:
     ClientKeepaliveHandler(Comm *, PropertiesPtr &, Session *);
-
     virtual void handle(Hypertable::EventPtr &event_ptr);
 
     void register_handle(ClientHandleStatePtr &handle_state) {
@@ -79,6 +79,7 @@ namespace Hyperspace {
     void destroy_session();
 
   private:
+
     Mutex              m_mutex;
     boost::xtime       m_last_keep_alive_send_time;
     boost::xtime       m_jeopardy_time;
@@ -86,8 +87,8 @@ namespace Hyperspace {
     Comm *m_comm;
     uint32_t m_lease_interval;
     uint32_t m_keep_alive_interval;
-    struct sockaddr_in m_master_addr;
-    struct sockaddr_in m_local_addr;
+    sockaddr_in m_master_addr;
+    CommAddress m_local_addr;
     bool m_verbose;
     Session *m_session;
     uint64_t m_session_id;
@@ -98,6 +99,9 @@ namespace Hyperspace {
     typedef hash_map<uint64_t, boost::xtime> BadNotificationHandleMap;
     BadNotificationHandleMap m_bad_handle_map;
     static const uint64_t ms_bad_notification_grace_period = 120000;
+    bool m_reconnect;
+    uint16_t m_hyperspace_port;
+    std::vector<String> m_hyperspace_replicas;
   };
 
   typedef intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;

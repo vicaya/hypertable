@@ -78,12 +78,13 @@ namespace Hypertable {
     void load(DynamicBuffer &fixed, DynamicBuffer &variable,int64_t end_of_data,
               const String &start_row="", const String &end_row="") {
       size_t total_entries = fixed.fill() / sizeof(OffsetT);
-      size_t index_entries = total_entries;
       SerializedKey key;
       OffsetT offset;
       const uint8_t *key_ptr;
       bool in_scope = (start_row == "") ? true : false;
       bool check_for_end_row = end_row != "";
+
+      m_index_entries = (int64_t)total_entries;
 
       assert(variable.own);
 
@@ -93,7 +94,7 @@ namespace Hypertable {
       fixed.ptr = fixed.base;
       key_ptr   = m_keydata.base;
 
-      for (size_t i=0; i<index_entries; ++i) {
+      for (int64_t i=0; i<m_index_entries; ++i) {
 
         // variable portion
         key.ptr = key_ptr;
@@ -111,7 +112,7 @@ namespace Hypertable {
         else if (check_for_end_row &&
                  strcmp(key.row(), end_row.c_str()) > 0) {
           m_map.insert(m_map.end(), value_type(key, offset));
-          if (i+1 < index_entries) {
+          if (i+1 < m_index_entries) {
             key.ptr = key_ptr;
             key_ptr += key.length();
             memcpy(&m_end_of_last_block, fixed.ptr, sizeof(offset));
@@ -169,6 +170,8 @@ namespace Hypertable {
 
     int64_t end_of_last_block() { return m_end_of_last_block; }
 
+    int64_t index_entries() { return m_index_entries; }
+
     iterator begin() {
       return iterator(m_map.begin());
     }
@@ -189,6 +192,7 @@ namespace Hypertable {
       m_map.clear();
       m_keydata.free();
       m_middle_key.ptr = 0;
+      m_index_entries = 0;
     }
 
   private:
@@ -197,6 +201,7 @@ namespace Hypertable {
     SerializedKey m_middle_key;
     int64_t m_end_of_last_block;
     int64_t m_disk_used;
+    int64_t m_index_entries;
   };
 
 

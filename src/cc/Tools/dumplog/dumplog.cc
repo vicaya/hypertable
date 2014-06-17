@@ -105,7 +105,9 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    CommitLogReaderPtr log_reader = new CommitLogReader(dfs_client, log_dir);
+    FilesystemPtr fs = dfs_client;
+
+    CommitLogReaderPtr log_reader = new CommitLogReader(fs, log_dir);
 
     if (block_summary) {
       printf("LOG %s\n", log_dir.c_str());

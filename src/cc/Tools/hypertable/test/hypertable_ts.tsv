@@ -1,0 +1,4 @@
+#timestamp	rowkey	column	value
+2009-02-12 02:12:12.1000000000	192.168.14.1	TestColumnFamily	testvalue_1
+2009-02-12 02:12:13:1	192.168.14.2	TestColumnFamily	testvalue_2
+2009-02-12 02:12:14	192.168.14.3	TestColumnFamily	testvalue_3

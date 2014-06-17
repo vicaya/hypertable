@@ -13,16 +13,17 @@ require_once $GLOBALS['THRIFT_ROOT'].'/transport/TFramedTransport.php';
  * include the other files from their packages/ folder locations, but we
  * include everything here due to the bogus path setup.
  */
+$old_error_reporting = error_reporting();
 error_reporting(E_NONE);
 $GEN_DIR = dirname(__FILE__).'/gen-php';
-require_once $GEN_DIR.'/ClientService.php';
-require_once $GEN_DIR.'/Client_types.php';
-require_once $GEN_DIR.'/HqlService.php';
-require_once $GEN_DIR.'/Hql_types.php';
-error_reporting(E_ALL);
+require_once $GEN_DIR.'/Client/ClientService.php';
+require_once $GEN_DIR.'/Client/Client_types.php';
+require_once $GEN_DIR.'/Hql/HqlService.php';
+require_once $GEN_DIR.'/Hql/Hql_types.php';
+error_reporting($old_error_reporting);
 
 class Hypertable_ThriftClient extends HqlServiceClient {
-  function __construct($host, $port, $timeout_ms = 30000, $do_open = true) {
+  function __construct($host, $port, $timeout_ms = 300000, $do_open = true) {
     $socket = new TSocket($host, $port);
     $socket->setSendTimeout($timeout_ms);
     $socket->setRecvTimeout($timeout_ms);

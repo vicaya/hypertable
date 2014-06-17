@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_CELLSTORETRAILERV0_H
 #define HYPERTABLE_CELLSTORETRAILERV0_H
 
+#include "Hypertable/Lib/Schema.h"
 
 #include "CellStoreTrailer.h"
 
@@ -75,6 +76,7 @@ namespace Hypertable {
       else if (prop == "table_generation")      return table_generation;
       else if (prop == "compression_ratio")     return compression_ratio;
       else if (prop == "compression_type")      return compression_type;
+      else if (prop == "bloom_filter_mode")     return BLOOM_FILTER_DISABLED;
       else                                      return boost::any();
     }
 

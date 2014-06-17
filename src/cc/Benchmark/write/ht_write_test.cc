@@ -77,6 +77,7 @@ namespace {
 
 int main(int argc, char **argv) {
   ClientPtr hypertable_client;
+  NamespacePtr ns;
   TablePtr table;
   TableMutatorPtr mutator;
   KeySpec key;
@@ -111,8 +112,8 @@ int main(int argc, char **argv) {
 
   try {
     hypertable_client = new Hypertable::Client();
-
-    table = hypertable_client->open_table("RandomTest");
+    ns = hypertable_client->open_namespace("/");
+    table = ns->open_table("RandomTest");
 
     mutator = table->create_mutator();
   }

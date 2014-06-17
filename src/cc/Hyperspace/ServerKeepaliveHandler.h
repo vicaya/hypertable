@@ -29,8 +29,6 @@
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Event.h"
-#include "HandleData.h"
-
 
 namespace Hyperspace {
 

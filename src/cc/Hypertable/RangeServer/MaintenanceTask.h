@@ -24,6 +24,7 @@
 
 #include <boost/thread/xtime.hpp>
 
+#include "MaintenanceFlag.h"
 #include "Range.h"
 
 namespace Hypertable {
@@ -57,11 +58,16 @@ namespace Hypertable {
 
     Range *get_range() { return m_range.get(); }
 
+    void add_subtask(const void *obj, int flags) {
+      m_map[obj] = flags;
+    }
+
     boost::xtime start_time;
     int priority;
 
   protected:
     RangePtr m_range;
+    MaintenanceFlag::Map m_map;
 
   private:
     bool m_retry;

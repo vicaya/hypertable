@@ -24,57 +24,78 @@
 
 #include <vector>
 
-#include "Common/CharArena.h"
+#include "Common/ReferenceCount.h"
+#include "Common/PageArenaAllocator.h"
 #include "Cell.h"
 
 namespace Hypertable {
 
-  typedef std::vector<Cell> Cells;
+typedef PageArenaAllocator<Cell> CellAlloc;
+typedef std::vector<Cell, CellAlloc> Cells;
 
-  class CellsBuilder {
-  public:
-    CellsBuilder() {}
+class CellsBuilder : public ReferenceCount {
+public:
+  CellsBuilder(size_t size_hint = 128)
+    : m_cells(CellAlloc(m_arena)), m_size_hint(size_hint) {}
 
-    void add(const Cell &cell, bool own = true) {
-      if (!own) {
-        m_cells.push_back(cell);
-        return;
-      }
-      Cell copy;
+  size_t size() const {
+    return m_cells.size();
+  }
 
-      if (cell.row_key)
-        copy.row_key = m_alloc.dup(cell.row_key);
+  void get_cell(Cell &cc, size_t ii) {
+    cc = m_cells[ii];
+  }
 
-      if (cell.column_family)
-        copy.column_family = m_alloc.dup(cell.column_family);
+  void add(const Cell &cell, bool own = true) {
 
-      if (cell.column_qualifier)
-        copy.column_qualifier = m_alloc.dup(cell.column_qualifier);
+    if (!m_cells.capacity())
+      m_cells.reserve(m_size_hint);
 
-      copy.timestamp = cell.timestamp;
-      copy.revision = cell.revision;
-
-      if (cell.value) {
-        copy.value = (uint8_t *)m_alloc.dup(cell.value, cell.value_len);
-        copy.value_len = cell.value_len;
-      }
-      copy.flag = cell.flag;
-      m_cells.push_back(copy);
+    if (!own) {
+      m_cells.push_back(cell);
+      return;
     }
 
-    Cells &get() { return m_cells; }
-    const Cells &get() const { return m_cells; }
+    Cell copy;
 
-    void swap(CellsBuilder &x) {
-      m_cells.swap(x.m_cells);
-      m_alloc.swap(x.m_alloc);
+    if (cell.row_key)
+      copy.row_key = m_arena.dup(cell.row_key);
+
+    if (cell.column_family)
+      copy.column_family = m_arena.dup(cell.column_family);
+
+    if (cell.column_qualifier)
+      copy.column_qualifier = m_arena.dup(cell.column_qualifier);
+
+    copy.timestamp = cell.timestamp;
+    copy.revision = cell.revision;
+
+    if (cell.value) {
+      copy.value = (uint8_t *)m_arena.dup(cell.value, cell.value_len);
+      copy.value_len = cell.value_len;
     }
+    copy.flag = cell.flag;
+    m_cells.push_back(copy);
+  }
 
-  private:
-    Cells m_cells;
-    CharArena m_alloc;
-  };
+  void get(Cells &cells) { cells = m_cells; }
+  Cells &get() { return m_cells; }
+  const Cells &get() const { return m_cells; }
 
+  void swap(CellsBuilder &x) {
+    m_cells.swap(x.m_cells);
+    m_arena.swap(x.m_arena);
+  }
+
+  void clear() { m_cells.clear(); }
+
+protected:
+  CharArena m_arena;
+  Cells m_cells;
+  size_t m_size_hint;
+};
+
+typedef intrusive_ptr<CellsBuilder> CellsBuilderPtr;
 } // namespace Hypertable
 
 #endif // HYPERTABLE_CELLS_H

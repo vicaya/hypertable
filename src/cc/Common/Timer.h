@@ -27,6 +27,7 @@
 #include <boost/thread/xtime.hpp>
 
 #include "Logger.h"
+#include "Time.h"
 
 namespace Hypertable {
 
@@ -85,9 +86,9 @@ namespace Hypertable {
     uint32_t duration() { return m_duration; }
 
   private:
+    boost::xtime start_time;
     bool m_running;
     bool m_started;
-    boost::xtime start_time;
     uint32_t m_duration;
     uint32_t m_remaining;
   };

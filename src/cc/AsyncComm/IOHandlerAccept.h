@@ -36,7 +36,7 @@ namespace Hypertable {
 
   public:
 
-    IOHandlerAccept(int sd, sockaddr_in &addr, DispatchHandlerPtr &dhp,
+    IOHandlerAccept(int sd, const InetAddr &addr, DispatchHandlerPtr &dhp,
                     HandlerMapPtr &hmap, ConnectionHandlerFactoryPtr &chfp)
       : IOHandler(sd, addr, dhp), m_handler_map_ptr(hmap),
         m_handler_factory_ptr(chfp) {
@@ -47,11 +47,19 @@ namespace Hypertable {
       return;
     }
 
-#if defined(__APPLE__)
-    virtual bool handle_event(struct kevent *event, clock_t arrival_clocks);
+    // define default poll() interface for everyone since it is chosen at runtime
+    virtual bool handle_event(struct pollfd *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
+
+#if defined(__APPLE__) || defined(__FreeBSD__)
+    virtual bool handle_event(struct kevent *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
 #elif defined(__linux__)
-    virtual bool handle_event(struct epoll_event *event,
-                              clock_t arrival_clocks);
+    virtual bool handle_event(struct epoll_event *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
+#elif defined(__sun__)
+    virtual bool handle_event(port_event_t *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
 #else
     ImplementMe;
 #endif

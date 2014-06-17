@@ -2,20 +2,18 @@ CREATE TABLE
 ------------
 #### EBNF
 
-    CREATE TABLE [table_option ...] name '(' [create_definition, ...] ')'
+    CREATE TABLE name '(' [create_definition, ...] ')' [table_option ...]
     CREATE TABLE name LIKE example_name
 
-    table_option:
-      MAX_VERSIONS '=' int
-      | TTL '=' duration
-      | IN_MEMORY
-      | BLOCKSIZE '=' int
-      | COMPRESSOR '=' compressor_spec
-
     create_definition:
-      column_family_name [MAX_VERSIONS '=' int] [TTL '=' duration]
+      column_family_name [column_family_option ...]
       | ACCESS GROUP name [access_group_option ...]
         ['(' [column_family_name, ...] ')']
+
+    column_family_option:
+      MAX_VERSIONS '=' int
+      | TTL '=' duration
+      | COUNTER
 
     duration:
       int MONTHS
@@ -26,8 +24,10 @@ CREATE TABLE
       | int [ SECONDS ]
 
     access_group_option:
-      IN_MEMORY
+      COUNTER
+      | IN_MEMORY
       | BLOCKSIZE '=' int
+      | REPLICATION '=' int
       | COMPRESSOR '=' compressor_spec
       | BLOOMFILTER '=' bloom_filter_spec
 
@@ -54,7 +54,18 @@ CREATE TABLE
 
     bloom_filter_options:
       --false-positive float
+      --bits-per-item float
+      --num-hashes int
       --max-approx-items int
+
+    table_option:
+      MAX_VERSIONS '=' int
+      | TTL '=' duration
+      | IN_MEMORY
+      | BLOCKSIZE '=' int
+      | REPLICATION '=' int
+      | COMPRESSOR '=' compressor_spec
+      | GROUP_COMMIT_INTERVAL '=' int
 
 #### Description
 <p>
@@ -131,18 +142,34 @@ The following table options are supported:
   * `TTL '=' duration`
   * `IN_MEMORY`
   * `BLOCKSIZE '=' int`
+  * `REPLICATION '=' int`
   * `COMPRESSOR '=' compressor_spec`
+  * `GROUP_COMMIT_INTERVAL '=' int`
 
-These are the same options as the ones in the column family and access group
-specification except that they act as defaults in the case where no
+Most of these are the same options as the ones in the column family and access
+group specification except that they act as defaults in the case where no
 corresponding option is specified in the column family or access group
 specifier.  See the description under Access Group Options for option details.
+
+"group commit" is a feature whereby the system will accumulate update requests
+for a table and commit them together as a group on a regular interval.  This
+improves the performance of systems that receive a large number of concurrent
+updates by reducing the number of times sync() gets called on the commit log.
+
+The `GROUP_COMMIT_INTERVAL` option tells the system that updates to this table
+should be carried out with group commit and also specifies the commit interval
+in milliseconds.  The interval is constrained by the value of the config property
+`Hypertable.RangeServer.CommitInterval`, which acts as a lower bound and defaults
+to 50ms.  The value specified for `GROUP_COMMIT_INTERVAL` will get rounded up to
+the nearest multiple of this property value.
+
 ### Column Family Options
 <p>
 The following column family options are supported:
 
   * `MAX_VERSIONS '=' int`
   * `TTL '=' duration`
+  * `COUNTER`
 
 Cells in a table are specified by not only a row key and a qualified column,
 but also a timestamp.  This allows for essentially multiple timestamped version
@@ -156,14 +183,59 @@ that fall within some time window in the immediate past.  For example, you can
 specify that you only want to keep cells that were created within the past two
 weeks.  Like the `MAX_VERSIONS` option, older versions are lazily garbage
 collected through the normal compaction process.
+
+The `COUNTER` option makes each instance of this column act as an atomic
+counter.  Counter columns are accessed using the same methods as other
+columns.  However, to modify the counter, the value must be formatted
+specially, as described in the following table.
+<p>
+<table border="1">
+<tr>
+<th>Value Format</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><pre> ['+'] n </pre></td>
+<td> Increment the counter by n </td>
+</tr>
+<tr>
+<td><pre> '-' n </pre></td>
+<td> Decrement the counter by n </td>
+</tr>
+<tr>
+<td><pre> '=' n </pre></td>
+<td> Reset the counter to n </td>
+</tr>
+</table>
+<p>
+For example, consider the following sequence of values written to a counter
+column:
+<pre>
+  +9
+  =0
+  +3
+  +4
+  +5
+  -2
+</pre>
+
+After these six values get written to a counter column, a subsequent read of that
+column would return the ASCII string "10".
+
 ### Access Group Options
 <p>
 The following access group options are supported:
 
+  * `COUNTER`
   * `IN_MEMORY`
   * `BLOCKSIZE '=' int`
+  * `REPLICATION '=' int`
   * `COMPRESSOR '=' compressor_spec`
   * `BLOOMFILTER '=' bloom_filter_spec`
+
+The `COUNTER` option makes all column families in the access group
+counter columns (see `COUNTER` description under Column Family Options
+section).
 
 The `IN_MEMORY` option indicates that all cell data for the access group should
 remain memory resident.  Queries against column families in IN_MEMORY access
@@ -182,6 +254,11 @@ The `BLOCKSIZE` option controls the size of the compressed blocks in the cell
 stores.  A smaller block size minimizes the amount of data that must be read
 from disk and decompressed for a key lookup at the expense of a larger block
 index which consumes memory.  The default value for the block size is 65K.
+
+The `REPLICATION` option controls the replication level in the underlying
+distributed file system (DFS) for cell store files created for this access
+group.  The default is unspecified, which translates to whatever the default
+replication level is for the underlying file system.
 
 The `COMPRESSOR` option specifies the compression codec that should be used for
 cell store blocks within an access group.  See the Compressors section below
@@ -221,7 +298,23 @@ The following table describes the bloom filter options:
 <tr>
 <td><pre> --false-positive arg </pre></td>
 <td><pre> 0.01 </pre></td>
-<td>Expected false positive probability</td>
+<td>Expected false positive probability.  This option is (currently) mutually
+exclusive with the --bits-per-item and --num-hashes options.  If specified
+it will choose the minimum number of bits per item that can achieve the given
+false positive probability and will choose the appropriate number of hash
+functions.</td>
+</tr>
+<tr>
+<td><pre> --bits-per-item arg </pre></td>
+<td><pre> [NULL] </pre></td>
+<td>Number of bits to use per item (to compute size of bloom filter).  Must
+be used in conjunction with --num-hashes.</td>
+</tr>
+<tr>
+<td><pre> --num-hashes arg </pre></td>
+<td><pre> [NULL] </pre></td>
+<td>Number of hash functions to use.  Must be used in conjunction with
+--bits-per-item.</td>
 </tr>
 <tr>
 <td><pre> --max-approx-items arg </pre></td>

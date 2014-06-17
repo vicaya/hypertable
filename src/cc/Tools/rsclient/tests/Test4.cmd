@@ -1,6 +1,6 @@
-UPDATE Test4 "Test4-data.txt";
-CREATE SCANNER ON Test4[..??];
+UPDATE 'test/Test4' "Test4-data.txt";
+CREATE SCANNER ON 'test/Test4'[..??];
 DESTROY SCANNER;
-CREATE SCANNER ON Test4[..??] RETURN_DELETES;
+CREATE SCANNER ON 'test/Test4'[..??] RETURN_DELETES;
 DESTROY SCANNER;
 quit;

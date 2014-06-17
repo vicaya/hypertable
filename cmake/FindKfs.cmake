@@ -31,9 +31,12 @@ FIND_KFS_LIB(kfsIO)
 FIND_KFS_LIB(kfsCommon)
 FIND_KFS_LIB(qcdio)
 
+find_library(Crypto_LIB NAMES crypto PATHS /opt/local/lib /usr/local/lib)
+
 if (Kfs_INCLUDE_DIR AND kfsClient_LIB)
   set(Kfs_FOUND TRUE)
-  set( Kfs_LIBRARIES ${kfsClient_LIB} ${kfsIO_LIB} ${kfsCommon_LIB} ${qcdio_LIB})
+  set( Kfs_LIBRARIES ${kfsClient_LIB} ${kfsIO_LIB} ${kfsCommon_LIB}
+                     ${qcdio_LIB} ${Crypto_LIB})
 else ()
    set(Kfs_FOUND FALSE)
    set( Kfs_LIBRARIES)

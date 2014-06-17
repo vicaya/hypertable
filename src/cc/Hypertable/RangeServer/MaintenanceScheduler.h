@@ -26,12 +26,13 @@
 
 #include "MaintenancePrioritizerLogCleanup.h"
 #include "MaintenancePrioritizerLowMemory.h"
+#include "RSStats.h"
 
 namespace Hypertable {
 
   class MaintenanceScheduler : public ReferenceCount {
   public:
-    MaintenanceScheduler(MaintenanceQueuePtr &queue,
+    MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPtr &server_stats,
                          RangeStatsGathererPtr &gatherer);
 
     void schedule();
@@ -51,27 +52,25 @@ namespace Hypertable {
       m_scheduling_needed = true;
     }
 
-    void update_stats_bytes_loaded(uint32_t n) {
-      m_stats.update_stats_bytes_loaded(n);
-    }
-
   private:
 
     bool low_memory_mode() {
       return m_prioritizer == &m_prioritizer_low_memory;
     }
 
-    Mutex m_mutex;
     bool m_initialized;
     bool m_scheduling_needed;
     ApplicationQueuePtr m_app_queue;
     MaintenanceQueuePtr m_queue;
+    RSStatsPtr m_server_stats;
     RangeStatsGathererPtr m_stats_gatherer;
-    MaintenancePrioritizer::Stats m_stats;
     MaintenancePrioritizer *m_prioritizer;
     MaintenancePrioritizerLogCleanup m_prioritizer_log_cleanup;
     MaintenancePrioritizerLowMemory  m_prioritizer_low_memory;
     int32_t m_maintenance_interval;
+    boost::xtime m_last_maintenance;
+    int64_t m_query_cache_memory;
+    int32_t m_low_memory_limit_percentage;
   };
 
   typedef intrusive_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;

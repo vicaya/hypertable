@@ -1,10 +1,12 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 DATA_SIZE=${DATA_SIZE:-"5000000"}
 AG_MAXFILES=1000
 AG_MAXMEM=250000
+
+. $HT_HOME/bin/ht-env.sh
 
 restart_servers() {
   $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \

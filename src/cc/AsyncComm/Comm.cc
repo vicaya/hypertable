@@ -25,10 +25,9 @@
 
 #include <cassert>
 #include <iostream>
-using namespace std;
 
 extern "C" {
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 #endif
@@ -43,10 +42,10 @@ extern "C" {
 #include <arpa/inet.h>
 }
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/FileUtils.h"
-#include "Common/System.h"
 #include "Common/SystemInfo.h"
 #include "Common/Time.h"
 
@@ -57,6 +56,7 @@ extern "C" {
 #include "IOHandlerData.h"
 
 using namespace Hypertable;
+using namespace std;
 
 atomic_t Comm::ms_next_request_id = ATOMIC_INIT(1);
 
@@ -70,32 +70,23 @@ Comm::Comm() {
     HT_ABORT;
   }
 
-#if defined(__linux__)
-  if (System::os_info().version_major < 2 ||
-      System::os_info().version_minor < 6 ||
-      (System::os_info().version_major == 2 &&
-       System::os_info().version_minor == 6 &&
-       System::os_info().version_micro < 17))
-    ReactorFactory::ms_epollet = false;
-#endif
-
-  ReactorFactory::get_reactor(m_timer_reactor_ptr);
-  m_handler_map_ptr = ReactorRunner::ms_handler_map_ptr;
+  ReactorFactory::get_reactor(m_timer_reactor);
+  m_handler_map = ReactorRunner::handler_map;
 }
 
 
 Comm::~Comm() {
   set<IOHandler *> handlers;
-  m_handler_map_ptr->decomission_all(handlers);
+  m_handler_map->decomission_all(handlers);
 
   foreach(IOHandler *handler, handlers)
     handler->shutdown();
 
+  // wait for all decomissioned handlers to get purged by Reactor
+  m_handler_map->wait_for_empty();
+
   // Since Comm is a singleton, this is OK
   ReactorFactory::destroy();
-
-  // wait for all decomissioned handlers to get purged by Reactor
-  m_handler_map_ptr->wait_for_empty();
 }
 
 
@@ -108,29 +99,37 @@ void Comm::destroy() {
 
 
 int
-Comm::connect(struct sockaddr_in &addr,
-              DispatchHandlerPtr &default_handler_ptr) {
+Comm::connect(const CommAddress &addr, DispatchHandlerPtr &default_handler) {
   int sd;
+  int error = m_handler_map->contains_data_handler(addr);
 
-  if (m_handler_map_ptr->contains_handler(addr))
+  if (error == Error::OK)
     return Error::COMM_ALREADY_CONNECTED;
+  else if (error != Error::COMM_NOT_CONNECTED)
+    return error;
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
     HT_ERRORF("socket: %s", strerror(errno));
     return Error::COMM_SOCKET_ERROR;
   }
 
-  return connect_socket(sd, addr, default_handler_ptr);
+  return connect_socket(sd, addr, default_handler);
 }
 
 
-int
-Comm::connect(struct sockaddr_in &addr, struct sockaddr_in &local_addr,
-              DispatchHandlerPtr &default_handler_ptr) {
-  int sd;
 
-  if (m_handler_map_ptr->contains_handler(addr))
+int
+Comm::connect(const CommAddress &addr, const CommAddress &local_addr,
+              DispatchHandlerPtr &default_handler) {
+  int sd;
+  int error = m_handler_map->contains_data_handler(addr);
+
+  HT_ASSERT(local_addr.is_inet());
+
+  if (error == Error::OK)
     return Error::COMM_ALREADY_CONNECTED;
+  else if (error != Error::COMM_NOT_CONNECTED)
+    return error;
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
     HT_ERRORF("socket: %s", strerror(errno));
@@ -138,36 +137,50 @@ Comm::connect(struct sockaddr_in &addr, struct sockaddr_in &local_addr,
   }
 
   // bind socket to local address
-  if ((bind(sd, (const sockaddr *)&local_addr, sizeof(sockaddr_in))) < 0) {
-    HT_ERRORF( "bind: %s: %s", InetAddr::format(local_addr).c_str(),
-              strerror(errno));
+  if ((bind(sd, (const sockaddr *)&local_addr.inet, sizeof(sockaddr_in))) < 0) {
+    HT_ERRORF( "bind: %s: %s", local_addr.to_str().c_str(), strerror(errno));
     return Error::COMM_BIND_ERROR;
   }
 
-  return connect_socket(sd, addr, default_handler_ptr);
+  return connect_socket(sd, addr, default_handler);
 }
 
 
-void
-Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr) {
-  DispatchHandlerPtr null_handler(0);
-  listen(addr, chf_ptr, null_handler);
-}
-
-
-int Comm::set_alias(const sockaddr_in &addr, const sockaddr_in &alias) {
+int Comm::set_alias(const InetAddr &addr, const InetAddr &alias) {
   ScopedLock lock(ms_mutex);
-  return m_handler_map_ptr->set_alias(addr, alias);
+  return m_handler_map->set_alias(addr, alias);
+}
+
+
+void Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf) {
+  DispatchHandlerPtr null_handler(0);
+  listen(addr, chf, null_handler);
+}
+
+
+int Comm::add_proxy(const String &proxy, const InetAddr &addr) {
+  HT_ASSERT(ReactorFactory::proxy_master);
+  return m_handler_map->add_proxy(proxy, addr);
+}
+
+void Comm::get_proxy_map(ProxyMapT &proxy_map) {
+  m_handler_map->get_proxy_map(proxy_map);
+}
+
+bool Comm::wait_for_proxy_load(Timer &timer) {
+  return m_handler_map->wait_for_proxy_load(timer);
 }
 
 
 void
-Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
-             DispatchHandlerPtr &default_handler_ptr) {
+Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
+             DispatchHandlerPtr &default_handler) {
   IOHandlerPtr handler;
   IOHandlerAccept *accept_handler;
   int one = 1;
   int sd;
+
+  HT_ASSERT(addr.is_inet());
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     HT_THROW(Error::COMM_SOCKET_ERROR, strerror(errno));
@@ -177,9 +190,11 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
 
 #if defined(__linux__)
   if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
-    HT_ERRORF("setting TCP_NODEPLAY: %s", strerror(errno));
-
-#elif defined(__APPLE__)
+    HT_ERRORF("setting TCP_NODELAY: %s", strerror(errno));
+#elif defined(__sun__)
+  if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(one)) < 0)
+    HT_ERRORF("setting TCP_NODELAY: %s", strerror(errno));
+#elif defined(__APPLE__) || defined(__FreeBSD__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
     HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
@@ -187,47 +202,60 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
   if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
     HT_ERRORF("setting SO_REUSEADDR: %s", strerror(errno));
 
-  if ((bind(sd, (const sockaddr *)&addr, sizeof(sockaddr_in))) < 0)
+  if ((bind(sd, (const sockaddr *)&addr.inet, sizeof(sockaddr_in))) < 0)
     HT_THROWF(Error::COMM_BIND_ERROR, "binding to %s: %s",
-              InetAddr::format(addr).c_str(), strerror(errno));
+              addr.to_str().c_str(), strerror(errno));
 
   if (::listen(sd, 1000) < 0)
     HT_THROWF(Error::COMM_LISTEN_ERROR, "listening: %s", strerror(errno));
 
-  handler = accept_handler = new IOHandlerAccept(sd, addr, default_handler_ptr,
-                                                 m_handler_map_ptr, chf_ptr);
-  m_handler_map_ptr->insert_handler(accept_handler);
+  handler = accept_handler = new IOHandlerAccept(sd, addr.inet, default_handler,
+                                                 m_handler_map, chf);
+  int32_t error = m_handler_map->insert_handler(accept_handler);
+  if (error != Error::OK)
+    HT_THROWF(error, "Error inserting accept handler for %s into handler map",
+              addr.to_str().c_str());
   accept_handler->start_polling();
 }
 
 
+
 int
-Comm::send_request(const sockaddr_in &addr, uint32_t timeout_ms,
-                   CommBufPtr &cbuf_ptr, DispatchHandler *resp_handler) {
+Comm::send_request(const CommAddress &addr, uint32_t timeout_ms,
+                   CommBufPtr &cbuf, DispatchHandler *resp_handler) {
   ScopedLock lock(ms_mutex);
   IOHandlerDataPtr data_handler;
-  int error = Error::OK;
+  int error;
 
-  if (!m_handler_map_ptr->lookup_data_handler(addr, data_handler)) {
-    HT_WARNF("No connection for %s", InetAddr::format(addr).c_str());
-    return Error::COMM_NOT_CONNECTED;
+  if ((error = m_handler_map->lookup_data_handler(addr, data_handler)) != Error::OK) {
+    HT_WARNF("No connection for %s - %s", addr.to_str().c_str(), Error::get_text(error));
+    return error;
   }
 
-  cbuf_ptr->header.flags |= CommHeader::FLAGS_BIT_REQUEST;
+  return send_request(data_handler, timeout_ms, cbuf, resp_handler);
+}
+
+
+
+int Comm::send_request(IOHandlerDataPtr &data_handler, uint32_t timeout_ms,
+		       CommBufPtr &cbuf, DispatchHandler *resp_handler) {
+  int error;
+
+  cbuf->header.flags |= CommHeader::FLAGS_BIT_REQUEST;
   if (resp_handler == 0) {
-    cbuf_ptr->header.flags |= CommHeader::FLAGS_BIT_IGNORE_RESPONSE;
-    cbuf_ptr->header.id = 0;
+    cbuf->header.flags |= CommHeader::FLAGS_BIT_IGNORE_RESPONSE;
+    cbuf->header.id = 0;
   }
   else {
-    cbuf_ptr->header.id = atomic_inc_return(&ms_next_request_id);
-    if (cbuf_ptr->header.id == 0)
-      cbuf_ptr->header.id = atomic_inc_return(&ms_next_request_id);
+    cbuf->header.id = atomic_inc_return(&ms_next_request_id);
+    if (cbuf->header.id == 0)
+      cbuf->header.id = atomic_inc_return(&ms_next_request_id);
   }
 
-  cbuf_ptr->header.timeout_ms = timeout_ms;
-  cbuf_ptr->write_header_and_reset();
+  cbuf->header.timeout_ms = timeout_ms;
+  cbuf->write_header_and_reset();
 
-  if ((error = data_handler->send_message(cbuf_ptr, timeout_ms, resp_handler))
+  if ((error = data_handler->send_message(cbuf, timeout_ms, resp_handler))
       != Error::OK)
     data_handler->shutdown();
 
@@ -235,21 +263,22 @@ Comm::send_request(const sockaddr_in &addr, uint32_t timeout_ms,
 }
 
 
-int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr) {
+
+int Comm::send_response(const CommAddress &addr, CommBufPtr &cbuf) {
   ScopedLock lock(ms_mutex);
   IOHandlerDataPtr data_handler;
-  int error = Error::OK;
+  int error;
 
-  if (!m_handler_map_ptr->lookup_data_handler(addr, data_handler)) {
-    HT_ERRORF("No connection for %s", InetAddr::format(addr).c_str());
-    return Error::COMM_NOT_CONNECTED;
+  if ((error = m_handler_map->lookup_data_handler(addr, data_handler)) != Error::OK) {
+    HT_ERRORF("No connection for %s - %s", addr.to_str().c_str(), Error::get_text(error));
+    return error;
   }
 
-  cbuf_ptr->header.flags &= CommHeader::FLAGS_MASK_REQUEST;
+  cbuf->header.flags &= CommHeader::FLAGS_MASK_REQUEST;
 
-  cbuf_ptr->write_header_and_reset();
+  cbuf->write_header_and_reset();
 
-  if ((error = data_handler->send_message(cbuf_ptr)) != Error::OK)
+  if ((error = data_handler->send_message(cbuf)) != Error::OK)
     data_handler->shutdown();
 
   return error;
@@ -257,12 +286,14 @@ int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr) {
 
 
 void
-Comm::create_datagram_receive_socket(struct sockaddr_in *addr, int tos,
+Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
                                      DispatchHandlerPtr &dhp) {
   IOHandlerPtr handler;
   IOHandlerDatagram *dg_handler;
   int one = 1;
   int sd;
+
+  HT_ASSERT(addr.is_inet());
 
   if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     HT_THROWF(Error::COMM_SOCKET_ERROR, "%s", strerror(errno));
@@ -292,45 +323,50 @@ Comm::create_datagram_receive_socket(struct sockaddr_in *addr, int tos,
     setsockopt(sd, SOL_IP, IP_TOS, &opt, sizeof(opt));
     opt = tos;
     setsockopt(sd, SOL_SOCKET, SO_PRIORITY, &opt, sizeof(opt));
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
     opt = IPTOS_LOWDELAY;       /* see <netinet/in.h> */
     setsockopt(sd, IPPROTO_IP, IP_TOS, &opt, sizeof(opt));
 #endif
   }
 
   // bind socket
-  if ((bind(sd, (const sockaddr *)addr, sizeof(sockaddr_in))) < 0)
+  if ((bind(sd, (const sockaddr *)&addr.inet, sizeof(sockaddr_in))) < 0)
     HT_THROWF(Error::COMM_BIND_ERROR, "binding to %s: %s",
-              InetAddr::format(*addr).c_str(), strerror(errno));
+              addr.to_str().c_str(), strerror(errno));
 
-  handler = dg_handler = new IOHandlerDatagram(sd, *addr, dhp);
+  handler = dg_handler = new IOHandlerDatagram(sd, addr.inet, dhp);
 
-  handler->get_local_address(addr);
+  addr.set_inet( handler->get_local_address() );
 
-  m_handler_map_ptr->insert_datagram_handler(dg_handler);
+  int32_t error = m_handler_map->insert_datagram_handler(dg_handler);
+  if (error != Error::OK)
+    HT_THROWF(error, "Error inserting datagram handler for %s into handler map",
+              addr.to_str().c_str());
   dg_handler->start_polling();
 }
 
 
 int
-Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr,
-                    CommBufPtr &cbuf_ptr) {
+Comm::send_datagram(const CommAddress &addr, const CommAddress &send_addr,
+                    CommBufPtr &cbuf) {
   ScopedLock lock(ms_mutex);
   IOHandlerDatagramPtr dg_handler;
-  int error = Error::OK;
+  int error;
 
-  if (!m_handler_map_ptr->lookup_datagram_handler(send_addr, dg_handler)) {
+  HT_ASSERT(addr.is_inet());
+
+  if ((error = m_handler_map->lookup_datagram_handler(send_addr, dg_handler)) != Error::OK) {
     HT_ERRORF("Datagram send/local address %s not registered",
-              InetAddr::format(send_addr).c_str());
-    HT_ABORT;
+              send_addr.to_str().c_str());
+    return error;
   }
 
-  cbuf_ptr->header.flags |= (CommHeader::FLAGS_BIT_REQUEST|
-                             CommHeader::FLAGS_BIT_IGNORE_RESPONSE);
+  cbuf->header.flags |= (CommHeader::FLAGS_BIT_REQUEST |
+			 CommHeader::FLAGS_BIT_IGNORE_RESPONSE);
 
-  cbuf_ptr->write_header_and_reset();
+  cbuf->write_header_and_reset();
 
-  if ((error = dg_handler->send_message(addr, cbuf_ptr)) != Error::OK)
+  if ((error = dg_handler->send_message(addr.inet, cbuf)) != Error::OK)
     dg_handler->shutdown();
 
   return error;
@@ -342,7 +378,7 @@ int Comm::set_timer(uint32_t duration_millis, DispatchHandler *handler) {
   boost::xtime_get(&timer.expire_time, boost::TIME_UTC);
   xtime_add_millis(timer.expire_time, duration_millis);
   timer.handler = handler;
-  m_timer_reactor_ptr->add_timer(timer);
+  m_timer_reactor->add_timer(timer);
   return Error::OK;
 }
 
@@ -352,32 +388,33 @@ Comm::set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler) {
   ExpireTimer timer;
   memcpy(&timer.expire_time, &expire_time, sizeof(boost::xtime));
   timer.handler = handler;
-  m_timer_reactor_ptr->add_timer(timer);
+  m_timer_reactor->add_timer(timer);
   return Error::OK;
 }
 
 
 int
-Comm::get_local_address(struct sockaddr_in addr,
-                        struct sockaddr_in *local_addr) {
+Comm::get_local_address(const CommAddress &addr,
+                        CommAddress &local_addr) {
   ScopedLock lock(ms_mutex);
   IOHandlerDataPtr data_handler;
+  int error;
 
-  if (!m_handler_map_ptr->lookup_data_handler(addr, data_handler)) {
-    HT_ERRORF("No connection for %s", InetAddr::format(addr).c_str());
-    return Error::COMM_NOT_CONNECTED;
+  if ((error = m_handler_map->lookup_data_handler(addr, data_handler)) != Error::OK) {
+    HT_ERRORF("No connection for %s - %s", addr.to_str().c_str(), Error::get_text(error));
+    return error;
   }
 
-  data_handler->get_local_address(local_addr);
+  local_addr.set_inet( data_handler->get_local_address() );
 
   return Error::OK;
 }
 
 
-int Comm::close_socket(struct sockaddr_in &addr) {
+int Comm::close_socket(const CommAddress &addr) {
   IOHandlerPtr handler;
 
-  if (!m_handler_map_ptr->decomission_handler(addr, handler))
+  if (!m_handler_map->decomission_handler(addr, handler))
     return Error::COMM_NOT_CONNECTED;
 
   handler->shutdown();
@@ -391,11 +428,20 @@ int Comm::close_socket(struct sockaddr_in &addr) {
  */
 
 int
-Comm::connect_socket(int sd, struct sockaddr_in &addr,
-                     DispatchHandlerPtr &default_handler_ptr) {
+Comm::connect_socket(int sd, const CommAddress &addr,
+                     DispatchHandlerPtr &default_handler) {
   IOHandlerPtr handler;
   IOHandlerData *data_handler;
+  int32_t error;
   int one = 1;
+  CommAddress connectable_addr;
+
+  if (addr.is_proxy()) {
+    if (!m_handler_map->translate_proxy_address(addr, connectable_addr))
+      return Error::COMM_INVALID_PROXY;
+  }
+  else
+    connectable_addr = addr;
 
   // Set to non-blocking
   FileUtils::set_flags(sd, O_NONBLOCK);
@@ -403,32 +449,35 @@ Comm::connect_socket(int sd, struct sockaddr_in &addr,
 #if defined(__linux__)
   if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
     HT_ERRORF("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
-
-#elif defined(__APPLE__)
+#elif defined(__sun__)
+  if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
+    HT_ERRORF("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
+#elif defined(__APPLE__) || defined(__FreeBSD__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
     HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  handler = data_handler = new IOHandlerData(sd, addr, default_handler_ptr);
-  m_handler_map_ptr->insert_handler(data_handler);
+  handler = data_handler = new IOHandlerData(sd, connectable_addr.inet, default_handler);
+  if (addr.is_proxy())
+    handler->set_proxy(addr.proxy);
+  if ((error = m_handler_map->insert_handler(data_handler)) != Error::OK)
+    return error;
 
-  while (::connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in))
+  while (::connect(sd, (struct sockaddr *)&connectable_addr.inet, sizeof(struct sockaddr_in))
           < 0) {
     if (errno == EINTR) {
       poll(0, 0, 1000);
       continue;
     }
     else if (errno == EINPROGRESS) {
-      data_handler->start_polling();
-      data_handler->add_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
-      return Error::OK;
+      //HT_INFO("connect() in progress starting to poll");
+      return data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
     }
-    HT_ERRORF("connecting to %s: %s", InetAddr::format(addr).c_str(),
+    m_handler_map->remove_handler(connectable_addr, handler);
+    HT_ERRORF("connecting to %s: %s", connectable_addr.to_str().c_str(),
               strerror(errno));
     return Error::COMM_CONNECT_ERROR;
   }
 
-  data_handler->start_polling();
-
-  return Error::OK;
+  return data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
 }

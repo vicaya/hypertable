@@ -15,7 +15,7 @@ use base('Hypertable::ThriftGen2::HqlServiceClient');
 
 sub new {
   my ($class, $host, $port, $timeout_ms, $do_open) = @_;
-  $timeout_ms = 20000 if !$timeout_ms;
+  $timeout_ms = 300000 if !$timeout_ms;
   my $socket = new Thrift::Socket($host, $port);
   $socket->setSendTimeout($timeout_ms);
   $socket->setRecvTimeout($timeout_ms);

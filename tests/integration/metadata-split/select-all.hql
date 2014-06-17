@@ -1,0 +1,2 @@
+use '/';
+select * from LoadTest;

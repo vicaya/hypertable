@@ -22,9 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/Config.h"
 #include "Common/Timer.h"
-#include "Common/InetAddr.h"
 
-#include "Defaults.h"
 #include "Key.h"
 #include "KeySpec.h"
 #include "TableMutatorDispatchHandler.h"
@@ -39,7 +37,7 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
     RangeLocatorPtr &range_locator, uint32_t timeout_ms)
   : m_comm(comm), m_schema(schema), m_range_locator(range_locator),
     m_range_server(comm, timeout_ms), m_table_identifier(*table_identifier),
-    m_full(false), m_resends(0), m_timeout_ms(timeout_ms) {
+    m_full(false), m_resends(0), m_timeout_ms(timeout_ms), m_counter_value(9)  {
 
   m_loc_cache = m_range_locator->location_cache();
 
@@ -47,6 +45,7 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
 
   m_server_flush_limit = Config::properties->get_i32(
       "Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer");
+  m_refresh_schema = Config::properties->get_bool("Hypertable.Client.RefreshSchema");
 }
 
 
@@ -62,22 +61,53 @@ TableMutatorScatterBuffer::set(const Key &key, const void *value,
                                timer, false);
   }
 
-  iter = m_buffer_map.find(range_info.location);
+  iter = m_buffer_map.find(range_info.addr);
 
   if (iter == m_buffer_map.end()) {
-    m_buffer_map[range_info.location] = new TableMutatorSendBuffer(
+    // this can be optimized by using the insert() method
+    m_buffer_map[range_info.addr] = new TableMutatorSendBuffer(
         &m_table_identifier, &m_completion_counter, m_range_locator.get());
-    iter = m_buffer_map.find(range_info.location);
-
-    if (!LocationCache::location_to_addr(range_info.location.c_str(),
-        (*iter).second->addr))
-      HT_THROW(Error::INVALID_METADATA, range_info.location);
+    iter = m_buffer_map.find(range_info.addr);
+    (*iter).second->addr = range_info.addr;
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
   create_key_and_append((*iter).second->accum, key.flag, key.row,
       key.column_family_code, key.column_qualifier, key.timestamp);
-  append_as_byte_string((*iter).second->accum, value, value_len);
+
+  // if the CF is a counter then re-encode value to 64 bit int
+  if (key.column_family_code && m_schema->get_column_family(key.column_family_code)->counter) {
+    bool counter_reset = false;
+    const char *ascii_value = (const char *)value;
+    char *endptr;
+    m_counter_value.clear();
+    m_counter_value.ensure(value_len+1);
+    if (value_len > 0 && (*ascii_value == '=' || *ascii_value == '+')) {
+      counter_reset = (*ascii_value == '=');
+      m_counter_value.add_unchecked(ascii_value+1, value_len-1);
+    }
+    else
+      m_counter_value.add_unchecked(value, value_len);
+    m_counter_value.add_unchecked((const void *)"\0",1);
+    uint64_t val = strtoull((const char *)m_counter_value.base, &endptr, 0);
+    if (*endptr)
+      HT_THROWF(Error::BAD_KEY, "Expected integer value, got %s, row=%s",
+          (char*)m_counter_value.base, key.row);
+    m_counter_value.clear();
+    Serialization::encode_i64(&m_counter_value.ptr, val);
+    /**
+     * If the value represents a counter reset (e.g. "=0"), then
+     * append a '=' character after the seralized reset value
+     */
+    if (counter_reset) {
+      *m_counter_value.ptr++ = '=';
+      append_as_byte_string((*iter).second->accum, m_counter_value.base, 9);
+    }
+    else
+      append_as_byte_string((*iter).second->accum, m_counter_value.base, 8);
+  }
+  else
+    append_as_byte_string((*iter).second->accum, value, value_len);
 
   if ((*iter).second->accum.fill() > m_server_flush_limit)
     m_full = true;
@@ -94,16 +124,13 @@ void TableMutatorScatterBuffer::set_delete(const Key &key, Timer &timer) {
                                timer, false);
   }
 
-  iter = m_buffer_map.find(range_info.location);
+  iter = m_buffer_map.find(range_info.addr);
 
   if (iter == m_buffer_map.end()) {
-    m_buffer_map[range_info.location] = new TableMutatorSendBuffer(
+    m_buffer_map[range_info.addr] = new TableMutatorSendBuffer(
         &m_table_identifier, &m_completion_counter, m_range_locator.get());
-    iter = m_buffer_map.find(range_info.location);
-
-    if (!LocationCache::location_to_addr(range_info.location.c_str(),
-        (*iter).second->addr))
-      HT_THROW(Error::INVALID_METADATA, range_info.location);
+    iter = m_buffer_map.find(range_info.addr);
+    (*iter).second->addr = range_info.addr;
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
@@ -139,16 +166,13 @@ TableMutatorScatterBuffer::set(SerializedKey key, ByteString value,
                                &range_info, timer, false);
   }
 
-  iter = m_buffer_map.find(range_info.location);
+  iter = m_buffer_map.find(range_info.addr);
 
   if (iter == m_buffer_map.end()) {
-    m_buffer_map[range_info.location] = new TableMutatorSendBuffer(
+    m_buffer_map[range_info.addr] = new TableMutatorSendBuffer(
         &m_table_identifier, &m_completion_counter, m_range_locator.get());
-    iter = m_buffer_map.find(range_info.location);
-
-    if (!LocationCache::location_to_addr(range_info.location.c_str(),
-        (*iter).second->addr))
-      HT_THROW(Error::INVALID_METADATA, range_info.location);
+    iter = m_buffer_map.find(range_info.addr);
+    (*iter).second->addr = range_info.addr;
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
@@ -228,7 +252,7 @@ void TableMutatorScatterBuffer::send(RangeServerFlagsMap &rangeserver_flags_map,
       }
       HT_ASSERT((size_t)(ptr-send_buffer->pending_updates.base)==len);
       send_buffer->dispatch_handler =
-          new TableMutatorDispatchHandler(send_buffer.get());
+          new TableMutatorDispatchHandler(send_buffer.get(), m_refresh_schema);
 
       send_buffer->send_count = send_buffer->key_offsets.size();
     }
@@ -244,8 +268,7 @@ void TableMutatorScatterBuffer::send(RangeServerFlagsMap &rangeserver_flags_map,
       m_range_server.update(send_buffer->addr, m_table_identifier,
           send_buffer->send_count, send_buffer->pending_updates, flags,
           send_buffer->dispatch_handler.get());
-      String rs_addr = InetAddr::format(send_buffer->addr);
-      rangeserver_flags_map[rs_addr] = flags;
+      rangeserver_flags_map[send_buffer->addr] = flags;
     }
     catch (Exception &e) {
       if (e.code() == Error::COMM_NOT_CONNECTED) {
@@ -271,8 +294,10 @@ bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
       std::vector<FailedRegion> failed_regions;
 
       for (TableMutatorSendBufferMap::const_iterator it = m_buffer_map.begin();
-           it != m_buffer_map.end(); ++it)
+           it != m_buffer_map.end(); ++it) {
         (*it).second->get_failed_regions(failed_regions);
+        (*it).second->failed_regions.clear();
+      }
 
       if (!failed_regions.empty()) {
         Cell cell;

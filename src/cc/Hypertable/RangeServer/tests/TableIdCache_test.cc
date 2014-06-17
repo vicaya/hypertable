@@ -28,21 +28,26 @@ using namespace Hypertable;
 
 int main(int argc, char **argv) {
   TableIdCachePtr cache;
+  char name[8];
 
   System::initialize(System::locate_install_dir(argv[0]));
 
   cache = new TableIdCache(50);
 
-  for (int i=0; i<100; i++)
-    cache->insert(i);
+  for (int i=0; i<100; i++) {
+    sprintf(name, "/%d", i);
+    cache->insert(name);
+  }
 
   for (int i=0; i<50; i++) {
-    if (cache->contains(i))
+    sprintf(name, "/%d", i);
+    if (cache->contains(name))
       return 1;
   }
 
   for (int i=50; i<100; i++) {
-    if (!cache->contains(i))
+    sprintf(name, "/%d", i);
+    if (!cache->contains(name))
       return 1;
   }
 

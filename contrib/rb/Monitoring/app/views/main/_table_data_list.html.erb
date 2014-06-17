@@ -1,0 +1,25 @@
+<h4>Number of Tables: <%= @tables.length %></h4>
+
+<table border="1"> 
+		<tr>
+			<th>Sums of All <%= link_to "Tables", tables_path %></th>
+		<% @table_timestamps.each_with_index do |ts, i| %>
+			<th>
+				<%= @time_interval_tables[i].to_s + " minute" + (@time_interval_tables[i].to_i > 1 ? "s" : "")%>
+				<br /><%= (Time.at ts / 10 ** 9).strftime("%Y-%m-%d %H:%M") %>
+			</th>
+		<% end %>
+		</tr>			
+		<tr>	
+			
+		<% sort_data_hash(@table_system_totals).each do |key, value| %>
+			<td><%= Table.pretty_titleize key.to_s.titleize %></td>
+				<% value.each do |v| %>
+					<td> 
+						<%= number_with_delimiter v %>
+						<%= Table.get_units(key)%>
+					</td>
+				<% end %>
+		</tr>
+		<% end %>	
+</table>

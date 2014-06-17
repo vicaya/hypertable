@@ -31,6 +31,7 @@ extern "C" {
 #include <time.h>
 }
 
+#include "Common/Filesystem.h"
 #include "Common/FileUtils.h"
 #include "Common/System.h"
 
@@ -60,7 +61,7 @@ KosmosBroker::~KosmosBroker() {
 
 void
 KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
-                   uint32_t bufsz) {
+                   uint32_t flags, uint32_t bufsz) {
   int fd, local_fd;
   String abspath;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
@@ -100,14 +101,14 @@ KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
 
 void
 KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
-    bool overwrite, int32_t bufsz, int16_t replication, int64_t blksz) {
+		     uint32_t flags, int32_t bufsz, int16_t replication, int64_t blksz) {
   int fd, local_fd;
-  int flags;
+  int oflags;
   String abspath;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
 
-  HT_DEBUGF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%lld",
-            fname, (int)overwrite, (int)bufsz, (int)replication, (Lld)blksz);
+  HT_DEBUGF("create file='%s' flags=%u bufsz=%d replication=%d blksz=%lld",
+            fname, flags, (int)bufsz, (int)replication, (Lld)blksz);
 
   if (fname[0] == '/')
     abspath = fname;
@@ -116,12 +117,12 @@ KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
 
   fd = atomic_inc_return(&ms_next_fd);
 
-  if (overwrite)
-    flags = O_WRONLY | O_CREAT | O_TRUNC;
+  if (flags & Filesystem::OPEN_FLAG_OVERWRITE)
+    oflags = O_WRONLY | O_CREAT | O_TRUNC;
   else
-    flags = O_WRONLY | O_CREAT | O_APPEND;
+    oflags = O_WRONLY | O_CREAT | O_APPEND;
 
-  if ((local_fd = clnt->Open(abspath.c_str(), flags)) < 0) {
+  if ((local_fd = clnt->Open(abspath.c_str(), oflags)) < 0) {
     HT_ERROR_OUT <<"KfsClient::Open failed: file='"<< abspath
         << "' - "<< KFS::ErrorCodeToStr(fd) << HT_END;
     report_error(cb, local_fd);

@@ -37,12 +37,6 @@
 #  error Unknown machine endianness detected.
 # endif
 # define HT_BYTE_ORDER __BYTE_ORDER
-#elif defined(_BIG_ENDIAN)
-# define HT_BIG_ENDIAN
-# define HT_BYTE_ORDER 4321
-#elif defined(_LITTLE_ENDIAN)
-# define HT_LITTLE_ENDIAN
-# define HT_BYTE_ORDER 1234
 #elif defined(__sparc) || defined(__sparc__) \
    || defined(_POWER) || defined(__powerpc__) \
    || defined(__ppc__) || defined(__hpux) \

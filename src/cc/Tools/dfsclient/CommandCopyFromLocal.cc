@@ -65,7 +65,7 @@ void CommandCopyFromLocal::run() {
     if ((fp = fopen(m_args[src_arg].first.c_str(), "r")) == 0)
       HT_THROW(Error::EXTERNAL, strerror(errno));
 
-    fd = m_client->create(m_args[src_arg+1].first, true, -1, -1, -1);
+    fd = m_client->create(m_args[src_arg+1].first, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
 
     // send 3 appends
     for (int i=0; i<3; i++) {

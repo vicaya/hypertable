@@ -3,9 +3,9 @@ LOAD DATA INFILE
 
 #### EBNF
 
-    LOAD DATA INFILE [options] fname INTO TABLE name
+    LOAD DATA INFILE [options] [file_location]fname[.gz] INTO TABLE name
 
-    LOAD DATA INFILE [options] fname INTO FILE fname
+    LOAD DATA INFILE [options] [file_location]fname[.gz] INTO FILE fname
 
     options:
 
@@ -13,7 +13,11 @@ LOAD DATA INFILE
        | TIMESTAMP_COLUMN '=' name |
        | HEADER_FILE '=' '"' filename '"'
        | ROW_UNIQUIFY_CHARS '=' n
-       | NOESCAPE)*
+       | NO_ESCAPE
+       | DUPLICATE_KEY_COLUMNS
+       | IGNORE_UNKNOWN_COLUMNS
+       | SINGLE_CELL_FORMAT
+       | RETURN_DELETES)*
 
     column_specifier =
       [ column_format ] column_name
@@ -22,15 +26,18 @@ LOAD DATA INFILE
       "%0" int
       | "%-"
       | "%"
-
+    
+    file_location:
+      "dfs://" | "file://"
+ 
 #### Description
 <p>
 The `LOAD DATA INFILE` command provides a way to bulk load data from an
-optionally compressed file or stdin (fname of "-"), into a table.  The input
-is assumed to start with a header line that indicates the format of the lines
-in the file.  The header can optionlly be stored in a separate file and
-referenced with the `HEADER_FILE` option.  The header is expected to have the
-following format:
+optionally compressed file or stdin (fname of "-", see Load from STDIN below),
+into a table.  The input is assumed to start with a header line that indicates
+the format of the lines in the file.  The header can optionlly be stored in a
+separate file and referenced with the `HEADER_FILE` option.  The header is
+expected to have the following format:
 
     header =
       [ '#' ] single_cell_format
@@ -122,11 +129,11 @@ file will produce a set of cells equivalent to Example 1 above.
 The `LOAD DATA INFILE` command accepts a number of options.  The first is the
 `ROW_KEY_COLUMN` option.  This is used in conjunction with the multi-cell
 input file format.  It provides a way to select which column in the input
-file should be used as the row key.  By separating two or more column names
-with the '+' character, multiple column values will be concatenated together,
-separated by a single space character to form the row key.  Also, each
-column specifier can have one of the following prefixes to control field width
-and justification:
+file should be used as the row key (default is first column).  By separating
+two or more column names with the '+' character, multiple column values will
+be concatenated together, separated by a single space character to form the
+row key.  Also, each column specifier can have one of the following prefixes
+to control field width and justification:
 
 ##### Table 1
 
@@ -208,15 +215,64 @@ timestamp as the row key.  However, as in the case of an Apache log, the
 timestamp usually only has resolution down to the second and there may be
 many entries that fall within the same second.
 
-#### `NOESCAPE`
+#### `NO_ESCAPE`
 <p>
-The `NOESCAPE` option provides a way to disable the escaping mechanism.  The
-newline and tab characters are escaped and unescaped when transferred in
+The `NO_ESCAPE` option provides a way to disable the escaping mechanism.
+The newline and tab characters are escaped and unescaped when transferred in
 and out of the system.  The `LOAD DATA INFILE` command will scan the input
-for the two character sequence '\' 'n' and will convert it into a newline
-character.  It will also scan the input for the two character sequence
-'\' 't' and will convert it into a tab character.  The `NOESCAPE` option
+for the two character sequences '\' 'n', '\' 't', and '\' '\' and will convert them
+into a newline, tab, and backslash, respectively.  The `NO_ESCAPE` option
 disables this conversion.
+
+#### `DUPLICATE_KEY_COLUMNS`
+<p>
+Normally input fields that represent the row key (the first field or the
+ones designated in the `ROW_KEY_COLUMN` option) are not also inserted as cell
+data.  This option causes the system to also insert the row key fields
+as cell data.
+
+#### `IGNORE_UNKNOWN_COLUMNS`
+<p>
+Skip input lines that refer to unknown (non-existent) column families.
+
+#### `SINGLE_CELL_FORMAT`
+<p>
+The `LOAD DATA INFILE` command will attempt to detect the format of the input
+file by parsing the first line if it begins with a '#' character.  It assumes
+that the remainder of the line is a tab-delimited list of column names.
+However, if the file format is the 3-field single-cell format
+(i.e. row,column,value) and lacks a header, and the first character of the
+row key in first line happens to be the '#' character, the parser will get
+confused and interpret the first cell as the format line.  The
+`SINGLE_CELL_FORMAT` option provides a way to tell the interpreter that there
+is no header format line and the format of the load file is one of the single
+cell formats (e.g. row,column,value or timestamp,row,column,value) and have
+it determine the format by counting the tabs on the first line.
+
+#### `RETURN_DELETES`
+<p>
+The `RETURN_DELETES` option is used internally for debugging.  When data is
+deleted from a table, the data is not actually deleted right away.  A delete
+key will get inserted into the database and the delete will get processed
+and applied during subsequent scans.  The `RETURN_DELETES` option will return
+the delete keys in addition to the normal cell keys and values.  This option
+can be useful when used in conjuction with the `DISPLAY_TIMESTAMPS` option to
+understand how the delete mechanism works.
+
+#### Load from STDIN
+<p>
+The LOAD DATA INFILE command has the ability to load data from standard input
+by specifying a file name of "-".  The following is an example of how to use
+this feature:
+
+    cat data.tsv | ht shell --batch -e 'load data infile "-" into table foo;'
+
+#### Load from DFS file 
+<p>
+If the data file name starts with the location specifier `dfs://` then the file is 
+read from the DFS over the DfsBroker. If it begins with the specifier `file://` then 
+it is read from the local FS (this is the default in the absence of a location 
+specifier).
 
 #### Compression
 <p>

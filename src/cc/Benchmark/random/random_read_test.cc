@@ -82,6 +82,7 @@ typedef Meta::list<AppPolicy, DefaultCommPolicy> Policies;
 
 int main(int argc, char **argv) {
   ClientPtr hypertable_client_ptr;
+  NamespacePtr namespace_ptr;
   TablePtr table_ptr;
   ScanSpecBuilder scan_spec;
   TableScannerPtr scanner_ptr;
@@ -121,8 +122,8 @@ int main(int argc, char **argv) {
     else
       hypertable_client_ptr = new Hypertable::Client(
           System::locate_install_dir(argv[0]));
-
-    table_ptr = hypertable_client_ptr->open_table("RandomTest");
+    namespace_ptr = hypertable_client_ptr->open_namespace("/");
+    table_ptr = namespace_ptr->open_table("RandomTest");
 
   }
   catch (Hypertable::Exception &e) {

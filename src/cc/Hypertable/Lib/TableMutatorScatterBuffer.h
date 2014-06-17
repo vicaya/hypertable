@@ -27,6 +27,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 
+#include "AsyncComm/CommAddress.h"
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
@@ -48,13 +49,13 @@ namespace Hypertable {
 
   typedef std::pair<Cell, int> FailedMutation;
   typedef std::vector<FailedMutation> FailedMutations;
-  typedef hash_map<String, uint32_t> RangeServerFlagsMap;
+  typedef CommAddressMap<uint32_t> RangeServerFlagsMap;
 
   class TableMutatorScatterBuffer : public ReferenceCount {
 
   public:
-    TableMutatorScatterBuffer(Comm *, const TableIdentifier *, SchemaPtr &,
-                              RangeLocatorPtr &, uint32_t timeout_ms);
+    TableMutatorScatterBuffer(Comm *, const TableIdentifier *,
+                              SchemaPtr &, RangeLocatorPtr &, uint32_t timeout_ms);
     void set(const Key &, const void *value, uint32_t value_len, Timer &timer);
     void set_delete(const Key &key, Timer &timer);
     void set(SerializedKey key, ByteString value, Timer &timer);
@@ -70,13 +71,15 @@ namespace Hypertable {
       failed_mutations = m_failed_mutations;
     }
     size_t get_failure_count() { return m_failed_mutations.size(); }
-
+    void refresh_schema(const TableIdentifier &table_id, SchemaPtr &schema) {
+      m_schema = schema;
+      m_table_identifier = table_id;
+    }
   private:
 
     friend class TableMutatorDispatchHandler;
 
-    typedef hash_map<String, TableMutatorSendBufferPtr>
-            TableMutatorSendBufferMap;
+    typedef CommAddressMap<TableMutatorSendBufferPtr> TableMutatorSendBufferMap;
 
     Comm                *m_comm;
     SchemaPtr            m_schema;
@@ -93,6 +96,8 @@ namespace Hypertable {
     uint32_t             m_timeout_ms;
     uint32_t             m_server_flush_limit;
     uint32_t             m_last_send_flags;
+    bool                 m_refresh_schema;
+    DynamicBuffer        m_counter_value;
   };
 
   typedef intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;

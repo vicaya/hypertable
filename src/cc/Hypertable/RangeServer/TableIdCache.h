@@ -37,16 +37,16 @@ namespace Hypertable {
 
   public:
     TableIdCache(int max_entries) : m_max_entries(max_entries) { }
-    bool contains(int id);
-    void insert(int id);
+    bool contains(const String &name);
+    void insert(const String &name);
 
   private:
 
     typedef boost::multi_index_container<
-      int,
+      String,
       indexed_by<
         sequenced<>,
-        hashed_unique< identity<int> >
+        hashed_unique< identity<String> >
       >
     > TableIdCacheT;
 

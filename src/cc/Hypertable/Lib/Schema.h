@@ -23,6 +23,7 @@
 #define HYPERTABLE_SCHEMA_H
 
 #include <list>
+#include <vector>
 
 #include <expat.h>
 
@@ -43,8 +44,8 @@ namespace Hypertable {
   class Schema : public ReferenceCount {
   public:
     struct ColumnFamily {
-      ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0),
-                       generation(0), deleted(false) { return; }
+      ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0), generation(0),
+                       deleted(false), renamed(false), new_name(), counter(false) { return; }
       String   name;
       String   ag;
       uint32_t id;
@@ -52,16 +53,21 @@ namespace Hypertable {
       time_t   ttl;
       uint32_t generation;
       bool deleted;
+      bool renamed;
+      String new_name;
+      bool counter;
     };
 
     typedef std::vector<ColumnFamily *> ColumnFamilies;
 
     struct AccessGroup {
-      AccessGroup() : name(), in_memory(false), blocksize(0),
+      AccessGroup() : name(), in_memory(false), counter(false), replication(-1), blocksize(0),
           bloom_filter(), columns() { }
 
       String   name;
       bool     in_memory;
+      bool     counter;
+      int16_t  replication;
       uint32_t blocksize;
       String compressor;
       String bloom_filter;
@@ -70,11 +76,11 @@ namespace Hypertable {
 
     typedef std::vector<AccessGroup *> AccessGroups;
 
-    Schema(bool read_ids=false);
+    Schema();
     Schema(const Schema &src_schema);
     ~Schema();
 
-    static Schema *new_instance(const char *buf, int len, bool read_ids=false);
+    static Schema *new_instance(const String &buf, int len);
 
     static void parse_compressor(const String &spec, PropertiesPtr &);
     void validate_compressor(const String &spec);
@@ -92,6 +98,7 @@ namespace Hypertable {
     void set_column_family_parameter(const char *param, const char *value);
 
     void assign_ids();
+    bool need_id_assignment() { return m_need_id_assignment; }
 
     void render(String &output, bool with_ids=false);
 
@@ -120,7 +127,7 @@ namespace Hypertable {
     get_access_groups() { return m_access_groups; }
 
     AccessGroup *
-    get_access_group(String name) { return m_access_group_map[name]; }
+    get_access_group(const String &name) { return m_access_group_map[name]; }
     ColumnFamilies &
     get_column_families() { return m_column_families; }
 
@@ -152,9 +159,17 @@ namespace Hypertable {
 
     bool add_column_family(ColumnFamily *cf);
     bool drop_column_family(const String& name);
+    bool rename_column_family(const String& old_name, const String& new_name);
+
+    bool column_is_counter(uint8_t family) {
+      return !m_counter_flags.empty() && (m_counter_flags[family] == 1);
+    }
 
     void set_compressor(const String &compressor) { m_compressor = compressor; }
     const String &get_compressor() { return m_compressor; }
+
+    void set_group_commit_interval(uint32_t interval) { m_group_commit_interval=interval; }
+    uint32_t get_group_commit_interval() { return m_group_commit_interval; }
 
     typedef hash_map<String, ColumnFamily *> ColumnFamilyMap;
     typedef hash_map<String, AccessGroup *> AccessGroupMap;
@@ -174,10 +189,12 @@ namespace Hypertable {
     AccessGroups   m_access_groups;
     AccessGroup   *m_open_access_group;
     ColumnFamily  *m_open_column_family;
-    bool           m_read_ids;
+    bool           m_need_id_assignment;
     bool           m_output_ids;
     size_t         m_max_column_family_id;
     String         m_compressor;
+    std::vector<int>  m_counter_flags;
+    uint32_t       m_group_commit_interval;
 
     static void
     start_element_handler(void *userdata, const XML_Char *name,

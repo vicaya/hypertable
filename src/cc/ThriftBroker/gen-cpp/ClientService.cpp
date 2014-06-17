@@ -7,36 +7,202 @@
 
 namespace Hypertable { namespace ThriftGen {
 
-uint32_t ClientService_create_table_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_create_namespace_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->name);
-          this->__isset.name = true;
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_create_namespace_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_create_namespace_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_create_namespace_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_create_namespace_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_create_namespace_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_create_namespace_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_create_namespace_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_create_namespace_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_create_table_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->schema);
           this->__isset.schema = true;
         } else {
@@ -55,13 +221,16 @@ uint32_t ClientService_create_table_args::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_create_table_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_create_table_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_create_table_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("schema", apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("schema", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString(this->schema);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -69,13 +238,16 @@ uint32_t ClientService_create_table_args::write(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_create_table_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_create_table_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_create_table_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("schema", apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("schema", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString((*(this->schema)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -83,28 +255,28 @@ uint32_t ClientService_create_table_pargs::write(apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_create_table_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_create_table_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -123,14 +295,14 @@ uint32_t ClientService_create_table_result::read(apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_create_table_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_create_table_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_create_table_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -139,28 +311,28 @@ uint32_t ClientService_create_table_result::write(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_create_table_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_create_table_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -179,44 +351,1416 @@ uint32_t ClientService_create_table_presult::read(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_namespace_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->name);
-          this->__isset.name = true;
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_namespace_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_open_namespace_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_namespace_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_open_namespace_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_namespace_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_namespace_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_open_namespace_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_I64, 0);
+    xfer += oprot->writeI64(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_namespace_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_namespace_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_namespace_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_close_namespace_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_namespace_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_close_namespace_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_namespace_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_namespace_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_close_namespace_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_namespace_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_future_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->queue_size);
+          this->__isset.queue_size = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_future_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_open_future_args");
+  xfer += oprot->writeFieldBegin("queue_size", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32(this->queue_size);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_future_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_open_future_pargs");
+  xfer += oprot->writeFieldBegin("queue_size", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32((*(this->queue_size)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_future_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_future_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_open_future_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_I64, 0);
+    xfer += oprot->writeI64(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_future_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_cancel_future_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ff);
+          this->__isset.ff = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_cancel_future_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_cancel_future_args");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ff);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_cancel_future_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_cancel_future_pargs");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_cancel_future_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_cancel_future_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_cancel_future_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_cancel_future_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ff);
+          this->__isset.ff = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_future_result_args");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ff);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_future_result_pargs");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->success.read(iprot);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_get_future_result_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRUCT, 0);
+    xfer += this->success.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += (*(this->success)).read(iprot);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_as_arrays_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ff);
+          this->__isset.ff = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_as_arrays_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_future_result_as_arrays_args");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ff);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_as_arrays_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_future_result_as_arrays_pargs");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_as_arrays_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->success.read(iprot);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_as_arrays_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_get_future_result_as_arrays_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRUCT, 0);
+    xfer += this->success.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_as_arrays_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += (*(this->success)).read(iprot);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_serialized_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ff);
+          this->__isset.ff = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_serialized_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_future_result_serialized_args");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ff);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_serialized_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_future_result_serialized_pargs");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_serialized_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->success.read(iprot);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_serialized_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_get_future_result_serialized_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRUCT, 0);
+    xfer += this->success.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_future_result_serialized_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += (*(this->success)).read(iprot);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_future_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ff);
+          this->__isset.ff = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_future_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_close_future_args");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ff);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_future_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_close_future_pargs");
+  xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_future_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_future_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_close_future_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_future_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_scanner_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->scan_spec.read(iprot);
           this->__isset.scan_spec = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
-      case 3:
-        if (ftype == apache::thrift::protocol::T_BOOL) {
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->retry_table_not_found);
           this->__isset.retry_table_not_found = true;
         } else {
@@ -235,16 +1779,19 @@ uint32_t ClientService_open_scanner_args::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_open_scanner_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_open_scanner_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
   xfer += this->scan_spec.write(oprot);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("retry_table_not_found", apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeFieldBegin("retry_table_not_found", ::apache::thrift::protocol::T_BOOL, 4);
   xfer += oprot->writeBool(this->retry_table_not_found);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -252,16 +1799,19 @@ uint32_t ClientService_open_scanner_args::write(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_open_scanner_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_open_scanner_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
   xfer += (*(this->scan_spec)).write(oprot);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("retry_table_not_found", apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeFieldBegin("retry_table_not_found", ::apache::thrift::protocol::T_BOOL, 4);
   xfer += oprot->writeBool((*(this->retry_table_not_found)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -269,28 +1819,28 @@ uint32_t ClientService_open_scanner_pargs::write(apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_scanner_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->success);
           this->__isset.success = true;
         } else {
@@ -298,7 +1848,7 @@ uint32_t ClientService_open_scanner_result::read(apache::thrift::protocol::TProt
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -317,18 +1867,18 @@ uint32_t ClientService_open_scanner_result::read(apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_open_scanner_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_open_scanner_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_I64, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_I64, 0);
     xfer += oprot->writeI64(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -337,28 +1887,28 @@ uint32_t ClientService_open_scanner_result::write(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_scanner_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64((*(this->success)));
           this->__isset.success = true;
         } else {
@@ -366,7 +1916,7 @@ uint32_t ClientService_open_scanner_presult::read(apache::thrift::protocol::TPro
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -385,28 +1935,262 @@ uint32_t ClientService_open_scanner_presult::read(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_scanner_async_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->future);
+          this->__isset.future = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->scan_spec.read(iprot);
+          this->__isset.scan_spec = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 5:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->retry_table_not_found);
+          this->__isset.retry_table_not_found = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_scanner_async_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_open_scanner_async_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("future", ::apache::thrift::protocol::T_I64, 3);
+  xfer += oprot->writeI64(this->future);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 4);
+  xfer += this->scan_spec.write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("retry_table_not_found", ::apache::thrift::protocol::T_BOOL, 5);
+  xfer += oprot->writeBool(this->retry_table_not_found);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_scanner_async_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_open_scanner_async_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("future", ::apache::thrift::protocol::T_I64, 3);
+  xfer += oprot->writeI64((*(this->future)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 4);
+  xfer += (*(this->scan_spec)).write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("retry_table_not_found", ::apache::thrift::protocol::T_BOOL, 5);
+  xfer += oprot->writeBool((*(this->retry_table_not_found)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_scanner_async_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_scanner_async_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_open_scanner_async_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_I64, 0);
+    xfer += oprot->writeI64(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_scanner_async_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_scanner_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->scanner);
           this->__isset.scanner = true;
         } else {
@@ -425,10 +2209,10 @@ uint32_t ClientService_close_scanner_args::read(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_scanner_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_close_scanner_args");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->scanner);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -436,10 +2220,10 @@ uint32_t ClientService_close_scanner_args::write(apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_scanner_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_close_scanner_pargs");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->scanner)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -447,28 +2231,28 @@ uint32_t ClientService_close_scanner_pargs::write(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_scanner_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -487,14 +2271,14 @@ uint32_t ClientService_close_scanner_result::read(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_scanner_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_close_scanner_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -503,28 +2287,28 @@ uint32_t ClientService_close_scanner_result::write(apache::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_scanner_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -543,28 +2327,28 @@ uint32_t ClientService_close_scanner_presult::read(apache::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_next_cells_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_scanner_async_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->scanner);
           this->__isset.scanner = true;
         } else {
@@ -583,10 +2367,10 @@ uint32_t ClientService_next_cells_args::read(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_next_cells_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_scanner_async_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_next_cells_args");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeStructBegin("ClientService_close_scanner_async_args");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->scanner);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -594,10 +2378,10 @@ uint32_t ClientService_next_cells_args::write(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_next_cells_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_scanner_async_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_next_cells_pargs");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeStructBegin("ClientService_close_scanner_async_pargs");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->scanner)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -605,48 +2389,28 @@ uint32_t ClientService_next_cells_pargs::write(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_next_cells_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_scanner_async_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
-      case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
-          {
-            this->success.clear();
-            uint32_t _size18;
-            apache::thrift::protocol::TType _etype21;
-            iprot->readListBegin(_etype21, _size18);
-            this->success.resize(_size18);
-            uint32_t _i22;
-            for (_i22 = 0; _i22 < _size18; ++_i22)
-            {
-              xfer += this->success[_i22].read(iprot);
-            }
-            iprot->readListEnd();
-          }
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -665,26 +2429,204 @@ uint32_t ClientService_next_cells_result::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_next_cells_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_scanner_async_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_close_scanner_async_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_scanner_async_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_next_cells_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->scanner);
+          this->__isset.scanner = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_next_cells_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_next_cells_args");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->scanner);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_next_cells_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_next_cells_pargs");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->scanner)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_next_cells_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->success.clear();
+            uint32_t _size59;
+            ::apache::thrift::protocol::TType _etype62;
+            iprot->readListBegin(_etype62, _size59);
+            this->success.resize(_size59);
+            uint32_t _i63;
+            for (_i63 = 0; _i63 < _size59; ++_i63)
+            {
+              xfer += this->success[_i63].read(iprot);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_next_cells_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_next_cells_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->success.size());
-      std::vector<Cell> ::const_iterator _iter23;
-      for (_iter23 = this->success.begin(); _iter23 != this->success.end(); ++_iter23)
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, this->success.size());
+      std::vector<Cell> ::const_iterator _iter64;
+      for (_iter64 = this->success.begin(); _iter64 != this->success.end(); ++_iter64)
       {
-        xfer += (*_iter23).write(oprot);
+        xfer += (*_iter64).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -693,38 +2635,38 @@ uint32_t ClientService_next_cells_result::write(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_next_cells_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_cells_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size24;
-            apache::thrift::protocol::TType _etype27;
-            iprot->readListBegin(_etype27, _size24);
-            (*(this->success)).resize(_size24);
-            uint32_t _i28;
-            for (_i28 = 0; _i28 < _size24; ++_i28)
+            uint32_t _size65;
+            ::apache::thrift::protocol::TType _etype68;
+            iprot->readListBegin(_etype68, _size65);
+            (*(this->success)).resize(_size65);
+            uint32_t _i69;
+            for (_i69 = 0; _i69 < _size65; ++_i69)
             {
-              xfer += (*(this->success))[_i28].read(iprot);
+              xfer += (*(this->success))[_i69].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -734,7 +2676,7 @@ uint32_t ClientService_next_cells_presult::read(apache::thrift::protocol::TProto
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -753,28 +2695,28 @@ uint32_t ClientService_next_cells_presult::read(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_next_cells_as_arrays_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_cells_as_arrays_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->scanner);
           this->__isset.scanner = true;
         } else {
@@ -793,10 +2735,10 @@ uint32_t ClientService_next_cells_as_arrays_args::read(apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_next_cells_as_arrays_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_cells_as_arrays_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_next_cells_as_arrays_args");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->scanner);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -804,10 +2746,10 @@ uint32_t ClientService_next_cells_as_arrays_args::write(apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_next_cells_as_arrays_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_cells_as_arrays_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_next_cells_as_arrays_pargs");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->scanner)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -815,47 +2757,47 @@ uint32_t ClientService_next_cells_as_arrays_pargs::write(apache::thrift::protoco
   return xfer;
 }
 
-uint32_t ClientService_next_cells_as_arrays_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_cells_as_arrays_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size29;
-            apache::thrift::protocol::TType _etype32;
-            iprot->readListBegin(_etype32, _size29);
-            this->success.resize(_size29);
-            uint32_t _i33;
-            for (_i33 = 0; _i33 < _size29; ++_i33)
+            uint32_t _size70;
+            ::apache::thrift::protocol::TType _etype73;
+            iprot->readListBegin(_etype73, _size70);
+            this->success.resize(_size70);
+            uint32_t _i74;
+            for (_i74 = 0; _i74 < _size70; ++_i74)
             {
               {
-                this->success[_i33].clear();
-                uint32_t _size34;
-                apache::thrift::protocol::TType _etype37;
-                iprot->readListBegin(_etype37, _size34);
-                this->success[_i33].resize(_size34);
-                uint32_t _i38;
-                for (_i38 = 0; _i38 < _size34; ++_i38)
+                this->success[_i74].clear();
+                uint32_t _size75;
+                ::apache::thrift::protocol::TType _etype78;
+                iprot->readListBegin(_etype78, _size75);
+                this->success[_i74].resize(_size75);
+                uint32_t _i79;
+                for (_i79 = 0; _i79 < _size75; ++_i79)
                 {
-                  xfer += iprot->readString(this->success[_i33][_i38]);
+                  xfer += iprot->readString(this->success[_i74][_i79]);
                 }
                 iprot->readListEnd();
               }
@@ -868,7 +2810,7 @@ uint32_t ClientService_next_cells_as_arrays_result::read(apache::thrift::protoco
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -887,25 +2829,25 @@ uint32_t ClientService_next_cells_as_arrays_result::read(apache::thrift::protoco
   return xfer;
 }
 
-uint32_t ClientService_next_cells_as_arrays_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_cells_as_arrays_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_next_cells_as_arrays_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(apache::thrift::protocol::T_LIST, this->success.size());
-      std::vector<CellAsArray> ::const_iterator _iter39;
-      for (_iter39 = this->success.begin(); _iter39 != this->success.end(); ++_iter39)
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_LIST, this->success.size());
+      std::vector<CellAsArray> ::const_iterator _iter80;
+      for (_iter80 = this->success.begin(); _iter80 != this->success.end(); ++_iter80)
       {
         {
-          xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, (*_iter39).size());
-          std::vector<std::string> ::const_iterator _iter40;
-          for (_iter40 = (*_iter39).begin(); _iter40 != (*_iter39).end(); ++_iter40)
+          xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*_iter80).size());
+          std::vector<std::string> ::const_iterator _iter81;
+          for (_iter81 = (*_iter80).begin(); _iter81 != (*_iter80).end(); ++_iter81)
           {
-            xfer += oprot->writeString((*_iter40));
+            xfer += oprot->writeString((*_iter81));
           }
           xfer += oprot->writeListEnd();
         }
@@ -914,7 +2856,7 @@ uint32_t ClientService_next_cells_as_arrays_result::write(apache::thrift::protoc
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -923,47 +2865,47 @@ uint32_t ClientService_next_cells_as_arrays_result::write(apache::thrift::protoc
   return xfer;
 }
 
-uint32_t ClientService_next_cells_as_arrays_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_cells_as_arrays_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size41;
-            apache::thrift::protocol::TType _etype44;
-            iprot->readListBegin(_etype44, _size41);
-            (*(this->success)).resize(_size41);
-            uint32_t _i45;
-            for (_i45 = 0; _i45 < _size41; ++_i45)
+            uint32_t _size82;
+            ::apache::thrift::protocol::TType _etype85;
+            iprot->readListBegin(_etype85, _size82);
+            (*(this->success)).resize(_size82);
+            uint32_t _i86;
+            for (_i86 = 0; _i86 < _size82; ++_i86)
             {
               {
-                (*(this->success))[_i45].clear();
-                uint32_t _size46;
-                apache::thrift::protocol::TType _etype49;
-                iprot->readListBegin(_etype49, _size46);
-                (*(this->success))[_i45].resize(_size46);
-                uint32_t _i50;
-                for (_i50 = 0; _i50 < _size46; ++_i50)
+                (*(this->success))[_i86].clear();
+                uint32_t _size87;
+                ::apache::thrift::protocol::TType _etype90;
+                iprot->readListBegin(_etype90, _size87);
+                (*(this->success))[_i86].resize(_size87);
+                uint32_t _i91;
+                for (_i91 = 0; _i91 < _size87; ++_i91)
                 {
-                  xfer += iprot->readString((*(this->success))[_i45][_i50]);
+                  xfer += iprot->readString((*(this->success))[_i86][_i91]);
                 }
                 iprot->readListEnd();
               }
@@ -976,7 +2918,7 @@ uint32_t ClientService_next_cells_as_arrays_presult::read(apache::thrift::protoc
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -995,28 +2937,28 @@ uint32_t ClientService_next_cells_as_arrays_presult::read(apache::thrift::protoc
   return xfer;
 }
 
-uint32_t ClientService_next_row_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_cells_serialized_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->scanner);
           this->__isset.scanner = true;
         } else {
@@ -1035,10 +2977,10 @@ uint32_t ClientService_next_row_args::read(apache::thrift::protocol::TProtocol* 
   return xfer;
 }
 
-uint32_t ClientService_next_row_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_cells_serialized_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_next_row_args");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeStructBegin("ClientService_next_cells_serialized_args");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->scanner);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1046,10 +2988,10 @@ uint32_t ClientService_next_row_args::write(apache::thrift::protocol::TProtocol*
   return xfer;
 }
 
-uint32_t ClientService_next_row_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_cells_serialized_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_next_row_pargs");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeStructBegin("ClientService_next_cells_serialized_pargs");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->scanner)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1057,38 +2999,196 @@ uint32_t ClientService_next_row_pargs::write(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_next_row_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_cells_serialized_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_next_cells_serialized_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_next_cells_serialized_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeBinary(this->success);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_next_cells_serialized_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_next_row_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->scanner);
+          this->__isset.scanner = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_next_row_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_next_row_args");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->scanner);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_next_row_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_next_row_pargs");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->scanner)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_next_row_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size51;
-            apache::thrift::protocol::TType _etype54;
-            iprot->readListBegin(_etype54, _size51);
-            this->success.resize(_size51);
-            uint32_t _i55;
-            for (_i55 = 0; _i55 < _size51; ++_i55)
+            uint32_t _size92;
+            ::apache::thrift::protocol::TType _etype95;
+            iprot->readListBegin(_etype95, _size92);
+            this->success.resize(_size92);
+            uint32_t _i96;
+            for (_i96 = 0; _i96 < _size92; ++_i96)
             {
-              xfer += this->success[_i55].read(iprot);
+              xfer += this->success[_i96].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -1098,7 +3198,7 @@ uint32_t ClientService_next_row_result::read(apache::thrift::protocol::TProtocol
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1117,26 +3217,26 @@ uint32_t ClientService_next_row_result::read(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_next_row_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_row_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_next_row_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->success.size());
-      std::vector<Cell> ::const_iterator _iter56;
-      for (_iter56 = this->success.begin(); _iter56 != this->success.end(); ++_iter56)
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, this->success.size());
+      std::vector<Cell> ::const_iterator _iter97;
+      for (_iter97 = this->success.begin(); _iter97 != this->success.end(); ++_iter97)
       {
-        xfer += (*_iter56).write(oprot);
+        xfer += (*_iter97).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -1145,38 +3245,38 @@ uint32_t ClientService_next_row_result::write(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_next_row_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_row_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size57;
-            apache::thrift::protocol::TType _etype60;
-            iprot->readListBegin(_etype60, _size57);
-            (*(this->success)).resize(_size57);
-            uint32_t _i61;
-            for (_i61 = 0; _i61 < _size57; ++_i61)
+            uint32_t _size98;
+            ::apache::thrift::protocol::TType _etype101;
+            iprot->readListBegin(_etype101, _size98);
+            (*(this->success)).resize(_size98);
+            uint32_t _i102;
+            for (_i102 = 0; _i102 < _size98; ++_i102)
             {
-              xfer += (*(this->success))[_i61].read(iprot);
+              xfer += (*(this->success))[_i102].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -1186,7 +3286,7 @@ uint32_t ClientService_next_row_presult::read(apache::thrift::protocol::TProtoco
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1205,28 +3305,28 @@ uint32_t ClientService_next_row_presult::read(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_next_row_as_arrays_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_row_as_arrays_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->scanner);
           this->__isset.scanner = true;
         } else {
@@ -1245,10 +3345,10 @@ uint32_t ClientService_next_row_as_arrays_args::read(apache::thrift::protocol::T
   return xfer;
 }
 
-uint32_t ClientService_next_row_as_arrays_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_row_as_arrays_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_next_row_as_arrays_args");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->scanner);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1256,10 +3356,10 @@ uint32_t ClientService_next_row_as_arrays_args::write(apache::thrift::protocol::
   return xfer;
 }
 
-uint32_t ClientService_next_row_as_arrays_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_row_as_arrays_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_next_row_as_arrays_pargs");
-  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->scanner)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1267,47 +3367,47 @@ uint32_t ClientService_next_row_as_arrays_pargs::write(apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_next_row_as_arrays_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_row_as_arrays_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size62;
-            apache::thrift::protocol::TType _etype65;
-            iprot->readListBegin(_etype65, _size62);
-            this->success.resize(_size62);
-            uint32_t _i66;
-            for (_i66 = 0; _i66 < _size62; ++_i66)
+            uint32_t _size103;
+            ::apache::thrift::protocol::TType _etype106;
+            iprot->readListBegin(_etype106, _size103);
+            this->success.resize(_size103);
+            uint32_t _i107;
+            for (_i107 = 0; _i107 < _size103; ++_i107)
             {
               {
-                this->success[_i66].clear();
-                uint32_t _size67;
-                apache::thrift::protocol::TType _etype70;
-                iprot->readListBegin(_etype70, _size67);
-                this->success[_i66].resize(_size67);
-                uint32_t _i71;
-                for (_i71 = 0; _i71 < _size67; ++_i71)
+                this->success[_i107].clear();
+                uint32_t _size108;
+                ::apache::thrift::protocol::TType _etype111;
+                iprot->readListBegin(_etype111, _size108);
+                this->success[_i107].resize(_size108);
+                uint32_t _i112;
+                for (_i112 = 0; _i112 < _size108; ++_i112)
                 {
-                  xfer += iprot->readString(this->success[_i66][_i71]);
+                  xfer += iprot->readString(this->success[_i107][_i112]);
                 }
                 iprot->readListEnd();
               }
@@ -1320,7 +3420,7 @@ uint32_t ClientService_next_row_as_arrays_result::read(apache::thrift::protocol:
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1339,25 +3439,25 @@ uint32_t ClientService_next_row_as_arrays_result::read(apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_next_row_as_arrays_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_row_as_arrays_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_next_row_as_arrays_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(apache::thrift::protocol::T_LIST, this->success.size());
-      std::vector<CellAsArray> ::const_iterator _iter72;
-      for (_iter72 = this->success.begin(); _iter72 != this->success.end(); ++_iter72)
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_LIST, this->success.size());
+      std::vector<CellAsArray> ::const_iterator _iter113;
+      for (_iter113 = this->success.begin(); _iter113 != this->success.end(); ++_iter113)
       {
         {
-          xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, (*_iter72).size());
-          std::vector<std::string> ::const_iterator _iter73;
-          for (_iter73 = (*_iter72).begin(); _iter73 != (*_iter72).end(); ++_iter73)
+          xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*_iter113).size());
+          std::vector<std::string> ::const_iterator _iter114;
+          for (_iter114 = (*_iter113).begin(); _iter114 != (*_iter113).end(); ++_iter114)
           {
-            xfer += oprot->writeString((*_iter73));
+            xfer += oprot->writeString((*_iter114));
           }
           xfer += oprot->writeListEnd();
         }
@@ -1366,7 +3466,7 @@ uint32_t ClientService_next_row_as_arrays_result::write(apache::thrift::protocol
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -1375,47 +3475,47 @@ uint32_t ClientService_next_row_as_arrays_result::write(apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_next_row_as_arrays_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_row_as_arrays_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size74;
-            apache::thrift::protocol::TType _etype77;
-            iprot->readListBegin(_etype77, _size74);
-            (*(this->success)).resize(_size74);
-            uint32_t _i78;
-            for (_i78 = 0; _i78 < _size74; ++_i78)
+            uint32_t _size115;
+            ::apache::thrift::protocol::TType _etype118;
+            iprot->readListBegin(_etype118, _size115);
+            (*(this->success)).resize(_size115);
+            uint32_t _i119;
+            for (_i119 = 0; _i119 < _size115; ++_i119)
             {
               {
-                (*(this->success))[_i78].clear();
-                uint32_t _size79;
-                apache::thrift::protocol::TType _etype82;
-                iprot->readListBegin(_etype82, _size79);
-                (*(this->success))[_i78].resize(_size79);
-                uint32_t _i83;
-                for (_i83 = 0; _i83 < _size79; ++_i83)
+                (*(this->success))[_i119].clear();
+                uint32_t _size120;
+                ::apache::thrift::protocol::TType _etype123;
+                iprot->readListBegin(_etype123, _size120);
+                (*(this->success))[_i119].resize(_size120);
+                uint32_t _i124;
+                for (_i124 = 0; _i124 < _size120; ++_i124)
                 {
-                  xfer += iprot->readString((*(this->success))[_i78][_i83]);
+                  xfer += iprot->readString((*(this->success))[_i119][_i124]);
                 }
                 iprot->readListEnd();
               }
@@ -1428,7 +3528,7 @@ uint32_t ClientService_next_row_as_arrays_presult::read(apache::thrift::protocol
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1447,36 +3547,222 @@ uint32_t ClientService_next_row_as_arrays_presult::read(apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_get_row_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_row_serialized_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->name);
-          this->__isset.name = true;
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->scanner);
+          this->__isset.scanner = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_next_row_serialized_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_next_row_serialized_args");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->scanner);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_next_row_serialized_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_next_row_serialized_pargs");
+  xfer += oprot->writeFieldBegin("scanner", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->scanner)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_next_row_serialized_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_next_row_serialized_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_next_row_serialized_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeBinary(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_next_row_serialized_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_row_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->row);
           this->__isset.row = true;
         } else {
@@ -1495,13 +3781,16 @@ uint32_t ClientService_get_row_args::read(apache::thrift::protocol::TProtocol* i
   return xfer;
 }
 
-uint32_t ClientService_get_row_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_row_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_row_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString(this->row);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1509,13 +3798,16 @@ uint32_t ClientService_get_row_args::write(apache::thrift::protocol::TProtocol* 
   return xfer;
 }
 
-uint32_t ClientService_get_row_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_row_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_row_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString((*(this->row)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1523,38 +3815,38 @@ uint32_t ClientService_get_row_pargs::write(apache::thrift::protocol::TProtocol*
   return xfer;
 }
 
-uint32_t ClientService_get_row_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_row_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size84;
-            apache::thrift::protocol::TType _etype87;
-            iprot->readListBegin(_etype87, _size84);
-            this->success.resize(_size84);
-            uint32_t _i88;
-            for (_i88 = 0; _i88 < _size84; ++_i88)
+            uint32_t _size125;
+            ::apache::thrift::protocol::TType _etype128;
+            iprot->readListBegin(_etype128, _size125);
+            this->success.resize(_size125);
+            uint32_t _i129;
+            for (_i129 = 0; _i129 < _size125; ++_i129)
             {
-              xfer += this->success[_i88].read(iprot);
+              xfer += this->success[_i129].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -1564,7 +3856,7 @@ uint32_t ClientService_get_row_result::read(apache::thrift::protocol::TProtocol*
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1583,26 +3875,26 @@ uint32_t ClientService_get_row_result::read(apache::thrift::protocol::TProtocol*
   return xfer;
 }
 
-uint32_t ClientService_get_row_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_row_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_row_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->success.size());
-      std::vector<Cell> ::const_iterator _iter89;
-      for (_iter89 = this->success.begin(); _iter89 != this->success.end(); ++_iter89)
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, this->success.size());
+      std::vector<Cell> ::const_iterator _iter130;
+      for (_iter130 = this->success.begin(); _iter130 != this->success.end(); ++_iter130)
       {
-        xfer += (*_iter89).write(oprot);
+        xfer += (*_iter130).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -1611,38 +3903,38 @@ uint32_t ClientService_get_row_result::write(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_get_row_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_row_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size90;
-            apache::thrift::protocol::TType _etype93;
-            iprot->readListBegin(_etype93, _size90);
-            (*(this->success)).resize(_size90);
-            uint32_t _i94;
-            for (_i94 = 0; _i94 < _size90; ++_i94)
+            uint32_t _size131;
+            ::apache::thrift::protocol::TType _etype134;
+            iprot->readListBegin(_etype134, _size131);
+            (*(this->success)).resize(_size131);
+            uint32_t _i135;
+            for (_i135 = 0; _i135 < _size131; ++_i135)
             {
-              xfer += (*(this->success))[_i94].read(iprot);
+              xfer += (*(this->success))[_i135].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -1652,7 +3944,7 @@ uint32_t ClientService_get_row_presult::read(apache::thrift::protocol::TProtocol
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1671,36 +3963,44 @@ uint32_t ClientService_get_row_presult::read(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_get_row_as_arrays_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_row_as_arrays_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
-      case 2:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->row);
           this->__isset.row = true;
         } else {
@@ -1719,13 +4019,16 @@ uint32_t ClientService_get_row_as_arrays_args::read(apache::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_get_row_as_arrays_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_row_as_arrays_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_row_as_arrays_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString(this->row);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1733,13 +4036,16 @@ uint32_t ClientService_get_row_as_arrays_args::write(apache::thrift::protocol::T
   return xfer;
 }
 
-uint32_t ClientService_get_row_as_arrays_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_row_as_arrays_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_row_as_arrays_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString((*(this->row)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1747,47 +4053,47 @@ uint32_t ClientService_get_row_as_arrays_pargs::write(apache::thrift::protocol::
   return xfer;
 }
 
-uint32_t ClientService_get_row_as_arrays_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_row_as_arrays_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size95;
-            apache::thrift::protocol::TType _etype98;
-            iprot->readListBegin(_etype98, _size95);
-            this->success.resize(_size95);
-            uint32_t _i99;
-            for (_i99 = 0; _i99 < _size95; ++_i99)
+            uint32_t _size136;
+            ::apache::thrift::protocol::TType _etype139;
+            iprot->readListBegin(_etype139, _size136);
+            this->success.resize(_size136);
+            uint32_t _i140;
+            for (_i140 = 0; _i140 < _size136; ++_i140)
             {
               {
-                this->success[_i99].clear();
-                uint32_t _size100;
-                apache::thrift::protocol::TType _etype103;
-                iprot->readListBegin(_etype103, _size100);
-                this->success[_i99].resize(_size100);
-                uint32_t _i104;
-                for (_i104 = 0; _i104 < _size100; ++_i104)
+                this->success[_i140].clear();
+                uint32_t _size141;
+                ::apache::thrift::protocol::TType _etype144;
+                iprot->readListBegin(_etype144, _size141);
+                this->success[_i140].resize(_size141);
+                uint32_t _i145;
+                for (_i145 = 0; _i145 < _size141; ++_i145)
                 {
-                  xfer += iprot->readString(this->success[_i99][_i104]);
+                  xfer += iprot->readString(this->success[_i140][_i145]);
                 }
                 iprot->readListEnd();
               }
@@ -1800,7 +4106,7 @@ uint32_t ClientService_get_row_as_arrays_result::read(apache::thrift::protocol::
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1819,25 +4125,25 @@ uint32_t ClientService_get_row_as_arrays_result::read(apache::thrift::protocol::
   return xfer;
 }
 
-uint32_t ClientService_get_row_as_arrays_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_row_as_arrays_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_row_as_arrays_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(apache::thrift::protocol::T_LIST, this->success.size());
-      std::vector<CellAsArray> ::const_iterator _iter105;
-      for (_iter105 = this->success.begin(); _iter105 != this->success.end(); ++_iter105)
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_LIST, this->success.size());
+      std::vector<CellAsArray> ::const_iterator _iter146;
+      for (_iter146 = this->success.begin(); _iter146 != this->success.end(); ++_iter146)
       {
         {
-          xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, (*_iter105).size());
-          std::vector<std::string> ::const_iterator _iter106;
-          for (_iter106 = (*_iter105).begin(); _iter106 != (*_iter105).end(); ++_iter106)
+          xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*_iter146).size());
+          std::vector<std::string> ::const_iterator _iter147;
+          for (_iter147 = (*_iter146).begin(); _iter147 != (*_iter146).end(); ++_iter147)
           {
-            xfer += oprot->writeString((*_iter106));
+            xfer += oprot->writeString((*_iter147));
           }
           xfer += oprot->writeListEnd();
         }
@@ -1846,7 +4152,7 @@ uint32_t ClientService_get_row_as_arrays_result::write(apache::thrift::protocol:
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -1855,47 +4161,47 @@ uint32_t ClientService_get_row_as_arrays_result::write(apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_get_row_as_arrays_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_row_as_arrays_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size107;
-            apache::thrift::protocol::TType _etype110;
-            iprot->readListBegin(_etype110, _size107);
-            (*(this->success)).resize(_size107);
-            uint32_t _i111;
-            for (_i111 = 0; _i111 < _size107; ++_i111)
+            uint32_t _size148;
+            ::apache::thrift::protocol::TType _etype151;
+            iprot->readListBegin(_etype151, _size148);
+            (*(this->success)).resize(_size148);
+            uint32_t _i152;
+            for (_i152 = 0; _i152 < _size148; ++_i152)
             {
               {
-                (*(this->success))[_i111].clear();
-                uint32_t _size112;
-                apache::thrift::protocol::TType _etype115;
-                iprot->readListBegin(_etype115, _size112);
-                (*(this->success))[_i111].resize(_size112);
-                uint32_t _i116;
-                for (_i116 = 0; _i116 < _size112; ++_i116)
+                (*(this->success))[_i152].clear();
+                uint32_t _size153;
+                ::apache::thrift::protocol::TType _etype156;
+                iprot->readListBegin(_etype156, _size153);
+                (*(this->success))[_i152].resize(_size153);
+                uint32_t _i157;
+                for (_i157 = 0; _i157 < _size153; ++_i157)
                 {
-                  xfer += iprot->readString((*(this->success))[_i111][_i116]);
+                  xfer += iprot->readString((*(this->success))[_i152][_i157]);
                 }
                 iprot->readListEnd();
               }
@@ -1908,7 +4214,7 @@ uint32_t ClientService_get_row_as_arrays_presult::read(apache::thrift::protocol:
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1927,44 +4233,258 @@ uint32_t ClientService_get_row_as_arrays_presult::read(apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_get_cell_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_row_serialized_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->name);
-          this->__isset.name = true;
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->row);
           this->__isset.row = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_row_serialized_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_row_serialized_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeString(this->row);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_row_serialized_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_row_serialized_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeString((*(this->row)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_row_serialized_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_row_serialized_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_get_row_serialized_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeBinary(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_row_serialized_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_cell_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       case 3:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->row);
+          this->__isset.row = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->column);
           this->__isset.column = true;
         } else {
@@ -1983,16 +4503,19 @@ uint32_t ClientService_get_cell_args::read(apache::thrift::protocol::TProtocol* 
   return xfer;
 }
 
-uint32_t ClientService_get_cell_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cell_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cell_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString(this->row);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("column", apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeFieldBegin("column", ::apache::thrift::protocol::T_STRING, 4);
   xfer += oprot->writeString(this->column);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2000,16 +4523,19 @@ uint32_t ClientService_get_cell_args::write(apache::thrift::protocol::TProtocol*
   return xfer;
 }
 
-uint32_t ClientService_get_cell_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cell_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cell_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString((*(this->row)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("column", apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeFieldBegin("column", ::apache::thrift::protocol::T_STRING, 4);
   xfer += oprot->writeString((*(this->column)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2017,28 +4543,28 @@ uint32_t ClientService_get_cell_pargs::write(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_get_cell_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cell_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readBinary(this->success);
           this->__isset.success = true;
         } else {
@@ -2046,7 +4572,7 @@ uint32_t ClientService_get_cell_result::read(apache::thrift::protocol::TProtocol
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2065,18 +4591,18 @@ uint32_t ClientService_get_cell_result::read(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_get_cell_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cell_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_cell_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
     xfer += oprot->writeBinary(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2085,28 +4611,28 @@ uint32_t ClientService_get_cell_result::write(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_get_cell_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cell_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readBinary((*(this->success)));
           this->__isset.success = true;
         } else {
@@ -2114,7 +4640,7 @@ uint32_t ClientService_get_cell_presult::read(apache::thrift::protocol::TProtoco
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2133,36 +4659,44 @@ uint32_t ClientService_get_cell_presult::read(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_get_cells_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->name);
-          this->__isset.name = true;
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->scan_spec.read(iprot);
           this->__isset.scan_spec = true;
         } else {
@@ -2181,13 +4715,16 @@ uint32_t ClientService_get_cells_args::read(apache::thrift::protocol::TProtocol*
   return xfer;
 }
 
-uint32_t ClientService_get_cells_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cells_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cells_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
   xfer += this->scan_spec.write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2195,13 +4732,16 @@ uint32_t ClientService_get_cells_args::write(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_get_cells_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cells_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cells_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
   xfer += (*(this->scan_spec)).write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2209,38 +4749,38 @@ uint32_t ClientService_get_cells_pargs::write(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_get_cells_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size117;
-            apache::thrift::protocol::TType _etype120;
-            iprot->readListBegin(_etype120, _size117);
-            this->success.resize(_size117);
-            uint32_t _i121;
-            for (_i121 = 0; _i121 < _size117; ++_i121)
+            uint32_t _size158;
+            ::apache::thrift::protocol::TType _etype161;
+            iprot->readListBegin(_etype161, _size158);
+            this->success.resize(_size158);
+            uint32_t _i162;
+            for (_i162 = 0; _i162 < _size158; ++_i162)
             {
-              xfer += this->success[_i121].read(iprot);
+              xfer += this->success[_i162].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -2250,7 +4790,7 @@ uint32_t ClientService_get_cells_result::read(apache::thrift::protocol::TProtoco
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2269,26 +4809,26 @@ uint32_t ClientService_get_cells_result::read(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_get_cells_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cells_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_cells_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->success.size());
-      std::vector<Cell> ::const_iterator _iter122;
-      for (_iter122 = this->success.begin(); _iter122 != this->success.end(); ++_iter122)
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, this->success.size());
+      std::vector<Cell> ::const_iterator _iter163;
+      for (_iter163 = this->success.begin(); _iter163 != this->success.end(); ++_iter163)
       {
-        xfer += (*_iter122).write(oprot);
+        xfer += (*_iter163).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2297,38 +4837,38 @@ uint32_t ClientService_get_cells_result::write(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_cells_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size123;
-            apache::thrift::protocol::TType _etype126;
-            iprot->readListBegin(_etype126, _size123);
-            (*(this->success)).resize(_size123);
-            uint32_t _i127;
-            for (_i127 = 0; _i127 < _size123; ++_i127)
+            uint32_t _size164;
+            ::apache::thrift::protocol::TType _etype167;
+            iprot->readListBegin(_etype167, _size164);
+            (*(this->success)).resize(_size164);
+            uint32_t _i168;
+            for (_i168 = 0; _i168 < _size164; ++_i168)
             {
-              xfer += (*(this->success))[_i127].read(iprot);
+              xfer += (*(this->success))[_i168].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -2338,7 +4878,7 @@ uint32_t ClientService_get_cells_presult::read(apache::thrift::protocol::TProtoc
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2357,36 +4897,44 @@ uint32_t ClientService_get_cells_presult::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_cells_as_arrays_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_as_arrays_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
-      case 2:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->scan_spec.read(iprot);
           this->__isset.scan_spec = true;
         } else {
@@ -2405,13 +4953,16 @@ uint32_t ClientService_get_cells_as_arrays_args::read(apache::thrift::protocol::
   return xfer;
 }
 
-uint32_t ClientService_get_cells_as_arrays_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cells_as_arrays_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cells_as_arrays_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
   xfer += this->scan_spec.write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2419,13 +4970,16 @@ uint32_t ClientService_get_cells_as_arrays_args::write(apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_get_cells_as_arrays_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cells_as_arrays_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cells_as_arrays_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
   xfer += (*(this->scan_spec)).write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2433,47 +4987,47 @@ uint32_t ClientService_get_cells_as_arrays_pargs::write(apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_get_cells_as_arrays_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_as_arrays_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size128;
-            apache::thrift::protocol::TType _etype131;
-            iprot->readListBegin(_etype131, _size128);
-            this->success.resize(_size128);
-            uint32_t _i132;
-            for (_i132 = 0; _i132 < _size128; ++_i132)
+            uint32_t _size169;
+            ::apache::thrift::protocol::TType _etype172;
+            iprot->readListBegin(_etype172, _size169);
+            this->success.resize(_size169);
+            uint32_t _i173;
+            for (_i173 = 0; _i173 < _size169; ++_i173)
             {
               {
-                this->success[_i132].clear();
-                uint32_t _size133;
-                apache::thrift::protocol::TType _etype136;
-                iprot->readListBegin(_etype136, _size133);
-                this->success[_i132].resize(_size133);
-                uint32_t _i137;
-                for (_i137 = 0; _i137 < _size133; ++_i137)
+                this->success[_i173].clear();
+                uint32_t _size174;
+                ::apache::thrift::protocol::TType _etype177;
+                iprot->readListBegin(_etype177, _size174);
+                this->success[_i173].resize(_size174);
+                uint32_t _i178;
+                for (_i178 = 0; _i178 < _size174; ++_i178)
                 {
-                  xfer += iprot->readString(this->success[_i132][_i137]);
+                  xfer += iprot->readString(this->success[_i173][_i178]);
                 }
                 iprot->readListEnd();
               }
@@ -2486,7 +5040,7 @@ uint32_t ClientService_get_cells_as_arrays_result::read(apache::thrift::protocol
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2505,25 +5059,25 @@ uint32_t ClientService_get_cells_as_arrays_result::read(apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_get_cells_as_arrays_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cells_as_arrays_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_cells_as_arrays_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(apache::thrift::protocol::T_LIST, this->success.size());
-      std::vector<CellAsArray> ::const_iterator _iter138;
-      for (_iter138 = this->success.begin(); _iter138 != this->success.end(); ++_iter138)
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_LIST, this->success.size());
+      std::vector<CellAsArray> ::const_iterator _iter179;
+      for (_iter179 = this->success.begin(); _iter179 != this->success.end(); ++_iter179)
       {
         {
-          xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, (*_iter138).size());
-          std::vector<std::string> ::const_iterator _iter139;
-          for (_iter139 = (*_iter138).begin(); _iter139 != (*_iter138).end(); ++_iter139)
+          xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*_iter179).size());
+          std::vector<std::string> ::const_iterator _iter180;
+          for (_iter180 = (*_iter179).begin(); _iter180 != (*_iter179).end(); ++_iter180)
           {
-            xfer += oprot->writeString((*_iter139));
+            xfer += oprot->writeString((*_iter180));
           }
           xfer += oprot->writeListEnd();
         }
@@ -2532,7 +5086,7 @@ uint32_t ClientService_get_cells_as_arrays_result::write(apache::thrift::protoco
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2541,47 +5095,47 @@ uint32_t ClientService_get_cells_as_arrays_result::write(apache::thrift::protoco
   return xfer;
 }
 
-uint32_t ClientService_get_cells_as_arrays_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_as_arrays_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size140;
-            apache::thrift::protocol::TType _etype143;
-            iprot->readListBegin(_etype143, _size140);
-            (*(this->success)).resize(_size140);
-            uint32_t _i144;
-            for (_i144 = 0; _i144 < _size140; ++_i144)
+            uint32_t _size181;
+            ::apache::thrift::protocol::TType _etype184;
+            iprot->readListBegin(_etype184, _size181);
+            (*(this->success)).resize(_size181);
+            uint32_t _i185;
+            for (_i185 = 0; _i185 < _size181; ++_i185)
             {
               {
-                (*(this->success))[_i144].clear();
-                uint32_t _size145;
-                apache::thrift::protocol::TType _etype148;
-                iprot->readListBegin(_etype148, _size145);
-                (*(this->success))[_i144].resize(_size145);
-                uint32_t _i149;
-                for (_i149 = 0; _i149 < _size145; ++_i149)
+                (*(this->success))[_i185].clear();
+                uint32_t _size186;
+                ::apache::thrift::protocol::TType _etype189;
+                iprot->readListBegin(_etype189, _size186);
+                (*(this->success))[_i185].resize(_size186);
+                uint32_t _i190;
+                for (_i190 = 0; _i190 < _size186; ++_i190)
                 {
-                  xfer += iprot->readString((*(this->success))[_i144][_i149]);
+                  xfer += iprot->readString((*(this->success))[_i185][_i190]);
                 }
                 iprot->readListEnd();
               }
@@ -2594,7 +5148,7 @@ uint32_t ClientService_get_cells_as_arrays_presult::read(apache::thrift::protoco
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2613,46 +5167,252 @@ uint32_t ClientService_get_cells_as_arrays_presult::read(apache::thrift::protoco
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_serialized_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->scan_spec.read(iprot);
+          this->__isset.scan_spec = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_cells_serialized_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_cells_serialized_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += this->scan_spec.write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_cells_serialized_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_cells_serialized_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += (*(this->scan_spec)).write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_cells_serialized_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_cells_serialized_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_get_cells_serialized_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeBinary(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_cells_serialized_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_refresh_shared_mutator_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->flags);
-          this->__isset.flags = true;
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 3:
-        if (ftype == apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->flush_interval);
-          this->__isset.flush_interval = true;
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->mutate_spec.read(iprot);
+          this->__isset.mutate_spec = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2669,70 +5429,62 @@ uint32_t ClientService_open_mutator_args::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_refresh_shared_mutator_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_open_mutator_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeStructBegin("ClientService_refresh_shared_mutator_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flags", apache::thrift::protocol::T_I32, 2);
-  xfer += oprot->writeI32(this->flags);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush_interval", apache::thrift::protocol::T_I32, 3);
-  xfer += oprot->writeI32(this->flush_interval);
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += this->mutate_spec.write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_refresh_shared_mutator_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_open_mutator_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeStructBegin("ClientService_refresh_shared_mutator_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flags", apache::thrift::protocol::T_I32, 2);
-  xfer += oprot->writeI32((*(this->flags)));
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush_interval", apache::thrift::protocol::T_I32, 3);
-  xfer += oprot->writeI32((*(this->flush_interval)));
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += (*(this->mutate_spec)).write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_refresh_shared_mutator_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
-      case 0:
-        if (ftype == apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->success);
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2751,198 +5503,14 @@ uint32_t ClientService_open_mutator_result::read(apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_refresh_shared_mutator_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_open_mutator_result");
-
-  if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_I64, 0);
-    xfer += oprot->writeI64(this->success);
-    xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->e.write(oprot);
-    xfer += oprot->writeFieldEnd();
-  }
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-uint32_t ClientService_open_mutator_presult::read(apache::thrift::protocol::TProtocol* iprot) {
-
-  uint32_t xfer = 0;
-  std::string fname;
-  apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-        if (ftype == apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64((*(this->success)));
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
-          xfer += this->e.read(iprot);
-          this->__isset.e = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t ClientService_close_mutator_args::read(apache::thrift::protocol::TProtocol* iprot) {
-
-  uint32_t xfer = 0;
-  std::string fname;
-  apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->mutator);
-          this->__isset.mutator = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->flush);
-          this->__isset.flush = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t ClientService_close_mutator_args::write(apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_close_mutator_args");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
-  xfer += oprot->writeI64(this->mutator);
-  xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush", apache::thrift::protocol::T_BOOL, 2);
-  xfer += oprot->writeBool(this->flush);
-  xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-uint32_t ClientService_close_mutator_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_close_mutator_pargs");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
-  xfer += oprot->writeI64((*(this->mutator)));
-  xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush", apache::thrift::protocol::T_BOOL, 2);
-  xfer += oprot->writeBool((*(this->flush)));
-  xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-uint32_t ClientService_close_mutator_result::read(apache::thrift::protocol::TProtocol* iprot) {
-
-  uint32_t xfer = 0;
-  std::string fname;
-  apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
-          xfer += this->e.read(iprot);
-          this->__isset.e = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t ClientService_close_mutator_result::write(apache::thrift::protocol::TProtocol* oprot) const {
-
-  uint32_t xfer = 0;
-
-  xfer += oprot->writeStructBegin("ClientService_close_mutator_result");
+  xfer += oprot->writeStructBegin("ClientService_refresh_shared_mutator_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2951,28 +5519,28 @@ uint32_t ClientService_close_mutator_result::write(apache::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_close_mutator_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_refresh_shared_mutator_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2991,36 +5559,536 @@ uint32_t ClientService_close_mutator_presult::read(apache::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_set_cell_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cells_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->mutator);
-          this->__isset.mutator = true;
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->mutate_spec.read(iprot);
+          this->__isset.mutate_spec = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->cells.clear();
+            uint32_t _size191;
+            ::apache::thrift::protocol::TType _etype194;
+            iprot->readListBegin(_etype194, _size191);
+            this->cells.resize(_size191);
+            uint32_t _i195;
+            for (_i195 = 0; _i195 < _size191; ++_i195)
+            {
+              xfer += this->cells[_i195].read(iprot);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.cells = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += this->mutate_spec.write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 4);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, this->cells.size());
+    std::vector<Cell> ::const_iterator _iter196;
+    for (_iter196 = this->cells.begin(); _iter196 != this->cells.end(); ++_iter196)
+    {
+      xfer += (*_iter196).write(oprot);
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += (*(this->mutate_spec)).write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 4);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, (*(this->cells)).size());
+    std::vector<Cell> ::const_iterator _iter197;
+    for (_iter197 = (*(this->cells)).begin(); _iter197 != (*(this->cells)).end(); ++_iter197)
+    {
+      xfer += (*_iter197).write(oprot);
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_as_arrays_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->mutate_spec.read(iprot);
+          this->__isset.mutate_spec = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->cells.clear();
+            uint32_t _size198;
+            ::apache::thrift::protocol::TType _etype201;
+            iprot->readListBegin(_etype201, _size198);
+            this->cells.resize(_size198);
+            uint32_t _i202;
+            for (_i202 = 0; _i202 < _size198; ++_i202)
+            {
+              {
+                this->cells[_i202].clear();
+                uint32_t _size203;
+                ::apache::thrift::protocol::TType _etype206;
+                iprot->readListBegin(_etype206, _size203);
+                this->cells[_i202].resize(_size203);
+                uint32_t _i207;
+                for (_i207 = 0; _i207 < _size203; ++_i207)
+                {
+                  xfer += iprot->readString(this->cells[_i202][_i207]);
+                }
+                iprot->readListEnd();
+              }
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.cells = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_as_arrays_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_as_arrays_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += this->mutate_spec.write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 4);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_LIST, this->cells.size());
+    std::vector<CellAsArray> ::const_iterator _iter208;
+    for (_iter208 = this->cells.begin(); _iter208 != this->cells.end(); ++_iter208)
+    {
+      {
+        xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*_iter208).size());
+        std::vector<std::string> ::const_iterator _iter209;
+        for (_iter209 = (*_iter208).begin(); _iter209 != (*_iter208).end(); ++_iter209)
+        {
+          xfer += oprot->writeString((*_iter209));
+        }
+        xfer += oprot->writeListEnd();
+      }
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_as_arrays_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_as_arrays_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += (*(this->mutate_spec)).write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 4);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_LIST, (*(this->cells)).size());
+    std::vector<CellAsArray> ::const_iterator _iter210;
+    for (_iter210 = (*(this->cells)).begin(); _iter210 != (*(this->cells)).end(); ++_iter210)
+    {
+      {
+        xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*_iter210).size());
+        std::vector<std::string> ::const_iterator _iter211;
+        for (_iter211 = (*_iter210).begin(); _iter211 != (*_iter210).end(); ++_iter211)
+        {
+          xfer += oprot->writeString((*_iter211));
+        }
+        xfer += oprot->writeListEnd();
+      }
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_as_arrays_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_as_arrays_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_as_arrays_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_offer_cells_as_arrays_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_offer_cell_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->mutate_spec.read(iprot);
+          this->__isset.mutate_spec = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->cell.read(iprot);
           this->__isset.cell = true;
         } else {
@@ -3039,13 +6107,19 @@ uint32_t ClientService_set_cell_args::read(apache::thrift::protocol::TProtocol* 
   return xfer;
 }
 
-uint32_t ClientService_set_cell_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_set_cell_args");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
-  xfer += oprot->writeI64(this->mutator);
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cell", apache::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += this->mutate_spec.write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cell", ::apache::thrift::protocol::T_STRUCT, 4);
   xfer += this->cell.write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -3053,13 +6127,19 @@ uint32_t ClientService_set_cell_args::write(apache::thrift::protocol::TProtocol*
   return xfer;
 }
 
-uint32_t ClientService_set_cell_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_set_cell_pargs");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
-  xfer += oprot->writeI64((*(this->mutator)));
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cell", apache::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += (*(this->mutate_spec)).write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cell", ::apache::thrift::protocol::T_STRUCT, 4);
   xfer += (*(this->cell)).write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -3067,28 +6147,28 @@ uint32_t ClientService_set_cell_pargs::write(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_set_cell_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3107,14 +6187,14 @@ uint32_t ClientService_set_cell_result::read(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_set_cell_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_set_cell_result");
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -3123,28 +6203,28 @@ uint32_t ClientService_set_cell_result::write(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_set_cell_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3163,46 +6243,62 @@ uint32_t ClientService_set_cell_presult::read(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_set_cell_as_array_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_as_array_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->mutator);
-          this->__isset.mutator = true;
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->mutate_spec.read(iprot);
+          this->__isset.mutate_spec = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->cell.clear();
-            uint32_t _size150;
-            apache::thrift::protocol::TType _etype153;
-            iprot->readListBegin(_etype153, _size150);
-            this->cell.resize(_size150);
-            uint32_t _i154;
-            for (_i154 = 0; _i154 < _size150; ++_i154)
+            uint32_t _size212;
+            ::apache::thrift::protocol::TType _etype215;
+            iprot->readListBegin(_etype215, _size212);
+            this->cell.resize(_size212);
+            uint32_t _i216;
+            for (_i216 = 0; _i216 < _size212; ++_i216)
             {
-              xfer += iprot->readString(this->cell[_i154]);
+              xfer += iprot->readString(this->cell[_i216]);
             }
             iprot->readListEnd();
           }
@@ -3223,19 +6319,25 @@ uint32_t ClientService_set_cell_as_array_args::read(apache::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_set_cell_as_array_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_as_array_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_set_cell_as_array_args");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
-  xfer += oprot->writeI64(this->mutator);
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_as_array_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cell", apache::thrift::protocol::T_LIST, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += this->mutate_spec.write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cell", ::apache::thrift::protocol::T_LIST, 4);
   {
-    xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, this->cell.size());
-    std::vector<std::string> ::const_iterator _iter155;
-    for (_iter155 = this->cell.begin(); _iter155 != this->cell.end(); ++_iter155)
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, this->cell.size());
+    std::vector<std::string> ::const_iterator _iter217;
+    for (_iter217 = this->cell.begin(); _iter217 != this->cell.end(); ++_iter217)
     {
-      xfer += oprot->writeString((*_iter155));
+      xfer += oprot->writeString((*_iter217));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3245,19 +6347,25 @@ uint32_t ClientService_set_cell_as_array_args::write(apache::thrift::protocol::T
   return xfer;
 }
 
-uint32_t ClientService_set_cell_as_array_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_as_array_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_set_cell_as_array_pargs");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
-  xfer += oprot->writeI64((*(this->mutator)));
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_as_array_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cell", apache::thrift::protocol::T_LIST, 2);
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += (*(this->mutate_spec)).write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cell", ::apache::thrift::protocol::T_LIST, 4);
   {
-    xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, (*(this->cell)).size());
-    std::vector<std::string> ::const_iterator _iter156;
-    for (_iter156 = (*(this->cell)).begin(); _iter156 != (*(this->cell)).end(); ++_iter156)
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*(this->cell)).size());
+    std::vector<std::string> ::const_iterator _iter218;
+    for (_iter218 = (*(this->cell)).begin(); _iter218 != (*(this->cell)).end(); ++_iter218)
     {
-      xfer += oprot->writeString((*_iter156));
+      xfer += oprot->writeString((*_iter218));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3267,28 +6375,28 @@ uint32_t ClientService_set_cell_as_array_pargs::write(apache::thrift::protocol::
   return xfer;
 }
 
-uint32_t ClientService_set_cell_as_array_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_as_array_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3307,14 +6415,14 @@ uint32_t ClientService_set_cell_as_array_result::read(apache::thrift::protocol::
   return xfer;
 }
 
-uint32_t ClientService_set_cell_as_array_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_as_array_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_set_cell_as_array_result");
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_as_array_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -3323,28 +6431,28 @@ uint32_t ClientService_set_cell_as_array_result::write(apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_set_cell_as_array_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_as_array_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3363,28 +6471,248 @@ uint32_t ClientService_set_cell_as_array_presult::read(apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_set_cells_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_mutator_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->flags);
+          this->__isset.flags = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->flush_interval);
+          this->__isset.flush_interval = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_mutator_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_open_mutator_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flags", ::apache::thrift::protocol::T_I32, 3);
+  xfer += oprot->writeI32(this->flags);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flush_interval", ::apache::thrift::protocol::T_I32, 4);
+  xfer += oprot->writeI32(this->flush_interval);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_mutator_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_open_mutator_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flags", ::apache::thrift::protocol::T_I32, 3);
+  xfer += oprot->writeI32((*(this->flags)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flush_interval", ::apache::thrift::protocol::T_I32, 4);
+  xfer += oprot->writeI32((*(this->flush_interval)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_mutator_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_open_mutator_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_open_mutator_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_I64, 0);
+    xfer += oprot->writeI64(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_open_mutator_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_mutator_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->mutator);
           this->__isset.mutator = true;
         } else {
@@ -3392,17 +6720,561 @@ uint32_t ClientService_set_cells_args::read(apache::thrift::protocol::TProtocol*
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->flush);
+          this->__isset.flush = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_mutator_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_close_mutator_args");
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->mutator);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flush", ::apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeBool(this->flush);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_mutator_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_close_mutator_pargs");
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->mutator)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flush", ::apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeBool((*(this->flush)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_mutator_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_close_mutator_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_close_mutator_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_close_mutator_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->mutator);
+          this->__isset.mutator = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->cell.read(iprot);
+          this->__isset.cell = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_set_cell_args");
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->mutator);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cell", ::apache::thrift::protocol::T_STRUCT, 2);
+  xfer += this->cell.write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_set_cell_pargs");
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->mutator)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cell", ::apache::thrift::protocol::T_STRUCT, 2);
+  xfer += (*(this->cell)).write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_set_cell_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_as_array_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->mutator);
+          this->__isset.mutator = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->cell.clear();
+            uint32_t _size219;
+            ::apache::thrift::protocol::TType _etype222;
+            iprot->readListBegin(_etype222, _size219);
+            this->cell.resize(_size219);
+            uint32_t _i223;
+            for (_i223 = 0; _i223 < _size219; ++_i223)
+            {
+              xfer += iprot->readString(this->cell[_i223]);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.cell = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_as_array_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_set_cell_as_array_args");
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->mutator);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cell", ::apache::thrift::protocol::T_LIST, 2);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, this->cell.size());
+    std::vector<std::string> ::const_iterator _iter224;
+    for (_iter224 = this->cell.begin(); _iter224 != this->cell.end(); ++_iter224)
+    {
+      xfer += oprot->writeString((*_iter224));
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_as_array_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_set_cell_as_array_pargs");
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->mutator)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cell", ::apache::thrift::protocol::T_LIST, 2);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*(this->cell)).size());
+    std::vector<std::string> ::const_iterator _iter225;
+    for (_iter225 = (*(this->cell)).begin(); _iter225 != (*(this->cell)).end(); ++_iter225)
+    {
+      xfer += oprot->writeString((*_iter225));
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_as_array_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_as_array_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_set_cell_as_array_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_set_cell_as_array_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_set_cells_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->mutator);
+          this->__isset.mutator = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->cells.clear();
-            uint32_t _size157;
-            apache::thrift::protocol::TType _etype160;
-            iprot->readListBegin(_etype160, _size157);
-            this->cells.resize(_size157);
-            uint32_t _i161;
-            for (_i161 = 0; _i161 < _size157; ++_i161)
+            uint32_t _size226;
+            ::apache::thrift::protocol::TType _etype229;
+            iprot->readListBegin(_etype229, _size226);
+            this->cells.resize(_size226);
+            uint32_t _i230;
+            for (_i230 = 0; _i230 < _size226; ++_i230)
             {
-              xfer += this->cells[_i161].read(iprot);
+              xfer += this->cells[_i230].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -3423,19 +7295,19 @@ uint32_t ClientService_set_cells_args::read(apache::thrift::protocol::TProtocol*
   return xfer;
 }
 
-uint32_t ClientService_set_cells_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cells_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_set_cells_args");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->mutator);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cells", apache::thrift::protocol::T_LIST, 2);
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 2);
   {
-    xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->cells.size());
-    std::vector<Cell> ::const_iterator _iter162;
-    for (_iter162 = this->cells.begin(); _iter162 != this->cells.end(); ++_iter162)
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, this->cells.size());
+    std::vector<Cell> ::const_iterator _iter231;
+    for (_iter231 = this->cells.begin(); _iter231 != this->cells.end(); ++_iter231)
     {
-      xfer += (*_iter162).write(oprot);
+      xfer += (*_iter231).write(oprot);
     }
     xfer += oprot->writeListEnd();
   }
@@ -3445,19 +7317,19 @@ uint32_t ClientService_set_cells_args::write(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_set_cells_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cells_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_set_cells_pargs");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->mutator)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cells", apache::thrift::protocol::T_LIST, 2);
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 2);
   {
-    xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, (*(this->cells)).size());
-    std::vector<Cell> ::const_iterator _iter163;
-    for (_iter163 = (*(this->cells)).begin(); _iter163 != (*(this->cells)).end(); ++_iter163)
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, (*(this->cells)).size());
+    std::vector<Cell> ::const_iterator _iter232;
+    for (_iter232 = (*(this->cells)).begin(); _iter232 != (*(this->cells)).end(); ++_iter232)
     {
-      xfer += (*_iter163).write(oprot);
+      xfer += (*_iter232).write(oprot);
     }
     xfer += oprot->writeListEnd();
   }
@@ -3467,28 +7339,28 @@ uint32_t ClientService_set_cells_pargs::write(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_set_cells_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cells_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3507,14 +7379,14 @@ uint32_t ClientService_set_cells_result::read(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_set_cells_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cells_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_set_cells_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -3523,28 +7395,28 @@ uint32_t ClientService_set_cells_result::write(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_set_cells_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cells_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3563,28 +7435,28 @@ uint32_t ClientService_set_cells_presult::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_set_cells_as_arrays_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cells_as_arrays_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->mutator);
           this->__isset.mutator = true;
         } else {
@@ -3592,26 +7464,26 @@ uint32_t ClientService_set_cells_as_arrays_args::read(apache::thrift::protocol::
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->cells.clear();
-            uint32_t _size164;
-            apache::thrift::protocol::TType _etype167;
-            iprot->readListBegin(_etype167, _size164);
-            this->cells.resize(_size164);
-            uint32_t _i168;
-            for (_i168 = 0; _i168 < _size164; ++_i168)
+            uint32_t _size233;
+            ::apache::thrift::protocol::TType _etype236;
+            iprot->readListBegin(_etype236, _size233);
+            this->cells.resize(_size233);
+            uint32_t _i237;
+            for (_i237 = 0; _i237 < _size233; ++_i237)
             {
               {
-                this->cells[_i168].clear();
-                uint32_t _size169;
-                apache::thrift::protocol::TType _etype172;
-                iprot->readListBegin(_etype172, _size169);
-                this->cells[_i168].resize(_size169);
-                uint32_t _i173;
-                for (_i173 = 0; _i173 < _size169; ++_i173)
+                this->cells[_i237].clear();
+                uint32_t _size238;
+                ::apache::thrift::protocol::TType _etype241;
+                iprot->readListBegin(_etype241, _size238);
+                this->cells[_i237].resize(_size238);
+                uint32_t _i242;
+                for (_i242 = 0; _i242 < _size238; ++_i242)
                 {
-                  xfer += iprot->readString(this->cells[_i168][_i173]);
+                  xfer += iprot->readString(this->cells[_i237][_i242]);
                 }
                 iprot->readListEnd();
               }
@@ -3635,24 +7507,24 @@ uint32_t ClientService_set_cells_as_arrays_args::read(apache::thrift::protocol::
   return xfer;
 }
 
-uint32_t ClientService_set_cells_as_arrays_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cells_as_arrays_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_set_cells_as_arrays_args");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->mutator);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cells", apache::thrift::protocol::T_LIST, 2);
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 2);
   {
-    xfer += oprot->writeListBegin(apache::thrift::protocol::T_LIST, this->cells.size());
-    std::vector<CellAsArray> ::const_iterator _iter174;
-    for (_iter174 = this->cells.begin(); _iter174 != this->cells.end(); ++_iter174)
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_LIST, this->cells.size());
+    std::vector<CellAsArray> ::const_iterator _iter243;
+    for (_iter243 = this->cells.begin(); _iter243 != this->cells.end(); ++_iter243)
     {
       {
-        xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, (*_iter174).size());
-        std::vector<std::string> ::const_iterator _iter175;
-        for (_iter175 = (*_iter174).begin(); _iter175 != (*_iter174).end(); ++_iter175)
+        xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*_iter243).size());
+        std::vector<std::string> ::const_iterator _iter244;
+        for (_iter244 = (*_iter243).begin(); _iter244 != (*_iter243).end(); ++_iter244)
         {
-          xfer += oprot->writeString((*_iter175));
+          xfer += oprot->writeString((*_iter244));
         }
         xfer += oprot->writeListEnd();
       }
@@ -3665,24 +7537,24 @@ uint32_t ClientService_set_cells_as_arrays_args::write(apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_set_cells_as_arrays_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cells_as_arrays_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_set_cells_as_arrays_pargs");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->mutator)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cells", apache::thrift::protocol::T_LIST, 2);
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 2);
   {
-    xfer += oprot->writeListBegin(apache::thrift::protocol::T_LIST, (*(this->cells)).size());
-    std::vector<CellAsArray> ::const_iterator _iter176;
-    for (_iter176 = (*(this->cells)).begin(); _iter176 != (*(this->cells)).end(); ++_iter176)
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_LIST, (*(this->cells)).size());
+    std::vector<CellAsArray> ::const_iterator _iter245;
+    for (_iter245 = (*(this->cells)).begin(); _iter245 != (*(this->cells)).end(); ++_iter245)
     {
       {
-        xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, (*_iter176).size());
-        std::vector<std::string> ::const_iterator _iter177;
-        for (_iter177 = (*_iter176).begin(); _iter177 != (*_iter176).end(); ++_iter177)
+        xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, (*_iter245).size());
+        std::vector<std::string> ::const_iterator _iter246;
+        for (_iter246 = (*_iter245).begin(); _iter246 != (*_iter245).end(); ++_iter246)
         {
-          xfer += oprot->writeString((*_iter177));
+          xfer += oprot->writeString((*_iter246));
         }
         xfer += oprot->writeListEnd();
       }
@@ -3695,28 +7567,28 @@ uint32_t ClientService_set_cells_as_arrays_pargs::write(apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_set_cells_as_arrays_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cells_as_arrays_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3735,14 +7607,14 @@ uint32_t ClientService_set_cells_as_arrays_result::read(apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_set_cells_as_arrays_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cells_as_arrays_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_set_cells_as_arrays_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -3751,28 +7623,28 @@ uint32_t ClientService_set_cells_as_arrays_result::write(apache::thrift::protoco
   return xfer;
 }
 
-uint32_t ClientService_set_cells_as_arrays_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cells_as_arrays_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3791,28 +7663,214 @@ uint32_t ClientService_set_cells_as_arrays_presult::read(apache::thrift::protoco
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cells_serialized_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_I64) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->mutator);
+          this->__isset.mutator = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary(this->cells);
+          this->__isset.cells = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->flush);
+          this->__isset.flush = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_set_cells_serialized_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_set_cells_serialized_args");
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->mutator);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeBinary(this->cells);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flush", ::apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeBool(this->flush);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_set_cells_serialized_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_set_cells_serialized_pargs");
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->mutator)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeBinary((*(this->cells)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flush", ::apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeBool((*(this->flush)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_set_cells_serialized_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_set_cells_serialized_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_set_cells_serialized_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_set_cells_serialized_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_flush_mutator_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->mutator);
           this->__isset.mutator = true;
         } else {
@@ -3831,10 +7889,10 @@ uint32_t ClientService_flush_mutator_args::read(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_flush_mutator_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_flush_mutator_args");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->mutator);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -3842,10 +7900,10 @@ uint32_t ClientService_flush_mutator_args::write(apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_flush_mutator_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_flush_mutator_pargs");
-  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->mutator)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -3853,28 +7911,28 @@ uint32_t ClientService_flush_mutator_pargs::write(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_flush_mutator_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3893,14 +7951,14 @@ uint32_t ClientService_flush_mutator_result::read(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_flush_mutator_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_flush_mutator_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -3909,28 +7967,28 @@ uint32_t ClientService_flush_mutator_result::write(apache::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_flush_mutator_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3949,30 +8007,30 @@ uint32_t ClientService_flush_mutator_presult::read(apache::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_exists_namespace_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->name);
-          this->__isset.name = true;
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->ns);
+          this->__isset.ns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3989,58 +8047,58 @@ uint32_t ClientService_get_table_id_args::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_exists_namespace_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_get_table_id_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeStructBegin("ClientService_exists_namespace_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->ns);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_exists_namespace_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_get_table_id_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeStructBegin("ClientService_exists_namespace_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString((*(this->ns)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_exists_namespace_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->success);
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->success);
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -4059,18 +8117,18 @@ uint32_t ClientService_get_table_id_result::read(apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_exists_namespace_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_get_table_id_result");
+  xfer += oprot->writeStructBegin("ClientService_exists_namespace_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_I32, 0);
-    xfer += oprot->writeI32(this->success);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
+    xfer += oprot->writeBool(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -4079,36 +8137,36 @@ uint32_t ClientService_get_table_id_result::write(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_exists_namespace_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32((*(this->success)));
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool((*(this->success)));
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -4127,28 +8185,36 @@ uint32_t ClientService_get_table_id_presult::read(apache::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_get_schema_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_exists_table_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -4167,10 +8233,13 @@ uint32_t ClientService_get_schema_args::read(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_get_schema_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_exists_table_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_get_schema_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeStructBegin("ClientService_exists_table_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -4178,10 +8247,13 @@ uint32_t ClientService_get_schema_args::write(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_get_schema_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_exists_table_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_get_schema_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeStructBegin("ClientService_exists_table_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -4189,28 +8261,220 @@ uint32_t ClientService_get_schema_pargs::write(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_schema_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_exists_table_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_exists_table_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_exists_table_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
+    xfer += oprot->writeBool(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_exists_table_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_table_id_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_table_id_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_table_id_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_table_id_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_table_id_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_table_id_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->success);
           this->__isset.success = true;
         } else {
@@ -4218,7 +8482,7 @@ uint32_t ClientService_get_schema_result::read(apache::thrift::protocol::TProtoc
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -4237,18 +8501,18 @@ uint32_t ClientService_get_schema_result::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_schema_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_table_id_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_get_schema_result");
+  xfer += oprot->writeStructBegin("ClientService_get_table_id_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
     xfer += oprot->writeString(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -4257,28 +8521,28 @@ uint32_t ClientService_get_schema_result::write(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_get_schema_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_table_id_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_STRING) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString((*(this->success)));
           this->__isset.success = true;
         } else {
@@ -4286,7 +8550,7 @@ uint32_t ClientService_get_schema_presult::read(apache::thrift::protocol::TProto
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -4305,26 +8569,42 @@ uint32_t ClientService_get_schema_presult::read(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_get_tables_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_schema_str_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -4337,64 +8617,64 @@ uint32_t ClientService_get_tables_args::read(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_get_tables_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_schema_str_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_get_tables_args");
+  xfer += oprot->writeStructBegin("ClientService_get_schema_str_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
 }
 
-uint32_t ClientService_get_tables_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_schema_str_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_get_tables_pargs");
+  xfer += oprot->writeStructBegin("ClientService_get_schema_str_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
 }
 
-uint32_t ClientService_get_tables_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_schema_str_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
-          {
-            this->success.clear();
-            uint32_t _size178;
-            apache::thrift::protocol::TType _etype181;
-            iprot->readListBegin(_etype181, _size178);
-            this->success.resize(_size178);
-            uint32_t _i182;
-            for (_i182 = 0; _i182 < _size178; ++_i182)
-            {
-              xfer += iprot->readString(this->success[_i182]);
-            }
-            iprot->readListEnd();
-          }
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->success);
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -4413,26 +8693,18 @@ uint32_t ClientService_get_tables_result::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_tables_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_schema_str_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_get_tables_result");
+  xfer += oprot->writeStructBegin("ClientService_get_schema_str_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
-    {
-      xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, this->success.size());
-      std::vector<std::string> ::const_iterator _iter183;
-      for (_iter183 = this->success.begin(); _iter183 != this->success.end(); ++_iter183)
-      {
-        xfer += oprot->writeString((*_iter183));
-      }
-      xfer += oprot->writeListEnd();
-    }
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeString(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -4441,48 +8713,36 @@ uint32_t ClientService_get_tables_result::write(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_get_tables_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_schema_str_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == apache::thrift::protocol::T_LIST) {
-          {
-            (*(this->success)).clear();
-            uint32_t _size184;
-            apache::thrift::protocol::TType _etype187;
-            iprot->readListBegin(_etype187, _size184);
-            (*(this->success)).resize(_size184);
-            uint32_t _i188;
-            for (_i188 = 0; _i188 < _size184; ++_i188)
-            {
-              xfer += iprot->readString((*(this->success))[_i188]);
-            }
-            iprot->readListEnd();
-          }
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString((*(this->success)));
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -4501,36 +8761,872 @@ uint32_t ClientService_get_tables_presult::read(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_drop_table_args::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_schema_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->name);
-          this->__isset.name = true;
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
-        if (ftype == apache::thrift::protocol::T_BOOL) {
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_schema_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_schema_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_schema_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_schema_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_schema_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->success.read(iprot);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_schema_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_get_schema_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRUCT, 0);
+    xfer += this->success.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_schema_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += (*(this->success)).read(iprot);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_tables_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_tables_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_tables_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_tables_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_tables_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_tables_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->success.clear();
+            uint32_t _size247;
+            ::apache::thrift::protocol::TType _etype250;
+            iprot->readListBegin(_etype250, _size247);
+            this->success.resize(_size247);
+            uint32_t _i251;
+            for (_i251 = 0; _i251 < _size247; ++_i251)
+            {
+              xfer += iprot->readString(this->success[_i251]);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_tables_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_get_tables_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
+    {
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, this->success.size());
+      std::vector<std::string> ::const_iterator _iter252;
+      for (_iter252 = this->success.begin(); _iter252 != this->success.end(); ++_iter252)
+      {
+        xfer += oprot->writeString((*_iter252));
+      }
+      xfer += oprot->writeListEnd();
+    }
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_tables_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            (*(this->success)).clear();
+            uint32_t _size253;
+            ::apache::thrift::protocol::TType _etype256;
+            iprot->readListBegin(_etype256, _size253);
+            (*(this->success)).resize(_size253);
+            uint32_t _i257;
+            for (_i257 = 0; _i257 < _size253; ++_i257)
+            {
+              xfer += iprot->readString((*(this->success))[_i257]);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_listing_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_listing_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_listing_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_listing_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_listing_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_listing_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->success.clear();
+            uint32_t _size258;
+            ::apache::thrift::protocol::TType _etype261;
+            iprot->readListBegin(_etype261, _size258);
+            this->success.resize(_size258);
+            uint32_t _i262;
+            for (_i262 = 0; _i262 < _size258; ++_i262)
+            {
+              xfer += this->success[_i262].read(iprot);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_listing_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_get_listing_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
+    {
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, this->success.size());
+      std::vector<NamespaceListing> ::const_iterator _iter263;
+      for (_iter263 = this->success.begin(); _iter263 != this->success.end(); ++_iter263)
+      {
+        xfer += (*_iter263).write(oprot);
+      }
+      xfer += oprot->writeListEnd();
+    }
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_listing_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            (*(this->success)).clear();
+            uint32_t _size264;
+            ::apache::thrift::protocol::TType _etype267;
+            iprot->readListBegin(_etype267, _size264);
+            (*(this->success)).resize(_size264);
+            uint32_t _i268;
+            for (_i268 = 0; _i268 < _size264; ++_i268)
+            {
+              xfer += (*(this->success))[_i268].read(iprot);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_table_splits_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->table_name);
+          this->__isset.table_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_table_splits_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_table_splits_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->table_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_table_splits_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_get_table_splits_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("table_name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->table_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_table_splits_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->success.clear();
+            uint32_t _size269;
+            ::apache::thrift::protocol::TType _etype272;
+            iprot->readListBegin(_etype272, _size269);
+            this->success.resize(_size269);
+            uint32_t _i273;
+            for (_i273 = 0; _i273 < _size269; ++_i273)
+            {
+              xfer += this->success[_i273].read(iprot);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_get_table_splits_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_get_table_splits_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_LIST, 0);
+    {
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, this->success.size());
+      std::vector<TableSplit> ::const_iterator _iter274;
+      for (_iter274 = this->success.begin(); _iter274 != this->success.end(); ++_iter274)
+      {
+        xfer += (*_iter274).write(oprot);
+      }
+      xfer += oprot->writeListEnd();
+    }
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_get_table_splits_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            (*(this->success)).clear();
+            uint32_t _size275;
+            ::apache::thrift::protocol::TType _etype278;
+            iprot->readListBegin(_etype278, _size275);
+            (*(this->success)).resize(_size275);
+            uint32_t _i279;
+            for (_i279 = 0; _i279 < _size275; ++_i279)
+            {
+              xfer += (*(this->success))[_i279].read(iprot);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_drop_namespace_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->if_exists);
           this->__isset.if_exists = true;
         } else {
@@ -4549,13 +9645,13 @@ uint32_t ClientService_drop_table_args::read(apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_drop_table_args::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_drop_namespace_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_drop_table_args");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeStructBegin("ClientService_drop_namespace_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->ns);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("if_exists", apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("if_exists", ::apache::thrift::protocol::T_BOOL, 2);
   xfer += oprot->writeBool(this->if_exists);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -4563,13 +9659,13 @@ uint32_t ClientService_drop_table_args::write(apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_drop_table_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_drop_namespace_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_drop_table_pargs");
-  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeStructBegin("ClientService_drop_namespace_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString((*(this->ns)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("if_exists", apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("if_exists", ::apache::thrift::protocol::T_BOOL, 2);
   xfer += oprot->writeBool((*(this->if_exists)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -4577,28 +9673,28 @@ uint32_t ClientService_drop_table_pargs::write(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_drop_table_result::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_drop_namespace_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -4617,14 +9713,14 @@ uint32_t ClientService_drop_table_result::read(apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_drop_table_result::write(apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_drop_namespace_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_drop_table_result");
+  xfer += oprot->writeStructBegin("ClientService_drop_namespace_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -4633,28 +9729,28 @@ uint32_t ClientService_drop_table_result::write(apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_drop_table_presult::read(apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_drop_namespace_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  apache::thrift::protocol::TType ftype;
+  ::apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using apache::thrift::protocol::TProtocolException;
+  using ::apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == apache::thrift::protocol::T_STOP) {
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == apache::thrift::protocol::T_STRUCT) {
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -4673,25 +9769,454 @@ uint32_t ClientService_drop_table_presult::read(apache::thrift::protocol::TProto
   return xfer;
 }
 
-void ClientServiceClient::create_table(const std::string& name, const std::string& schema)
+uint32_t ClientService_rename_table_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->name);
+          this->__isset.name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->new_name);
+          this->__isset.new_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_rename_table_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_rename_table_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("new_name", ::apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeString(this->new_name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_rename_table_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_rename_table_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("new_name", ::apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeString((*(this->new_name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_rename_table_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_rename_table_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_rename_table_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_rename_table_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_drop_table_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->name);
+          this->__isset.name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->if_exists);
+          this->__isset.if_exists = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_drop_table_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_drop_table_args");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("if_exists", ::apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeBool(this->if_exists);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_drop_table_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_drop_table_pargs");
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString((*(this->name)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("if_exists", ::apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeBool((*(this->if_exists)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_drop_table_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_drop_table_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_drop_table_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_drop_table_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+void ClientServiceClient::create_namespace(const std::string& ns)
 {
-  send_create_table(name, schema);
+  send_create_namespace(ns);
+  recv_create_namespace();
+}
+
+void ClientServiceClient::send_create_namespace(const std::string& ns)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("create_namespace", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_create_namespace_pargs args;
+  args.ns = &ns;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_create_namespace()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("create_namespace") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_create_namespace_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::create_table(const Namespace ns, const std::string& table_name, const std::string& schema)
+{
+  send_create_table(ns, table_name, schema);
   recv_create_table();
 }
 
-void ClientServiceClient::send_create_table(const std::string& name, const std::string& schema)
+void ClientServiceClient::send_create_table(const Namespace ns, const std::string& table_name, const std::string& schema)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("create_table", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("create_table", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_create_table_pargs args;
-  args.name = &name;
+  args.ns = &ns;
+  args.table_name = &table_name;
   args.schema = &schema;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_create_table()
@@ -4699,27 +10224,25 @@ void ClientServiceClient::recv_create_table()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("create_table") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_create_table_presult result;
   result.read(iprot_);
@@ -4732,26 +10255,500 @@ void ClientServiceClient::recv_create_table()
   return;
 }
 
-Scanner ClientServiceClient::open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found)
+Namespace ClientServiceClient::open_namespace(const std::string& ns)
 {
-  send_open_scanner(name, scan_spec, retry_table_not_found);
+  send_open_namespace(ns);
+  return recv_open_namespace();
+}
+
+void ClientServiceClient::send_open_namespace(const std::string& ns)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("open_namespace", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_open_namespace_pargs args;
+  args.ns = &ns;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+Namespace ClientServiceClient::recv_open_namespace()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("open_namespace") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  Namespace _return;
+  ClientService_open_namespace_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    return _return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "open_namespace failed: unknown result");
+}
+
+void ClientServiceClient::close_namespace(const Namespace ns)
+{
+  send_close_namespace(ns);
+  recv_close_namespace();
+}
+
+void ClientServiceClient::send_close_namespace(const Namespace ns)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("close_namespace", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_close_namespace_pargs args;
+  args.ns = &ns;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_close_namespace()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("close_namespace") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_close_namespace_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+Future ClientServiceClient::open_future(const int32_t queue_size)
+{
+  send_open_future(queue_size);
+  return recv_open_future();
+}
+
+void ClientServiceClient::send_open_future(const int32_t queue_size)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("open_future", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_open_future_pargs args;
+  args.queue_size = &queue_size;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+Future ClientServiceClient::recv_open_future()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("open_future") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  Future _return;
+  ClientService_open_future_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    return _return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "open_future failed: unknown result");
+}
+
+void ClientServiceClient::cancel_future(const Future ff)
+{
+  send_cancel_future(ff);
+  recv_cancel_future();
+}
+
+void ClientServiceClient::send_cancel_future(const Future ff)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("cancel_future", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_cancel_future_pargs args;
+  args.ff = &ff;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_cancel_future()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("cancel_future") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_cancel_future_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::get_future_result(Result& _return, const Future ff)
+{
+  send_get_future_result(ff);
+  recv_get_future_result(_return);
+}
+
+void ClientServiceClient::send_get_future_result(const Future ff)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_future_result", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_future_result_pargs args;
+  args.ff = &ff;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_future_result(Result& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("get_future_result") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_get_future_result_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_future_result failed: unknown result");
+}
+
+void ClientServiceClient::get_future_result_as_arrays(ResultAsArrays& _return, const Future ff)
+{
+  send_get_future_result_as_arrays(ff);
+  recv_get_future_result_as_arrays(_return);
+}
+
+void ClientServiceClient::send_get_future_result_as_arrays(const Future ff)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_future_result_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_future_result_as_arrays_pargs args;
+  args.ff = &ff;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_future_result_as_arrays(ResultAsArrays& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("get_future_result_as_arrays") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_get_future_result_as_arrays_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_future_result_as_arrays failed: unknown result");
+}
+
+void ClientServiceClient::get_future_result_serialized(ResultSerialized& _return, const Future ff)
+{
+  send_get_future_result_serialized(ff);
+  recv_get_future_result_serialized(_return);
+}
+
+void ClientServiceClient::send_get_future_result_serialized(const Future ff)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_future_result_serialized", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_future_result_serialized_pargs args;
+  args.ff = &ff;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_future_result_serialized(ResultSerialized& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("get_future_result_serialized") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_get_future_result_serialized_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_future_result_serialized failed: unknown result");
+}
+
+void ClientServiceClient::close_future(const Future ff)
+{
+  send_close_future(ff);
+  recv_close_future();
+}
+
+void ClientServiceClient::send_close_future(const Future ff)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("close_future", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_close_future_pargs args;
+  args.ff = &ff;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_close_future()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("close_future") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_close_future_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+Scanner ClientServiceClient::open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found)
+{
+  send_open_scanner(ns, table_name, scan_spec, retry_table_not_found);
   return recv_open_scanner();
 }
 
-void ClientServiceClient::send_open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found)
+void ClientServiceClient::send_open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("open_scanner", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("open_scanner", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_open_scanner_pargs args;
-  args.name = &name;
+  args.ns = &ns;
+  args.table_name = &table_name;
   args.scan_spec = &scan_spec;
   args.retry_table_not_found = &retry_table_not_found;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 Scanner ClientServiceClient::recv_open_scanner()
@@ -4759,27 +10756,25 @@ Scanner ClientServiceClient::recv_open_scanner()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("open_scanner") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   Scanner _return;
   ClientService_open_scanner_presult result;
@@ -4794,7 +10789,72 @@ Scanner ClientServiceClient::recv_open_scanner()
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "open_scanner failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "open_scanner failed: unknown result");
+}
+
+ScannerAsync ClientServiceClient::open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found)
+{
+  send_open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found);
+  return recv_open_scanner_async();
+}
+
+void ClientServiceClient::send_open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("open_scanner_async", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_open_scanner_async_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.future = &future;
+  args.scan_spec = &scan_spec;
+  args.retry_table_not_found = &retry_table_not_found;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+ScannerAsync ClientServiceClient::recv_open_scanner_async()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("open_scanner_async") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ScannerAsync _return;
+  ClientService_open_scanner_async_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    return _return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "open_scanner_async failed: unknown result");
 }
 
 void ClientServiceClient::close_scanner(const Scanner scanner)
@@ -4806,15 +10866,15 @@ void ClientServiceClient::close_scanner(const Scanner scanner)
 void ClientServiceClient::send_close_scanner(const Scanner scanner)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("close_scanner", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("close_scanner", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_close_scanner_pargs args;
   args.scanner = &scanner;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_close_scanner()
@@ -4822,29 +10882,83 @@ void ClientServiceClient::recv_close_scanner()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("close_scanner") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_close_scanner_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::close_scanner_async(const ScannerAsync scanner)
+{
+  send_close_scanner_async(scanner);
+  recv_close_scanner_async();
+}
+
+void ClientServiceClient::send_close_scanner_async(const ScannerAsync scanner)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("close_scanner_async", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_close_scanner_async_pargs args;
+  args.scanner = &scanner;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_close_scanner_async()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("close_scanner_async") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_close_scanner_async_presult result;
   result.read(iprot_);
   iprot_->readMessageEnd();
   iprot_->getTransport()->readEnd();
@@ -4864,15 +10978,15 @@ void ClientServiceClient::next_cells(std::vector<Cell> & _return, const Scanner 
 void ClientServiceClient::send_next_cells(const Scanner scanner)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("next_cells", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("next_cells", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_next_cells_pargs args;
   args.scanner = &scanner;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_cells(std::vector<Cell> & _return)
@@ -4880,27 +10994,25 @@ void ClientServiceClient::recv_next_cells(std::vector<Cell> & _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_cells") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_cells_presult result;
   result.success = &_return;
@@ -4915,7 +11027,7 @@ void ClientServiceClient::recv_next_cells(std::vector<Cell> & _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "next_cells failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "next_cells failed: unknown result");
 }
 
 void ClientServiceClient::next_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner)
@@ -4927,15 +11039,15 @@ void ClientServiceClient::next_cells_as_arrays(std::vector<CellAsArray> & _retur
 void ClientServiceClient::send_next_cells_as_arrays(const Scanner scanner)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("next_cells_as_arrays", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("next_cells_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_next_cells_as_arrays_pargs args;
   args.scanner = &scanner;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_cells_as_arrays(std::vector<CellAsArray> & _return)
@@ -4943,27 +11055,25 @@ void ClientServiceClient::recv_next_cells_as_arrays(std::vector<CellAsArray> & _
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_cells_as_arrays") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_cells_as_arrays_presult result;
   result.success = &_return;
@@ -4978,7 +11088,65 @@ void ClientServiceClient::recv_next_cells_as_arrays(std::vector<CellAsArray> & _
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "next_cells_as_arrays failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "next_cells_as_arrays failed: unknown result");
+}
+
+void ClientServiceClient::next_cells_serialized(CellsSerialized& _return, const Scanner scanner)
+{
+  send_next_cells_serialized(scanner);
+  recv_next_cells_serialized(_return);
+}
+
+void ClientServiceClient::send_next_cells_serialized(const Scanner scanner)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("next_cells_serialized", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_next_cells_serialized_pargs args;
+  args.scanner = &scanner;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_next_cells_serialized(CellsSerialized& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("next_cells_serialized") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_next_cells_serialized_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "next_cells_serialized failed: unknown result");
 }
 
 void ClientServiceClient::next_row(std::vector<Cell> & _return, const Scanner scanner)
@@ -4990,15 +11158,15 @@ void ClientServiceClient::next_row(std::vector<Cell> & _return, const Scanner sc
 void ClientServiceClient::send_next_row(const Scanner scanner)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("next_row", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("next_row", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_next_row_pargs args;
   args.scanner = &scanner;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_row(std::vector<Cell> & _return)
@@ -5006,27 +11174,25 @@ void ClientServiceClient::recv_next_row(std::vector<Cell> & _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_row") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_row_presult result;
   result.success = &_return;
@@ -5041,7 +11207,7 @@ void ClientServiceClient::recv_next_row(std::vector<Cell> & _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "next_row failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "next_row failed: unknown result");
 }
 
 void ClientServiceClient::next_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner)
@@ -5053,15 +11219,15 @@ void ClientServiceClient::next_row_as_arrays(std::vector<CellAsArray> & _return,
 void ClientServiceClient::send_next_row_as_arrays(const Scanner scanner)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("next_row_as_arrays", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("next_row_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_next_row_as_arrays_pargs args;
   args.scanner = &scanner;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_next_row_as_arrays(std::vector<CellAsArray> & _return)
@@ -5069,27 +11235,25 @@ void ClientServiceClient::recv_next_row_as_arrays(std::vector<CellAsArray> & _re
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_row_as_arrays") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_row_as_arrays_presult result;
   result.success = &_return;
@@ -5104,28 +11268,90 @@ void ClientServiceClient::recv_next_row_as_arrays(std::vector<CellAsArray> & _re
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "next_row_as_arrays failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "next_row_as_arrays failed: unknown result");
 }
 
-void ClientServiceClient::get_row(std::vector<Cell> & _return, const std::string& name, const std::string& row)
+void ClientServiceClient::next_row_serialized(CellsSerialized& _return, const Scanner scanner)
 {
-  send_get_row(name, row);
+  send_next_row_serialized(scanner);
+  recv_next_row_serialized(_return);
+}
+
+void ClientServiceClient::send_next_row_serialized(const Scanner scanner)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("next_row_serialized", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_next_row_serialized_pargs args;
+  args.scanner = &scanner;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_next_row_serialized(CellsSerialized& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("next_row_serialized") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_next_row_serialized_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "next_row_serialized failed: unknown result");
+}
+
+void ClientServiceClient::get_row(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const std::string& row)
+{
+  send_get_row(ns, table_name, row);
   recv_get_row(_return);
 }
 
-void ClientServiceClient::send_get_row(const std::string& name, const std::string& row)
+void ClientServiceClient::send_get_row(const Namespace ns, const std::string& table_name, const std::string& row)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_row", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_row", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_row_pargs args;
-  args.name = &name;
+  args.ns = &ns;
+  args.table_name = &table_name;
   args.row = &row;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_row(std::vector<Cell> & _return)
@@ -5133,27 +11359,25 @@ void ClientServiceClient::recv_get_row(std::vector<Cell> & _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_row") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_row_presult result;
   result.success = &_return;
@@ -5168,28 +11392,29 @@ void ClientServiceClient::recv_get_row(std::vector<Cell> & _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_row failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_row failed: unknown result");
 }
 
-void ClientServiceClient::get_row_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const std::string& row)
+void ClientServiceClient::get_row_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const std::string& row)
 {
-  send_get_row_as_arrays(name, row);
+  send_get_row_as_arrays(ns, name, row);
   recv_get_row_as_arrays(_return);
 }
 
-void ClientServiceClient::send_get_row_as_arrays(const std::string& name, const std::string& row)
+void ClientServiceClient::send_get_row_as_arrays(const Namespace ns, const std::string& name, const std::string& row)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_row_as_arrays", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_row_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_row_as_arrays_pargs args;
+  args.ns = &ns;
   args.name = &name;
   args.row = &row;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_row_as_arrays(std::vector<CellAsArray> & _return)
@@ -5197,27 +11422,25 @@ void ClientServiceClient::recv_get_row_as_arrays(std::vector<CellAsArray> & _ret
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_row_as_arrays") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_row_as_arrays_presult result;
   result.success = &_return;
@@ -5232,29 +11455,93 @@ void ClientServiceClient::recv_get_row_as_arrays(std::vector<CellAsArray> & _ret
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_row_as_arrays failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_row_as_arrays failed: unknown result");
 }
 
-void ClientServiceClient::get_cell(Value& _return, const std::string& name, const std::string& row, const std::string& column)
+void ClientServiceClient::get_row_serialized(CellsSerialized& _return, const Namespace ns, const std::string& table_name, const std::string& row)
 {
-  send_get_cell(name, row, column);
+  send_get_row_serialized(ns, table_name, row);
+  recv_get_row_serialized(_return);
+}
+
+void ClientServiceClient::send_get_row_serialized(const Namespace ns, const std::string& table_name, const std::string& row)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_row_serialized", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_row_serialized_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.row = &row;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_row_serialized(CellsSerialized& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("get_row_serialized") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_get_row_serialized_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_row_serialized failed: unknown result");
+}
+
+void ClientServiceClient::get_cell(Value& _return, const Namespace ns, const std::string& table_name, const std::string& row, const std::string& column)
+{
+  send_get_cell(ns, table_name, row, column);
   recv_get_cell(_return);
 }
 
-void ClientServiceClient::send_get_cell(const std::string& name, const std::string& row, const std::string& column)
+void ClientServiceClient::send_get_cell(const Namespace ns, const std::string& table_name, const std::string& row, const std::string& column)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_cell", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_cell", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_cell_pargs args;
-  args.name = &name;
+  args.ns = &ns;
+  args.table_name = &table_name;
   args.row = &row;
   args.column = &column;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_cell(Value& _return)
@@ -5262,27 +11549,25 @@ void ClientServiceClient::recv_get_cell(Value& _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_cell") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_cell_presult result;
   result.success = &_return;
@@ -5297,28 +11582,29 @@ void ClientServiceClient::recv_get_cell(Value& _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_cell failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_cell failed: unknown result");
 }
 
-void ClientServiceClient::get_cells(std::vector<Cell> & _return, const std::string& name, const ScanSpec& scan_spec)
+void ClientServiceClient::get_cells(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec)
 {
-  send_get_cells(name, scan_spec);
+  send_get_cells(ns, table_name, scan_spec);
   recv_get_cells(_return);
 }
 
-void ClientServiceClient::send_get_cells(const std::string& name, const ScanSpec& scan_spec)
+void ClientServiceClient::send_get_cells(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_cells", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_cells", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_cells_pargs args;
-  args.name = &name;
+  args.ns = &ns;
+  args.table_name = &table_name;
   args.scan_spec = &scan_spec;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_cells(std::vector<Cell> & _return)
@@ -5326,27 +11612,25 @@ void ClientServiceClient::recv_get_cells(std::vector<Cell> & _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_cells") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_cells_presult result;
   result.success = &_return;
@@ -5361,28 +11645,29 @@ void ClientServiceClient::recv_get_cells(std::vector<Cell> & _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_cells failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_cells failed: unknown result");
 }
 
-void ClientServiceClient::get_cells_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const ScanSpec& scan_spec)
+void ClientServiceClient::get_cells_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec)
 {
-  send_get_cells_as_arrays(name, scan_spec);
+  send_get_cells_as_arrays(ns, name, scan_spec);
   recv_get_cells_as_arrays(_return);
 }
 
-void ClientServiceClient::send_get_cells_as_arrays(const std::string& name, const ScanSpec& scan_spec)
+void ClientServiceClient::send_get_cells_as_arrays(const Namespace ns, const std::string& name, const ScanSpec& scan_spec)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_cells_as_arrays", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_cells_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_cells_as_arrays_pargs args;
+  args.ns = &ns;
   args.name = &name;
   args.scan_spec = &scan_spec;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_cells_as_arrays(std::vector<CellAsArray> & _return)
@@ -5390,27 +11675,25 @@ void ClientServiceClient::recv_get_cells_as_arrays(std::vector<CellAsArray> & _r
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_cells_as_arrays") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_cells_as_arrays_presult result;
   result.success = &_return;
@@ -5425,29 +11708,387 @@ void ClientServiceClient::recv_get_cells_as_arrays(std::vector<CellAsArray> & _r
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
 }
 
-Mutator ClientServiceClient::open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval)
+void ClientServiceClient::get_cells_serialized(CellsSerialized& _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec)
 {
-  send_open_mutator(name, flags, flush_interval);
+  send_get_cells_serialized(ns, name, scan_spec);
+  recv_get_cells_serialized(_return);
+}
+
+void ClientServiceClient::send_get_cells_serialized(const Namespace ns, const std::string& name, const ScanSpec& scan_spec)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_cells_serialized", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_cells_serialized_pargs args;
+  args.ns = &ns;
+  args.name = &name;
+  args.scan_spec = &scan_spec;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_cells_serialized(CellsSerialized& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("get_cells_serialized") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_get_cells_serialized_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_cells_serialized failed: unknown result");
+}
+
+void ClientServiceClient::refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec)
+{
+  send_refresh_shared_mutator(ns, table_name, mutate_spec);
+  recv_refresh_shared_mutator();
+}
+
+void ClientServiceClient::send_refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("refresh_shared_mutator", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_refresh_shared_mutator_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.mutate_spec = &mutate_spec;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_refresh_shared_mutator()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("refresh_shared_mutator") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_refresh_shared_mutator_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::offer_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells)
+{
+  send_offer_cells(ns, table_name, mutate_spec, cells);
+  recv_offer_cells();
+}
+
+void ClientServiceClient::send_offer_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("offer_cells", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_offer_cells_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.mutate_spec = &mutate_spec;
+  args.cells = &cells;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_offer_cells()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("offer_cells") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_offer_cells_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells)
+{
+  send_offer_cells_as_arrays(ns, table_name, mutate_spec, cells);
+  recv_offer_cells_as_arrays();
+}
+
+void ClientServiceClient::send_offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("offer_cells_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_offer_cells_as_arrays_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.mutate_spec = &mutate_spec;
+  args.cells = &cells;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_offer_cells_as_arrays()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("offer_cells_as_arrays") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_offer_cells_as_arrays_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell)
+{
+  send_offer_cell(ns, table_name, mutate_spec, cell);
+  recv_offer_cell();
+}
+
+void ClientServiceClient::send_offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("offer_cell", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_offer_cell_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.mutate_spec = &mutate_spec;
+  args.cell = &cell;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_offer_cell()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("offer_cell") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_offer_cell_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell)
+{
+  send_offer_cell_as_array(ns, table_name, mutate_spec, cell);
+  recv_offer_cell_as_array();
+}
+
+void ClientServiceClient::send_offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("offer_cell_as_array", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_offer_cell_as_array_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.mutate_spec = &mutate_spec;
+  args.cell = &cell;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_offer_cell_as_array()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("offer_cell_as_array") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_offer_cell_as_array_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+Mutator ClientServiceClient::open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval)
+{
+  send_open_mutator(ns, table_name, flags, flush_interval);
   return recv_open_mutator();
 }
 
-void ClientServiceClient::send_open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval)
+void ClientServiceClient::send_open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("open_mutator", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("open_mutator", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_open_mutator_pargs args;
-  args.name = &name;
+  args.ns = &ns;
+  args.table_name = &table_name;
   args.flags = &flags;
   args.flush_interval = &flush_interval;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 Mutator ClientServiceClient::recv_open_mutator()
@@ -5455,27 +12096,25 @@ Mutator ClientServiceClient::recv_open_mutator()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("open_mutator") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   Mutator _return;
   ClientService_open_mutator_presult result;
@@ -5490,7 +12129,7 @@ Mutator ClientServiceClient::recv_open_mutator()
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "open_mutator failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "open_mutator failed: unknown result");
 }
 
 void ClientServiceClient::close_mutator(const Mutator mutator, const bool flush)
@@ -5502,7 +12141,7 @@ void ClientServiceClient::close_mutator(const Mutator mutator, const bool flush)
 void ClientServiceClient::send_close_mutator(const Mutator mutator, const bool flush)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("close_mutator", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("close_mutator", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_close_mutator_pargs args;
   args.mutator = &mutator;
@@ -5510,8 +12149,8 @@ void ClientServiceClient::send_close_mutator(const Mutator mutator, const bool f
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_close_mutator()
@@ -5519,27 +12158,25 @@ void ClientServiceClient::recv_close_mutator()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("close_mutator") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_close_mutator_presult result;
   result.read(iprot_);
@@ -5561,7 +12198,7 @@ void ClientServiceClient::set_cell(const Mutator mutator, const Cell& cell)
 void ClientServiceClient::send_set_cell(const Mutator mutator, const Cell& cell)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("set_cell", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("set_cell", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_set_cell_pargs args;
   args.mutator = &mutator;
@@ -5569,8 +12206,8 @@ void ClientServiceClient::send_set_cell(const Mutator mutator, const Cell& cell)
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_set_cell()
@@ -5578,27 +12215,25 @@ void ClientServiceClient::recv_set_cell()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cell") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cell_presult result;
   result.read(iprot_);
@@ -5620,7 +12255,7 @@ void ClientServiceClient::set_cell_as_array(const Mutator mutator, const CellAsA
 void ClientServiceClient::send_set_cell_as_array(const Mutator mutator, const CellAsArray& cell)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("set_cell_as_array", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("set_cell_as_array", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_set_cell_as_array_pargs args;
   args.mutator = &mutator;
@@ -5628,8 +12263,8 @@ void ClientServiceClient::send_set_cell_as_array(const Mutator mutator, const Ce
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_set_cell_as_array()
@@ -5637,27 +12272,25 @@ void ClientServiceClient::recv_set_cell_as_array()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cell_as_array") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cell_as_array_presult result;
   result.read(iprot_);
@@ -5679,7 +12312,7 @@ void ClientServiceClient::set_cells(const Mutator mutator, const std::vector<Cel
 void ClientServiceClient::send_set_cells(const Mutator mutator, const std::vector<Cell> & cells)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("set_cells", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("set_cells", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_set_cells_pargs args;
   args.mutator = &mutator;
@@ -5687,8 +12320,8 @@ void ClientServiceClient::send_set_cells(const Mutator mutator, const std::vecto
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_set_cells()
@@ -5696,27 +12329,25 @@ void ClientServiceClient::recv_set_cells()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cells") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cells_presult result;
   result.read(iprot_);
@@ -5738,7 +12369,7 @@ void ClientServiceClient::set_cells_as_arrays(const Mutator mutator, const std::
 void ClientServiceClient::send_set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("set_cells_as_arrays", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("set_cells_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_set_cells_as_arrays_pargs args;
   args.mutator = &mutator;
@@ -5746,8 +12377,8 @@ void ClientServiceClient::send_set_cells_as_arrays(const Mutator mutator, const 
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_set_cells_as_arrays()
@@ -5755,29 +12386,85 @@ void ClientServiceClient::recv_set_cells_as_arrays()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cells_as_arrays") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cells_as_arrays_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush)
+{
+  send_set_cells_serialized(mutator, cells, flush);
+  recv_set_cells_serialized();
+}
+
+void ClientServiceClient::send_set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("set_cells_serialized", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_set_cells_serialized_pargs args;
+  args.mutator = &mutator;
+  args.cells = &cells;
+  args.flush = &flush;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_set_cells_serialized()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("set_cells_serialized") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_set_cells_serialized_presult result;
   result.read(iprot_);
   iprot_->readMessageEnd();
   iprot_->getTransport()->readEnd();
@@ -5797,15 +12484,15 @@ void ClientServiceClient::flush_mutator(const Mutator mutator)
 void ClientServiceClient::send_flush_mutator(const Mutator mutator)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("flush_mutator", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("flush_mutator", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_flush_mutator_pargs args;
   args.mutator = &mutator;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_flush_mutator()
@@ -5813,27 +12500,25 @@ void ClientServiceClient::recv_flush_mutator()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("flush_mutator") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_flush_mutator_presult result;
   result.read(iprot_);
@@ -5846,55 +12531,53 @@ void ClientServiceClient::recv_flush_mutator()
   return;
 }
 
-int32_t ClientServiceClient::get_table_id(const std::string& name)
+bool ClientServiceClient::exists_namespace(const std::string& ns)
 {
-  send_get_table_id(name);
-  return recv_get_table_id();
+  send_exists_namespace(ns);
+  return recv_exists_namespace();
 }
 
-void ClientServiceClient::send_get_table_id(const std::string& name)
+void ClientServiceClient::send_exists_namespace(const std::string& ns)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_table_id", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("exists_namespace", ::apache::thrift::protocol::T_CALL, cseqid);
 
-  ClientService_get_table_id_pargs args;
-  args.name = &name;
+  ClientService_exists_namespace_pargs args;
+  args.ns = &ns;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
-int32_t ClientServiceClient::recv_get_table_id()
+bool ClientServiceClient::recv_exists_namespace()
 {
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
-  if (fname.compare("get_table_id") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (fname.compare("exists_namespace") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
-  int32_t _return;
-  ClientService_get_table_id_presult result;
+  bool _return;
+  ClientService_exists_namespace_presult result;
   result.success = &_return;
   result.read(iprot_);
   iprot_->readMessageEnd();
@@ -5906,55 +12589,240 @@ int32_t ClientServiceClient::recv_get_table_id()
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_table_id failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "exists_namespace failed: unknown result");
 }
 
-void ClientServiceClient::get_schema(std::string& _return, const std::string& name)
+bool ClientServiceClient::exists_table(const Namespace ns, const std::string& name)
 {
-  send_get_schema(name);
-  recv_get_schema(_return);
+  send_exists_table(ns, name);
+  return recv_exists_table();
 }
 
-void ClientServiceClient::send_get_schema(const std::string& name)
+void ClientServiceClient::send_exists_table(const Namespace ns, const std::string& name)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_schema", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("exists_table", ::apache::thrift::protocol::T_CALL, cseqid);
 
-  ClientService_get_schema_pargs args;
+  ClientService_exists_table_pargs args;
+  args.ns = &ns;
   args.name = &name;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
-void ClientServiceClient::recv_get_schema(std::string& _return)
+bool ClientServiceClient::recv_exists_table()
 {
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+  }
+  if (fname.compare("exists_table") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  bool _return;
+  ClientService_exists_table_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    return _return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "exists_table failed: unknown result");
+}
+
+void ClientServiceClient::get_table_id(std::string& _return, const Namespace ns, const std::string& table_name)
+{
+  send_get_table_id(ns, table_name);
+  recv_get_table_id(_return);
+}
+
+void ClientServiceClient::send_get_table_id(const Namespace ns, const std::string& table_name)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_table_id", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_table_id_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_table_id(std::string& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("get_table_id") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_get_table_id_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_table_id failed: unknown result");
+}
+
+void ClientServiceClient::get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name)
+{
+  send_get_schema_str(ns, table_name);
+  recv_get_schema_str(_return);
+}
+
+void ClientServiceClient::send_get_schema_str(const Namespace ns, const std::string& table_name)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_schema_str", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_schema_str_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_schema_str(std::string& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("get_schema_str") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_get_schema_str_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_schema_str failed: unknown result");
+}
+
+void ClientServiceClient::get_schema(Schema& _return, const Namespace ns, const std::string& table_name)
+{
+  send_get_schema(ns, table_name);
+  recv_get_schema(_return);
+}
+
+void ClientServiceClient::send_get_schema(const Namespace ns, const std::string& table_name)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_schema", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_schema_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_schema(Schema& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
   }
   if (fname.compare("get_schema") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_schema_presult result;
   result.success = &_return;
@@ -5969,26 +12837,27 @@ void ClientServiceClient::recv_get_schema(std::string& _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_schema failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_schema failed: unknown result");
 }
 
-void ClientServiceClient::get_tables(std::vector<std::string> & _return)
+void ClientServiceClient::get_tables(std::vector<std::string> & _return, const Namespace ns)
 {
-  send_get_tables();
+  send_get_tables(ns);
   recv_get_tables(_return);
 }
 
-void ClientServiceClient::send_get_tables()
+void ClientServiceClient::send_get_tables(const Namespace ns)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_tables", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_tables", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_tables_pargs args;
+  args.ns = &ns;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_get_tables(std::vector<std::string> & _return)
@@ -5996,27 +12865,25 @@ void ClientServiceClient::recv_get_tables(std::vector<std::string> & _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_tables") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_tables_presult result;
   result.success = &_return;
@@ -6031,28 +12898,267 @@ void ClientServiceClient::recv_get_tables(std::vector<std::string> & _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_tables failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_tables failed: unknown result");
 }
 
-void ClientServiceClient::drop_table(const std::string& name, const bool if_exists)
+void ClientServiceClient::get_listing(std::vector<NamespaceListing> & _return, const Namespace ns)
 {
-  send_drop_table(name, if_exists);
+  send_get_listing(ns);
+  recv_get_listing(_return);
+}
+
+void ClientServiceClient::send_get_listing(const Namespace ns)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_listing", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_listing_pargs args;
+  args.ns = &ns;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_listing(std::vector<NamespaceListing> & _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("get_listing") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_get_listing_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_listing failed: unknown result");
+}
+
+void ClientServiceClient::get_table_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name)
+{
+  send_get_table_splits(ns, table_name);
+  recv_get_table_splits(_return);
+}
+
+void ClientServiceClient::send_get_table_splits(const Namespace ns, const std::string& table_name)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("get_table_splits", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_get_table_splits_pargs args;
+  args.ns = &ns;
+  args.table_name = &table_name;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_get_table_splits(std::vector<TableSplit> & _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("get_table_splits") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_get_table_splits_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_table_splits failed: unknown result");
+}
+
+void ClientServiceClient::drop_namespace(const std::string& ns, const bool if_exists)
+{
+  send_drop_namespace(ns, if_exists);
+  recv_drop_namespace();
+}
+
+void ClientServiceClient::send_drop_namespace(const std::string& ns, const bool if_exists)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("drop_namespace", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_drop_namespace_pargs args;
+  args.ns = &ns;
+  args.if_exists = &if_exists;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_drop_namespace()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("drop_namespace") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_drop_namespace_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::rename_table(const Namespace ns, const std::string& name, const std::string& new_name)
+{
+  send_rename_table(ns, name, new_name);
+  recv_rename_table();
+}
+
+void ClientServiceClient::send_rename_table(const Namespace ns, const std::string& name, const std::string& new_name)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("rename_table", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_rename_table_pargs args;
+  args.ns = &ns;
+  args.name = &name;
+  args.new_name = &new_name;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void ClientServiceClient::recv_rename_table()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("rename_table") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  ClientService_rename_table_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
+void ClientServiceClient::drop_table(const Namespace ns, const std::string& name, const bool if_exists)
+{
+  send_drop_table(ns, name, if_exists);
   recv_drop_table();
 }
 
-void ClientServiceClient::send_drop_table(const std::string& name, const bool if_exists)
+void ClientServiceClient::send_drop_table(const Namespace ns, const std::string& name, const bool if_exists)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("drop_table", apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("drop_table", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_drop_table_pargs args;
+  args.ns = &ns;
   args.name = &name;
   args.if_exists = &if_exists;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
-  oprot_->getTransport()->flush();
   oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 void ClientServiceClient::recv_drop_table()
@@ -6060,27 +13166,25 @@ void ClientServiceClient::recv_drop_table()
 
   int32_t rseqid = 0;
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
-    apache::thrift::TApplicationException x;
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("drop_table") != 0) {
-    iprot_->skip(apache::thrift::protocol::T_STRUCT);
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_drop_table_presult result;
   result.read(iprot_);
@@ -6093,118 +13197,750 @@ void ClientServiceClient::recv_drop_table()
   return;
 }
 
-bool ClientServiceProcessor::process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot) {
+bool ClientServiceProcessor::process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot, void* callContext) {
 
-  apache::thrift::protocol::TProtocol* iprot = piprot.get();
-  apache::thrift::protocol::TProtocol* oprot = poprot.get();
+  ::apache::thrift::protocol::TProtocol* iprot = piprot.get();
+  ::apache::thrift::protocol::TProtocol* oprot = poprot.get();
   std::string fname;
-  apache::thrift::protocol::TMessageType mtype;
+  ::apache::thrift::protocol::TMessageType mtype;
   int32_t seqid;
 
   iprot->readMessageBegin(fname, mtype, seqid);
 
-  if (mtype != apache::thrift::protocol::T_CALL && mtype != apache::thrift::protocol::T_ONEWAY) {
-    iprot->skip(apache::thrift::protocol::T_STRUCT);
+  if (mtype != ::apache::thrift::protocol::T_CALL && mtype != ::apache::thrift::protocol::T_ONEWAY) {
+    iprot->skip(::apache::thrift::protocol::T_STRUCT);
     iprot->readMessageEnd();
     iprot->getTransport()->readEnd();
-    apache::thrift::TApplicationException x(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
-    oprot->writeMessageBegin(fname, apache::thrift::protocol::T_EXCEPTION, seqid);
+    ::apache::thrift::TApplicationException x(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    oprot->writeMessageBegin(fname, ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return true;
   }
 
-  return process_fn(iprot, oprot, fname, seqid);
+  return process_fn(iprot, oprot, fname, seqid, callContext);
 }
 
-bool ClientServiceProcessor::process_fn(apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid) {
-  std::map<std::string, void (ClientServiceProcessor::*)(int32_t, apache::thrift::protocol::TProtocol*, apache::thrift::protocol::TProtocol*)>::iterator pfn;
+bool ClientServiceProcessor::process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid, void* callContext) {
+  std::map<std::string, void (ClientServiceProcessor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*, void*)>::iterator pfn;
   pfn = processMap_.find(fname);
   if (pfn == processMap_.end()) {
-    iprot->skip(apache::thrift::protocol::T_STRUCT);
+    iprot->skip(::apache::thrift::protocol::T_STRUCT);
     iprot->readMessageEnd();
     iprot->getTransport()->readEnd();
-    apache::thrift::TApplicationException x(apache::thrift::TApplicationException::UNKNOWN_METHOD, "Invalid method name: '"+fname+"'");
-    oprot->writeMessageBegin(fname, apache::thrift::protocol::T_EXCEPTION, seqid);
+    ::apache::thrift::TApplicationException x(::apache::thrift::TApplicationException::UNKNOWN_METHOD, "Invalid method name: '"+fname+"'");
+    oprot->writeMessageBegin(fname, ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return true;
   }
-  (this->*(pfn->second))(seqid, iprot, oprot);
+  (this->*(pfn->second))(seqid, iprot, oprot, callContext);
   return true;
 }
 
-void ClientServiceProcessor::process_create_table(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_create_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
-  ClientService_create_table_args args;
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.create_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.create_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.create_namespace");
+  }
+
+  ClientService_create_namespace_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
 
-  ClientService_create_table_result result;
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.create_namespace", bytes);
+  }
+
+  ClientService_create_namespace_result result;
   try {
-    iface_->create_table(args.name, args.schema);
+    iface_->create_namespace(args.ns);
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("create_table", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.create_namespace");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("create_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("create_table", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.create_namespace");
+  }
+
+  oprot->writeMessageBegin("create_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.create_namespace", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_open_scanner(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_create_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
-  ClientService_open_scanner_args args;
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.create_table", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.create_table");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.create_table");
+  }
+
+  ClientService_create_table_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
 
-  ClientService_open_scanner_result result;
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.create_table", bytes);
+  }
+
+  ClientService_create_table_result result;
   try {
-    result.success = iface_->open_scanner(args.name, args.scan_spec, args.retry_table_not_found);
+    iface_->create_table(args.ns, args.table_name, args.schema);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.create_table");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("create_table", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.create_table");
+  }
+
+  oprot->writeMessageBegin("create_table", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.create_table", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_open_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_namespace");
+  }
+
+  ClientService_open_namespace_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_namespace", bytes);
+  }
+
+  ClientService_open_namespace_result result;
+  try {
+    result.success = iface_->open_namespace(args.ns);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("open_scanner", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_namespace");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("open_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("open_scanner", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_namespace");
+  }
+
+  oprot->writeMessageBegin("open_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_namespace", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_close_scanner(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_namespace");
+  }
+
+  ClientService_close_namespace_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_namespace", bytes);
+  }
+
+  ClientService_close_namespace_result result;
+  try {
+    iface_->close_namespace(args.ns);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_namespace");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("close_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_namespace");
+  }
+
+  oprot->writeMessageBegin("close_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_namespace", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_open_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_future", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_future");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_future");
+  }
+
+  ClientService_open_future_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_future", bytes);
+  }
+
+  ClientService_open_future_result result;
+  try {
+    result.success = iface_->open_future(args.queue_size);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_future");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("open_future", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_future");
+  }
+
+  oprot->writeMessageBegin("open_future", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_future", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_cancel_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.cancel_future", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.cancel_future");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.cancel_future");
+  }
+
+  ClientService_cancel_future_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.cancel_future", bytes);
+  }
+
+  ClientService_cancel_future_result result;
+  try {
+    iface_->cancel_future(args.ff);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.cancel_future");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("cancel_future", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.cancel_future");
+  }
+
+  oprot->writeMessageBegin("cancel_future", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.cancel_future", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_get_future_result(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_future_result", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_future_result");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_future_result");
+  }
+
+  ClientService_get_future_result_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_future_result", bytes);
+  }
+
+  ClientService_get_future_result_result result;
+  try {
+    iface_->get_future_result(result.success, args.ff);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_future_result");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_future_result", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_future_result");
+  }
+
+  oprot->writeMessageBegin("get_future_result", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_future_result", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_get_future_result_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_future_result_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_future_result_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_future_result_as_arrays");
+  }
+
+  ClientService_get_future_result_as_arrays_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_future_result_as_arrays", bytes);
+  }
+
+  ClientService_get_future_result_as_arrays_result result;
+  try {
+    iface_->get_future_result_as_arrays(result.success, args.ff);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_future_result_as_arrays");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_future_result_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_future_result_as_arrays");
+  }
+
+  oprot->writeMessageBegin("get_future_result_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_future_result_as_arrays", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_get_future_result_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_future_result_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_future_result_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_future_result_serialized");
+  }
+
+  ClientService_get_future_result_serialized_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_future_result_serialized", bytes);
+  }
+
+  ClientService_get_future_result_serialized_result result;
+  try {
+    iface_->get_future_result_serialized(result.success, args.ff);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_future_result_serialized");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_future_result_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_future_result_serialized");
+  }
+
+  oprot->writeMessageBegin("get_future_result_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_future_result_serialized", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_close_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_future", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_future");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_future");
+  }
+
+  ClientService_close_future_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_future", bytes);
+  }
+
+  ClientService_close_future_result result;
+  try {
+    iface_->close_future(args.ff);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_future");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("close_future", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_future");
+  }
+
+  oprot->writeMessageBegin("close_future", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_future", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_open_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_scanner", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_scanner");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_scanner");
+  }
+
+  ClientService_open_scanner_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_scanner", bytes);
+  }
+
+  ClientService_open_scanner_result result;
+  try {
+    result.success = iface_->open_scanner(args.ns, args.table_name, args.scan_spec, args.retry_table_not_found);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_scanner");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("open_scanner", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_scanner");
+  }
+
+  oprot->writeMessageBegin("open_scanner", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_scanner", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_open_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_scanner_async", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_scanner_async");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_scanner_async");
+  }
+
+  ClientService_open_scanner_async_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_scanner_async", bytes);
+  }
+
+  ClientService_open_scanner_async_result result;
+  try {
+    result.success = iface_->open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec, args.retry_table_not_found);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_scanner_async");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("open_scanner_async", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_scanner_async");
+  }
+
+  oprot->writeMessageBegin("open_scanner_async", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_scanner_async", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_close_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_scanner", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_scanner");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_scanner");
+  }
+
   ClientService_close_scanner_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_scanner", bytes);
+  }
 
   ClientService_close_scanner_result result;
   try {
@@ -6213,28 +13949,110 @@ void ClientServiceProcessor::process_close_scanner(int32_t seqid, apache::thrift
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("close_scanner", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_scanner");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("close_scanner", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("close_scanner", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_scanner");
+  }
+
+  oprot->writeMessageBegin("close_scanner", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_scanner", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_scanner_async", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_scanner_async");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_scanner_async");
+  }
+
+  ClientService_close_scanner_async_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_scanner_async", bytes);
+  }
+
+  ClientService_close_scanner_async_result result;
+  try {
+    iface_->close_scanner_async(args.scanner);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_scanner_async");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("close_scanner_async", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_scanner_async");
+  }
+
+  oprot->writeMessageBegin("close_scanner_async", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_scanner_async", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_next_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_cells", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_cells");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_cells");
+  }
+
   ClientService_next_cells_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_cells", bytes);
+  }
 
   ClientService_next_cells_result result;
   try {
@@ -6244,28 +14062,54 @@ void ClientServiceProcessor::process_next_cells(int32_t seqid, apache::thrift::p
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("next_cells", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_cells");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("next_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("next_cells", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_cells");
+  }
+
+  oprot->writeMessageBegin("next_cells", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_cells", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_cells_as_arrays(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_cells_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_cells_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_cells_as_arrays");
+  }
+
   ClientService_next_cells_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_cells_as_arrays", bytes);
+  }
 
   ClientService_next_cells_as_arrays_result result;
   try {
@@ -6275,28 +14119,108 @@ void ClientServiceProcessor::process_next_cells_as_arrays(int32_t seqid, apache:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("next_cells_as_arrays", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_cells_as_arrays");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("next_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("next_cells_as_arrays", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_cells_as_arrays");
+  }
+
+  oprot->writeMessageBegin("next_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_cells_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_row(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_cells_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_cells_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_cells_serialized");
+  }
+
+  ClientService_next_cells_serialized_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_cells_serialized", bytes);
+  }
+
+  ClientService_next_cells_serialized_result result;
+  try {
+    iface_->next_cells_serialized(result.success, args.scanner);
+    result.__isset.success = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_cells_serialized");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("next_cells_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_cells_serialized");
+  }
+
+  oprot->writeMessageBegin("next_cells_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_cells_serialized", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_next_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_row", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_row");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_row");
+  }
+
   ClientService_next_row_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_row", bytes);
+  }
 
   ClientService_next_row_result result;
   try {
@@ -6306,28 +14230,54 @@ void ClientServiceProcessor::process_next_row(int32_t seqid, apache::thrift::pro
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("next_row", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_row");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("next_row", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("next_row", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_row");
+  }
+
+  oprot->writeMessageBegin("next_row", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_row", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_next_row_as_arrays(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_row_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_row_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_row_as_arrays");
+  }
+
   ClientService_next_row_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_row_as_arrays", bytes);
+  }
 
   ClientService_next_row_as_arrays_result result;
   try {
@@ -6337,214 +14287,847 @@ void ClientServiceProcessor::process_next_row_as_arrays(int32_t seqid, apache::t
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("next_row_as_arrays", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_row_as_arrays");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("next_row_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("next_row_as_arrays", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_row_as_arrays");
+  }
+
+  oprot->writeMessageBegin("next_row_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_row_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_row(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.next_row_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.next_row_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.next_row_serialized");
+  }
+
+  ClientService_next_row_serialized_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.next_row_serialized", bytes);
+  }
+
+  ClientService_next_row_serialized_result result;
+  try {
+    iface_->next_row_serialized(result.success, args.scanner);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.next_row_serialized");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("next_row_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.next_row_serialized");
+  }
+
+  oprot->writeMessageBegin("next_row_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.next_row_serialized", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_get_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_row", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_row");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_row");
+  }
+
   ClientService_get_row_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_row", bytes);
+  }
 
   ClientService_get_row_result result;
   try {
-    iface_->get_row(result.success, args.name, args.row);
+    iface_->get_row(result.success, args.ns, args.table_name, args.row);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_row", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_row");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_row", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("get_row", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_row");
+  }
+
+  oprot->writeMessageBegin("get_row", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_row", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_row_as_arrays(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_row_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_row_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_row_as_arrays");
+  }
+
   ClientService_get_row_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_row_as_arrays", bytes);
+  }
 
   ClientService_get_row_as_arrays_result result;
   try {
-    iface_->get_row_as_arrays(result.success, args.name, args.row);
+    iface_->get_row_as_arrays(result.success, args.ns, args.name, args.row);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_row_as_arrays", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_row_as_arrays");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_row_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("get_row_as_arrays", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_row_as_arrays");
+  }
+
+  oprot->writeMessageBegin("get_row_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_row_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_cell(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_row_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_row_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_row_serialized");
+  }
+
+  ClientService_get_row_serialized_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_row_serialized", bytes);
+  }
+
+  ClientService_get_row_serialized_result result;
+  try {
+    iface_->get_row_serialized(result.success, args.ns, args.table_name, args.row);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_row_serialized");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_row_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_row_serialized");
+  }
+
+  oprot->writeMessageBegin("get_row_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_row_serialized", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_get_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_cell", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_cell");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_cell");
+  }
+
   ClientService_get_cell_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_cell", bytes);
+  }
 
   ClientService_get_cell_result result;
   try {
-    iface_->get_cell(result.success, args.name, args.row, args.column);
+    iface_->get_cell(result.success, args.ns, args.table_name, args.row, args.column);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_cell", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_cell");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_cell", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("get_cell", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_cell");
+  }
+
+  oprot->writeMessageBegin("get_cell", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_cell", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_cells", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_cells");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_cells");
+  }
+
   ClientService_get_cells_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_cells", bytes);
+  }
 
   ClientService_get_cells_result result;
   try {
-    iface_->get_cells(result.success, args.name, args.scan_spec);
+    iface_->get_cells(result.success, args.ns, args.table_name, args.scan_spec);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_cells", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_cells");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("get_cells", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_cells");
+  }
+
+  oprot->writeMessageBegin("get_cells", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_cells", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_cells_as_arrays(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_cells_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_cells_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_cells_as_arrays");
+  }
+
   ClientService_get_cells_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_cells_as_arrays", bytes);
+  }
 
   ClientService_get_cells_as_arrays_result result;
   try {
-    iface_->get_cells_as_arrays(result.success, args.name, args.scan_spec);
+    iface_->get_cells_as_arrays(result.success, args.ns, args.name, args.scan_spec);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_cells_as_arrays", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_cells_as_arrays");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("get_cells_as_arrays", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_cells_as_arrays");
+  }
+
+  oprot->writeMessageBegin("get_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_cells_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_open_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_cells_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_cells_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_cells_serialized");
+  }
+
+  ClientService_get_cells_serialized_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_cells_serialized", bytes);
+  }
+
+  ClientService_get_cells_serialized_result result;
+  try {
+    iface_->get_cells_serialized(result.success, args.ns, args.name, args.scan_spec);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_cells_serialized");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_cells_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_cells_serialized");
+  }
+
+  oprot->writeMessageBegin("get_cells_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_cells_serialized", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_refresh_shared_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.refresh_shared_mutator", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.refresh_shared_mutator");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.refresh_shared_mutator");
+  }
+
+  ClientService_refresh_shared_mutator_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.refresh_shared_mutator", bytes);
+  }
+
+  ClientService_refresh_shared_mutator_result result;
+  try {
+    iface_->refresh_shared_mutator(args.ns, args.table_name, args.mutate_spec);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.refresh_shared_mutator");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("refresh_shared_mutator", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.refresh_shared_mutator");
+  }
+
+  oprot->writeMessageBegin("refresh_shared_mutator", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.refresh_shared_mutator", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_offer_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.offer_cells", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.offer_cells");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.offer_cells");
+  }
+
+  ClientService_offer_cells_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.offer_cells", bytes);
+  }
+
+  ClientService_offer_cells_result result;
+  try {
+    iface_->offer_cells(args.ns, args.table_name, args.mutate_spec, args.cells);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.offer_cells");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("offer_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.offer_cells");
+  }
+
+  oprot->writeMessageBegin("offer_cells", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.offer_cells", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_offer_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.offer_cells_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.offer_cells_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.offer_cells_as_arrays");
+  }
+
+  ClientService_offer_cells_as_arrays_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.offer_cells_as_arrays", bytes);
+  }
+
+  ClientService_offer_cells_as_arrays_result result;
+  try {
+    iface_->offer_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.offer_cells_as_arrays");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("offer_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.offer_cells_as_arrays");
+  }
+
+  oprot->writeMessageBegin("offer_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.offer_cells_as_arrays", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_offer_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.offer_cell", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.offer_cell");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.offer_cell");
+  }
+
+  ClientService_offer_cell_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.offer_cell", bytes);
+  }
+
+  ClientService_offer_cell_result result;
+  try {
+    iface_->offer_cell(args.ns, args.table_name, args.mutate_spec, args.cell);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.offer_cell");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("offer_cell", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.offer_cell");
+  }
+
+  oprot->writeMessageBegin("offer_cell", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.offer_cell", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_offer_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.offer_cell_as_array", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.offer_cell_as_array");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.offer_cell_as_array");
+  }
+
+  ClientService_offer_cell_as_array_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.offer_cell_as_array", bytes);
+  }
+
+  ClientService_offer_cell_as_array_result result;
+  try {
+    iface_->offer_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.offer_cell_as_array");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("offer_cell_as_array", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.offer_cell_as_array");
+  }
+
+  oprot->writeMessageBegin("offer_cell_as_array", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.offer_cell_as_array", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_open_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.open_mutator", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.open_mutator");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.open_mutator");
+  }
+
   ClientService_open_mutator_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.open_mutator", bytes);
+  }
 
   ClientService_open_mutator_result result;
   try {
-    result.success = iface_->open_mutator(args.name, args.flags, args.flush_interval);
+    result.success = iface_->open_mutator(args.ns, args.table_name, args.flags, args.flush_interval);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("open_mutator", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.open_mutator");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("open_mutator", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("open_mutator", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.open_mutator");
+  }
+
+  oprot->writeMessageBegin("open_mutator", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.open_mutator", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_close_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.close_mutator", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.close_mutator");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.close_mutator");
+  }
+
   ClientService_close_mutator_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.close_mutator", bytes);
+  }
 
   ClientService_close_mutator_result result;
   try {
@@ -6553,28 +15136,54 @@ void ClientServiceProcessor::process_close_mutator(int32_t seqid, apache::thrift
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("close_mutator", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.close_mutator");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("close_mutator", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("close_mutator", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.close_mutator");
+  }
+
+  oprot->writeMessageBegin("close_mutator", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.close_mutator", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_set_cell(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cell", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cell");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cell");
+  }
+
   ClientService_set_cell_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cell", bytes);
+  }
 
   ClientService_set_cell_result result;
   try {
@@ -6583,28 +15192,54 @@ void ClientServiceProcessor::process_set_cell(int32_t seqid, apache::thrift::pro
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("set_cell", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cell");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("set_cell", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("set_cell", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cell");
+  }
+
+  oprot->writeMessageBegin("set_cell", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cell", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_set_cell_as_array(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cell_as_array", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cell_as_array");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cell_as_array");
+  }
+
   ClientService_set_cell_as_array_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cell_as_array", bytes);
+  }
 
   ClientService_set_cell_as_array_result result;
   try {
@@ -6613,28 +15248,54 @@ void ClientServiceProcessor::process_set_cell_as_array(int32_t seqid, apache::th
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("set_cell_as_array", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cell_as_array");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("set_cell_as_array", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("set_cell_as_array", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cell_as_array");
+  }
+
+  oprot->writeMessageBegin("set_cell_as_array", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cell_as_array", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_set_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cells", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cells");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cells");
+  }
+
   ClientService_set_cells_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cells", bytes);
+  }
 
   ClientService_set_cells_result result;
   try {
@@ -6643,28 +15304,54 @@ void ClientServiceProcessor::process_set_cells(int32_t seqid, apache::thrift::pr
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("set_cells", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cells");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("set_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("set_cells", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cells");
+  }
+
+  oprot->writeMessageBegin("set_cells", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cells", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_set_cells_as_arrays(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cells_as_arrays", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cells_as_arrays");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cells_as_arrays");
+  }
+
   ClientService_set_cells_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cells_as_arrays", bytes);
+  }
 
   ClientService_set_cells_as_arrays_result result;
   try {
@@ -6673,28 +15360,110 @@ void ClientServiceProcessor::process_set_cells_as_arrays(int32_t seqid, apache::
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("set_cells_as_arrays", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cells_as_arrays");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("set_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("set_cells_as_arrays", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cells_as_arrays");
+  }
+
+  oprot->writeMessageBegin("set_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cells_as_arrays", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_flush_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.set_cells_serialized", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.set_cells_serialized");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.set_cells_serialized");
+  }
+
+  ClientService_set_cells_serialized_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.set_cells_serialized", bytes);
+  }
+
+  ClientService_set_cells_serialized_result result;
+  try {
+    iface_->set_cells_serialized(args.mutator, args.cells, args.flush);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.set_cells_serialized");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("set_cells_serialized", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.set_cells_serialized");
+  }
+
+  oprot->writeMessageBegin("set_cells_serialized", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.set_cells_serialized", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_flush_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.flush_mutator", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.flush_mutator");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.flush_mutator");
+  }
+
   ClientService_flush_mutator_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.flush_mutator", bytes);
+  }
 
   ClientService_flush_mutator_result result;
   try {
@@ -6703,143 +15472,656 @@ void ClientServiceProcessor::process_flush_mutator(int32_t seqid, apache::thrift
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("flush_mutator", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.flush_mutator");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("flush_mutator", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("flush_mutator", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.flush_mutator");
+  }
+
+  oprot->writeMessageBegin("flush_mutator", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.flush_mutator", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_table_id(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_exists_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.exists_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.exists_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.exists_namespace");
+  }
+
+  ClientService_exists_namespace_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.exists_namespace", bytes);
+  }
+
+  ClientService_exists_namespace_result result;
+  try {
+    result.success = iface_->exists_namespace(args.ns);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.exists_namespace");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("exists_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.exists_namespace");
+  }
+
+  oprot->writeMessageBegin("exists_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.exists_namespace", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_exists_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.exists_table", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.exists_table");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.exists_table");
+  }
+
+  ClientService_exists_table_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.exists_table", bytes);
+  }
+
+  ClientService_exists_table_result result;
+  try {
+    result.success = iface_->exists_table(args.ns, args.name);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.exists_table");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("exists_table", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.exists_table");
+  }
+
+  oprot->writeMessageBegin("exists_table", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.exists_table", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_get_table_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_table_id", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_table_id");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_table_id");
+  }
+
   ClientService_get_table_id_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_table_id", bytes);
+  }
 
   ClientService_get_table_id_result result;
   try {
-    result.success = iface_->get_table_id(args.name);
+    iface_->get_table_id(result.success, args.ns, args.table_name);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_table_id", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_table_id");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_table_id", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("get_table_id", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_table_id");
+  }
+
+  oprot->writeMessageBegin("get_table_id", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_table_id", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_schema(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_schema_str(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_schema_str", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_schema_str");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_schema_str");
+  }
+
+  ClientService_get_schema_str_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_schema_str", bytes);
+  }
+
+  ClientService_get_schema_str_result result;
+  try {
+    iface_->get_schema_str(result.success, args.ns, args.table_name);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_schema_str");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_schema_str", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_schema_str");
+  }
+
+  oprot->writeMessageBegin("get_schema_str", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_schema_str", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_schema", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_schema");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_schema");
+  }
+
   ClientService_get_schema_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_schema", bytes);
+  }
 
   ClientService_get_schema_result result;
   try {
-    iface_->get_schema(result.success, args.name);
+    iface_->get_schema(result.success, args.ns, args.table_name);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_schema", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_schema");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_schema", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("get_schema", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_schema");
+  }
+
+  oprot->writeMessageBegin("get_schema", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_schema", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_get_tables(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_tables", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_tables");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_tables");
+  }
+
   ClientService_get_tables_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_tables", bytes);
+  }
 
   ClientService_get_tables_result result;
   try {
-    iface_->get_tables(result.success);
+    iface_->get_tables(result.success, args.ns);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_tables", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_tables");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_tables", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("get_tables", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_tables");
+  }
+
+  oprot->writeMessageBegin("get_tables", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_tables", bytes);
+  }
 }
 
-void ClientServiceProcessor::process_drop_table(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_listing(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
-  ClientService_drop_table_args args;
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_listing", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_listing");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_listing");
+  }
+
+  ClientService_get_listing_args args;
   args.read(iprot);
   iprot->readMessageEnd();
-  iprot->getTransport()->readEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
 
-  ClientService_drop_table_result result;
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_listing", bytes);
+  }
+
+  ClientService_get_listing_result result;
   try {
-    iface_->drop_table(args.name, args.if_exists);
+    iface_->get_listing(result.success, args.ns);
+    result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("drop_table", apache::thrift::protocol::T_EXCEPTION, seqid);
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_listing");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_listing", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
-    oprot->getTransport()->flush();
     oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
     return;
   }
 
-  oprot->writeMessageBegin("drop_table", apache::thrift::protocol::T_REPLY, seqid);
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_listing");
+  }
+
+  oprot->writeMessageBegin("get_listing", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
-  oprot->getTransport()->writeEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_listing", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_get_table_splits(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.get_table_splits", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.get_table_splits");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.get_table_splits");
+  }
+
+  ClientService_get_table_splits_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.get_table_splits", bytes);
+  }
+
+  ClientService_get_table_splits_result result;
+  try {
+    iface_->get_table_splits(result.success, args.ns, args.table_name);
+    result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.get_table_splits");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_table_splits", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.get_table_splits");
+  }
+
+  oprot->writeMessageBegin("get_table_splits", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.get_table_splits", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_drop_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.drop_namespace", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.drop_namespace");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.drop_namespace");
+  }
+
+  ClientService_drop_namespace_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.drop_namespace", bytes);
+  }
+
+  ClientService_drop_namespace_result result;
+  try {
+    iface_->drop_namespace(args.ns, args.if_exists);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.drop_namespace");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("drop_namespace", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.drop_namespace");
+  }
+
+  oprot->writeMessageBegin("drop_namespace", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.drop_namespace", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_rename_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.rename_table", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.rename_table");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.rename_table");
+  }
+
+  ClientService_rename_table_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.rename_table", bytes);
+  }
+
+  ClientService_rename_table_result result;
+  try {
+    iface_->rename_table(args.ns, args.name, args.new_name);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.rename_table");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("rename_table", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.rename_table");
+  }
+
+  oprot->writeMessageBegin("rename_table", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.rename_table", bytes);
+  }
+}
+
+void ClientServiceProcessor::process_drop_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (eventHandler_.get() != NULL) {
+    ctx = eventHandler_->getContext("ClientService.drop_table", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, "ClientService.drop_table");
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preRead(ctx, "ClientService.drop_table");
+  }
+
+  ClientService_drop_table_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postRead(ctx, "ClientService.drop_table", bytes);
+  }
+
+  ClientService_drop_table_result result;
+  try {
+    iface_->drop_table(args.ns, args.name, args.if_exists);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    if (eventHandler_.get() != NULL) {
+      eventHandler_->handlerError(ctx, "ClientService.drop_table");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("drop_table", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->preWrite(ctx, "ClientService.drop_table");
+  }
+
+  oprot->writeMessageBegin("drop_table", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (eventHandler_.get() != NULL) {
+    eventHandler_->postWrite(ctx, "ClientService.drop_table", bytes);
+  }
 }
 
 }} // namespace

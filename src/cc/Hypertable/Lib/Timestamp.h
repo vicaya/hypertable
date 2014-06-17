@@ -28,7 +28,7 @@ namespace Hypertable {
 
   class Timestamp {
   public:
-    Timestamp(uint64_t l, uint64_t r) : logical(l), real(r) { return; }
+    Timestamp(int64_t l, int64_t r) : logical(l), real(r) { return; }
     Timestamp() : logical(0), real(0) { return; }
     void clear() { logical = real = 0; }
     size_t encoded_length() const { return 16; }

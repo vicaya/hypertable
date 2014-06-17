@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_HQLHELPTEXT_H
 #define HYPERTABLE_HQLHELPTEXT_H
 
+#include "Common/String.h"
+
 namespace Hypertable {
 
   class HqlHelpText {
@@ -29,6 +31,7 @@ namespace Hypertable {
     static const char **get(const String &subject);
     static void print(const String &subject);
     static void install_range_server_client_text();
+    static void install_master_client_text();
   };
 
 }

@@ -28,6 +28,7 @@
 
 #include "Hypertable/Lib/Types.h"
 
+#include "MetaLogEntityRange.h"
 #include "RangeServer.h"
 #include "RequestHandlerReplayLoadRange.h"
 
@@ -42,15 +43,20 @@ void RequestHandlerReplayLoadRange::run() {
   TableIdentifier table;
   RangeSpec range;
   RangeState range_state;
+  bool needs_compaction;
   const uint8_t *decode_ptr = m_event_ptr->payload;
   size_t decode_remain = m_event_ptr->payload_len;
+  MetaLog::EntityRangePtr entity_range;
 
   try {
     table.decode(&decode_ptr, &decode_remain);
     range.decode(&decode_ptr, &decode_remain);
     range_state.decode(&decode_ptr, &decode_remain);
+    needs_compaction = Serialization::decode_bool(&decode_ptr, &decode_remain);
 
-    m_range_server->replay_load_range(&cb, &table, &range, &range_state);
+    entity_range = new MetaLog::EntityRange(table, range, range_state, needs_compaction);
+
+    m_range_server->replay_load_range(&cb, entity_range.get());
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

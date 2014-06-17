@@ -20,6 +20,9 @@
  */
 
 #include "Common/Compat.h"
+
+#include <boost/algorithm/string.hpp>
+
 #include <cstring>
 #include <iostream>
 
@@ -79,18 +82,24 @@ void CellInterval::decode(const uint8_t **bufp, size_t *remainp) {
 
 size_t ScanSpec::encoded_length() const {
   size_t len = encoded_length_vi32(row_limit) +
+               encoded_length_vi32(cell_limit) +
                encoded_length_vi32(max_versions) +
                encoded_length_vi32(columns.size()) +
                encoded_length_vi32(row_intervals.size()) +
-               encoded_length_vi32(cell_intervals.size());
+               encoded_length_vi32(cell_intervals.size()) +
+               encoded_length_vstr(row_regexp) +
+               encoded_length_vstr(value_regexp);
+
   foreach(const char *c, columns) len += encoded_length_vstr(c);
   foreach(const RowInterval &ri, row_intervals) len += ri.encoded_length();
   foreach(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
-  return len + 8 + 8 + 2;
+
+  return len + 8 + 8 + 3;
 }
 
 void ScanSpec::encode(uint8_t **bufp) const {
   encode_vi32(bufp, row_limit);
+  encode_vi32(bufp, cell_limit);
   encode_vi32(bufp, max_versions);
   encode_vi32(bufp, columns.size());
   foreach(const char *c, columns) encode_vstr(bufp, c);
@@ -102,6 +111,9 @@ void ScanSpec::encode(uint8_t **bufp) const {
   encode_i64(bufp, time_interval.second);
   encode_bool(bufp, return_deletes);
   encode_bool(bufp, keys_only);
+  encode_vstr(bufp, row_regexp);
+  encode_vstr(bufp, value_regexp);
+  encode_bool(bufp, scan_and_filter_rows);
 }
 
 void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
@@ -109,6 +121,7 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
   CellInterval ci;
   HT_TRY("decoding scan spec",
     row_limit = decode_vi32(bufp, remainp);
+    cell_limit = decode_vi32(bufp, remainp);
     max_versions = decode_vi32(bufp, remainp);
     for (size_t nc = decode_vi32(bufp, remainp); nc--;)
       columns.push_back(decode_vstr(bufp, remainp));
@@ -123,7 +136,10 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     time_interval.first = decode_i64(bufp, remainp);
     time_interval.second = decode_i64(bufp, remainp);
     return_deletes = decode_i8(bufp, remainp);
-    keys_only = decode_i8(bufp, remainp));
+    keys_only = decode_i8(bufp, remainp) != 0;
+    row_regexp = decode_vstr(bufp, remainp);
+    value_regexp = decode_vstr(bufp, remainp);
+    scan_and_filter_rows = decode_i8(bufp, remainp) != 0);
 }
 
 
@@ -174,9 +190,13 @@ ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
 
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
+     <<" cell_limit="<< scan_spec.cell_limit
      <<" max_versions="<< scan_spec.max_versions
      <<" return_deletes="<< scan_spec.return_deletes
      <<" keys_only="<< scan_spec.keys_only;
+  os << " row_regexp=" << scan_spec.row_regexp;
+  os << " value_regexp=" << scan_spec.value_regexp;
+  os << " scan_and_filter_rows=" << scan_spec.scan_and_filter_rows;
 
   if (!scan_spec.row_intervals.empty()) {
     os << "\n rows=";
@@ -201,21 +221,54 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
 }
 
 
-ScanSpecBuilder::ScanSpecBuilder(const ScanSpec &ss) {
-  set_row_limit(ss.row_limit);
-  set_max_versions(ss.max_versions);
-  set_time_interval(ss.time_interval.first, ss.time_interval.second);
-  set_return_deletes(ss.return_deletes);
-  set_keys_only(ss.keys_only);
+ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
+  : row_limit(ss.row_limit), cell_limit(ss.cell_limit), max_versions(ss.max_versions),
+    columns(CstrAlloc(arena)), row_intervals(RowIntervalAlloc(arena)),
+    cell_intervals(CellIntervalAlloc(arena)),
+    time_interval(ss.time_interval.first, ss.time_interval.second),
+    return_deletes(ss.return_deletes), keys_only(ss.keys_only),
+    scan_and_filter_rows(ss.scan_and_filter_rows) {
+  columns.reserve(ss.columns.size());
+  row_intervals.reserve(ss.row_intervals.size());
+  cell_intervals.reserve(ss.cell_intervals.size());
 
   foreach(const char *c, ss.columns)
-    add_column(c);
+    add_column(arena, c);
 
   foreach(const RowInterval &ri, ss.row_intervals)
-    add_row_interval(ri.start, ri.start_inclusive,
+    add_row_interval(arena, ri.start, ri.start_inclusive,
                      ri.end, ri.end_inclusive);
 
   foreach(const CellInterval &ci, ss.cell_intervals)
-    add_cell_interval(ci.start_row, ci.start_column, ci.start_inclusive,
+    add_cell_interval(arena, ci.start_row, ci.start_column, ci.start_inclusive,
                       ci.end_row, ci.end_column, ci.end_inclusive);
 }
+
+void ScanSpec::parse_column(const char *column_str, String &family, String &qualifier,
+    bool *has_qualifier, bool *regexp)
+{
+  String column = column_str;
+  size_t pos = column.find_first_of(':');
+  qualifier.clear();
+  *has_qualifier = pos != String::npos;
+  *regexp = false;
+
+  if (!*has_qualifier) {
+    family = column;
+  }
+  else {
+    family = column.substr(0, pos);
+    if (column.length() > pos+1) {
+      // has qualifier
+      qualifier = column.substr(pos+1);
+      if (column[pos+1] == '/') {
+        *regexp = true;
+        boost::trim_if(qualifier, boost::is_any_of("/"));
+      }
+      else if (column[pos+1] == '\"' || column[pos+1] == '\'') {
+        boost::trim_if(qualifier, boost::is_any_of("\""));
+      }
+    }
+  }
+}
+

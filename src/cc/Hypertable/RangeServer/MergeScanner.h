@@ -43,13 +43,53 @@ namespace Hypertable {
       ByteString value;
     };
 
+    class RegexpInfo {
+    public:
+      RegexpInfo(): last_family(-1), last_rowkey_match(false), last_column_match(false) {}
+
+      void check_rowkey(const char *rowkey, bool *cached, bool *match) {
+        *match = last_rowkey_match;
+        if (!strcmp(rowkey, last_rowkey.c_str()))
+          *cached = true;
+        else
+          *cached = false;
+      }
+
+      void check_column(int family, const char *qualifier, bool *cached,
+          bool *match) {
+          *match = last_column_match;
+          if (last_family == family && !strcmp(qualifier, last_qualifier.c_str()))
+            *cached = true;
+          else
+            *cached = false;
+      }
+
+      void set_rowkey(const char *rowkey, bool match) {
+        last_rowkey = rowkey;
+        last_rowkey_match = match;
+      }
+
+      void set_column(int family, const char *qualifier, bool match) {
+        last_family = family;
+        last_qualifier = qualifier;
+        last_column_match = match;
+      }
+
+    private:
+      String last_rowkey;
+      String last_qualifier;
+      int last_family;
+      bool last_rowkey_match;
+      bool last_column_match;
+    };
+
     struct LtScannerState {
       bool operator()(const ScannerState &ss1, const ScannerState &ss2) const {
-        return !(ss1.key.serial < ss2.key.serial);
+        return ss1.key.serial > ss2.key.serial;
       }
     };
 
-    MergeScanner(ScanContextPtr &scan_ctx, bool return_everything=true);
+    MergeScanner(ScanContextPtr &scan_ctx, bool return_everything=true, bool ag_scanner=false);
     virtual ~MergeScanner();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
@@ -57,6 +97,16 @@ namespace Hypertable {
 
     void install_release_callback(CellStoreReleaseCallback &cb) {
       m_release_callback = cb;
+    }
+
+    void get_io_accounting_data(uint64_t *inbytesp, uint64_t *outbytesp,
+                                uint64_t *incellsp=0, uint64_t *outcellsp=0) {
+      *inbytesp = m_bytes_input;
+      *outbytesp = m_bytes_output;
+      if (incellsp)
+        *incellsp = m_cells_input;
+      if (outcellsp)
+        *outcellsp = m_cells_output;
     }
 
   private:
@@ -95,6 +145,32 @@ namespace Hypertable {
               &&  m_deleted_cell.fill() == len
               && !memcmp(m_deleted_cell.base, key.row, len));
     }
+    inline bool matches_counted_key(const Key& key) const {
+      size_t len = key.len_cell();
+      size_t len_counted_key = m_counted_key.len_cell();
+
+      return (m_count_present && len == len_counted_key &&
+              !memcmp(m_counted_key.row, key.row, len));
+    }
+
+    inline void increment_count(const Key &key, const ByteString &value) {
+      if (m_skip_remaining_counter)
+        return;
+      const uint8_t *decode;
+      size_t remain = value.decode_length(&decode);
+      // value must be encoded 64 bit int
+      if (remain != 8 && remain != 9) {
+        HT_FATAL_OUT << "Expected counter to be encoded 64 bit int but remain=" << remain
+            << " ,key=" << key << HT_END;
+      }
+      m_count += Serialization::decode_i64(&decode, &remain);
+      if (remain == 1) {
+        if ((char)*decode != '=')
+          HT_FATAL_OUT << "Bad counter reset flag, expected '=' but got " << (int)*decode << HT_END;
+        m_skip_remaining_counter = true;
+      }
+    }
+    void finish_count();
 
     bool          m_done;
     bool          m_initialized;
@@ -111,17 +187,40 @@ namespace Hypertable {
     bool          m_return_deletes; // if this is true, return a delete even if
                                     // it doesn't satisfy ScanSpec
                                     // timestamp/version requirement
+
+    bool          m_no_forward;
+    bool          m_count_present;
+    bool          m_skip_remaining_counter;
+    uint64_t      m_count;
+    Key           m_counted_key;
+    DynamicBuffer m_counted_value;
+    DynamicBuffer m_tmp_count;
+
+    bool          m_ag_scanner;
+    bool          m_track_io;
     int32_t       m_row_count;
     int32_t       m_row_limit;
-    uint32_t      m_cell_count;
-    uint32_t      m_cell_limit;
+    int32_t       m_cell_count;
+    int32_t       m_cell_limit;
+    uint32_t      m_revs_count;
+    uint32_t      m_revs_limit;
     int64_t       m_cell_cutoff;
     int64_t       m_start_timestamp;
     int64_t       m_end_timestamp;
+    uint64_t       m_bytes_input;
+    uint64_t       m_bytes_output;
+    uint64_t       m_cells_input;
+    uint64_t       m_cells_output;
+    uint64_t       m_cur_bytes;
     int64_t       m_revision;
     DynamicBuffer m_prev_key;
+    int32_t       m_prev_cf;
+    RegexpInfo    m_regexp_cache;
     CellStoreReleaseCallback m_release_callback;
   };
+
+  typedef boost::intrusive_ptr<MergeScanner> MergeScannerPtr;
+
 
 } // namespace Hypertable
 

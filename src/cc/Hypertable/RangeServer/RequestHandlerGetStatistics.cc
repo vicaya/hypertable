@@ -35,5 +35,12 @@ using namespace Hypertable;
  */
 void RequestHandlerGetStatistics::run() {
   ResponseCallbackGetStatistics cb(m_comm, m_event_ptr);
-  m_range_server->get_statistics(&cb);
+
+  try {
+    m_range_server->get_statistics(&cb);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb.error(e.code(), "Error handling GetStatistics message");
+  }
 }

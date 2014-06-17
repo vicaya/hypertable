@@ -54,6 +54,10 @@ namespace Hypertable {
     InetAddr(uint32_t ip32, uint16_t port);
     InetAddr(const sockaddr_in &addr) { operator=(addr); }
 
+    size_t encoded_length() const;
+    void encode(uint8_t **bufp) const;
+    void decode(const uint8_t **bufp, size_t *remainp);
+
     InetAddr &operator=(const sockaddr_in &addr) {
       if (this != &addr)
         memcpy(this, &addr, sizeof(sockaddr_in));
@@ -61,7 +65,24 @@ namespace Hypertable {
       return *this;
     }
 
+    bool operator==(const InetAddr &other) const {
+      return (bool)!memcmp(this, &other, sizeof(InetAddr));
+    }
+
+    bool operator!=(const InetAddr &other) const {
+      return !(*this == other);
+    }
+
+    bool operator<(const InetAddr &other) const {
+      if (sin_family != other.sin_family)
+	return sin_family < other.sin_family;
+      if (sin_addr.s_addr != other.sin_addr.s_addr)
+	return sin_addr.s_addr < other.sin_addr.s_addr;
+      return sin_port < other.sin_port;
+    }
+
     String format(int sep = ':') { return InetAddr::format(*this, sep); }
+    String format_ipaddress() { return InetAddr::format_ipaddress(*this); }
     String hex(int sep = ':') { return InetAddr::hex(*this, sep); }
 
     // convenient/legacy static methods
@@ -100,6 +121,7 @@ namespace Hypertable {
     /** Format a socket address */
     static const char *string_format(String &addr_str, const sockaddr_in &addr);
     static String format(const sockaddr_in &addr, int sep = ':');
+    static String format_ipaddress(const sockaddr_in &addr);
     static String hex(const sockaddr_in &addr, int sep = ':');
   };
 

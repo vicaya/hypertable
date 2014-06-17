@@ -23,9 +23,10 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/StringExt.h"
 
 #include <cstdlib>
-
+#include "Common/ScopeGuard.h"
 #include "Hyperspace/Session.h"
 
 #include "TableInfo.h"
@@ -33,38 +34,33 @@
 namespace Hypertable {
   using namespace Hyperspace;
 
-  TableInfo::TableInfo(const String &table_name) {
+  TableInfo::TableInfo(const String &toplevel_dir, const String &table_id)
+    : m_toplevel_dir(toplevel_dir) {
     memset(&m_table, 0, sizeof(TableIdentifier));
-    m_table.name = new char [strlen(table_name.c_str()) + 1];
-    strcpy((char *)m_table.name, table_name.c_str());
+    m_table.set_id(table_id);
   }
 
-  void TableInfo::load(Hyperspace::SessionPtr &hyperspace_ptr) {
-    String table_file = (String)"/hypertable/tables/" + m_table.name;
+  void TableInfo::load(Hyperspace::SessionPtr &hyperspace) {
+    String table_file = m_toplevel_dir + "/tables/" + m_table.id;
     DynamicBuffer valbuf(0);
-    HandleCallbackPtr null_handle_callback;
     uint64_t handle;
 
-    handle = hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ,
-                                  null_handle_callback);
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, hyperspace, &handle);
+    handle = hyperspace->open(table_file.c_str(), OPEN_FLAG_READ);
 
-    hyperspace_ptr->attr_get(handle, "schema", valbuf);
+    hyperspace->attr_get(handle, "schema", valbuf);
 
     Schema *schema = Schema::new_instance((const char *)valbuf.base,
-                                          valbuf.fill(), true);
+                                          valbuf.fill());
     if (!schema->is_valid())
       HT_THROWF(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
                 "Schema Parse Error: %s", schema->get_error_string());
-    m_schema_ptr = schema;
+    if (schema->need_id_assignment())
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
+               "Schema Parse Error: need ID assignment");
+
+    m_schema = schema;
 
     m_table.generation = schema->get_generation();
-
-    valbuf.clear();
-    hyperspace_ptr->attr_get(handle, "table_id", valbuf);
-
-    m_table.id = atoi((const char *)valbuf.base);
-
-    hyperspace_ptr->close(handle);
-
   }
 }

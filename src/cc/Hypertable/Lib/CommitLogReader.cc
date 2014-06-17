@@ -41,6 +41,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/StringExt.h"
+#include "Common/md5.h"
 
 #include "Hypertable/Lib/CompressorFactory.h"
 
@@ -64,7 +65,7 @@ namespace {
 }
 
 
-CommitLogReader::CommitLogReader(Filesystem *fs, const String &log_dir, bool mark_for_deletion)
+CommitLogReader::CommitLogReader(FilesystemPtr &fs, const String &log_dir, bool mark_for_deletion)
   : CommitLogBase(log_dir), m_fs(fs), m_fragment_queue_offset(0),
     m_block_buffer(256), m_revision(TIMESTAMP_MIN), m_compressor(0) {
 
@@ -96,10 +97,18 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
                                format("%u", (*fragment_queue_iter).num));
 
   if (!(*fragment_queue_iter).block_stream->next(infop, header)) {
-    delete (*fragment_queue_iter).block_stream;
-    (*fragment_queue_iter).block_stream = 0;
-    (*fragment_queue_iter).revision = m_revision;
-    m_fragment_queue_offset++;
+    CommitLogFileInfo &info = *fragment_queue_iter;
+    delete info.block_stream;
+    info.block_stream = 0;
+    if (m_revision == TIMESTAMP_MIN) {
+      HT_WARNF("Skipping log fragment '%s/%u' because unable to read any valid blocks",
+               info.log_dir.c_str(), info.num);
+      m_fragment_queue.erase(fragment_queue_iter);
+    }
+    else {
+      info.revision = m_revision;
+      m_fragment_queue_offset++;
+    }
     m_revision = TIMESTAMP_MIN;
     goto try_again;
   }
@@ -108,6 +117,11 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
     assert(header->get_compression_type() == BlockCompressionCodec::NONE);
     String log_dir = (const char *)(infop->block_ptr + header->length());
     load_fragments(log_dir, true);
+    m_linked_logs.insert(md5_hash(log_dir.c_str()));
+    if (header->get_revision() > m_latest_revision)
+      m_latest_revision = header->get_revision();
+    if (header->get_revision() > m_revision)
+      m_revision = header->get_revision();
     goto try_again;
   }
 

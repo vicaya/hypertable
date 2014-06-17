@@ -1,3 +1,4 @@
+USE "/";
 CREATE TABLE Pages (
        date,
        "refer-url",

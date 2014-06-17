@@ -20,13 +20,16 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Init.h"
+
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/progress.hpp>
-#include <boost/timer.hpp>
 #include <boost/thread/xtime.hpp>
+#include <boost/timer.hpp>
 
 extern "C" {
 #include <time.h>
@@ -52,16 +55,17 @@ extern "C" {
 
 using namespace std;
 using namespace Hypertable;
+using namespace Hypertable::Config;
 using namespace Hql;
 using namespace Serialization;
 
 namespace {
 
-  void process_event(EventPtr &event_ptr) {
-    int32_t error;
-    const uint8_t *decode_ptr = event_ptr->payload + 4;
-    size_t decode_remain = event_ptr->payload_len - 4;
-    uint32_t offset, len;
+  void process_event(EventPtr &event) {
+    ::int32_t error;
+    const ::uint8_t *decode_ptr = event->payload + 4;
+    size_t decode_remain = event->payload_len - 4;
+    ::uint32_t offset, len;
     if (decode_remain == 0)
       cout << "success" << endl;
     else {
@@ -84,11 +88,17 @@ namespace {
 }
 
 RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm,
-    Hyperspace::SessionPtr &hyperspace_ptr, const sockaddr_in addr,
-    RangeServerClientPtr &range_server_ptr)
-  : m_comm(comm), m_hyperspace_ptr(hyperspace_ptr), m_addr(addr),
-    m_range_server_ptr(range_server_ptr), m_cur_scanner_id(-1) {
+    Hyperspace::SessionPtr &hyperspace, const sockaddr_in addr,
+    RangeServerClientPtr &range_server)
+  : m_comm(comm), m_hyperspace(hyperspace), m_addr(addr),
+    m_range_server(range_server), m_cur_scanner_id(-1) {
   HqlHelpText::install_range_server_client_text();
+  if (m_hyperspace) {
+    m_toplevel_dir = properties->get_str("Hypertable.Directory");
+    boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
+    m_toplevel_dir = String("/") + m_toplevel_dir;
+    m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
+  }
   return;
 }
 
@@ -99,14 +109,14 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
   TableInfo *table_info;
   String schema_str;
   String out_str;
-  SchemaPtr schema_ptr;
+  SchemaPtr schema;
   Hql::ParserState state;
   Hql::Parser parser(state);
   parse_info<> info;
   DispatchHandlerSynchronizer sync_handler;
   ScanBlock scanblock;
-  int32_t scanner_id;
-  EventPtr event_ptr;
+  ::int32_t scanner_id;
+  EventPtr event;
 
   info = parse(line.c_str(), parser, space_p);
 
@@ -116,12 +126,19 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     if (state.table_name != "") {
       table_info = m_table_map[state.table_name];
       if (table_info == 0) {
-        table_info = new TableInfo(state.table_name);
-        table_info->load(m_hyperspace_ptr);
+        bool is_namespace = false;
+        String table_id;
+        if (!m_hyperspace)
+          HT_FATALF("Hyperspace is required to execute:  %s", line.c_str());
+        if (!m_namemap->name_to_id(state.table_name, table_id, &is_namespace) ||
+            is_namespace)
+          HT_THROW(Error::TABLE_NOT_FOUND, state.table_name);
+        table_info = new TableInfo(m_toplevel_dir, table_id);
+        table_info->load(m_hyperspace);
         m_table_map[state.table_name] = table_info;
       }
       table = table_info->get_table_identifier();
-      table_info->get_schema_ptr(schema_ptr);
+      table_info->get_schema_ptr(schema);
     }
 
     // if end row is "??", transform it to 0xff 0xff
@@ -140,7 +157,9 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       range_state.soft_limit = 200000000LL;
 
-      m_range_server_ptr->load_range(m_addr, *table, range, 0, range_state, 0);
+      m_range_server->load_range(m_addr, *table, range, 0, range_state, false);
+
+      m_range_server->acknowledge_load(m_addr, *table, range);
 
     }
     else if (state.command == COMMAND_UPDATE) {
@@ -150,15 +169,15 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
         HT_THROW(Error::FILE_NOT_FOUND, String("Input file '")
                  + state.input_file + "' does not exist");
 
-      tsource = new TestSource(state.input_file, schema_ptr.get());
+      tsource = new TestSource(state.input_file, schema.get());
 
-      uint8_t *send_buf = 0;
+      ::uint8_t *send_buf = 0;
       size_t   send_buf_len = 0;
       DynamicBuffer buf(BUFFER_SIZE);
       SerializedKey key;
       ByteString value;
       size_t key_len, value_len;
-      uint32_t send_count = 0;
+      ::uint32_t send_count = 0;
       bool outstanding = false;
 
       while (true) {
@@ -178,7 +197,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
          */
         if (buf.fill()) {
           std::vector<SerializedKey> keys;
-          const uint8_t *ptr;
+          const ::uint8_t *ptr;
           size_t len;
 
           key.ptr = ptr = buf.base;
@@ -192,8 +211,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
           std::sort(keys.begin(), keys.end());
 
-          send_buf = new uint8_t [buf.fill()];
-          uint8_t *sendp = send_buf;
+          send_buf = new ::uint8_t [buf.fill()];
+          ::uint8_t *sendp = send_buf;
           for (size_t i=0; i<keys.size(); i++) {
             key = keys[i];
             key.next();
@@ -212,17 +231,17 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
         }
 
         if (outstanding) {
-          if (!sync_handler.wait_for_reply(event_ptr))
-            HT_THROW(Protocol::response_code(event_ptr),
-                     (Protocol::string_format_message(event_ptr)));
-          process_event(event_ptr);
+          if (!sync_handler.wait_for_reply(event))
+            HT_THROW(Protocol::response_code(event),
+                     (Protocol::string_format_message(event)));
+          process_event(event);
         }
 
         outstanding = false;
 
         if (send_buf_len > 0) {
           StaticBuffer mybuf(send_buf, send_buf_len);
-          m_range_server_ptr->update(m_addr, *table, send_count, mybuf, 0,
+          m_range_server->update(m_addr, *table, send_count, mybuf, 0,
                                      &sync_handler);
           outstanding = true;
         }
@@ -231,17 +250,17 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       }
 
       if (outstanding) {
-        if (!sync_handler.wait_for_reply(event_ptr))
-          HT_THROW(Protocol::response_code(event_ptr),
-                   (Protocol::string_format_message(event_ptr)));
-        process_event(event_ptr);
+        if (!sync_handler.wait_for_reply(event))
+          HT_THROW(Protocol::response_code(event),
+                   (Protocol::string_format_message(event)));
+        process_event(event);
       }
 
     }
     else if (state.command == COMMAND_CREATE_SCANNER) {
       range.start_row = state.range_start_row.c_str();
       range.end_row = state.range_end_row.c_str();
-      m_range_server_ptr->create_scanner(m_addr, *table, range,
+      m_range_server->create_scanner(m_addr, *table, range,
           state.scan.builder.get(), scanblock);
       m_cur_scanner_id = scanblock.get_scanner_id();
 
@@ -249,7 +268,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       ByteString value;
 
       while (scanblock.next(key, value))
-        display_scan_data(key, value, schema_ptr);
+        display_scan_data(key, value, schema);
 
       if (scanblock.eos())
         m_cur_scanner_id = -1;
@@ -269,13 +288,13 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       /**
        */
-      m_range_server_ptr->fetch_scanblock(m_addr, scanner_id, scanblock);
+      m_range_server->fetch_scanblock(m_addr, scanner_id, scanblock);
 
       SerializedKey key;
       ByteString value;
 
       while (scanblock.next(key, value))
-        display_scan_data(key, value, schema_ptr);
+        display_scan_data(key, value, schema);
 
       if (scanblock.eos())
         m_cur_scanner_id = -1;
@@ -292,7 +311,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       else
         scanner_id = state.scanner_id;
 
-      m_range_server_ptr->destroy_scanner(m_addr, scanner_id);
+      m_range_server->destroy_scanner(m_addr, scanner_id);
 
     }
     else if (state.command == COMMAND_DROP_RANGE) {
@@ -300,32 +319,32 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       range.start_row = state.range_start_row.c_str();
       range.end_row = state.range_end_row.c_str();
 
-      m_range_server_ptr->drop_range(m_addr, *table, range, &sync_handler);
+      m_range_server->drop_range(m_addr, *table, range, &sync_handler);
 
-      if (!sync_handler.wait_for_reply(event_ptr))
-        HT_THROW(Protocol::response_code(event_ptr),
-                 (Protocol::string_format_message(event_ptr)));
+      if (!sync_handler.wait_for_reply(event))
+        HT_THROW(Protocol::response_code(event),
+                 (Protocol::string_format_message(event)));
 
     }
     else if (state.command == COMMAND_REPLAY_BEGIN) {
       // fix me!!  added metadata boolean
-      m_range_server_ptr->replay_begin(m_addr, false, &sync_handler);
-      if (!sync_handler.wait_for_reply(event_ptr))
-        HT_THROW(Protocol::response_code(event_ptr),
-                 (Protocol::string_format_message(event_ptr)));
+      m_range_server->replay_begin(m_addr, false, &sync_handler);
+      if (!sync_handler.wait_for_reply(event))
+        HT_THROW(Protocol::response_code(event),
+                 (Protocol::string_format_message(event)));
     }
     else if (state.command == COMMAND_REPLAY_LOG) {
       cout << "Not implemented." << endl;
     }
     else if (state.command == COMMAND_DUMP) {
-      m_range_server_ptr->dump(m_addr, state.output_file, state.nokeys);
+      m_range_server->dump(m_addr, state.output_file, state.nokeys);
       cout << "success" << endl;
     }
     else if (state.command == COMMAND_REPLAY_COMMIT) {
-      m_range_server_ptr->replay_commit(m_addr, &sync_handler);
-      if (!sync_handler.wait_for_reply(event_ptr))
-        HT_THROW(Protocol::response_code(event_ptr),
-                 (Protocol::string_format_message(event_ptr)));
+      m_range_server->replay_commit(m_addr, &sync_handler);
+      if (!sync_handler.wait_for_reply(event))
+        HT_THROW(Protocol::response_code(event),
+                 (Protocol::string_format_message(event)));
     }
     else if (state.command == COMMAND_HELP) {
       const char **text = HqlHelpText::get(state.str);
@@ -337,11 +356,14 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
         cout << endl << "no help for '" << state.str << "'" << endl << endl;
     }
     else if (state.command == COMMAND_CLOSE) {
-      m_range_server_ptr->close(m_addr);
+      m_range_server->close(m_addr);
+    }
+    else if (state.command == COMMAND_WAIT_FOR_MAINTENANCE) {
+      m_range_server->wait_for_maintenance(m_addr);
     }
     else if (state.command == COMMAND_SHUTDOWN) {
-      m_range_server_ptr->close(m_addr);
-      m_range_server_ptr->shutdown(m_addr);
+      m_range_server->close(m_addr);
+      m_range_server->shutdown(m_addr);
     }
     else
       HT_THROW(Error::HQL_PARSE_ERROR, "unsupported command");
@@ -358,7 +380,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 void
 RangeServerCommandInterpreter::display_scan_data(const SerializedKey &serkey,
                                                  const ByteString &value,
-                                                 SchemaPtr &schema_ptr) {
+                                                 SchemaPtr &schema) {
   Key key(serkey);
   Schema::ColumnFamily *cf;
 
@@ -366,13 +388,13 @@ RangeServerCommandInterpreter::display_scan_data(const SerializedKey &serkey,
     cout << key.timestamp << " " << key.row << " DELETE" << endl;
   }
   else if (key.flag == FLAG_DELETE_COLUMN_FAMILY) {
-     cf = schema_ptr->get_column_family(key.column_family_code);
+     cf = schema->get_column_family(key.column_family_code);
      cout << key.timestamp << " " << key.row << " " << cf->name << " DELETE"
           << endl;
   }
   else {
     if (key.column_family_code > 0) {
-      cf = schema_ptr->get_column_family(key.column_family_code);
+      cf = schema->get_column_family(key.column_family_code);
       if (key.flag == FLAG_DELETE_CELL)
         cout << key.timestamp << " " << key.row << " " << cf->name << ":"
              << key.column_qualifier << " DELETE" << endl;

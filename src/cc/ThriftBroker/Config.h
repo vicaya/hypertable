@@ -30,6 +30,8 @@ namespace Hypertable { namespace Config {
   void init_thrift_client_options();
   void init_thrift_client();
   void init_thrift_broker_options();
+  void init_thrift_broker();
+  void redirect_thrift_output();
 
   struct ThriftClientPolicy : Policy {
     static void init_options() { init_thrift_client_options(); }
@@ -41,7 +43,7 @@ namespace Hypertable { namespace Config {
    */
   struct ThriftBrokerPolicy : Policy {
     static void init_options() { init_thrift_broker_options(); }
-    static void init() { init_generic_server(); }
+    static void init() { init_thrift_broker(); }
   };
 
 }} // namespace Hypertable::Config

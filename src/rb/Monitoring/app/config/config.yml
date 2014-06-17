@@ -1,0 +1,2 @@
+:production:
+        :data: "#{ENV['HYPERTABLE_HOME']}/run/monitoring/"

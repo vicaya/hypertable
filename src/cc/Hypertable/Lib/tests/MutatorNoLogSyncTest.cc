@@ -31,6 +31,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/StringExt.h"
 #include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
@@ -214,7 +215,7 @@ namespace {
     };
 
   const char *schema =
-  "<Schema>"
+  "<Schema group_commit_interval=\"100\">"
   "  <AccessGroup name=\"default\">"
   "    <ColumnFamily>"
   "      <Name>Field</Name>"
@@ -228,6 +229,7 @@ namespace {
 
 int main(int argc, char **argv) {
   ClientPtr hypertable_client_ptr;
+  NamespacePtr namespace_ptr;
   TablePtr table_ptr;
   KeySpec key;
   String start_all, clean_db;
@@ -257,7 +259,10 @@ int main(int argc, char **argv) {
   // Setup dirs /links
   unlink("rs1.out");unlink("rs2.out");unlink("rs3.out");
   unlink("./Hypertable.RangeServer");
-  link("../RangeServer/Hypertable.RangeServer", "./Hypertable.RangeServer");
+  HT_ASSERT(link("../RangeServer/Hypertable.RangeServer",
+                 "./Hypertable.RangeServer") == 0);
+  unlink("./serverup");
+  HT_ASSERT(link("../../Tools/serverup/serverup", "./serverup") == 0);
 
   config_file = install_dir + config_file;
   Config::parse_file(config_file, file_desc());
@@ -267,18 +272,20 @@ int main(int argc, char **argv) {
     HT_ERROR("Unable to start servers");
     exit(1);
   }
+  sleep(2);
 
   // launch rangeservers with small split size so we have multiple ranges on multiple servers
-  start_rangeservers(rangeservers, num_rs, "--Hypertable.RangeServer.Range.SplitSize=700");
+  start_rangeservers(rangeservers, num_rs, "--Hypertable.RangeServer.Range.SplitSize=3000");
 
   ReactorFactory::initialize(2);
   try {
     assert (config_file != "");
     hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]),
                                                    config_file);
-    hypertable_client_ptr->drop_table("MutatorNoLogSyncTest", true);
-    hypertable_client_ptr->create_table("MutatorNoLogSyncTest", schema);
-    table_ptr = hypertable_client_ptr->open_table("MutatorNoLogSyncTest");
+    namespace_ptr = hypertable_client_ptr->open_namespace("/");
+    namespace_ptr->drop_table("MutatorNoLogSyncTest", true);
+    namespace_ptr->create_table("MutatorNoLogSyncTest", schema);
+    table_ptr = namespace_ptr->open_table("MutatorNoLogSyncTest");
   }
   catch (Hypertable::Exception &e) {
     cerr << e << endl;
@@ -403,6 +410,16 @@ int main(int argc, char **argv) {
 
 
 namespace {
+  void check_rangeserver(uint32_t port) {
+    //make syscall to serverup and make sure RangeServer is up
+    String command;
+    command = (String)"./serverup --wait 5000 --silent --range-server localhost:" + port + (String)" rangeserver";
+    if (system(command.c_str()) !=0) {
+      HT_ERRORF("RangeServer on port %d did not come up", port);
+      exit(1);
+    }
+  }
+
   void start_rangeservers(vector<ServerLauncher *> &rangeservers, uint32_t nn,
                           String split_size_arg, uint32_t sleep_sec)
   {
@@ -414,12 +431,14 @@ namespace {
     static int file_counter=1;
 
     for (uint32_t ii=0; ii<nn; ii++) {
+      String proxy_name = (String)"--Hypertable.RangeServer.ProxyName=rs" + (ii+1);
       outfile = (String)"rs" + (file_counter++) + (String)".out";
       port = (String) "--Hypertable.RangeServer.Port=" + (base_port+ii);
       rs_args.clear();
       rs_args.push_back("Hypertable.RangeServer");
       rs_args.push_back(port.c_str());
       rs_args.push_back("--config=./MutatorNoLogSyncTest.cfg");
+      rs_args.push_back(proxy_name.c_str());
 
       if (split_size_arg != "")
         rs_args.push_back(split_size_arg.c_str());
@@ -432,7 +451,13 @@ namespace {
       rangeservers.push_back(rs);
     }
     sleep(sleep_sec);
+    // make sure the RangeServers started ow throw exception
+    for (uint32_t ii=0; ii<nn; ii++) {
+      check_rangeserver(base_port + ii);
+    }
+
   }
+
 
   void stop_rangeservers(vector<ServerLauncher *> &rangeservers, uint32_t sleep_sec)
   {

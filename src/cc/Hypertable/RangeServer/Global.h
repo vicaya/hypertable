@@ -27,20 +27,21 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "Common/FailureInducer.h"
 #include "Common/Properties.h"
+#include "Common/Filesystem.h"
+
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
 #include "Hypertable/Lib/CommitLog.h"
+#include "Hypertable/Lib/MetaLogWriter.h"
 #include "Hypertable/Lib/RangeServerClient.h"
-#include "Hypertable/Lib/RangeServerMetaLog.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "FileBlockCache.h"
+#include "LocationInitializer.h"
 #include "MaintenanceQueue.h"
 #include "MemoryTracker.h"
 #include "ScannerMap.h"
@@ -53,32 +54,38 @@ namespace Hypertable {
   class Global {
   public:
     static Hyperspace::SessionPtr hyperspace;
-    static Hypertable::Filesystem *dfs;
-    static Hypertable::Filesystem *log_dfs;
+    static Hypertable::FilesystemPtr dfs;
+    static Hypertable::FilesystemPtr log_dfs;
     static Hypertable::MaintenanceQueuePtr maintenance_queue;
     static Hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
     static CommitLog     *user_log;
+    static CommitLog     *system_log;
     static CommitLog     *metadata_log;
     static CommitLog     *root_log;
-    static Hypertable::RangeServerMetaLog *range_log;
+    static MetaLog::WriterPtr rsml_writer;
     static std::string    log_dir;
-    static std::string    location;
+    static LocationInitializerPtr location_initializer;
     static int64_t        range_split_size;
     static int64_t        range_maximum_size;
+    static int32_t        access_group_garbage_compaction_threshold;
     static int32_t        access_group_max_files;
     static int32_t        access_group_merge_files;
     static int32_t        access_group_max_mem;
+    static int32_t        cell_cache_scanner_cache_size;
     static ScannerMap     scanner_map;
     static Hypertable::FileBlockCache *block_cache;
     static TablePtr       metadata_table;
+    static TablePtr       rs_metrics_table;
     static int64_t        range_metadata_split_size;
-    static Hypertable::MemoryTracker memory_tracker;
+    static Hypertable::MemoryTracker *memory_tracker;
     static int64_t        log_prune_threshold_min;
     static int64_t        log_prune_threshold_max;
     static int64_t        memory_limit;
-    static Hypertable::FailureInducer *failure_inducer;
     static uint64_t       access_counter;
+    static bool           enable_shadow_cache;
+    static std::string    toplevel_dir;
+    static int32_t        metrics_interval;
   };
 
 } // namespace Hypertable

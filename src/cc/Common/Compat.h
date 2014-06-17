@@ -27,10 +27,14 @@
 // The same stuff for C code
 #include "compat-c.h"
 
+#include <cstddef> // for std::size_t and std::ptrdiff_t
+
 // C++ specific stuff
 #ifndef BOOST_SPIRIT_THREADSAFE
-# define BOOST_SPIRIT_THREADSAFE
+#  define BOOST_SPIRIT_THREADSAFE
 #endif
+
+#define BOOST_IOSTREAMS_USE_DEPRECATED
 
 #include "Sweetener.h"
 

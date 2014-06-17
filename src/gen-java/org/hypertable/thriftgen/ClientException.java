@@ -9,14 +9,16 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Collections;
-import org.apache.log4j.Logger;
-
-import org.apache.thrift.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.protocol.*;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Exception for thrift clients.
@@ -29,30 +31,89 @@ import org.apache.thrift.protocol.*;
  * Note: some languages (like php) don't have adequate namespace, so Exception
  * would conflict with language builtins.
  */
-public class ClientException extends Exception implements TBase, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("ClientException");
-  private static final TField CODE_FIELD_DESC = new TField("code", TType.I32, (short)1);
-  private static final TField MESSAGE_FIELD_DESC = new TField("message", TType.STRING, (short)2);
+public class ClientException extends Exception implements org.apache.thrift.TBase<ClientException, ClientException._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ClientException");
+
+  private static final org.apache.thrift.protocol.TField CODE_FIELD_DESC = new org.apache.thrift.protocol.TField("code", org.apache.thrift.protocol.TType.I32, (short)1);
+  private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)2);
 
   public int code;
-  public static final int CODE = 1;
   public String message;
-  public static final int MESSAGE = 2;
 
-  private final Isset __isset = new Isset();
-  private static final class Isset implements java.io.Serializable {
-    public boolean code = false;
+  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+    CODE((short)1, "code"),
+    MESSAGE((short)2, "message");
+
+    private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+    static {
+      for (_Fields field : EnumSet.allOf(_Fields.class)) {
+        byName.put(field.getFieldName(), field);
+      }
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, or null if its not found.
+     */
+    public static _Fields findByThriftId(int fieldId) {
+      switch(fieldId) {
+        case 1: // CODE
+          return CODE;
+        case 2: // MESSAGE
+          return MESSAGE;
+        default:
+          return null;
+      }
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, throwing an exception
+     * if it is not found.
+     */
+    public static _Fields findByThriftIdOrThrow(int fieldId) {
+      _Fields fields = findByThriftId(fieldId);
+      if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+      return fields;
+    }
+
+    /**
+     * Find the _Fields constant that matches name, or null if its not found.
+     */
+    public static _Fields findByName(String name) {
+      return byName.get(name);
+    }
+
+    private final short _thriftId;
+    private final String _fieldName;
+
+    _Fields(short thriftId, String fieldName) {
+      _thriftId = thriftId;
+      _fieldName = fieldName;
+    }
+
+    public short getThriftFieldId() {
+      return _thriftId;
+    }
+
+    public String getFieldName() {
+      return _fieldName;
+    }
   }
 
-  public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-    put(CODE, new FieldMetaData("code", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I32)));
-    put(MESSAGE, new FieldMetaData("message", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-  }});
+  // isset id assignments
+  private static final int __CODE_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
 
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    FieldMetaData.addStructMetaDataMap(ClientException.class, metaDataMap);
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.CODE, new org.apache.thrift.meta_data.FieldMetaData("code", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ClientException.class, metaDataMap);
   }
 
   public ClientException() {
@@ -64,7 +125,7 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
   {
     this();
     this.code = code;
-    this.__isset.code = true;
+    setCodeIsSet(true);
     this.message = message;
   }
 
@@ -72,53 +133,62 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
    * Performs a deep copy on <i>other</i>.
    */
   public ClientException(ClientException other) {
-    __isset.code = other.__isset.code;
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     this.code = other.code;
     if (other.isSetMessage()) {
       this.message = other.message;
     }
   }
 
-  @Override
-  public ClientException clone() {
+  public ClientException deepCopy() {
     return new ClientException(this);
+  }
+
+  @Override
+  public void clear() {
+    setCodeIsSet(false);
+    this.code = 0;
+    this.message = null;
   }
 
   public int getCode() {
     return this.code;
   }
 
-  public void setCode(int code) {
+  public ClientException setCode(int code) {
     this.code = code;
-    this.__isset.code = true;
+    setCodeIsSet(true);
+    return this;
   }
 
   public void unsetCode() {
-    this.__isset.code = false;
+    __isset_bit_vector.clear(__CODE_ISSET_ID);
   }
 
-  // Returns true if field code is set (has been asigned a value) and false otherwise
+  /** Returns true if field code is set (has been assigned a value) and false otherwise */
   public boolean isSetCode() {
-    return this.__isset.code;
+    return __isset_bit_vector.get(__CODE_ISSET_ID);
   }
 
   public void setCodeIsSet(boolean value) {
-    this.__isset.code = value;
+    __isset_bit_vector.set(__CODE_ISSET_ID, value);
   }
 
   public String getMessage() {
     return this.message;
   }
 
-  public void setMessage(String message) {
+  public ClientException setMessage(String message) {
     this.message = message;
+    return this;
   }
 
   public void unsetMessage() {
     this.message = null;
   }
 
-  // Returns true if field message is set (has been asigned a value) and false otherwise
+  /** Returns true if field message is set (has been assigned a value) and false otherwise */
   public boolean isSetMessage() {
     return this.message != null;
   }
@@ -129,8 +199,8 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
+  public void setFieldValue(_Fields field, Object value) {
+    switch (field) {
     case CODE:
       if (value == null) {
         unsetCode();
@@ -147,34 +217,34 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
       }
       break;
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
   }
 
-  public Object getFieldValue(int fieldID) {
-    switch (fieldID) {
+  public Object getFieldValue(_Fields field) {
+    switch (field) {
     case CODE:
       return new Integer(getCode());
 
     case MESSAGE:
       return getMessage();
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
   }
 
-  // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-  public boolean isSet(int fieldID) {
-    switch (fieldID) {
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+  public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
+    switch (field) {
     case CODE:
       return isSetCode();
     case MESSAGE:
       return isSetMessage();
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
   }
 
   @Override
@@ -216,46 +286,78 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     return 0;
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public int compareTo(ClientException other) {
+    if (!getClass().equals(other.getClass())) {
+      return getClass().getName().compareTo(other.getClass().getName());
+    }
+
+    int lastComparison = 0;
+    ClientException typedOther = (ClientException)other;
+
+    lastComparison = Boolean.valueOf(isSetCode()).compareTo(typedOther.isSetCode());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetCode()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.code, typedOther.code);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetMessage()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.message, typedOther.message);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
+  }
+
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
-      switch (field.id)
-      {
-        case CODE:
-          if (field.type == TType.I32) {
+      switch (field.id) {
+        case 1: // CODE
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.code = iprot.readI32();
-            this.__isset.code = true;
+            setCodeIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case MESSAGE:
-          if (field.type == TType.STRING) {
+        case 2: // MESSAGE
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.message = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 
-
     // check for required fields of primitive type, which can't be checked in the validate method
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -291,9 +393,24 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
-    // check that fields of type enum have valid values
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

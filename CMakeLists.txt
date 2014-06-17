@@ -22,8 +22,9 @@ project(HYPERTABLE)
 # Hypertable version components
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
-set(VERSION_MICRO "2")
-set(VERSION_PATCH "7")
+set(VERSION_MICRO "5")
+set(VERSION_PATCH "0")
+set(VERSION_MISC_SUFFIX  "pre")
 
 # cmake behavior compatibility
 cmake_minimum_required(VERSION 2.6.0)
@@ -50,6 +51,11 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
       CACHE PATH "installation directory prefix" FORCE)
 endif ()
 
+if (HT_DEPENDENCY_DIR)
+  set(HT_DEPENDENCY_LIB_DIR ${HT_DEPENDENCY_DIR}/lib)
+  set(HT_DEPENDENCY_INCLUDE_DIR ${HT_DEPENDENCY_DIR}/include)
+endif ()
+
 # Enable testing
 enable_testing()
 
@@ -58,7 +64,11 @@ set(TEST_DIFF ${HYPERTABLE_SOURCE_DIR}/bin/src-utils/testdiff)
 
 # gcc warning settings
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wall -pedantic -Wno-long-long)
+  if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+    add_definitions(-Wall -pedantic -Wno-long-long -pthreads)
+  else (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+    add_definitions(-Wall -pedantic -Wno-long-long)
+  endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 endif ()
 
 add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
@@ -81,29 +91,36 @@ find_package(Threads REQUIRED)
 message(STATUS "Use thread library: ${CMAKE_THREAD_LIBS_INIT}")
 find_package(Boost REQUIRED)
 find_package(BerkeleyDB REQUIRED)
+find_package(RRDtool REQUIRED)
 find_package(EXPAT REQUIRED)
 find_package(Log4cpp REQUIRED)
 find_package(Readline REQUIRED)
 find_package(SIGAR REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
+find_package(RE2 REQUIRED)
 find_package(Doxygen)
 find_package(Tcmalloc)
+find_package(Hoard)
 find_package(Kfs)
 find_package(Ceph)
-find_package(Ant)
+find_package(Ant REQUIRED)
 find_package(JNI)
 find_package(PythonLibs)
-find_package(LibEvent)
-find_package(Thrift)
+find_package(LibEvent REQUIRED)
+find_package(Thrift REQUIRED)
 find_package(RubyThrift)
 find_package(PHP5Thrift)
 find_package(PerlThrift)
 find_package(PythonThrift)
 
-# set malloc library except in Debug mode
-if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
+# set malloc library (maybe)
+if (Hoard_FOUND AND USE_HOARD)
+  set(MALLOC_LIBRARY ${Hoard_LIBRARIES})
+elseif (NOT USE_GLIBC_MALLOC)
+  if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug" OR USE_TCMALLOC)
+    set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
+  endif ()
 endif ()
 
 # include directories
@@ -139,7 +156,7 @@ include(DocHelper)
 
 # sub-project directories
 add_subdirectory(src)
-add_subdirectory(examples)
+#add_subdirectory(examples)
 add_subdirectory(contrib)
 add_subdirectory(tests/integration)
 
@@ -155,13 +172,16 @@ configure_file(bin/prerm.in prerm @ONLY)
 file(GLOB CONFS conf/[^.]*)
 install(FILES ${CONFS} DESTINATION conf)
 install(PROGRAMS ${HYPERTABLE_BINARY_DIR}/ht DESTINATION bin)
+file(GLOB JARS lib/*.jar lib/*.txt)
+install(FILES ${JARS} DESTINATION lib/java)
+install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
+          DESTINATION lib/java OPTIONAL)
+install(PROGRAMS bin/jrun DESTINATION bin)
 
 if (NOT HT_COMPONENT_INSTALL)
-  file(GLOB JARS lib/*.jar lib/*.txt)
-  install(FILES ${JARS} DESTINATION lib/java)
-  install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
+  install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}-examples.jar
           DESTINATION lib/java OPTIONAL)
-  file(GLOB SCRIPTS bin/jrun bin/*.sh)
+  file(GLOB SCRIPTS bin/*.sh)
   install(PROGRAMS ${SCRIPTS} DESTINATION bin)
   install(DIRECTORY examples/apache_log DESTINATION examples
           USE_SOURCE_PERMISSIONS)
@@ -170,7 +190,7 @@ if (NOT HT_COMPONENT_INSTALL)
   install(DIRECTORY examples/freebase DESTINATION examples
           USE_SOURCE_PERMISSIONS)
 
-  include(PackageHelper)
+include(PackageHelper)
 else ()
   install(PROGRAMS bin/ht-env.sh bin/fhsize.sh bin/prerm.sh DESTINATION bin)
 endif ()

@@ -24,7 +24,6 @@
 
 namespace Hyperspace {
 
-Mutex        Event::ms_next_event_id_mutex;
-uint64_t     Event::ms_next_event_id = 1;
+BerkeleyDbFilesystem *Event::ms_bdb_fs=0;
 
 }

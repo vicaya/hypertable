@@ -24,15 +24,16 @@
 
 #include <cassert>
 #include <list>
+#include <vector>
 
 #include <boost/thread/condition.hpp>
 
 #include "Common/Thread.h"
 #include "Common/Mutex.h"
-#include "Common/Logger.h"
 #include "Common/HashMap.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
+#include "Common/Logger.h"
 
 #include "ApplicationHandler.h"
 
@@ -175,8 +176,14 @@ namespace Hypertable {
     ApplicationQueueState  m_state;
     ThreadGroup            m_threads;
     bool joined;
+    std::vector<Thread::id>     m_thread_ids;
 
   public:
+
+    /**
+     * Default ctor used by derived classes only
+     */
+    ApplicationQueue() : joined(true) {}
 
     /**
      * Constructor to set up the application queue.  It creates a number
@@ -187,12 +194,13 @@ namespace Hypertable {
     ApplicationQueue(int worker_count) : joined(false) {
       Worker Worker(m_state);
       assert (worker_count > 0);
-      for (int i=0; i<worker_count; ++i)
-        m_threads.create_thread(Worker);
+      for (int i=0; i<worker_count; ++i) {
+        m_thread_ids.push_back(m_threads.create_thread(Worker)->get_id());
+      }
       //threads
     }
 
-    ~ApplicationQueue() {
+    virtual ~ApplicationQueue() {
       if (!joined) {
         shutdown();
         join();
@@ -200,11 +208,19 @@ namespace Hypertable {
     }
 
     /**
+     * Return all the thread ids for this threadgroup
+     *
+     */
+    virtual std::vector<Thread::id> get_thread_ids() const {
+      return m_thread_ids;
+    }
+
+    /**
      * Shuts down the application queue.  All outstanding requests are carried
      * out and then all threads exit.  #join can be called to wait for
      * completion of the shutdown.
      */
-    void shutdown() {
+    virtual void shutdown() {
       m_state.shutdown = true;
       m_state.cond.notify_all();
     }
@@ -214,7 +230,7 @@ namespace Hypertable {
      * application queue threads exit.
      */
 
-    void join() {
+    virtual void join() {
       ScopedLock lock(m_mutex);
       if (!joined) {
         m_threads.join_all();
@@ -222,12 +238,12 @@ namespace Hypertable {
       }
     }
 
-    void stop() {
+    virtual void stop() {
       ScopedLock lock(m_state.queue_mutex);
       m_state.paused = true;
     }
 
-    void start() {
+    virtual void start() {
       ScopedLock lock(m_state.queue_mutex);
       m_state.paused = false;
       m_state.cond.notify_all();
@@ -240,7 +256,7 @@ namespace Hypertable {
      * ApplicationHandler.  This thread group ID is constructed in the Event
      * object
      */
-    void add(ApplicationHandler *app_handler) {
+    virtual void add(ApplicationHandler *app_handler) {
       UsageRecMap::iterator uiter;
       uint64_t thread_group = app_handler->get_thread_group();
       WorkRec *rec = new WorkRec(app_handler);

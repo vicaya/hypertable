@@ -32,8 +32,7 @@
 
 #include "Hypertable/Lib/SerializedKey.h"
 
-#include "CellCachePool.h"
-#include "CellCachePoolAllocator.h"
+#include "CellCacheAllocator.h"
 
 namespace Hypertable {
 
@@ -66,6 +65,8 @@ namespace Hypertable {
      */
     virtual void add(const Key &key, const ByteString value);
 
+    virtual void add_counter(const Key &key, const ByteString value);
+
     virtual const char *get_split_row();
 
     virtual void get_split_rows(std::vector<std::string> &split_rows);
@@ -84,17 +85,37 @@ namespace Hypertable {
 
     size_t size() { return m_cell_map.size(); }
 
+    bool empty() {ScopedLock lock(m_mutex); return m_cell_map.empty(); }
+
     /** Returns the amount of memory used by the CellCache.  This is the
      * summation of the lengths of all the keys and values in the map.
      */
-    uint64_t memory_used() {
+    int64_t memory_used() {
       ScopedLock lock(m_mutex);
-      return m_alloc.memory_used();
+      int64_t used = m_arena.used();
+      if (used < 0)
+        HT_WARN_OUT << "[Issue 339] Mem usage for CellCache=" << used << HT_END;
+      return used;
     }
 
-    uint32_t get_collision_count() { return m_collisions; }
+    /**
+     * Returns the amount of memory allocated by the CellCache.
+     */
+    uint64_t memory_allocated() {
+      ScopedLock lock(m_mutex);
+      return m_arena.total();
+    }
 
-    uint32_t get_delete_count() { return m_deletes; }
+    void get_counts(size_t *cellsp, int64_t *key_bytesp, int64_t *value_bytesp) {
+      ScopedLock lock(m_mutex);
+      *cellsp = m_cell_map.size();
+      *key_bytesp = m_key_bytes;
+      *value_bytesp = m_value_bytes;
+    }
+
+    int32_t get_collision_count() { return m_collisions; }
+
+    int32_t get_delete_count() { return m_deletes; }
 
     void freeze() { m_frozen = true; }
     void unfreeze() { m_frozen = false; }
@@ -111,18 +132,21 @@ namespace Hypertable {
     friend class CellCacheScanner;
 
     typedef std::pair<const SerializedKey, uint32_t> Value;
-    typedef CellCachePoolAllocator<Value> Alloc;
+    typedef CellCacheAllocator<Value> Alloc;
     typedef std::map<const SerializedKey, uint32_t,
                      std::less<const SerializedKey>, Alloc> CellMap;
 
   protected:
 
     Mutex              m_mutex;
-    CellCachePool      m_alloc;
+    CellCacheArena     m_arena;
     CellMap            m_cell_map;
-    uint32_t           m_deletes;
-    uint32_t           m_collisions;
+    int32_t            m_deletes;
+    int32_t            m_collisions;
+    int64_t            m_key_bytes;
+    int64_t            m_value_bytes;
     bool               m_frozen;
+    bool               m_have_counter_deletes;
 
   };
 

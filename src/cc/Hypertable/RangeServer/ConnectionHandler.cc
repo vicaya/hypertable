@@ -33,9 +33,9 @@ extern "C" {
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ResponseCallback.h"
 
-#include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 
+#include "RequestHandlerAcknowledgeLoad.h"
 #include "RequestHandlerCompact.h"
 #include "RequestHandlerDestroyScanner.h"
 #include "RequestHandlerDump.h"
@@ -54,24 +54,15 @@ extern "C" {
 #include "RequestHandlerDropRange.h"
 #include "RequestHandlerClose.h"
 #include "RequestHandlerCommitLogSync.h"
+#include "RequestHandlerWaitForMaintenance.h"
 
 #include "ConnectionHandler.h"
-#include "EventHandlerMasterConnection.h"
 #include "RangeServer.h"
 
 
 using namespace Hypertable;
 using namespace Serialization;
 using namespace Error;
-
-/**
- *
- */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
-    RangeServerPtr range_server, MasterClientPtr &master_client)
-  : m_comm(comm), m_app_queue_ptr(app_queue), m_range_server_ptr(range_server),
-    m_master_client_ptr(master_client), m_shutdown(false) {
-}
 
 /**
  *
@@ -88,7 +79,9 @@ ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
  */
 void ConnectionHandler::handle(EventPtr &event) {
 
-  if (m_shutdown && event->header.command != RangeServerProtocol::COMMAND_SHUTDOWN) {
+  if (m_shutdown &&
+      event->header.command != RangeServerProtocol::COMMAND_SHUTDOWN &&
+      event->header.command != RangeServerProtocol::COMMAND_STATUS) {
     ResponseCallback cb(m_comm, event);
     cb.error(RANGESERVER_SHUTTING_DOWN, "");
     return;
@@ -108,6 +101,10 @@ void ConnectionHandler::handle(EventPtr &event) {
                   (Llu)event->header.command);
 
       switch (event->header.command) {
+      case RangeServerProtocol::COMMAND_ACKNOWLEDGE_LOAD:
+        handler = new RequestHandlerAcknowledgeLoad(m_comm, m_range_server_ptr.get(),
+                                                    event);
+        break;
       case RangeServerProtocol::COMMAND_COMPACT:
         handler = new RequestHandlerCompact(m_comm, m_range_server_ptr.get(),
                                             event);
@@ -165,8 +162,16 @@ void ConnectionHandler::handle(EventPtr &event) {
         handler = new RequestHandlerClose(m_comm, m_range_server_ptr.get(),
                                              event);
         break;
+      case RangeServerProtocol::COMMAND_WAIT_FOR_MAINTENANCE:
+        handler = new RequestHandlerWaitForMaintenance(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_SHUTDOWN:
-        _exit(0);
+        HT_INFO("Received shutdown command");
+        m_shutdown = true;
+        m_range_server_ptr->shutdown();
+        m_range_server_ptr = 0;
+        m_app_queue_ptr->shutdown();
+        return;
       case RangeServerProtocol::COMMAND_DUMP:
         handler = new RequestHandlerDump(m_comm, m_range_server_ptr.get(),
                                          event);
@@ -194,18 +199,6 @@ void ConnectionHandler::handle(EventPtr &event) {
       std::string errmsg = format("%s - %s", e.what(), get_text(e.code()));
       cb.error(Error::PROTOCOL_ERROR, errmsg);
     }
-  }
-  else if (event->type == Event::CONNECTION_ESTABLISHED) {
-
-    HT_INFOF("%s", event->to_str().c_str());
-
-    /**
-     * If this is the connection to the Master, then we need to register
-     * ourselves with the master
-     */
-    if (m_master_client_ptr)
-      m_app_queue_ptr->add(new EventHandlerMasterConnection(m_master_client_ptr,
-                           m_range_server_ptr->get_location(), event));
   }
   else {
     HT_INFOF("%s", event->to_str().c_str());

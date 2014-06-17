@@ -39,7 +39,7 @@
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "../CellStoreFactory.h"
-#include "../CellStoreV1.h"
+#include "../CellStoreV5.h"
 #include "../FileBlockCache.h"
 #include "../Global.h"
 
@@ -99,14 +99,15 @@ int main(int argc, char **argv) {
     Global::dfs = new DfsBroker::Client(conn_mgr, addr, 15000);
 
     // force broker client to be destroyed before connection manager
-    client = (DfsBroker::Client *)Global::dfs;
+    client = (DfsBroker::Client *)Global::dfs.get();
 
     if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");
       return 1;
     }
 
-    Global::block_cache = new FileBlockCache(20000000LL);
+    Global::block_cache = new FileBlockCache(10000000LL, 20000000LL);
+    Global::memory_tracker = new MemoryTracker(Global::block_cache);
 
     String testdir = "/test/CellStore";
     String csname = testdir + "/cs64";
@@ -116,7 +117,7 @@ int main(int argc, char **argv) {
     Config::properties->set("Hypertable.RangeServer.CellStore.DefaultCompressor", String("none"));
     Config::properties->set("Hypertable.RangeServer.CellStore.DefaultBlockSize", 4*1024*1024);
 
-    cs = new CellStoreV1(Global::dfs);
+    cs = new CellStoreV5(Global::dfs.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 4096, Config::properties));
 
     // setup value
@@ -158,7 +159,7 @@ int main(int argc, char **argv) {
 
     std::ofstream out(output_file.c_str(), ios_base::out|ios_base::app);
 
-    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str), true);
+    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str));
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
       exit(1);

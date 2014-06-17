@@ -38,9 +38,13 @@ using namespace Hypertable;
  */
 void RequestHandlerCommitLogSync::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
+  TableIdentifier table;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    m_range_server->commit_log_sync(&cb);
+    table.decode(&decode_ptr, &decode_remain);
+    m_range_server->commit_log_sync(&cb, &table);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

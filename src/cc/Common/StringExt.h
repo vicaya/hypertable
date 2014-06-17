@@ -23,9 +23,13 @@
 
 #include <cstdio>
 #include <stdexcept>
+#include <set>
 
 #include "Common/String.h"
 #include "HashMap.h"
+
+
+typedef std::set<std::string> StringSet;
 
 
 /** STL Strict Weak Ordering for comparing c-style strings. */
@@ -34,6 +38,8 @@ struct LtCstr {
     return strcmp(s1, s2) < 0;
   }
 };
+
+typedef std::set<const char *, LtCstr>  CstrSet;
 
 inline std::string operator+(const std::string& s1, short sval) {
   char cbuf[8];

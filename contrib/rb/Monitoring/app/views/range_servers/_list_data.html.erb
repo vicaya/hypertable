@@ -1,0 +1,27 @@
+<table border="1"> 
+		<tr>
+			<th><%= @range_server.name %>
+				<br />
+			</th>
+		<% @range_server.timestamps.each_with_index do |ts, i| %>
+			<th>
+				<%= @time_intervals[i].to_s + " minute average" %> <br />at <%= (Time.at ts / 10 ** 9).strftime("%T") %>
+			</th>
+		<% end %>
+		</tr>			
+		<tr>	
+			
+		<% @stat_types.each do |stat| %>
+			<td>
+				<%= link_to_if_rrd_chart_exists stat %>
+			</td>
+						
+				<% @time_intervals.each_with_index do |interval, index| %>
+					<td>
+						<%= number_with_delimiter @range_server.get_value(stat, index, true) %>
+					</td>
+					
+				<% end %>
+		</tr>
+		<% end %>
+</table>

@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_RESPONSECALLBACKCREATESCANNER_H
 #define HYPERTABLE_RESPONSECALLBACKCREATESCANNER_H
 
+#include <boost/shared_array.hpp>
+
 #include "Common/Error.h"
 
 #include "AsyncComm/CommBuf.h"
@@ -35,6 +37,9 @@ namespace Hypertable {
       : ResponseCallback(comm, event_ptr) { }
 
     int response(short moreflag, int32_t id, StaticBuffer &ext);
+    int response(short moreflag, int32_t id, 
+		 boost::shared_array<uint8_t> &ext_buffer,
+		 uint32_t ext_len);
   };
 
 }

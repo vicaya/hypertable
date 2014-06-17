@@ -16,7 +16,7 @@ Error: Hyperspace 'mkdir' error, name=/how/now/brown/cow - HYPERSPACE file not f
 delete foo;
 Error: Hyperspace 'unlink' error, name=/foo - HYPERSPACE file not found
 open foo flags=READ;
-Error: Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 - HYPERSPACE bad pathname
+Error: Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 - HYPERSPACE file not found
 open foo flags=READ|CREATE;
 open foo flags=READ|CREATE|EXCL;
 Error: Hyperspace 'open' error, name=/foo flags=0x19 events=0x0 - HYPERSPACE file exists
@@ -48,8 +48,27 @@ attrlist foo;
 Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
 delete foo;
 create foo flags=READ|WRITE attr:msg1="Hello, World!" attr:msg2="How now brown cow";
+mkdir /bar2/;
+open /bar2 flags=READ|WRITE ;
+attrset /bar2 msg1="Hello, Bar!";
+attrset /bar2 msg2="How now brown cow";
+attrset /bar2 counter="10";
+attrincr /bar2 counter;
+10
+attrincr /bar2 counter;
+11
+attrdel /bar2 counter;
+attrset /bar2 msg1="Hello, Bar2/!";
+create /bar2/foo flags=READ|WRITE attr:msg1="Hello, Bar/Foo!";
+create bar3 flags=READ|WRITE attr:msg2="Hello, Bar/Foo!";
 close foo;
 delete foo;
+close /bar2;
+close /bar2/foo;
+delete /bar2/foo;
+close bar3;
+delete bar3;
+delete bar2;
 echo;
 
 echo << NotificationTest >>;

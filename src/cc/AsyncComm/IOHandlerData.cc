@@ -23,16 +23,17 @@
 
 #include <cassert>
 #include <iostream>
-using namespace std;
 
 extern "C" {
 #include <arpa/inet.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/event.h>
 #endif
+#include <sys/uio.h>
 }
 
 #include "Common/Error.h"
@@ -41,9 +42,11 @@ extern "C" {
 #include "Common/Time.h"
 
 #include "IOHandlerData.h"
-using namespace Hypertable;
+#include "ReactorRunner.h"
 
-#if defined(__linux__)
+using namespace Hypertable;
+using namespace std;
+
 
 namespace {
 
@@ -85,7 +88,7 @@ namespace {
   ssize_t
   et_socket_writev(int fd, const iovec *vector, int count, int *errnop) {
     ssize_t nwritten;
-    while ((nwritten = ::writev(fd, vector, count)) <= 0) {
+    while ((nwritten = writev(fd, vector, count)) <= 0) {
       if (errno == EINTR) {
         nwritten = 0; /* and call write() again */
         continue;
@@ -100,7 +103,115 @@ namespace {
 
 
 bool
-IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
+IOHandlerData::handle_event(struct pollfd *event, clock_t arrival_clocks, time_t arrival_time) {
+  int error = 0;
+  bool eof = false;
+
+  //DisplayEvent(event);
+
+  try {
+    if (event->revents & POLLOUT) {
+      if (handle_write_readiness()) {
+        handle_disconnect();
+        return true;
+      }
+    }
+
+    if (event->revents & POLLIN) {
+      size_t nread;
+      while (true) {
+        if (!m_got_header) {
+          nread = et_socket_read(m_sd, m_message_header_ptr,
+                                 m_message_header_remaining, &error, &eof);
+          if (nread == (size_t)-1) {
+            if (errno != ECONNREFUSED) {
+              HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                        (int)m_message_header_remaining, strerror(errno));
+              error = Error::OK;
+            }
+            else
+              error = Error::COMM_CONNECT_ERROR;
+
+            handle_disconnect(error);
+            return true;
+          }
+          else if (nread < m_message_header_remaining) {
+            m_message_header_remaining -= nread;
+            m_message_header_ptr += nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else {
+            m_message_header_ptr += nread;
+            handle_message_header(arrival_clocks, arrival_time);
+          }
+
+          if (eof)
+            break;
+        }
+        else { // got header
+          nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining,
+                                 &error, &eof);
+          if (nread == (size_t)-1) {
+            HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                      (int)m_message_header_remaining, strerror(errno));
+            handle_disconnect();
+            return true;
+          }
+          else if (nread < m_message_remaining) {
+            m_message_ptr += nread;
+            m_message_remaining -= nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else
+            handle_message_body();
+
+          if (eof)
+            break;
+        }
+      }
+    }
+
+    if (eof) {
+      HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
+		inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->revents & POLLERR) {
+      HT_ERRORF("Received POLLERR on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->revents & POLLHUP) {
+      HT_DEBUGF("Received POLLHUP on descriptor %d (%s:%d)", m_sd,
+		inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    HT_ASSERT((event->revents & POLLNVAL) == 0);
+
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    handle_disconnect();
+    return true;
+  }
+
+  return false;
+}
+
+#if defined(__linux__)
+
+bool
+IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks, time_t arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -141,7 +252,7 @@ IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
           }
           else {
             m_message_header_ptr += nread;
-            handle_message_header(arrival_clocks);
+            handle_message_header(arrival_clocks, arrival_time);
           }
 
           if (eof)
@@ -212,12 +323,127 @@ IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
   return false;
 }
 
-#elif defined(__APPLE__)
+#elif defined(__sun__)
+
+bool IOHandlerData::handle_event(port_event_t *event, clock_t arrival_clocks, time_t arrival_time) {
+  int error = 0;
+  bool eof = false;
+
+  //display_event(event);
+
+  try {
+
+    if (event->portev_events & POLLOUT) {
+      if (handle_write_readiness()) {
+	HT_INFO("handle_disconnect() write readiness");
+        handle_disconnect();
+        return true;
+      }
+    }
+
+    if (event->portev_events & POLLIN) {
+      size_t nread;
+      while (true) {
+        if (!m_got_header) {
+          nread = et_socket_read(m_sd, m_message_header_ptr,
+                                 m_message_header_remaining, &error, &eof);
+          if (nread == (size_t)-1) {
+            if (errno != ECONNREFUSED) {
+              HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                        (int)m_message_header_remaining, strerror(errno));
+              error = Error::OK;
+            }
+            else
+              error = Error::COMM_CONNECT_ERROR;
+
+            handle_disconnect(error);
+            return true;
+          }
+          else if (nread < m_message_header_remaining) {
+            m_message_header_remaining -= nread;
+            m_message_header_ptr += nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else {
+            m_message_header_ptr += nread;
+            handle_message_header(arrival_clocks, arrival_time);
+          }
+
+          if (eof)
+            break;
+        }
+        else { // got header
+          nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining,
+                                 &error, &eof);
+          if (nread == (size_t)-1) {
+            HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                      (int)m_message_header_remaining, strerror(errno));
+            handle_disconnect();
+            return true;
+          }
+          else if (nread < m_message_remaining) {
+            m_message_ptr += nread;
+            m_message_remaining -= nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else
+            handle_message_body();
+
+          if (eof)
+            break;
+        }
+      }
+    }
+
+    if (eof) {
+      HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
+		inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+
+    if (event->portev_events & POLLERR) {
+      HT_ERRORF("Received POLLERR on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->portev_events & POLLHUP) {
+      HT_DEBUGF("Received POLLHUP on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->portev_events & POLLREMOVE) {
+      HT_DEBUGF("Received POLLREMOVE on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+    
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    handle_disconnect();
+    return true;
+  }
+
+  return false;
+}
+
+#elif defined(__APPLE__) || defined(__FreeBSD__)
 
 /**
  *
  */
-bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks) {
+bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks, time_t arrival_time) {
 
   //DisplayEvent(event);
 
@@ -253,7 +479,7 @@ bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks) {
             assert(nread == m_message_header_remaining);
             available -= nread;
             m_message_header_ptr += nread;
-            handle_message_header(arrival_clocks);
+            handle_message_header(arrival_clocks, arrival_time);
           }
           else {
             nread = FileUtils::read(m_sd, m_message_header_ptr, available);
@@ -305,7 +531,6 @@ bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks) {
     return true;
   }
 
-
   return false;
 }
 #else
@@ -313,7 +538,7 @@ bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks) {
 #endif
 
 
-void IOHandlerData::handle_message_header(clock_t arrival_clocks) {
+void IOHandlerData::handle_message_header(clock_t arrival_clocks, time_t arrival_time) {
   size_t header_len = (size_t)m_message_header[1];
 
   // check to see if there is any variable length header
@@ -326,8 +551,20 @@ void IOHandlerData::handle_message_header(clock_t arrival_clocks) {
 
   m_event->load_header(m_sd, m_message_header, header_len);
   m_event->arrival_clocks = arrival_clocks;
+  m_event->arrival_time = arrival_time;
 
+#if defined(__linux__)
+  if (m_event->header.alignment > 0) {
+    void *vptr = 0;
+    posix_memalign(&vptr, m_event->header.alignment,
+		   m_event->header.total_len - header_len);
+    m_message = (uint8_t *)vptr;
+  }
+  else
+    m_message = new uint8_t [m_event->header.total_len - header_len];
+#else
   m_message = new uint8_t [m_event->header.total_len - header_len];
+#endif
   m_message_ptr = m_message;
   m_message_remaining = m_event->header.total_len - header_len;
   m_message_header_remaining = 0;
@@ -339,7 +576,12 @@ void IOHandlerData::handle_message_header(clock_t arrival_clocks) {
 void IOHandlerData::handle_message_body() {
   DispatchHandler *dh = 0;
 
-  if ((m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST) == 0 &&
+  if (m_event->header.flags & CommHeader::FLAGS_BIT_PROXY_MAP_UPDATE) {
+    ReactorRunner::handler_map->update_proxies((const char *)m_message,
+                  m_event->header.total_len - m_event->header.header_len);
+    //HT_INFO("proxy map update");
+  }
+  else if ((m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST) == 0 &&
       (m_event->header.id == 0
       || (dh = m_reactor_ptr->remove_request(m_event->header.id)) == 0)) {
     if ((m_event->header.flags & CommHeader::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
@@ -354,6 +596,8 @@ void IOHandlerData::handle_message_body() {
     m_event->payload = m_message;
     m_event->payload_len = m_event->header.total_len
                            - m_event->header.header_len;
+    m_event->set_proxy(m_proxy);
+    //HT_INFOF("Just received messaage of size %d", m_event->header.total_len);
     deliver_event( m_event, dh );
   }
 
@@ -363,55 +607,68 @@ void IOHandlerData::handle_message_body() {
 
 void IOHandlerData::handle_disconnect(int error) {
   m_reactor_ptr->cancel_requests(this);
-  deliver_event(new Event(Event::DISCONNECT, m_addr, error));
+  deliver_event(new Event(Event::DISCONNECT, m_addr, m_proxy, error));
 }
 
 
 bool IOHandlerData::handle_write_readiness() {
+  bool deliver_conn_estab_event = false;
+  bool rval = true;
 
-  if (m_connected == false) {
-    socklen_t name_len = sizeof(m_local_addr);
-    int sockerr = 0;
-    socklen_t sockerr_len = sizeof(sockerr);
-
-    if (getsockopt(m_sd, SOL_SOCKET, SO_ERROR, &sockerr, &sockerr_len) < 0) {
-      HT_ERRORF("getsockopt(SO_ERROR) failed - %s", strerror(errno));
-    }
-
-    if (sockerr) {
-      HT_ERRORF("connect() completion error - %s", strerror(sockerr));
-      return true;
-    }
-
-    int bufsize = 4*32768;
-    if (setsockopt(m_sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize,
-        sizeof(bufsize)) < 0) {
-      HT_ERRORF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
-    }
-    if (setsockopt(m_sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize,
-        sizeof(bufsize)) < 0) {
-      HT_ERRORF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
-    }
-
-    if (getsockname(m_sd, (struct sockaddr *)&m_local_addr, &name_len) < 0) {
-      HT_ERRORF("getsockname(%d) failed - %s", m_sd, strerror(errno));
-      return true;
-    }
-    //clog << "Connection established." << endl;
-    m_connected = true;
-    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_addr,
-                            Error::OK));
-  }
-  else {
+  while (true) {
     ScopedLock lock(m_mutex);
+
+    if (m_connected == false) {
+      socklen_t name_len = sizeof(m_local_addr);
+      int sockerr = 0;
+      socklen_t sockerr_len = sizeof(sockerr);
+
+      if (getsockopt(m_sd, SOL_SOCKET, SO_ERROR, &sockerr, &sockerr_len) < 0) {
+	HT_ERRORF("getsockopt(SO_ERROR) failed - %s", strerror(errno));
+      }
+
+      if (sockerr) {
+	HT_ERRORF("connect() completion error - %s", strerror(sockerr));
+	break;
+      }
+
+      int bufsize = 4*32768;
+      if (setsockopt(m_sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize,
+		     sizeof(bufsize)) < 0) {
+	HT_ERRORF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
+      }
+      if (setsockopt(m_sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize,
+		     sizeof(bufsize)) < 0) {
+	HT_ERRORF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
+      }
+
+      if (getsockname(m_sd, (struct sockaddr *)&m_local_addr, &name_len) < 0) {
+	HT_ERRORF("getsockname(%d) failed - %s", m_sd, strerror(errno));
+	break;
+      }
+      //HT_INFO("Connection established.");
+      m_connected = true;
+      deliver_conn_estab_event = true;
+    }
+
+    //HT_INFO("about to flush send queue");
     if (flush_send_queue() != Error::OK) {
       HT_DEBUG("error flushing send queue");
-      return true;
+      break;
     }
+    //HT_INFO("about to remove poll interest");
     if (m_send_queue.empty())
       remove_poll_interest(Reactor::WRITE_READY);
+
+    rval = false;
+    break;
   }
-  return false;
+
+  if (deliver_conn_estab_event)
+    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_addr,
+			    m_proxy, Error::OK));
+
+  return rval;
 }
 
 
@@ -422,6 +679,11 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
   int error;
   bool initially_empty = m_send_queue.empty() ? true : false;
 
+  /**
+  if (!m_connected)
+    return Error::COMM_NOT_CONNECTED;
+  **/
+
   // If request, Add message ID to request cache
   if (cbp->header.id != 0 && disp_handler != 0
       && cbp->header.flags & CommHeader::FLAGS_BIT_REQUEST) {
@@ -431,10 +693,14 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
     m_reactor_ptr->add_request(cbp->header.id, this, disp_handler, expire_time);
   }
 
+  //HT_INFOF("About to send message of size %d", cbp->header.total_len);
+
   m_send_queue.push_back(cbp);
 
-  if ((error = flush_send_queue()) != Error::OK)
-    return error;
+  if (m_connected) {
+    if ((error = flush_send_queue()) != Error::OK)
+      HT_WARNF("Problem flushing send queue - %s", Error::get_text(error));
+  }
 
   if (initially_empty && !m_send_queue.empty()) {
     add_poll_interest(Reactor::WRITE_READY);
@@ -530,7 +796,7 @@ int IOHandlerData::flush_send_queue() {
   return Error::OK;
 }
 
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined (__sun__) || defined(__FreeBSD__)
 
 int IOHandlerData::flush_send_queue() {
   ssize_t nwritten, towrite, remaining;
@@ -592,7 +858,6 @@ int IOHandlerData::flush_send_queue() {
 
   return Error::OK;
 }
-
 
 #else
   ImplementMe;

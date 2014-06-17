@@ -1,0 +1,143 @@
+:stats: {
+        :range_count: { :pair: [:range_count],
+                       :units: "" ,
+                       :color: ["#73d216"],
+                       :pname: "Range Count"},
+
+        :cell_read_rate: { :pair: [:cell_read_rate],
+                       :units: "" ,
+                       :color: ["#edd400"],
+                       :pname: "Cells Read/s"},
+
+        :cell_write_rate: {
+                       :pair: [:cell_write_rate],
+                       :units: "" ,
+                       :color: ["#73d216"],
+                       :pname: "Cells Written/s"
+                      },
+
+        :byte_read_rate: {
+                     :pair: [:byte_read_rate],
+                     :color: ["#c17d11"],
+                     :units: "Bytes",
+                     :pname: "Bytes Read/s"},
+
+        :byte_write_rate: {
+                     :pair: [:byte_write_rate],
+                     :color: [ "#888a85"],
+                     :units: "Bytes",
+                     :pname: "Bytes Written/s"},
+
+        :qcache_max_mem: {
+                     :pair: [:qcache_max_mem],
+                     :color: ["#8ae234"],
+                     :units: "",
+                     :pname: "Query Cache Max Mem"},
+        :qcache_hit_pct: {
+                     :pair: [:qcache_hit_pct],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Query Cache Hits Percentage"},
+
+        :loadavg: {
+                    :pair: [:loadavg],
+                    :color: ["#73d216"],
+                    :units: "",
+                    :pname: "Load Avg"},
+
+        :qcache_fill: {
+                  :pair: [:qcache_fill],
+                  :color: ["#fcaf3e"],
+                  :units: "" ,
+                  :pname: "Query Cache Fill"},
+
+
+         :scans: {
+                   :pair: [:scans],
+                   :units: "",
+                   :color: ["#cc0000"],
+                   :pname: "Scans/s"},
+         :syncs: {
+                   :pair: [:syncs],
+                   :units: "",
+                   :color: ["#cc0000"],
+                   :pname: "Syncs/s"},
+
+         :bcache_hit_pct: {
+                    :pair: [:bcache_hit_pct],
+                    :color: ["#cc0000"],
+                    :units: "",
+                    :pname: "Block Cache Hit Percentage"},
+         :bcache_max_mem: {
+                    :pair: [:bcache_max_mem],
+                    :color: ["#5c3566"],
+                    :units: "",
+                    :pname: "Block Cache Max Mem",
+                    :flag: "1"  },
+
+	:bcache_fill: {
+                    :pair: [:bcache_fill],
+                    :color: ["#5c3566"],
+                    :units: "",
+                    :pname: "Block Cache Fill"
+                    },
+	
+	:disk_used_pct: {
+                    :pair: [:disk_used_pct],
+                    :color: ["#5c3566"],
+                    :units: "",
+                    :pname: "Disk Used Pct"
+                    },
+
+	:disk_read_KBps: {
+                    :pair: [:disk_read_KBps],
+                    :color: ["#cc0000"],
+                    :units: "",
+                    :pname: "Disk Read KBps"},
+
+	
+	:disk_write_KBps: {
+                     :pair: [:disk_write_KBps],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Disk Write KBps"},
+
+	:disk_write_iops: {
+                     :pair: [:disk_write_iops],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Disk Write IOPS"},
+	
+	:disk_read_iops: {
+                     :pair: [:disk_read_iops],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Disk Read IOPS"},
+
+
+        :vm_size: {
+                  :pair: [:vm_size],
+                  :color: ["#ef2929"],
+                  :units: "KB",
+                  :pname: "Virtual Memory Size"},
+
+        :vm_resident: {
+                  :pair: [:vm_resident],
+                  :color: ["#73d216"],
+                  :units: "KB",
+                  :pname: "Virtual Memory Resident"},
+
+
+	:net_rx_rate: {
+                     :pair: [:net_rx_rate],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Net RX Rate"},
+
+	:net_tx_rate: {
+                     :pair: [:net_tx_rate],
+                     :color: ["#ef2929"],
+                     :units: "",
+                     :pname: "Net TX Rate"}
+	
+}

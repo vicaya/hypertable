@@ -60,6 +60,11 @@ HOW TO BUILD FROM SOURCE
 
         cmake -DCMAKE_BUILD_TYPE=Release ~/src/hypertable
 
+    If you would like to install the build in a directory that contains
+    a version suffix (e.g. 0.9.3.0.1d45f8d), you can configure as follows:
+
+        cmake -DCMAKE_BUILD_TYPE=Release -DVERSION_ADD_COMMIT_SUFFIX=1 ~/src/hypertable
+
     Note, you can also use:
 
         ccmake ~/src/hypertable
@@ -72,8 +77,7 @@ HOW TO BUILD FROM SOURCE
 
     Since PHP has no builtin package system, its thrift installation needs to
     be manually specified for ThriftBroker support:
-
-        cmake -DPHPTHRIFT_ROOT=~/thrift/lib/php/src ~/src/hypertable
+        cmake -DPHPTHRIFT_ROOT:STRING=/home/user/src/thrift/lib/php/src
 
 4.  Build Hypertable binaries.
 

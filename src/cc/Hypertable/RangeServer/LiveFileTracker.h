@@ -52,24 +52,13 @@ namespace Hypertable {
     }
 
     /**
-     * Clears the live file set.  Sets the m_need_update flag to true.
-     */
-    void clear_live() {
-      ScopedLock lock(m_mutex);
-      m_live.clear();
-      m_need_update = true;
-    }
-
-    /**
-     * Adds a file to the live file set.
+     * Updates the live file set
      *
-     * @param fname file to add
+     * @param add filename to add
+     * @param deletes vector of filenames to delete
+     * @param nextcsid Next available CellStore ID
      */
-    void add_live(const String &fname) {
-      ScopedLock lock(m_mutex);
-      m_live.insert(fname);
-      m_need_update = true;
-    }
+    void update_live(const String &add, std::vector<String> &deletes, uint32_t nextcsid);
 
     /**
      * Adds a file to the live file set without seting the 'need_update' bit
@@ -78,7 +67,7 @@ namespace Hypertable {
      */
     void add_live_noupdate(const String &fname) {
       ScopedLock lock(m_mutex);
-      m_live.insert(fname);
+      m_live.insert(strip_basename(fname));
     }
 
     /**
@@ -116,10 +105,18 @@ namespace Hypertable {
      */
     void get_file_list(String &file_list, bool include_blocked);
 
+    void set_next_csid(uint32_t nid) { 
+      m_last_nextcsid = m_cur_nextcsid = nid;
+    }
+
   private:
+
+    String strip_basename(const String &fname);
+
     Mutex            m_mutex;
     Mutex            m_update_mutex;
     TableIdentifierManaged m_identifier;
+    String           m_file_basename;
     SchemaPtr        m_schema_ptr;
     String           m_start_row;
     String           m_end_row;
@@ -129,6 +126,8 @@ namespace Hypertable {
     std::set<String> m_blocked;
     bool             m_need_update;
     bool             m_is_root;
+    uint32_t         m_last_nextcsid;
+    uint32_t         m_cur_nextcsid;
   };
 
 }

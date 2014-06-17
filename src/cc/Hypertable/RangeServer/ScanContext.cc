@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include <algorithm>
 #include <cassert>
+#include <re2/re2.h>
 
 #include "Common/Logger.h"
 
@@ -41,6 +42,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   uint32_t max_versions = 0;
   boost::xtime xtnow;
   int64_t now;
+  String family, qualifier;
+  bool has_qualifier, is_regexp;
 
   boost::xtime_get(&xtnow, boost::TIME_UTC);
   now = ((int64_t)xtnow.sec * 1000000000LL) + (int64_t)xtnow.nsec;
@@ -67,24 +70,27 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     max_versions = spec->max_versions;
   }
 
-  memset(family_info, 0, 256*sizeof(CellFilterInfo));
-
   if (sp) {
     schema = sp;
 
     if (spec && spec->columns.size() > 0) {
+
       foreach(const char *cfstr, spec->columns) {
-        cf = schema->get_column_family(cfstr);
+        ScanSpec::parse_column(cfstr, family, qualifier, &has_qualifier, &is_regexp);
+        cf = schema->get_column_family(family.c_str());
 
         if (cf == 0)
           HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY, cfstr);
 
         family_mask[cf->id] = true;
+        if (has_qualifier) {
+          family_info[cf->id].add_qualifier(qualifier.c_str(), is_regexp);
+        }
         if (cf->ttl == 0)
           family_info[cf->id].cutoff_time = TIMESTAMP_MIN;
         else
           family_info[cf->id].cutoff_time = now
-              - ((uint64_t)cf->ttl * 1000000000LL);
+            - ((int64_t)cf->ttl * 1000000000LL);
         if (max_versions == 0)
           family_info[cf->id].max_versions = cf->max_versions;
         else {
@@ -92,32 +98,34 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
             family_info[cf->id].max_versions = max_versions;
           else
             family_info[cf->id].max_versions = max_versions < cf->max_versions
-                ?  max_versions : cf->max_versions;
+              ?  max_versions : cf->max_versions;
         }
+        if (cf->counter)
+          family_info[cf->id].counter = true;
       }
     }
     else {
       Schema::AccessGroups &aglist = schema->get_access_groups();
 
       family_mask[0] = true;  // ROW_DELETE records have 0 column family, so
-                              // this allows them to pass through
+      // this allows them to pass through
       for (Schema::AccessGroups::iterator ag_it = aglist.begin();
-           ag_it != aglist.end(); ++ag_it) {
+          ag_it != aglist.end(); ++ag_it) {
         for (Schema::ColumnFamilies::iterator cf_it = (*ag_it)->columns.begin();
-             cf_it != (*ag_it)->columns.end(); ++cf_it) {
+            cf_it != (*ag_it)->columns.end(); ++cf_it) {
           if ((*cf_it)->id == 0)
             HT_THROWF(Error::RANGESERVER_SCHEMA_INVALID_CFID,
-                      "Bad ID for Column Family '%s'", (*cf_it)->name.c_str());
+                "Bad ID for Column Family '%s'", (*cf_it)->name.c_str());
           if ((*cf_it)->deleted) {
             family_mask[(*cf_it)->id] = false;
             continue;
           }
           family_mask[(*cf_it)->id] = true;
           if ((*cf_it)->ttl == 0)
-            family_info[(*cf_it)->id].cutoff_time = 0;
+            family_info[(*cf_it)->id].cutoff_time = TIMESTAMP_MIN;
           else
             family_info[(*cf_it)->id].cutoff_time = now
-                - ((uint64_t)(*cf_it)->ttl * 1000000000LL);
+              - ((int64_t)(*cf_it)->ttl * 1000000000LL);
 
           if (max_versions == 0)
             family_info[(*cf_it)->id].max_versions = (*cf_it)->max_versions;
@@ -126,9 +134,11 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
               family_info[(*cf_it)->id].max_versions = max_versions;
             else
               family_info[(*cf_it)->id].max_versions =
-                  (max_versions < (*cf_it)->max_versions)
-                  ? max_versions : (*cf_it)->max_versions;
+                (max_versions < (*cf_it)->max_versions)
+                ? max_versions : (*cf_it)->max_versions;
           }
+          if ((*cf_it)->counter)
+            family_info[(*cf_it)->id].counter = true;
         }
       }
     }
@@ -151,20 +161,28 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       single_row = true;
 
     if (!spec->row_intervals.empty()) {
-
       // start row
-      start_row = spec->row_intervals[0].start;
-      start_inclusive = spec->row_intervals[0].start_inclusive;
+      start_row = spec->row_intervals.front().start;
+      start_inclusive = spec->row_intervals.front().start_inclusive;
 
-      // end row
-      if (spec->row_intervals[0].end[0] == 0)
+      // end row (if scan_and_filter_rows the rows are ordered ascending, otherwise only one row interval)
+      if (spec->row_intervals.back().end[0] == 0)
         end_row = Key::END_ROW_MARKER;
       else {
-        end_row = spec->row_intervals[0].end;
-        end_inclusive = spec->row_intervals[0].end_inclusive;
+        end_row = spec->row_intervals.back().end;
+        end_inclusive = spec->row_intervals.back().end_inclusive;
 
-        if (!strcmp(spec->row_intervals[0].start, spec->row_intervals[0].end))
+        if (!strcmp(spec->row_intervals.front().start, spec->row_intervals.back().end))
           single_row = true;
+      }
+
+      if (spec->scan_and_filter_rows) {
+        foreach (const RowInterval& ri, spec->row_intervals) {
+          rowset.insert(arena.dup(ri.start)); // ri.end is set to "" in order to safe space
+        }
+        end_row = *rowset.rbegin();
+        end_inclusive = true;
+        single_row = rowset.size() == 1;
       }
     }
     else if (!spec->cell_intervals.empty()) {
@@ -177,7 +195,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         ptr = strchr(spec->cell_intervals[0].start_column, ':');
         if (ptr == 0) {
           ptr = spec->cell_intervals[0].start_column
-                + strlen(spec->cell_intervals[0].start_column);
+            + strlen(spec->cell_intervals[0].start_column);
           start_qualifier = "";
         }
         else {
@@ -187,10 +205,10 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
           has_start_cf_qualifier = true;
         }
         column_family_str = String(spec->cell_intervals[0].start_column,
-                                   ptr - spec->cell_intervals[0].start_column);
+            ptr - spec->cell_intervals[0].start_column);
         if ((cf = schema->get_column_family(column_family_str)) == 0)
           HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
-                   format("Bad column family (%s)", column_family_str.c_str()));
+              format("Bad column family (%s)", column_family_str.c_str()));
 
         start_key.column_family_code = cf->id;
 
@@ -207,7 +225,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         ptr = strchr(spec->cell_intervals[0].end_column, ':');
         if (ptr == 0) {
           ptr = spec->cell_intervals[0].end_column
-                + strlen(spec->cell_intervals[0].end_column);
+            + strlen(spec->cell_intervals[0].end_column);
           end_qualifier = "";
         }
         else {
@@ -217,10 +235,10 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         }
 
         column_family_str = String(spec->cell_intervals[0].end_column,
-                                   ptr - spec->cell_intervals[0].end_column);
+            ptr - spec->cell_intervals[0].end_column);
         if ((cf = schema->get_column_family(column_family_str)) == 0)
           HT_THROWF(Error::RANGESERVER_BAD_SCAN_SPEC, "Bad column family (%s)",
-                    column_family_str.c_str());
+              column_family_str.c_str());
 
         end_key.column_family_code = cf->id;
 
@@ -233,12 +251,12 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       }
 
       if (!strcmp(spec->cell_intervals[0].start_row,
-                  spec->cell_intervals[0].end_row))
+            spec->cell_intervals[0].end_row))
         single_row = true;
 
       if (single_row && ((end_key.column_family_code == start_key.column_family_code
-          && start_qualifier.compare(end_qualifier) > 0)
-          || start_key.column_family_code > end_key.column_family_code))
+              && start_qualifier.compare(end_qualifier) > 0)
+            || start_key.column_family_code > end_key.column_family_code))
         HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_cell > end_cell");
 
     }
@@ -267,14 +285,15 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   end_key.row_len = end_row.length();
 
   dbuf.reserve(start_row.length() + start_qualifier.length()
-               + end_row.length() + end_qualifier.length() + 64);
+      + end_row.length() + end_qualifier.length() + 64);
 
   String tmp_str;
 
   if (spec && !spec->cell_intervals.empty()) {
     if (start_inclusive)
-      create_key_and_append(dbuf, FLAG_INSERT, start_key.row, start_key.column_family_code,
-                            start_key.column_qualifier, TIMESTAMP_MAX, revision);
+      // DELETE_ROW and DELETE_CF will be handled by the scanner
+      create_key_and_append(dbuf, FLAG_DELETE_CELL, start_key.row, start_key.column_family_code,
+          start_key.column_qualifier, TIMESTAMP_MAX, revision);
     else {
       if (start_key.column_qualifier == 0)
         tmp_str = Key::END_ROW_MARKER;
@@ -282,16 +301,17 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         tmp_str = start_key.column_qualifier;
         tmp_str.append(1, 1);
       }
-      create_key_and_append(dbuf, FLAG_INSERT, start_key.row,
-                            start_key.column_family_code,
-                            tmp_str.c_str(), TIMESTAMP_MAX, revision);
+      // DELETE_ROW and DELETE_CF will be handled by the scanner
+      create_key_and_append(dbuf, FLAG_DELETE_CELL, start_key.row,
+          start_key.column_family_code,
+          tmp_str.c_str(), TIMESTAMP_MAX, revision);
     }
     start_serkey.ptr = dbuf.base;
     end_serkey.ptr = dbuf.ptr;
 
     if (!end_inclusive)
       create_key_and_append(dbuf, 0, end_key.row, end_key.column_family_code,
-                            end_key.column_qualifier, TIMESTAMP_MAX, revision);
+          end_key.column_qualifier, TIMESTAMP_MAX, revision);
     else {
       if (end_key.column_qualifier == 0)
         tmp_str = Key::END_ROW_MARKER;
@@ -300,7 +320,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         tmp_str.append(1, 1);
       }
       create_key_and_append(dbuf, 0, end_key.row, end_key.column_family_code,
-                            tmp_str.c_str(), TIMESTAMP_MAX, revision);
+          tmp_str.c_str(), TIMESTAMP_MAX, revision);
     }
   }
   else {
@@ -322,4 +342,21 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     }
   }
 
+  /** Get row, value regexps and row set **/
+  if (spec) {
+    if (spec->row_regexp && *spec->row_regexp != 0) {
+      row_regexp = new RE2(spec->row_regexp);
+      if (!row_regexp->ok()) {
+        HT_THROW(Error::BAD_SCAN_SPEC, (String)"Can't convert row_regexp "
+            + spec->row_regexp + " to regexp -" + row_regexp->error_arg());
+      }
+    }
+    if (spec->value_regexp && *spec->value_regexp != 0) {
+      value_regexp = new RE2(spec->value_regexp);
+      if (!value_regexp->ok()) {
+        HT_THROW(Error::BAD_SCAN_SPEC, (String)"Can't convert value_regexp "
+            + spec->value_regexp + " to regexp -" + value_regexp->error_arg());
+      }
+    }
+  }
 }

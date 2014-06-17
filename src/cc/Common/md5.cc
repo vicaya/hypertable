@@ -25,14 +25,21 @@
  *  http://www.ietf.org/rfc/rfc1321.txt
  */
 
+#define SELF_TEST 1
 #ifndef _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_DEPRECATE 1
 #endif
 
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "md5.h"
+
+/*
+ * Translation Table as described in RFC 4648
+ */
+static const char mb64_charset[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 /*
  * 32-bit integer manipulation macros (little endian)
@@ -70,7 +77,7 @@ void md5_starts( md5_context *ctx )
     ctx->state[3] = 0x10325476;
 }
 
-static void md5_process( md5_context *ctx, unsigned char data[64] )
+static void md5_process( md5_context *ctx, const unsigned char data[64] )
 {
     unsigned long X[16], A, B, C, D;
 
@@ -196,7 +203,7 @@ static void md5_process( md5_context *ctx, unsigned char data[64] )
 /*
  * MD5 process buffer
  */
-void md5_update( md5_context *ctx, unsigned char *input, int ilen )
+void md5_update( md5_context *ctx, const unsigned char *input, int ilen )
 {
     int fill;
     unsigned long left;
@@ -300,7 +307,7 @@ int md5_file( char *path, unsigned char output[16] )
 /*
  * Output = MD5( input buffer )
  */
-void md5_csum( unsigned char *input, int ilen,
+void md5_csum( const unsigned char *input, int ilen,
                unsigned char output[16] )
 {
     md5_context ctx;
@@ -314,7 +321,7 @@ void md5_csum( unsigned char *input, int ilen,
  * Output = HMAC-MD5( input buffer, hmac key )
  */
 void md5_hmac( unsigned char *key, int keylen,
-               unsigned char *input, int ilen,
+               const unsigned char *input, int ilen,
                unsigned char output[16] )
 {
     int i;
@@ -359,7 +366,7 @@ void md5_hex(const void *input, size_t len, char output[33]) {
   unsigned char digest[16];
 
   md5_starts(&ctx);
-  md5_update(&ctx, (unsigned char *)input, len);
+  md5_update(&ctx, (const unsigned char *)input, len);
   md5_finish(&ctx, digest);
 
   int index, j=0;
@@ -376,7 +383,57 @@ void md5_string(const char *input, char output[33]) {
   md5_hex(input, strlen(input), output);
 }
 
+int64_t md5_hash(const char *input) {
+  md5_context ctx;
+  unsigned char digest[16];
+  int64_t hash;
+
+  md5_starts(&ctx);
+  md5_update(&ctx, (const unsigned char *)input, strlen(input));
+  md5_finish(&ctx, digest);
+
+  memcpy(&hash, digest, sizeof(int64_t));
+  return hash;
+  
+}
+
+void digest_to_trunc_modified_base64(const char digest[16], char output[17]) {
+  int digest_pos=0;
+  int output_pos=0;
+
+  while (digest_pos < 12) {
+    // Convert next 3 bytes of digest into 4 bytes of 6 bit chars
+    output[output_pos]   = (digest[digest_pos] & 0xfc) >> 2;
+    output[output_pos+1] = ((digest[digest_pos] & 0x03) << 4) |
+                           ((digest[digest_pos+1] & 0xf0) >> 4);
+    output[output_pos+2] = ((digest[digest_pos+1] & 0x0f) << 2) |
+                           ((digest[digest_pos+2] & 0xc0) >> 6);
+    output[output_pos+3] = digest[digest_pos+2] & 0x3f;
+
+    // Convert 6 bit chars to modified base64 char
+    for(int ii=0; ii<4; ++ii)
+      output[output_pos+ii] = mb64_charset[(unsigned)output[output_pos+ii]];
+
+    output_pos += 4;
+    digest_pos += 3;
+  }
+  output[16]='\0';
+}
+
+void md5_trunc_modified_base64(const char *input, char output[17]) {
+  md5_context ctx;
+  unsigned char digest[16];
+  size_t len = strlen(input);
+
+  md5_starts(&ctx);
+  md5_update(&ctx, (const unsigned char *)input, len);
+  md5_finish(&ctx, digest);
+  digest_to_trunc_modified_base64((const char *)digest, output);
+}
+
+
 #ifdef SELF_TEST
+
 /*
  * RFC 1321 test vectors
  */
@@ -409,6 +466,7 @@ static const unsigned char md5_test_sum[7][16] =
     { 0x57, 0xED, 0xF4, 0xA2, 0x2B, 0xE3, 0xC9, 0x55,
       0xAC, 0x49, 0xDA, 0x2E, 0x21, 0x07, 0xB6, 0x7A }
 };
+
 
 /*
  * Checkup routine

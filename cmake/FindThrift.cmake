@@ -5,17 +5,19 @@
 #  Thrift_LIBS, Thrift libraries
 #  Thrift_FOUND, If false, do not try to use ant
 
-exec_program(thrift ARGS -version OUTPUT_VARIABLE Thrift_VERSION
+exec_program(env ARGS thrift -version OUTPUT_VARIABLE Thrift_VERSION
              RETURN_VALUE Thrift_RETURN)
 
-find_path(Thrift_INCLUDE_DIR Thrift.h PATHS
+find_path(Thrift_INCLUDE_DIR Thrift.h NO_DEFAULT_PATH PATHS
+  ${HT_DEPENDENCY_INCLUDE_DIR}/thrift
   /usr/local/include/thrift
   /opt/local/include/thrift
+  /usr/include/thrift
 )
 
-set(Thrift_LIB_PATHS /usr/local/lib /opt/local/lib)
+set(Thrift_LIB_PATHS ${HT_DEPENDENCY_LIB_DIR} /usr/local/lib /opt/local/lib /usr/lib64)
 
-find_library(Thrift_LIB NAMES thrift PATHS ${Thrift_LIB_PATHS})
+find_library(Thrift_LIB NAMES thrift NO_DEFAULT_PATH PATHS ${Thrift_LIB_PATHS})
 find_library(Thrift_NB_LIB NAMES thriftnb PATHS ${Thrift_LIB_PATHS})
 
 if (Thrift_VERSION MATCHES "^Thrift version" AND LibEvent_LIBS

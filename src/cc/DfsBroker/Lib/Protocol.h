@@ -38,10 +38,11 @@ namespace Hypertable {
     public:
 
       static CommBuf *create_open_request(const String &fname,
+                                          uint32_t flags,
                                           uint32_t bufsz=0);
 
       static CommBuf *create_create_request(const String &fname,
-                                            bool overwrite,
+                                            uint32_t flags,
                                             int32_t bufsz,
                                             int32_t replication,
                                             int64_t blksz);

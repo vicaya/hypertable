@@ -22,12 +22,16 @@
 #ifndef HYPERTABLE_SCANCONTEXT_H
 #define HYPERTABLE_SCANCONTEXT_H
 
+#include<re2/re2.h>
+
 #include <cassert>
 #include <utility>
+#include <set>
 
 #include "Common/ByteString.h"
 #include "Common/Error.h"
 #include "Common/ReferenceCount.h"
+#include "Common/StringExt.h"
 
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
@@ -36,9 +40,81 @@
 
 namespace Hypertable {
 
-  struct CellFilterInfo {
+  using namespace std;
+
+  class CellFilterInfo {
+  public:
+    CellFilterInfo(): cutoff_time(0), max_versions(0), counter(false),
+        filter_by_exact_qualifier(false), filter_by_regexp_qualifier(false) {}
+
+    CellFilterInfo(const CellFilterInfo& other) {
+      cutoff_time = other.cutoff_time;
+      max_versions = other.max_versions;
+      counter = other.counter;
+      regexp_qualifiers.clear();
+      for (size_t ii=0; ii<other.regexp_qualifiers.size(); ++ii) {
+        regexp_qualifiers.push_back( new RE2(other.regexp_qualifiers[ii]->pattern()) );
+      }
+      exact_qualifiers = other.exact_qualifiers;
+      for (size_t ii=0; ii<exact_qualifiers.size(); ++ii) {
+        exact_qualifiers_set.insert(exact_qualifiers[ii].c_str());
+      }
+      filter_by_exact_qualifier = other.filter_by_exact_qualifier;
+      filter_by_regexp_qualifier = other.filter_by_regexp_qualifier;
+    }
+
+    ~CellFilterInfo() {
+      for (size_t ii=0; ii<regexp_qualifiers.size(); ++ii)
+        delete regexp_qualifiers[ii];
+    }
+
+    bool qualifier_matches(const char *qualifier) {
+      if (!filter_by_exact_qualifier && !filter_by_regexp_qualifier)
+        return true;
+      // check exact match first
+      if (exact_qualifiers_set.find(qualifier) != exact_qualifiers_set.end())
+        return true;
+      // check for regexp match
+      for (size_t ii=0; ii<regexp_qualifiers.size(); ++ii)
+        if (RE2::PartialMatch(qualifier, *regexp_qualifiers[ii]))
+          return true;
+      return false;
+    }
+
+    void add_qualifier(const char *qualifier, bool is_regexp) {
+      if (is_regexp) {
+        RE2 *regexp = new RE2(qualifier);
+        if (!regexp->ok())
+          HT_THROW(Error::BAD_SCAN_SPEC, (String)"Can't convert qualifier " + qualifier +
+                   " to regexp -" + regexp->error_arg());
+        regexp_qualifiers.push_back(regexp);
+        filter_by_regexp_qualifier = true;
+      }
+      else {
+        exact_qualifiers.push_back(qualifier);
+        exact_qualifiers_set.insert(exact_qualifiers.back().c_str());
+        filter_by_exact_qualifier = true;
+      }
+    }
+
+    bool has_qualifier_filter() const {
+      return filter_by_exact_qualifier||filter_by_regexp_qualifier;
+    }
+    bool has_qualifier_regexp_filter() const { return regexp_qualifiers.size()>0;}
+
     int64_t  cutoff_time;
     uint32_t max_versions;
+    bool counter;
+  private:
+    // disable assignment -- if needed then implement with deep copy of
+    // qualifier_regexp
+    CellFilterInfo& operator = (const CellFilterInfo&);
+    vector<RE2 *> regexp_qualifiers;
+    vector<String> exact_qualifiers;
+    typedef set<const char *, LtCstr> QualifierSet;
+    QualifierSet exact_qualifiers_set;
+    bool filter_by_exact_qualifier;
+    bool filter_by_regexp_qualifier;
   };
 
   /**
@@ -60,9 +136,13 @@ namespace Hypertable {
     bool has_start_cf_qualifier;
     bool restricted_range;
     int64_t revision;
-    std::pair<int64_t, int64_t> time_interval;
+    pair<int64_t, int64_t> time_interval;
     bool family_mask[256];
-    CellFilterInfo family_info[256];
+    vector<CellFilterInfo> family_info;
+    RE2 *row_regexp;
+    RE2 *value_regexp;
+    typedef std::set<const char *, LtCstr, CstrAlloc> CstrRowSet;
+    CstrRowSet rowset;
 
     /**
      * Constructor.
@@ -73,7 +153,7 @@ namespace Hypertable {
      * @param schema smart pointer to schema object
      */
     ScanContext(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
-                SchemaPtr &schema) {
+                SchemaPtr &schema) : family_info(256), row_regexp(0), value_regexp(0) {
       initialize(rev, ss, range, schema);
     }
 
@@ -83,7 +163,8 @@ namespace Hypertable {
      * @param rev scan revision
      * @param schema smart pointer to schema object
      */
-    ScanContext(int64_t rev, SchemaPtr &schema) {
+    ScanContext(int64_t rev, SchemaPtr &schema) : family_info(256), row_regexp(0),
+        value_regexp(0) {
       initialize(rev, 0, 0, schema);
     }
 
@@ -92,7 +173,7 @@ namespace Hypertable {
      *
      * @param rev scan revision
      */
-    ScanContext(int64_t rev=TIMESTAMP_MAX) {
+    ScanContext(int64_t rev=TIMESTAMP_MAX) : family_info(256), row_regexp(0), value_regexp(0) {
       SchemaPtr schema;
       initialize(rev, 0, 0, schema);
     }
@@ -102,10 +183,18 @@ namespace Hypertable {
      *
      * @param schema smart pointer to schema object
      */
-    ScanContext(SchemaPtr &schema) {
+    ScanContext(SchemaPtr &schema) : family_info(256), row_regexp(0), value_regexp(0) {
       initialize(TIMESTAMP_MAX, 0, 0, schema);
     }
 
+    ~ScanContext() {
+      if (row_regexp != 0) {
+        delete row_regexp;
+      }
+      if (value_regexp != 0) {
+        delete value_regexp;
+      }
+    }
 
   private:
 
@@ -124,7 +213,13 @@ namespace Hypertable {
      */
     void initialize(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
                     SchemaPtr &sp);
+    /**
+     * Disable copy ctor and assignment op
+     */
+    ScanContext(const ScanContext&);
+    ScanContext& operator = (const ScanContext&);
 
+    CharArena arena;
   };
 
   typedef intrusive_ptr<ScanContext> ScanContextPtr;

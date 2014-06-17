@@ -62,16 +62,6 @@ namespace Hypertable {
                                 const String &new_end_row);
 
     /**
-     * Returns the table name
-     */
-    String get_name() { return (String)m_identifier.name; }
-
-    /**
-     * Returns the table id
-     */
-    uint32_t get_id() { return m_identifier.id; }
-
-    /**
      * Returns a pointer to the schema object
      *
      * @return reference to the smart pointer to the schema object
@@ -99,6 +89,14 @@ namespace Hypertable {
     bool get_range(const RangeSpec *range_spec, RangePtr &range);
 
     /**
+     * Returns true of the given range exists
+     *
+     * @param range_spec range specification
+     * @return true if found, false otherwise
+     */
+    bool has_range(const RangeSpec *range_spec);
+
+    /**
      * Removes the range described by the given range spec
      *
      * @param range_spec range specification of range to remove
@@ -107,6 +105,27 @@ namespace Hypertable {
      * @return true if removed, false if not found
      */
     bool remove_range(const RangeSpec *range_spec, RangePtr &range);
+
+    /**
+     * Stages a range for being added
+     *
+     * @param range_spec range specification of range to remove
+     */
+    void stage_range(const RangeSpec *range_spec);
+
+    /**
+     * Unstages a previously staged range
+     *
+     * @param range_spec range specification of range to remove
+     */
+    void unstage_range(const RangeSpec *range_spec);
+
+    /**
+     * Adds a range that was previously staged
+     *
+     * @param range smart pointer to range object
+     */
+    void add_staged_range(RangePtr &range);
 
     /**
      * Adds a range
@@ -148,6 +167,8 @@ namespace Hypertable {
      * Clears the range map
      */
     void clear();
+
+    TableIdentifier &identifier() { return m_identifier; }
 
   private:
 

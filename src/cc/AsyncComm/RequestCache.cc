@@ -22,7 +22,6 @@
 #include "Common/Compat.h"
 
 #include <cassert>
-using namespace std;
 
 #define HT_DISABLE_LOG_DEBUG 1
 
@@ -30,7 +29,9 @@ using namespace std;
 
 #include "IOHandlerData.h"
 #include "RequestCache.h"
+
 using namespace Hypertable;
+using namespace std;
 
 void
 RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh,

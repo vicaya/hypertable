@@ -1,0 +1,78 @@
+<div id="rangeservers">
+<h3> Range Servers </h3>
+<h4>Number of Range Servers: <%= @rs_records['RangeServerSummary']['servers'].length %></h4>
+
+<table class="ht-table table_nodes">
+<colgroup span="4"></colgroup>
+<thead class="ht-table-thead">
+<tr class="ht-table-subheader">
+<th  class="ht-table-subheadercell">
+<span class="ht-table-sortable-header">Server<a href="/?sort=name&ord=<%=@n_ord%>"><img src=<%= @name_sort_img %> height="15" width="15"></a>
+</th>
+<th class="ht-table-subheadercell"> Host </th>
+<th class="ht-table-subheadercell"> IP </th>
+<th class="ht-table-subheadercell"> System </th>
+<th class="ht-table-subheadercell"> Kernel </th>
+<th class="ht-table-subheadercell"> Arch </th>
+<th class="ht-table-subheadercell"> Cores </th>
+<th class="ht-table-subheadercell"> Disk<br/> (TB) </th>
+<th class="ht-table-subheadercell" align="left"> Disk<br/>Use (%)</th>
+<th class="ht-table-subheadercell"> RAM<br/> (GB) </th>
+<th class="ht-table-subheadercell"> Clock<br/> Skew </th>
+<th class="ht-table-subheadercell"> Last<br/>Error </th>
+<th class="ht-table-subheadercell"> Last<br/>Contact </th>
+</tr>
+</thead>
+<% @rs_records['RangeServerSummary']['servers'].each do |server|  %>
+<tr class="ht-table-firstrow">
+<td class="ht-table-cell">
+<a href="/graphs?server=<%= server['location'] %>"><%= server['location'] %></a>
+</td>
+<td class="ht-table-cell">
+<%= server['hostname'] %>
+</td>
+<td class="ht-table-cell">
+<%= server['ip'] %>
+</td>
+<td class="ht-table-cell">
+<%= server['vendor']+' '+server['vendorVersion'] %>
+</td>
+<td class="ht-table-cell">
+<%= server['os']+' '+server['osVersion'] %>
+</td>
+<td class="ht-table-cell">
+<%= server['arch'] %>
+</td>
+<td class="ht-table-cell" align="right">
+<%= server['cores'] %>
+</td>
+<td class="ht-table-cell" align="right">
+<%= server['disk'] %>
+</td>
+<td class="ht-table-cell" align="right">
+<%= server['diskUsePct'] %>
+</td>
+<td class="ht-table-cell" align="right">
+<%= server['ram'] %>
+</td>
+<% if server['skew'] != '0' %>
+<td class="ht-table-cell" bgcolor="red">
+<% else %>
+<td class="ht-table-cell">
+<% end %>
+<%= server['skew'] %>
+</td>
+<% if server['lastError'] != 'ok' %>
+<td class="ht-table-cell" bgcolor="red">
+<% else %>
+<td class="ht-table-cell">
+<% end %>
+<%= server['lastError'] %>
+</td>
+<td class="ht-table-cell">
+<%= server['lastContact'] %>
+</td>
+</tr>
+<% end %>
+</table>
+</div>

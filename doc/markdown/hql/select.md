@@ -2,7 +2,7 @@ SELECT
 ------
 #### EBNF
 
-    SELECT ('*' | column_family_name [',' column_family_name]*)
+    SELECT [CELLS] ('*' | (column_predicate [',' column_predicate]*))
       FROM table_name
       [where_clause]
       [options_spec]
@@ -16,6 +16,11 @@ SELECT
       | timestamp_predicate
 
     relop: '=' | '<' | '<=' | '>' | '>=' | '=^'
+    
+    column_predicate
+      = column_family
+      | column_family ':' column_qualifer
+      | column_family ':' '/' column_qualifier_regexp '/'
 
     cell_spec: row ',' column
 
@@ -28,6 +33,7 @@ SELECT
       [row_key relop] ROW relop row_key
       | '(' [row_key relop] ROW relop row_key
               (OR [row_key relop] ROW relop row_key)* ')'
+      | ROW REGEXP '"'row_regexp'"'
 
     timestamp_predicate:
       [timestamp relop] TIMESTAMP relop timestamp
@@ -35,20 +41,26 @@ SELECT
     options_spec:
       (REVS revision_count
       | LIMIT row_count
-      | INTO FILE filename[.gz]
+      | CELL_LIMIT max_cells_per_cf
+      | INTO FILE [file_location]filename[.gz]
       | DISPLAY_TIMESTAMPS
       | KEYS_ONLY
-      | NOESCAPE
-      | RETURN_DELETES)*
+      | NO_ESCAPE
+      | RETURN_DELETES
+      | SCAN_AND_FILTER_ROWS)*
 
     timestamp:
       'YYYY-MM-DD HH:MM:SS[.nanoseconds]'
-
+    
+    file_location:
+      "dfs://" | "file://"
+ 
 #### Description
 <p>
 The parser only accepts a single timestamp predicate.  The '=^' operator is the
 "starts with" operator.  It will return all rows that have the same prefix as
-the operand.
+the operand. Use of the value_predicate without the "CELLS" modifier to the
+"SELECT" command is deprecated.
 
 #### Options
 <p>
@@ -64,11 +76,20 @@ return the most recent version of the cell.
 <p>
 Limits the number of rows returned by the `SELECT` statement to `row_count`.
 
-#### `INTO FILE filename[.gz]`
+#### `CELL_LIMIT max_cells_per_cf`
+<p>
+Limits the number of cells returned per row per column family by the `SELECT` 
+statement to `max_cells_per_cf`.
+
+#### `INTO FILE [file://|dfs://]filename[.gz]`
 <p>
 The result of a `SELECT` command is displayed to standard output by default.
-The `INTO FILE` option allows the output to get redirected to a file.  If the
-file name specified ends in a `.gz` extension, then the output is compressed
+The `INTO FILE` option allows the output to get redirected to a file.  
+If the file name starts with the location specifier `dfs://` then the output file is 
+assumed to reside in the DFS. If it starts with `file://` then output is 
+sent to a local file. This is also the default location in the absence of any 
+location specifier.
+If the file name specified ends in a `.gz` extension, then the output is compressed
 with gzip before it is written to the file.  The first line of the output,
 when using the `INTO FILE` option, is a header line, which will take one of
 the two following formats.  The second format will be output if the
@@ -96,19 +117,23 @@ efficient because the option is processed by the RangeServers and not by
 the client.  The value data is not transferred back to the client, only
 the key data.
 
-#### `NOESCAPE`
+#### `NO_ESCAPE`
 <p>
 The output format of a `SELECT` command comprises tab delimited lines, one
 cell per line, which is suitable for input to the `LOAD DATA INFILE`
 command.  However, if the value portion of the cell contains either newline
 or tab characters, then it will confuse the `LOAD DATA INFILE` input parser.
-To prevent this from happening, newline and tab characters are converted into
-two character escape sequences, described in the following table.
+To prevent this from happening, newline, tab, and backslash characters are
+converted into two character escape sequences, described in the following table.
 
 <table border="1">
 <tr>
 <td>&nbsp;<b>Character</b>&nbsp;</td>
 <td>&nbsp;<b>Escape Sequence</b>&nbsp;</td>
+</tr>
+<tr>
+<td>&nbsp;backslash \</td>
+<td><pre> '\' '\' </pre></td>
 </tr>
 <tr>
 <td>&nbsp;newline \n&nbsp;</td>
@@ -120,7 +145,7 @@ two character escape sequences, described in the following table.
 </tr>
 </table>
 <p>
-The `NOESCAPE` option turns off this escaping mechanism.
+The `NO_ESCAPE` option turns off this escaping mechanism.
 <p>
 #### `RETURN_DELETES`
 <p>
@@ -131,6 +156,17 @@ and applied during subsequent scans.  The `RETURN_DELETES` option will return
 the delete keys in addition to the normal cell keys and values.  This option
 can be useful when used in conjuction with the `DISPLAY_TIMESTAMPS` option to
 understand how the delete mechanism works.
+
+<p>
+#### `SCAN_AND_FILTER_ROWS`
+<p>
+The `SCAN_AND_FILTER_ROWS` option can be used to improve query performance
+for queries that select a very large number of individual rows.  The default
+algorithm for fetching a set of rows is to fetch each row individually, which
+involves a network roundtrip to a range server for each row.  Supplying the
+`SCAN_AND_FILTER_ROWS` option tells the system to scan over the data and
+filter the requested rows at the range server, which will reduce the number of
+network roundtrips required when the number of rows requested is very large.
 
 <p>
 #### Examples
@@ -154,4 +190,9 @@ understand how the delete mechanism works.
                                CELL = "foo","tag:adage" OR
                                CELL = "cow","tag:Ab" OR
                                CELL =^ "foo","tag:acya");
-
+    SELECT * FROM test INTO FILE "dfs:///tmp/foo";
+    SELECT col2:"bird" from RegexpTest WHERE ROW REGEXP "http://.*"; 
+    SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
+    SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE VALUE REGEXP \"l.*e\";
+    SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP \"^\\D+\" 
+        AND VALUE REGEXP \"l.*e\";",

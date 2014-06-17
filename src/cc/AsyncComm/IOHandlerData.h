@@ -44,9 +44,9 @@ namespace Hypertable {
 
   public:
 
-    IOHandlerData(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp)
+    IOHandlerData(int sd, const InetAddr &addr, DispatchHandlerPtr &dhp, bool connected=false)
       : IOHandler(sd, addr, dhp), m_send_queue() {
-      m_connected = false;
+      m_connected = connected;
       reset_incoming_message_state();
     }
 
@@ -65,11 +65,19 @@ namespace Hypertable {
 
     int flush_send_queue();
 
-#if defined(__APPLE__)
-    virtual bool handle_event(struct kevent *event, clock_t arrival_clocks);
+    // define default poll() interface for everyone since it is chosen at runtime
+    virtual bool handle_event(struct pollfd *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
+
+#if defined(__APPLE__) || defined(__FreeBSD__)
+    virtual bool handle_event(struct kevent *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
 #elif defined(__linux__)
-    virtual bool handle_event(struct epoll_event *event,
-                              clock_t arrival_clocks);
+    virtual bool handle_event(struct epoll_event *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
+#elif defined(__sun__)
+    virtual bool handle_event(port_event_t *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
 #else
     ImplementMe;
 #endif
@@ -77,7 +85,7 @@ namespace Hypertable {
     bool handle_write_readiness();
 
   private:
-    void handle_message_header(clock_t arrival_clocks);
+    void handle_message_header(clock_t arrival_clocks, time_t arrival_time);
     void handle_message_body();
     void handle_disconnect(int error = Error::OK);
 

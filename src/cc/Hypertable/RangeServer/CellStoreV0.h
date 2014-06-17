@@ -39,9 +39,9 @@
 #include "Common/BloomFilter.h"
 #include "Common/BlobHashSet.h"
 #include "Common/Mutex.h"
+#include "Common/Filesystem.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
-#include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "CellStore.h"
@@ -78,7 +78,12 @@ namespace Hypertable {
     }
     virtual bool may_contain(ScanContextPtr &);
 
-    virtual uint64_t disk_usage() { return m_disk_usage; }
+    virtual uint64_t disk_usage() {
+      if (m_disk_usage < 0)
+        HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
+                    << HT_END;
+      return m_disk_usage;
+    }
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
     virtual const char *get_split_row();
     virtual int64_t get_total_entries() { return m_trailer.total_entries; }
@@ -88,11 +93,10 @@ namespace Hypertable {
     virtual BlockCompressionCodec *create_block_compression_codec();
     virtual void display_block_info();
     virtual int64_t end_of_last_block() { return m_trailer.fix_index_offset; }
-    virtual BloomFilter *get_bloom_filter() { return m_bloom_filter; }
+    virtual size_t bloom_filter_size() { return m_bloom_filter ? m_bloom_filter->size() : 0; }
     virtual int64_t bloom_filter_memory_used() { return 0; }
     virtual int64_t block_index_memory_used() { return 0; }
-    virtual void maybe_purge_indexes(uint64_t access_counter) { return; }
-    virtual int64_t purgeable_index_memory(uint64_t access_counter) { return false; }
+    virtual uint64_t purge_indexes() { return 0; }
     virtual bool restricted_range() { return true; }
 
     virtual int32_t get_fd() {

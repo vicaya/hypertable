@@ -65,8 +65,14 @@ namespace Hypertable {
 
     void find_range_and_start_scan(const char *row_key, Timer &timer, bool synchronous=false);
 
+    int64_t bytes_scanned() { return m_bytes_scanned; }
+
   private:
     void init(const ScanSpec &, Timer &);
+
+    int fetch_create_scanner_result(Timer &timer);
+
+    void request_next_scanblock(CommAddress addr);
 
     Comm               *m_comm;
     Table              *m_table;
@@ -81,11 +87,12 @@ namespace Hypertable {
     String              m_cur_row;
     String              m_create_scanner_row;
     RangeLocationInfo   m_range_info;
-    struct sockaddr_in  m_cur_addr;
+    RangeLocationInfo   m_next_range_info;
     bool                m_readahead;
     bool                m_fetch_outstanding;
     bool                m_create_scanner_outstanding;
-    DispatchHandlerSynchronizer  m_sync_handler;
+    DispatchHandlerSynchronizer  m_create_scanner_handler;
+    DispatchHandlerSynchronizer  m_fetch_scanblock_handler;
     EventPtr            m_event;
     String              m_start_row;
     String              m_end_row;
@@ -93,6 +100,9 @@ namespace Hypertable {
     int32_t             m_rows_seen;
     uint32_t            m_timeout_ms;
     bool                m_retry_table_not_found;
+    int64_t             m_bytes_scanned;
+    typedef std::set<const char *, LtCstr> CstrRowSet;
+    CstrRowSet          m_rowset;
   };
 
   typedef intrusive_ptr<IntervalScanner> IntervalScannerPtr;

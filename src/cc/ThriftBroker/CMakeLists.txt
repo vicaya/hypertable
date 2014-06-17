@@ -20,7 +20,7 @@
 HT_GLOB(ThriftGen_SRCS gen-cpp/*Service.cpp gen-cpp/*constants.cpp
         gen-cpp/*types.cpp)
 
-add_library(HyperThrift ThriftHelper.cc ${ThriftGen_SRCS})
+add_library(HyperThrift ThriftHelper.cc SerializedCellsReader.cc SerializedCellsWriter.cc ${ThriftGen_SRCS})
 target_link_libraries(HyperThrift ${Thrift_LIBS} ${LibEvent_LIBS})
 
 add_library(HyperThriftConfig Config.cc)
@@ -38,13 +38,22 @@ add_custom_command(
   COMMENT   "thrift2cpp"
 )
 
+# Disable tcmalloc for 32-bit systems
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL "i386" OR
+    CMAKE_SYSTEM_PROCESSOR STREQUAL "i586" OR
+    CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
+  set(THRIFT_MALLOC_LIBRARY "")
+else ()
+  set(THRIFT_MALLOC_LIBRARY ${MALLOC_LIBRARY})
+endif ()
+
 # ThriftBroker
 add_executable(ThriftBroker ${ThriftBroker_SRCS})
-target_link_libraries(ThriftBroker HyperThriftConfig ${MALLOC_LIBRARY})
+target_link_libraries(ThriftBroker HyperThriftConfig ${THRIFT_MALLOC_LIBRARY})
 
 # Basic regression test
 add_executable(client_test tests/client_test.cc)
-target_link_libraries(client_test HyperThrift)
+target_link_libraries(client_test HyperThrift HyperCommon Hypertable)
 add_test(ThriftClient-cpp client_test)
 
 if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
@@ -57,7 +66,7 @@ if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
 endif ()
 
 if (PACKAGE_THRIFTBROKER)
-  file(GLOB SCRIPTS ${CMAKE_SOURCE_DIR}/bin/*thriftbroker.sh)
+  file(GLOB SCRIPTS ${CMAKE_SOURCE_DIR}/bin/*broker.sh ${CMAKE_SOURCE_DIR}/bin/stop-servers.sh ${CMAKE_SOURCE_DIR}/bin/random-wait.sh)
   install(PROGRAMS ${SCRIPTS} DESTINATION bin)
   set(CPACK_PACKAGE_NAME "hypertable-thriftbroker")
   include(PackageHelper)

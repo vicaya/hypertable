@@ -29,6 +29,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/Filesystem.h"
 #include "Common/FileUtils.h"
 #include "Common/System.h"
 #include "CephBroker.h"
@@ -66,7 +67,8 @@ CephBroker::~CephBroker() {
   ceph_deinitialize();
 }
 
-void CephBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
+void CephBroker::open(ResponseCallbackOpen *cb, const char *fname,
+		      uint32_t flags, uint32_t bufsz) {
   int fd, ceph_fd;
   String abspath;
   HT_DEBUGF("open file='%s' bufsz=%d", fname, bufsz);
@@ -93,22 +95,22 @@ void CephBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufs
   }
 }
 
-void CephBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
+void CephBroker::create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
 			int32_t bufsz, int16_t replication, int64_t blksz){
   int fd, ceph_fd;
-  int flags;
+  int oflags;
   String abspath;
 
   make_abs_path(fname, abspath);
-  HT_DEBUGF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%lld",
-            fname, (int)overwrite, bufsz, (int)replication, (Lld)blksz);
+  HT_DEBUGF("create file='%s' flags=%u bufsz=%d replication=%d blksz=%lld",
+            fname, flags, bufsz, (int)replication, (Lld)blksz);
 
   fd = atomic_inc_return(&ms_next_fd);
 
-  if (overwrite)
-    flags = O_WRONLY | O_CREAT | O_TRUNC;
+  if (flags & Filesystem::OPEN_FLAG_OVERWRITE)
+    oflags = O_WRONLY | O_CREAT | O_TRUNC;
   else
-    flags = O_WRONLY | O_CREAT | O_APPEND;
+    oflags = O_WRONLY | O_CREAT | O_APPEND;
 
   //make sure the directories in the path exist
   String directory = abspath.substr(0, abspath.rfind('/'));
@@ -121,7 +123,7 @@ void CephBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwr
   }
 
   //create file
-  if ((ceph_fd = ceph_open(abspath.c_str(), flags, 0644)) < 0) {
+  if ((ceph_fd = ceph_open(abspath.c_str(), oflags, 0644)) < 0) {
     HT_ERRORF("open failed: file=%s - %s",  abspath.c_str(), strerror(-ceph_fd));
     report_error(cb, ceph_fd);
     return;

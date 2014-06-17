@@ -121,7 +121,8 @@ int main(int argc, char **argv) {
   std::vector<const char *> master_args;
   std::vector<const char *> client_args;
   Comm *comm;
-  struct sockaddr_in addr;
+  CommAddress addr;
+  struct sockaddr_in inet_addr;
   DispatchHandlerPtr dhp;
 
   Config::init(0, 0);
@@ -138,14 +139,18 @@ int main(int argc, char **argv) {
 
   comm = Comm::instance();
 
-  if (!InetAddr::initialize(&addr, "23451"))
+  if (!InetAddr::initialize(&inet_addr, "23451"))
     exit(1);
 
-  comm->create_datagram_receive_socket(&addr, 0x10, dhp);
+  addr.set_inet(inet_addr);
+  comm->create_datagram_receive_socket(addr, 0x10, dhp);
 
-  system("/bin/rm -rf ./hsroot");
+  if (system("/bin/rm -rf ./hsroot") != 0) {
+    HT_ERROR("Problem removing ./hsroot directory");
+    exit(1);
+  }
 
-  if (system("mkdir ./hsroot") != 0) {
+  if (system("mkdir -p ./hsroot") != 0) {
     HT_ERROR("Unable to create ./hsroot directory");
     exit(1);
   }
@@ -162,7 +167,7 @@ int main(int argc, char **argv) {
   client_args.push_back((const char *)0);
 
   unlink("./Hyperspace.Master");
-  link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master");
+  HT_ASSERT(link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master") == 0);
 
   {
     ServerLauncher master("./Hyperspace.Master",
@@ -244,17 +249,85 @@ namespace {
     IssueCommand(g_fd1, "delete foo");
     IssueCommand(g_fd1, "create foo flags=READ|WRITE "
         "attr:msg1=\"Hello, World!\" attr:msg2=\"How now brown cow\"");
+    IssueCommand(g_fd1, "mkdir /bar2/");
+    IssueCommand(g_fd1, "open /bar2 flags=READ|WRITE ");
+    IssueCommand(g_fd1, "attrset /bar2 msg1=\"Hello, Bar!\"");
+    IssueCommand(g_fd1, "attrset /bar2 msg2=\"How now brown cow\"");
+    IssueCommand(g_fd1, "attrset /bar2 counter=\"10\"");
+    IssueCommand(g_fd1, "attrincr /bar2 counter");
+    IssueCommand(g_fd1, "attrincr /bar2 counter");
+    IssueCommand(g_fd1, "attrdel /bar2 counter");
+    IssueCommand(g_fd1, "attrset /bar2 msg1=\"Hello, Bar2/!\"");
+    IssueCommand(g_fd1, "create /bar2/foo flags=READ|WRITE "
+        "attr:msg1=\"Hello, Bar/Foo!\"");
+    IssueCommand(g_fd1, "create bar3 flags=READ|WRITE "
+        "attr:msg2=\"Hello, Bar/Foo!\"");
     IssueCommand(g_fd2, "open foo flags=READ");
     IssueCommand(g_fd3, "open foo flags=READ");
     IssueCommand(g_fd2, "attrget foo msg1");
     IssueCommand(g_fd3, "attrlist foo");
+    IssueCommand(g_fd3, "create /apple flags=READ|WRITE");
+    IssueCommand(g_fd3, "create /orange flags=READ|WRITE attr:msg1=\"val1\"");
+    IssueCommand(g_fd3, "create /zuccini flags=READ|WRITE attr:msg1=\"val2\"");
+    IssueCommand(g_fd3, "mkdir /banana");
+    IssueCommand(g_fd3, "open /banana flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /banana msg1=\"val3\"");
+    IssueCommand(g_fd3, "close /banana");
+    IssueCommand(g_fd3, "create /rhubarb flags=READ|WRITE");
+    IssueCommand(g_fd3, "open /");
+    IssueCommand(g_fd3, "readdirattr / msg1");
+    IssueCommand(g_fd3, "readdirattr -R / msg1");
+    IssueCommand(g_fd3, "mkdir /rda");
+    IssueCommand(g_fd3, "create /rda/apple flags=READ|WRITE");
+    IssueCommand(g_fd3, "create /rda/orange flags=READ|WRITE attr:msg1=\"val4\"");
+    IssueCommand(g_fd3, "create /rda/zuccini flags=READ|WRITE attr:msg1=\"val5\"");
+    IssueCommand(g_fd3, "mkdir /rda/banana");
+    IssueCommand(g_fd3, "open /rda/banana flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /rda/banana msg1=\"val6\"");
+    IssueCommand(g_fd3, "close /rda/banana");
+    IssueCommand(g_fd3, "mkdir /rda/cumquat");
+    IssueCommand(g_fd3, "create /rda/rhubarb flags=READ|WRITE");
+    IssueCommand(g_fd3, "open /rda");
+    IssueCommand(g_fd3, "readdirattr /rda msg1");
+    IssueCommand(g_fd3, "readdirattr -r /rda msg1");
+    IssueCommand(g_fd3, "open /");
+    IssueCommand(g_fd3, "attrset / msg1=\"val1\"");
+    IssueCommand(g_fd3, "mkdir /rpatest");
+    IssueCommand(g_fd3, "mkdir /rpatest/bar");
+    IssueCommand(g_fd3, "open /rpatest/bar flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /rpatest/bar msg1=\"val2\";");
+    IssueCommand(g_fd3, "close /rpatest/bar");
+    IssueCommand(g_fd3, "mkdir /rpatest/bar/how");
+    IssueCommand(g_fd3, "mkdir /rpatest/bar/how/now");
+    IssueCommand(g_fd3, "open /rpatest/bar/how/now flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /rpatest/bar/how/now msg1=\"val3\"");
+    IssueCommand(g_fd3, "close /rpatest/bar/how/now");
+    IssueCommand(g_fd3, "mkdir /rpatest/bar/how/now/brown");
+    IssueCommand(g_fd3, "open /rpatest/bar/how/now/brown flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /rpatest/bar/how/now/brown msg1=\"val4\"");
+    IssueCommand(g_fd3, "close /rpatest/bar/how/now/brown");
+    IssueCommand(g_fd3, "create /rpatest/bar/how/now/brown/cow flags=READ|WRITE attr:msg1=\"val5\"");
+    IssueCommand(g_fd3, "open /rpatest/bar/how/now/brown/cow");
+    IssueCommand(g_fd3, "readpathattr /rpatest/bar/how/now/brown/cow msg1");
+    IssueCommand(g_fd3, "readdirattr -r / msg1");
+    IssueCommand(g_fd3, "close /rpatest/bar/how/now/brown/cow");
+    IssueCommand(g_fd3, "open /bar2/foo flags=READ");
+    IssueCommand(g_fd3, "readpathattr /bar2/foo msg1");
+    IssueCommand(g_fd3, "close /bar2/foo");
     IssueCommand(g_fd3, "attrexists foo msg2");
     IssueCommand(g_fd3, "attrexists foo msg3");
     IssueCommand(g_fd3, "attrget foo msg2");
     IssueCommand(g_fd1, "close foo");
     IssueCommand(g_fd2, "close foo");
     IssueCommand(g_fd3, "close foo");
+    IssueCommand(g_fd3, "close /");
     IssueCommand(g_fd1, "delete foo");
+    IssueCommand(g_fd1, "close /bar2");
+    IssueCommand(g_fd1, "close /bar2/foo");
+    IssueCommand(g_fd1, "delete /bar2/foo");
+    IssueCommand(g_fd1, "close bar3");
+    IssueCommand(g_fd1, "delete bar3");
+    IssueCommand(g_fd1, "delete bar2");
   }
 
   void NotificationTest() {

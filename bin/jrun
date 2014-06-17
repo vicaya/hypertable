@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright 2007 Doug Judd (Zvents, Inc.)
 #
@@ -22,6 +22,9 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 # Parse and remove jrun specific arguments
 DEBUG_ARGS=
 
+# Setup CLASSPATH
+CLASSPATH="${HYPERTABLE_HOME}"
+
 while [ $# -gt 1 ] ; do
   if [ "--pidfile" = "$1" ] ; then
     shift
@@ -31,15 +34,16 @@ while [ $# -gt 1 ] ; do
     DEBUG_ARGS="-Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n\
                 -Xdebug"
     shift
+  elif [ "--add-to-classpath" = "$1" ] ; then
+    shift
+    CLASSPATH=${CLASSPATH}:$1
+    shift
+  elif [ "--verbose" = "$1" ] ; then
+    shift
   else
     break
   fi
 done
-
-
-# Setup CLASSPATH
-CLASSPATH="${HYPERTABLE_HOME}"
-#CLASSPATH=${CLASSPATH}:$JAVA_HOME/lib/tools.jar
 
 # for developers, add Hadoop classes to CLASSPATH
 if [ -d "$HYPERTABLE_HOME/build/classes" ]; then
@@ -60,10 +64,11 @@ if [ -d "$HYPERTABLE_HOME/webapps" ]; then
   CLASSPATH=${CLASSPATH}:$HYPERTABLE_HOME
 fi
 
-# add libs to CLASSPATH
-for f in $HYPERTABLE_HOME/lib/*.jar; do
+# add thrift to classpath
+for f in $HYPERTABLE_HOME/lib/java/libthrift*.jar; do
   CLASSPATH=${CLASSPATH}:$f;
 done
+
 # add lib/java to CLASSPATH
 for f in $HYPERTABLE_HOME/lib/java/*.jar; do
   CLASSPATH=${CLASSPATH}:$f;
@@ -79,4 +84,8 @@ unset IFS
 #
 # run it
 #
-exec java $DEBUG_ARGS -classpath "$CLASSPATH" "$@"
+if [ "$JAVA_HOME" != "" ] ; then
+  exec $JAVA_HOME/bin/java $DEBUG_ARGS -classpath "$CLASSPATH" "$@"
+else
+  exec java $DEBUG_ARGS -classpath "$CLASSPATH" "$@"
+fi

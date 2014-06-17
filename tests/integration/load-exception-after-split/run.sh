@@ -1,10 +1,12 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 DATA_SIZE=${DATA_SIZE:-"25000000"}
 
 ARGS=""
+
+. $HT_HOME/bin/ht-env.sh
 
 $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
     --Hypertable.RangeServer.Range.SplitSize=2500K \

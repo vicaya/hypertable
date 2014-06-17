@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright (C) 2009  Luke Lu (llu@hypertable.org)
 #
@@ -26,7 +26,9 @@ lib=$1
 if o=`(objdump -p $lib | grep SONAME)  2>/dev/null` ||
    o=`(elfdump -d $lib | grep SONAME) 2>/dev/null`
 then
-  echo $o | sed 's/.* \([^ ][^ ]*\)/\1/'
-elif o=`otool -D $lib 2>/dev/null | grep -v ':$'`; then
-  echo $o | sed 's/.*\/\([^\/][^\/]*\)/\1/'
+  echo $o | sed 's/.* \([^ ][^ ]*\)/\1/' | cut -f 1 -d' '
+elif o=`otool -D $lib 2>/dev/null`; then
+  echo $o | tail -1 | sed 's/.*\/\([^\/][^\/]*\)/\1/' | cut -f 1 -d' ' | sed 's/:$//'
+else
+  echo $lib | awk 'BEGIN {FS="/"} { print $NF; }' | cut -f 1 -d' '
 fi

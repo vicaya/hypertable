@@ -55,12 +55,13 @@ int32_t Protocol::response_code(Event *event) {
  *
  */
 String Protocol::string_format_message(Event *event) {
-  int error = 0;
-  const uint8_t *msg = event->payload;
-  size_t remaining = event->payload_len;
+  int error = Error::OK;
 
   if (event == 0)
     return String("NULL event");
+
+  const uint8_t *msg = event->payload;
+  size_t remaining = event->payload_len;
 
   if (event->type != Event::MESSAGE)
     return event->to_str();

@@ -77,11 +77,14 @@ namespace Hypertable {
 
     bool empty() { return m_fragment_queue.empty(); }
 
+    std::set<int64_t> &get_linked_log_set() { return m_linked_logs; }
+
   protected:
-    String           m_log_dir;
-    String           m_log_name;
-    LogFragmentQueue m_fragment_queue;
-    int64_t          m_latest_revision;
+    String            m_log_dir;
+    String            m_log_name;
+    LogFragmentQueue  m_fragment_queue;
+    int64_t           m_latest_revision;
+    std::set<int64_t> m_linked_logs;
   };
 
   typedef intrusive_ptr<CommitLogBase> CommitLogBasePtr;

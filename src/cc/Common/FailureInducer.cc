@@ -30,6 +30,8 @@ namespace {
   enum { FAILURE_TYPE_EXIT, FAILURE_TYPE_THROW };
 }
 
+FailureInducer *FailureInducer::instance = 0;
+
 void FailureInducer::parse_option(String option) {
   char *istr = (char*)strchr(option.c_str(), ':');
   HT_ASSERT(istr != 0);
@@ -59,7 +61,7 @@ void FailureInducer::maybe_fail(const String &label) {
         uint32_t iteration = (*iter).second->iteration;
         delete (*iter).second;
         m_state_map.erase(iter);
-        HT_THROW(Error::FAILED_EXPECTATION,
+        HT_THROW(Error::INDUCED_FAILURE,
                  format("induced failure '%s' iteration=%u",
                         label.c_str(), iteration));
       }
@@ -72,4 +74,11 @@ void FailureInducer::maybe_fail(const String &label) {
     else
       (*iter).second->iteration++;
   }
+}
+
+void FailureInducer::clear() {
+  ScopedLock lock(m_mutex);
+  for (StateMap::iterator iter = m_state_map.begin(); iter != m_state_map.end(); ++iter)
+    delete iter->second;
+  m_state_map.clear();
 }

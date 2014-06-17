@@ -24,7 +24,11 @@
 
 #include <vector>
 
+#include "AsyncComm/ConnectionManager.h"
+#include "DfsBroker/Lib/Client.h"
+
 #include "Cells.h"
+#include "TableDumper.h"
 #include "TableScanner.h"
 #include "TableMutator.h"
 
@@ -67,6 +71,9 @@ namespace Hypertable {
       /** Called when interpreter is ready to scan */
       virtual void on_scan(TableScanner &) { }
 
+      /** Called when interpreter is ready to dump */
+      virtual void on_dump(TableDumper &) { }
+
       /** Called when interpreter is ready to update */
       virtual void on_update(size_t total) { }
 
@@ -99,17 +106,19 @@ namespace Hypertable {
 
       virtual void on_return(const String &ret) { retstrs.push_back(ret); }
       virtual void on_scan(TableScanner &scanner) { copy(scanner, cells); }
+      virtual void on_dump(TableDumper &dumper) { copy(dumper, cells); }
     };
 
     /** Construct from hypertable client */
-    HqlInterpreter(Client *client);
+    HqlInterpreter(Client *client, ConnectionManagerPtr &conn_mgr,
+                   bool immutable_namespace=true);
 
     /** The main interface for the interpreter */
     void execute(const String &str, Callback &);
 
     /** A convenient method demonstrate the usage of the interface */
     void
-    execute(const String &str, CellsBuilder &output, std::vector<String> ret) {
+    execute(const String &str, CellsBuilder &output, std::vector<String> &ret) {
       SmallCallback cb(output, ret);
       execute(str, cb);
     }
@@ -121,10 +130,15 @@ namespace Hypertable {
       execute(cmd, cb, res);
     }
 
+    void set_namespace(const String &ns);
+
   private:
     Client *m_client;
+    NamespacePtr m_namespace;
     uint32_t m_mutator_flags;
-
+    ConnectionManagerPtr m_conn_manager;
+    DfsBroker::ClientPtr m_dfs_client;
+    bool m_immutable_namespace;
   };
 
   typedef intrusive_ptr<HqlInterpreter> HqlInterpreterPtr;

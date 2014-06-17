@@ -33,7 +33,12 @@ namespace Hypertable {
   class DiscreteRandomGeneratorUniform: public DiscreteRandomGenerator {
   public:
     DiscreteRandomGeneratorUniform() : DiscreteRandomGenerator() { }
-    virtual uint64_t get_sample() { return ((uint64_t)m_rng() << 32) | m_rng();}
+    virtual uint64_t get_sample() { 
+      uint64_t rval = ((uint64_t)m_rng() << 32) | m_rng();
+      if (m_pool_max != 0)
+	rval = m_pool_min + (rval % (m_pool_max-m_pool_min));
+      return rval;
+    }
   };
 
 }

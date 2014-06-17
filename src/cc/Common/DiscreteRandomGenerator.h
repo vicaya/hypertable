@@ -50,10 +50,28 @@ namespace Hypertable {
       m_u01 = boost::uniform_01<boost::mt19937>(m_rng);
     }
 
-    void set_max(uint64_t max) {
-      m_max_val = max;
+    void set_value_count(uint64_t value_count) {
+      m_value_count = value_count;
       delete [] m_cmf;
       m_cmf = 0;
+      delete [] m_numbers;
+      m_numbers = 0;
+    }
+
+    void set_pool_min(uint64_t pool_min) {
+      m_pool_min = pool_min;
+      delete [] m_cmf;
+      m_cmf = 0;
+      delete [] m_numbers;
+      m_numbers = 0;
+    }
+
+    void set_pool_max(uint64_t pool_max) {
+      m_pool_max = pool_max;
+      delete [] m_cmf;
+      m_cmf = 0;
+      delete [] m_numbers;
+      m_numbers = 0;
     }
 
     /**
@@ -75,12 +93,15 @@ namespace Hypertable {
      * @param val value to be generated
      * @return probability of generating this value
      */
-    virtual double pmf(uint64_t val) { return 1.0 / (double)m_max_val; }
+    virtual double pmf(uint64_t val) { return 1.0 / (double)m_value_count; }
 
     boost::mt19937 m_rng;
     boost::uniform_01<boost::mt19937> m_u01;
     unsigned int m_seed;
-    uint64_t m_max_val;
+    uint64_t m_value_count;
+    uint64_t m_pool_min;
+    uint64_t m_pool_max;
+    uint64_t *m_numbers;
     double *m_cmf;
   };
   typedef boost::intrusive_ptr<DiscreteRandomGenerator> DiscreteRandomGeneratorPtr;

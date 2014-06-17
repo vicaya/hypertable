@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/InetAddr.h"
 #include "Config.h"
+#include "Thrift.h"
 
 namespace Hypertable { namespace Config {
 
@@ -43,6 +44,8 @@ void init_thrift_client() {
   bool defaulted = properties->defaulted("thrift-broker");
   properties->set("thrift-host", e.host, defaulted);
   properties->set("thrift-port", e.port, !e.port || defaulted);
+  // redirect thrift output
+  redirect_thrift_output();
 }
 
 void init_thrift_broker_options() {
@@ -50,9 +53,31 @@ void init_thrift_broker_options() {
     ("port", i16()->default_value(38080), "Listening port")
     ("pidfile", str(), "File to contain the process id")
     ("log-api", boo()->default_value(false), "Enable or disable API logging")
+    ("workers", i32()->default_value(50), "Worker threads")
     ;
   alias("port", "ThriftBroker.Port");
   alias("log-api", "ThriftBroker.API.Logging");
+  alias("workers", "ThriftBroker.Workers");
+  // hidden aliases
+  alias("thrift-timeout", "ThriftBroker.Timeout");
+}
+
+void init_thrift_broker() {
+  init_generic_server();
+  // redirect thrift output
+  redirect_thrift_output();
+}
+
+static void thrift_output_handler(const char *message) {
+  if (message) {
+    #if !defined(HT_DISABLE_LOG_ALL) && !defined(HT_DISABLE_LOG_ERROR)
+    if (Logger::logger->isErrorEnabled()) Logger::logger->log(log4cpp::Priority::ERROR, message);
+    #endif
+  }
+}
+
+void redirect_thrift_output() {
+  apache::thrift::GlobalOutput.setOutputFunction(thrift_output_handler);
 }
 
 }} // namespace Hypertable::Config

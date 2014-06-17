@@ -55,7 +55,7 @@ struct ClientHelper {
  */
 class Client : private ClientHelper, public ThriftGen::HqlServiceClient {
 public:
-  Client(const std::string &host, int port, int timeout_ms = 30000,
+  Client(const std::string &host, int port, int timeout_ms = 300000,
          bool open = true)
     : ClientHelper(host, port, timeout_ms), HqlServiceClient(protocol),
       m_do_close(false) {

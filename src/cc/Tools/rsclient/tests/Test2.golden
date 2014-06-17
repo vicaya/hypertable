@@ -5,7 +5,7 @@ For information about Hypertable, visit http://www.hypertable.org/
 Type 'help' for a list of commands, or 'help shell' for a
 list of shell meta commands.
 
-UPDATE Test2 "Test2-data.txt";
+UPDATE 'test/Test2' "Test2-data.txt";
 success
 success
 success
@@ -344,7 +344,7 @@ success
 success
 success
 success
-CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=4;
+CREATE SCANNER ON 'test/Test2'[..??] WHERE ROW >= "Abama" LIMIT=4;
 1189631333141746 Abama apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631333575431 Abama apple:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333438063 Abama apple:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
@@ -511,7 +511,7 @@ CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=4;
 1189631332442202 Abarambo broccoli:http://www.nielsenmedia.com/DMAs.html
 1189631333623650 Abarambo broccoli:http://www.sesameworkshop.org/sesamestreet/
 DESTROY SCANNER;
-CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=2 REVS=1;
+CREATE SCANNER ON 'test/Test2'[..??] WHERE ROW >= "Abama" LIMIT=2 REVS=1;
 1189631333141746 Abama apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631333575431 Abama apple:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333438063 Abama apple:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm

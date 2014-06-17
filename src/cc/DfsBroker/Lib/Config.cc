@@ -27,7 +27,7 @@ namespace Hypertable { namespace Config {
 
 void init_dfs_client_options() {
   cmdline_desc().add_options()
-    ("dfs", str()->default_value("localhost:38030"),
+    ("dfs", str(),
         "DFS client endpoint in <host:port> format")
     ("dfs-timeout", i32(),
         "Timeout in milliseconds for DFS client connections")
@@ -40,10 +40,12 @@ void init_dfs_client_options() {
 
 void init_dfs_client() {
   // prepare hidden aliases to be synced
-  Endpoint e = InetAddr::parse_endpoint(get_str("dfs"));
-  bool defaulted = properties->defaulted("dfs");
-  properties->set("dfs-host", e.host, defaulted);
-  properties->set("dfs-port", e.port, !e.port || defaulted);
+  if (properties->has("dfs")) {
+    Endpoint e = InetAddr::parse_endpoint(get_str("dfs"));
+    bool defaulted = properties->defaulted("dfs");
+    properties->set("dfs-host", e.host, defaulted);
+    properties->set("dfs-port", e.port, !e.port || defaulted);
+  }
 }
 
 void init_dfs_broker_options() {

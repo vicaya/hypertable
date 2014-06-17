@@ -24,6 +24,8 @@
 
 #include <boost/thread/condition.hpp>
 
+#include <map>
+
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/HashMap.h"
@@ -35,12 +37,20 @@
 
 #include "Hyperspace/Session.h"
 
+#include "Hypertable/Lib/Cells.h"
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Types.h"
+#include "Hypertable/Lib/NameIdMapper.h"
+#include "Hypertable/Lib/StatsRangeServer.h"
 
 #include "Global.h"
+#include "GroupCommitInterface.h"
+#include "GroupCommitTimerHandler.h"
 #include "MaintenanceScheduler.h"
+#include "MetaLogEntityRange.h"
+#include "QueryCache.h"
+#include "RSStats.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackGetStatistics.h"
@@ -54,6 +64,7 @@ namespace Hypertable {
   using namespace Hyperspace;
 
   class ConnectionHandler;
+  class TableUpdate;
 
   class RangeServer : public ReferenceCount {
   public:
@@ -66,50 +77,71 @@ namespace Hypertable {
                  uint8_t compaction_type);
     void create_scanner(ResponseCallbackCreateScanner *,
                         const TableIdentifier *,
-                        const  RangeSpec *, const ScanSpec *);
+                        const  RangeSpec *, const ScanSpec *,
+			QueryCache::Key *);
     void destroy_scanner(ResponseCallback *cb, uint32_t scanner_id);
     void fetch_scanblock(ResponseCallbackFetchScanblock *, uint32_t scanner_id);
     void load_range(ResponseCallback *, const TableIdentifier *,
                     const RangeSpec *, const char *transfer_log_dir,
-                    const RangeState *);
+                    const RangeState *, bool needs_compaction);
+    void acknowledge_load(ResponseCallback *, const TableIdentifier *,
+                          const RangeSpec *);
     void update_schema(ResponseCallback *, const TableIdentifier *,
                        const char *);
     void update(ResponseCallbackUpdate *, const TableIdentifier *,
                 uint32_t count, StaticBuffer &, uint32_t flags);
-    void commit_log_sync(ResponseCallback *);
+    void batch_update(std::vector<TableUpdate *> &updates);
+
+    void commit_log_sync(ResponseCallback *, const TableIdentifier *);
     void drop_table(ResponseCallback *, const TableIdentifier *);
     void dump(ResponseCallback *, const char *, bool);
     void get_statistics(ResponseCallbackGetStatistics *);
 
     void replay_begin(ResponseCallback *, uint16_t group);
-    void replay_load_range(ResponseCallback *, const TableIdentifier *,
-                           const RangeSpec *, const RangeState *);
+    void replay_load_range(ResponseCallback *, MetaLog::EntityRange *,
+                           bool write_rsml=true);
     void replay_update(ResponseCallback *, const uint8_t *data, size_t len);
     void replay_commit(ResponseCallback *);
 
     void drop_range(ResponseCallback *, const TableIdentifier *,
                     const RangeSpec *);
 
+    void relinquish_range(ResponseCallback *, const TableIdentifier *,
+                          const RangeSpec *);
+
     void close(ResponseCallback *cb);
 
+    /**
+     * Blocks while the maintenance queue is non-empty
+     *
+     * @param cb Response callback
+     */
+    void wait_for_maintenance(ResponseCallback *cb);
+
     // Other methods
+    void group_commit();
     void do_maintenance();
 
     MaintenanceSchedulerPtr &get_scheduler() { return m_maintenance_scheduler; }
 
     ApplicationQueuePtr get_application_queue() { return m_app_queue; }
 
-    std::string &get_location() { return Global::location; }
-
     void master_change();
 
     void wait_for_recovery_finish();
+    void wait_for_root_recovery_finish();
+    void wait_for_metadata_recovery_finish();
+    void wait_for_system_recovery_finish();
     void wait_for_recovery_finish(const TableIdentifier *table,
                                   const RangeSpec *range);
 
     void register_timer(TimerInterface *timer) {
+      ScopedLock lock(m_mutex);
+      HT_ASSERT(m_timer_handler == 0);
       m_timer_handler = timer;
     }
+
+    void shutdown();
 
   private:
     void initialize(PropertiesPtr &);
@@ -123,12 +155,15 @@ namespace Hypertable {
     Mutex                  m_drop_table_mutex;
     boost::condition       m_root_replay_finished_cond;
     boost::condition       m_metadata_replay_finished_cond;
+    boost::condition       m_system_replay_finished_cond;
     boost::condition       m_replay_finished_cond;
     bool                   m_root_replay_finished;
     bool                   m_metadata_replay_finished;
+    bool                   m_system_replay_finished;
     bool                   m_replay_finished;
     Mutex                  m_update_mutex_a;
     Mutex                  m_update_mutex_b;
+    Mutex                  m_stats_mutex;
     PropertiesPtr          m_props;
     bool                   m_verbose;
     Comm                  *m_comm;
@@ -148,10 +183,29 @@ namespace Hypertable {
     uint64_t               m_log_roll_limit;
     int                    m_replay_group;
     TableIdCachePtr        m_dropped_table_id_cache;
-    RangeStatsGathererPtr  m_stats_gatherer;
+
+    StatsRangeServerPtr    m_stats;
+    RSStatsPtr             m_server_stats;
+    int64_t                m_server_stats_timestamp;
+
+    RangeStatsGathererPtr  m_maintenance_stats_gatherer;
+    NameIdMapperPtr        m_namemap;
+
     MaintenanceSchedulerPtr m_maintenance_scheduler;
     TimerInterface        *m_timer_handler;
+    GroupCommitInterface  *m_group_commit;
+    GroupCommitTimerHandler *m_group_commit_timer_handler;
     uint32_t               m_update_delay;
+    QueryCache            *m_query_cache;
+    int64_t                m_last_revision;
+    int64_t                m_scanner_buffer_size;
+    time_t                 m_next_metrics_update;
+    double                 m_loadavg_accum;
+    uint64_t               m_page_in_accum;
+    uint64_t               m_page_out_accum;
+    size_t                 m_metric_samples;
+    size_t                 m_cores;
+    CellsBuilder          *m_pending_metrics_updates;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

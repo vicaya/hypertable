@@ -25,9 +25,9 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
+#include "Common/Filesystem.h"
 
 #include "BlockCompressionHeaderCommitLog.h"
-#include "Filesystem.h"
 
 
 namespace Hypertable {
@@ -48,8 +48,8 @@ namespace Hypertable {
 
   public:
 
-    CommitLogBlockStream(Filesystem *fs);
-    CommitLogBlockStream(Filesystem *fs, const String &log_dir,
+    CommitLogBlockStream(FilesystemPtr &fs);
+    CommitLogBlockStream(FilesystemPtr &fs, const String &log_dir,
                          const String &fragment);
     virtual ~CommitLogBlockStream();
 
@@ -65,7 +65,7 @@ namespace Hypertable {
 
     int load_next_valid_header(BlockCompressionHeaderCommitLog *header);
 
-    Filesystem   *m_fs;
+    FilesystemPtr m_fs;
     String        m_fragment;
     String        m_fname;
     String        m_log_dir;

@@ -25,6 +25,7 @@
 #include <iostream>
 #include <string>
 
+#include "Common/FailureInducer.h"
 #include "Common/Init.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
@@ -34,6 +35,7 @@
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
+#include "AsyncComm/ReactorFactory.h"
 #include "AsyncComm/ReactorRunner.h"
 
 #include "Config.h"
@@ -52,18 +54,18 @@ typedef Meta::list<RangeServerPolicy, DfsClientPolicy, HyperspaceClientPolicy,
 
 int main(int argc, char **argv) {
 
-  ReactorRunner::ms_record_arrival_clocks = true;
+  ReactorRunner::record_arrival_clocks = true;
+
+  init_with_policies<Policies>(argc, argv);
 
   try {
-    init_with_policies<Policies>(argc, argv);
 
     Global::verbose = get_bool("verbose");
 
     if (has("induce-failure")) {
-      if (Global::failure_inducer == 0)
-        Global::failure_inducer = new FailureInducer();
-
-      Global::failure_inducer->parse_option(get_str("induce-failure"));
+      if (FailureInducer::instance == 0)
+        FailureInducer::instance = new FailureInducer();
+      FailureInducer::instance->parse_option(get_str("induce-failure"));
     }
 
     Comm *comm = Comm::instance();
@@ -75,8 +77,9 @@ int main(int argc, char **argv) {
     /**
      * Connect to Hyperspace
      */
-    Global::hyperspace = new Hyperspace::Session(comm, properties,
-        new HyperspaceSessionHandler());
+    HyperspaceSessionHandler hs_handler;
+    Global::hyperspace = new Hyperspace::Session(comm, properties);
+    Global::hyperspace->add_callback(&hs_handler);
     int timeout = get_i32("Hyperspace.Timeout");
 
     if (!Global::hyperspace->wait_for_connection(timeout)) {
@@ -93,10 +96,11 @@ int main(int argc, char **argv) {
     app_queue->join();
 
     HT_ERROR("Exiting RangeServer.");
+
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
     return 1;
   }
-  return 0;
+  _exit(0);
 }

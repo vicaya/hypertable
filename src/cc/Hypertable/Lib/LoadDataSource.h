@@ -37,6 +37,7 @@
 
 #include "DataSource.h"
 #include "FixedRandomStringGenerator.h"
+#include "LoadDataFlags.h"
 
 
 namespace Hypertable {
@@ -50,8 +51,9 @@ namespace Hypertable {
   class LoadDataSource : public ReferenceCount {
 
   public:
-    LoadDataSource(int row_uniquify_chars = 0,
-                   bool dupkeycol = false);
+    LoadDataSource(const String &header_fname,
+		   int row_uniquify_chars = 0,
+                   int load_flags = 0);
 
     virtual ~LoadDataSource() { delete [] m_type_mask; return; }
 
@@ -66,19 +68,29 @@ namespace Hypertable {
     virtual void init(const std::vector<String> &key_columns, const String &timestamp_column);
 
     int64_t get_current_lineno() { return m_cur_line; }
+    unsigned long get_source_size() const { return m_source_size; }
 
   protected:
+
+    bool get_next_line(String &line) {
+      if (m_first_line_cached) {
+	       line = m_first_line;
+	       m_first_line_cached = false;
+	       return true;
+      }
+      return getline(m_fin, line);
+    }
 
     virtual void parse_header(const String& header,
                               const std::vector<String> &key_columns,
                               const String &timestamp_column);
     virtual void init_src()=0;
-    virtual String get_header()=0;
     virtual uint64_t incr_consumed()=0;
 
-    virtual bool should_skip(int idx, const uint32_t *masks, bool dupkeycols) {
+    bool should_skip(int idx, const uint32_t *masks) {
       uint32_t bm = masks[idx];
-      return bm && ((bm & TIMESTAMP) || !(dupkeycols && (bm & ROW_KEY)));
+      return bm && ((bm & TIMESTAMP) ||
+		    !(LoadDataFlags::duplicate_key_columns(m_load_flags) && (bm & ROW_KEY)));
     }
 
     class KeyComponentInfo {
@@ -97,7 +109,9 @@ namespace Hypertable {
       TIMESTAMP =         (1 << 1)
     };
 
-    bool parse_date_format(const char *str, struct tm *tm);
+    String get_header();
+
+    bool parse_date_format(const char *str, int64_t &timestamp);
 
     bool add_row_component(int index);
 
@@ -118,13 +132,17 @@ namespace Hypertable {
     bool m_hyperformat;
     bool m_leading_timestamps;
     int m_timestamp_index;
-    uint64_t m_timestamp;
+    int64_t m_timestamp;
     size_t m_limit;
     uint64_t m_offset;
     bool m_zipped;
     FixedRandomStringGenerator *m_rsgen;
+    String m_header_fname;
     int m_row_uniquify_chars;
-    bool m_dupkeycols;
+    int m_load_flags;
+    String m_first_line;
+    bool m_first_line_cached;
+    unsigned long m_source_size;
   };
 
  typedef boost::intrusive_ptr<LoadDataSource> LoadDataSourcePtr;

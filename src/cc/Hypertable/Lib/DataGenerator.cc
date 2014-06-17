@@ -38,7 +38,7 @@ using namespace boost;
 
 DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
   : m_generator(generator), m_keys_only(generator->m_keys_only),
-    m_amount(0), m_last_data_size(0) {
+    m_amount(0), m_count(0), m_last_data_size(0) {
   RowComponent *row_comp;
   Column *column;
 
@@ -53,7 +53,7 @@ DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
   }
 
   if (m_keys_only) {
-    m_cell.value = (const uint8_t *)"";
+    m_cell.value = (const ::uint8_t *)"";
     m_cell.value_len = 0;
   }
 
@@ -97,7 +97,7 @@ void DataGeneratorIterator::next() {
     m_cell.column_family = m_columns[m_next_column]->column_family.c_str();
     m_cell.column_qualifier = m_columns[m_next_column]->qualifier().c_str();
     if (!m_keys_only) {
-      m_cell.value = (const uint8_t *)m_columns[m_next_column]->value().c_str();
+      m_cell.value = (const ::uint8_t *)m_columns[m_next_column]->value().c_str();
       m_cell.value_len = m_columns[m_next_column]->value().length();
     }
     m_last_data_size = m_row.length() + strlen(m_cell.column_qualifier) + m_cell.value_len;
@@ -107,6 +107,7 @@ void DataGeneratorIterator::next() {
     m_last_data_size = m_row.length();
     m_amount += m_last_data_size;
   }
+  m_count++;
 }
 
 DataGeneratorIterator& DataGeneratorIterator::operator++() {
@@ -131,9 +132,14 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
   std::map<String, int> column_map;
 
   if (has("DataGenerator.MaxBytes"))
-    m_limit = get_i64("DataGenerator.MaxBytes");
+    m_max_bytes = get_i64("DataGenerator.MaxBytes");
   else
-    m_limit = m_props->get_i64("DataGenerator.MaxBytes", std::numeric_limits<int64_t>::max());
+    m_max_bytes = m_props->get_i64("DataGenerator.MaxBytes", std::numeric_limits< ::int64_t >::max());
+
+  if (has("DataGenerator.MaxKeys"))
+    m_max_keys = get_i64("DataGenerator.MaxKeys");
+  else
+    m_max_keys = m_props->get_i64("DataGenerator.MaxKeys", std::numeric_limits< ::int64_t >::max());
 
   if (has("DataGenerator.Seed"))
     m_seed = get_i32("DataGenerator.Seed");
@@ -175,6 +181,10 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
       }
       else if (!strcmp(ptr, ".max")) {
         m_row_component_specs[index].max = m_props->get_str(names[i]);
+      }
+      else if (!strcmp(ptr, ".values")) {
+        str = m_props->get_str(names[i]);
+        m_row_component_specs[index].value_count = (uint64_t)strtoll(str.c_str(), 0, 0);
       }
       else if (ends_with(ptr, ".order")) {
         m_row_component_specs[index].order = parse_order( m_props->get_str(names[i]) );

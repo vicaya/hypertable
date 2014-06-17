@@ -27,6 +27,7 @@
 
 #include "AsyncComm/ApplicationQueue.h"
 
+#include "NameIdMapper.h"
 #include "Schema.h"
 #include "RangeLocator.h"
 #include "Types.h"
@@ -38,6 +39,8 @@ namespace Hyperspace {
 namespace Hypertable {
 
   class ConnectionManager;
+  class ResultCallback;
+  class TableScannerAsync;
   class TableScanner;
   class TableMutator;
 
@@ -47,10 +50,10 @@ namespace Hypertable {
 
   public:
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
-          const String &name);
+          NameIdMapperPtr &namemap, const String &name);
     Table(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
-          Hyperspace::SessionPtr &, ApplicationQueuePtr &, const String &name,
-          uint32_t default_timeout_ms);
+          Hyperspace::SessionPtr &, ApplicationQueuePtr &, NameIdMapperPtr &namemap,
+          const String &name, uint32_t default_timeout_ms);
     virtual ~Table();
 
     /**
@@ -68,7 +71,7 @@ namespace Hypertable {
                                  uint32_t flush_interval_ms = 0);
 
     /**
-     * Creates a scanner on this table
+     * Creates a synchronous scanner on this table
      *
      * @param scan_spec scan specification
      * @param timeout_ms maximum time in milliseconds to allow
@@ -81,8 +84,30 @@ namespace Hypertable {
                                  uint32_t timeout_ms = 0,
                                  bool retry_table_not_found = false);
 
+
+    /**
+     * Creates an asynchronous scanner on this table
+     *
+     * @param scan_spec scan specification
+     * @param timeout_ms maximum time in milliseconds to allow
+     *        scanner methods to execute before throwing an exception
+     * @param retry_table_not_found whether to retry upon errors caused by
+     *        drop/create tables with the same name
+     * @param cb callback to be notified when scan results arrive
+     * @return pointer to scanner object
+     */
+    TableScannerAsync *create_scanner_async(ResultCallback *cb,
+                                            const ScanSpec &scan_spec,
+                                            uint32_t timeout_ms = 0,
+                                            bool retry_table_not_found = false);
+
     void get_identifier(TableIdentifier *table_id_p) {
       memcpy(table_id_p, &m_table, sizeof(TableIdentifier));
+    }
+
+    String get_name() {
+      ScopedLock lock(m_mutex);
+      return m_name;
     }
 
     SchemaPtr schema() {
@@ -114,7 +139,7 @@ namespace Hypertable {
     }
 
   private:
-    void initialize(const char *name);
+    void initialize();
 
     Mutex                  m_mutex;
     PropertiesPtr          m_props;
@@ -124,9 +149,13 @@ namespace Hypertable {
     SchemaPtr              m_schema;
     RangeLocatorPtr        m_range_locator;
     ApplicationQueuePtr    m_app_queue;
+    NameIdMapperPtr        m_namemap;
+    String                 m_name;
     TableIdentifierManaged m_table;
     int                    m_timeout_ms;
     bool                   m_stale;
+    String                 m_toplevel_dir;
+    size_t                 m_scanner_queue_size;
   };
 
   typedef intrusive_ptr<Table> TablePtr;

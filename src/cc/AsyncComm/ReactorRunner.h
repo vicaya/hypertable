@@ -36,9 +36,9 @@ namespace Hypertable {
   public:
     void operator()();
     void set_reactor(ReactorPtr &reactor_ptr) { m_reactor_ptr = reactor_ptr; }
-    static bool ms_shutdown;
-    static bool ms_record_arrival_clocks;
-    static HandlerMapPtr ms_handler_map_ptr;
+    static bool shutdown;
+    static bool record_arrival_clocks;
+    static HandlerMapPtr handler_map;
   private:
     void cleanup_and_remove_handlers(std::set<IOHandler *> &handlers);
     ReactorPtr m_reactor_ptr;

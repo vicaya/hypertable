@@ -32,11 +32,9 @@ using namespace std;
 
 namespace Hypertable {
 
-uint64_t get_ts64() {
-  static Mutex mutex;
-  ScopedLock lock(mutex);
+int64_t get_ts64() {
   HiResTime now;
-  return ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+  return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
 }
 
 bool xtime_add_millis(boost::xtime &xt, uint32_t millis) {
@@ -116,5 +114,34 @@ std::ostream &hires_ts_date(std::ostream &out) {
              << right << setw(2) << setfill('0') << tv.tm_sec << '.'
              << right << setw(9) << setfill('0') << now.nsec;
 }
+
+#if defined(__sun__)
+  time_t timegm(struct tm *t) {
+    time_t tl, tb;
+    struct tm *tg;
+
+    tl = mktime (t);
+    if (tl == -1)
+      {
+	t->tm_hour--;
+	tl = mktime (t);
+	if (tl == -1)
+	  return -1; /* can't deal with output from strptime */
+	tl += 3600;
+      }
+    tg = gmtime (&tl);
+    tg->tm_isdst = 0;
+    tb = mktime (tg);
+    if (tb == -1)
+      {
+	tg->tm_hour--;
+	tb = mktime (tg);
+	if (tb == -1)
+	  return -1; /* can't deal with output from gmtime */
+	tb += 3600;
+      }
+    return (tl - (tb - tl));
+  }
+#endif
 
 } // namespace Hypertable

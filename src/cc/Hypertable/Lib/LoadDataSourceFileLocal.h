@@ -45,18 +45,16 @@ namespace Hypertable {
 
   public:
     LoadDataSourceFileLocal(const String &fname, const String &header_fname,
-                            int row_uniquify_chars = 0,
-                            bool dupkeycol = false);
+                            int row_uniquify_chars = 0, int load_flags = 0);
 
     ~LoadDataSourceFileLocal() { };
 
     uint64_t incr_consumed();
 
   protected:
-    String get_header();
     void init_src();
-
     boost::iostreams::file_source m_source;
+    String m_fname;
     String m_header_fname;
   };
 

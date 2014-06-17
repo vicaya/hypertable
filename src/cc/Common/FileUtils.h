@@ -32,8 +32,10 @@ namespace Hypertable {
   class FileUtils {
 
   public:
+    static ssize_t read(const String &fname, String &contents);
     static ssize_t read(int fd, void *vptr, size_t n);
     static ssize_t pread(int fd, void *vptr, size_t n, off_t offset);
+    static ssize_t write(const String &fname, String &contents);
     static ssize_t write(int fd, const void *vptr, size_t n);
     static ssize_t writev(int fd, const struct iovec *vector, int count);
     static ssize_t sendto(int fd, const void *vptr, size_t n,
@@ -44,8 +46,11 @@ namespace Hypertable {
     static ssize_t recv(int fd, void *vptr, size_t n);
     static void set_flags(int fd, int flags);
     static char *file_to_buffer(const String &fname, off_t *lenp);
+    static String file_to_string(const String &fname);
     static bool mkdirs(const String &dirname);
     static bool exists(const String &fname);
+    static bool unlink(const String &fname);
+    static bool rename(const String &oldpath, const String &newpath);
     static uint64_t size(const String &fname);
     static off_t length(const String &fname);
     static void add_trailing_slash(String &path);

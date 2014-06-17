@@ -39,6 +39,8 @@ namespace Hyperspace {
     virtual void execute_line(const String &line);
 
   private:
+    static void printDirEntryAttrListing(int indent, const String& attr_name, const std::vector<DirEntryAttr> listing);
+
     Session* m_session;
   };
 

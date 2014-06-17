@@ -25,6 +25,7 @@ set(TEST_DEPENDENCIES ${DST_DIR}/words)
 set(AsyncComm_SRCS
 DispatchHandlerSynchronizer.cc
 Comm.cc
+CommAddress.cc
 CommHeader.cc
 Config.cc
 ConnectionManager.cc
@@ -34,12 +35,17 @@ IOHandlerAccept.cc
 IOHandlerData.cc
 IOHandlerDatagram.cc
 Protocol.cc
+ProxyMap.cc
 Reactor.cc
 ReactorFactory.cc
 ReactorRunner.cc
 RequestCache.cc
 ResponseCallback.cc
 )
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+  link_libraries(nsl socket resolv)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 
 add_library(HyperComm ${AsyncComm_SRCS})
 target_link_libraries(HyperComm HyperCommon)

@@ -1,11 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
+HYPERTABLE_HOME=$HT_HOME
 SCRIPT_DIR=`dirname $0`
 NUM_POLLS=${NUM_POLLS:-"10"}
 MY_IP=`$HT_HOME/bin/system_info --my-ip`
 WRITE_TOTAL=${WRITE_TOTAL:-"30000000"}
 WRITE_SIZE=${WRITE_SIZE:-"500000"}
+
+. $HT_HOME/bin/ht-env.sh
 
 $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
    --Hypertable.RangeServer.CommitLog.RollLimit 1M \
@@ -43,11 +46,11 @@ done
 while [ $NUM_POLLS -gt 0 ]; do
   sleep 2
   n=`ls $HT_HOME/fs/local/hypertable/servers/${MY_IP}_38060/log/user | wc -l`
-  if [ $n -le 10 ] ; then
+  if [ $n -le 13 ] ; then
       NUM_POLLS=3
       while [ $NUM_POLLS -gt 0 ]; do
           n=`ls $HT_HOME/fs/local/hypertable/servers/${MY_IP}_38060/log | wc -l`
-          [ $n -le 10 ] && exit 0
+          [ $n -le 13 ] && exit 0
           sleep 2
           NUM_POLLS=$((NUM_POLLS - 1))
       done

@@ -30,7 +30,8 @@
 
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/RangeServerClient.h"
-#include "Hypertable/Lib/Stat.h"
+// #include "Hypertable/Lib/StatsV0.h" FIXME!!!!
+#include "Hypertable/Lib/StatsRangeServer.h"
 
 using namespace Hypertable;
 using namespace Config;
@@ -53,11 +54,15 @@ int main(int argc, char **argv) {
                 addr.format().c_str());
 
     RangeServerClient *client = new RangeServerClient(comm, timeout);
-    RangeServerStat stat;
+    StatsRangeServer stats;
+    String stats_str;
 
-    client->get_statistics(addr, stat);
+    client->get_statistics(addr, stats);
+    /** FIXME!!
+    stats->dump_str(stats_str);
 
-    std::cout << stat << std::endl;
+    std::cout << stats_str << std::endl;
+    */
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

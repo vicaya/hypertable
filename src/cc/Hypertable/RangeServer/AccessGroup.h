@@ -1,4 +1,3 @@
-
 /** -*- c++ -*-
  * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
@@ -27,12 +26,13 @@
 #include <set>
 #include <vector>
 #include <cstdio>
+#include <ctime>
 #include <iostream>
 #include <fstream>
 
 #include <boost/thread/condition.hpp>
 
-#include "Common/CharArena.h"
+#include "Common/PageArena.h"
 #include "Common/String.h"
 #include "Common/StringExt.h"
 #include "Common/HashMap.h"
@@ -40,9 +40,12 @@
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Types.h"
 
+#include "AccessGroupGarbageTracker.h"
 #include "CellCache.h"
 #include "CellStore.h"
+#include "CellStoreTrailerV5.h"
 #include "LiveFileTracker.h"
+#include "MaintenanceFlag.h"
 
 
 namespace Hypertable {
@@ -51,26 +54,118 @@ namespace Hypertable {
 
   public:
 
+    class CellStoreMaintenanceData {
+    public:
+      void *user_data;
+      CellStoreMaintenanceData *next;
+      CellStore *cs;
+      CellStore::IndexMemoryStats index_stats;
+      uint64_t shadow_cache_size;
+      int64_t  shadow_cache_ecr;
+      uint32_t shadow_cache_hits;
+      int16_t  maintenance_flags;
+    };
+
     class MaintenanceData {
     public:
+      void *user_data;
       MaintenanceData *next;
       AccessGroup *ag;
+      CellStoreMaintenanceData *csdata;
       int64_t earliest_cached_revision;
       int64_t latest_stored_revision;
       int64_t mem_used;
+      int64_t mem_allocated;
       int64_t cached_items;
+      uint64_t cell_count;
       int64_t immutable_items;
       int64_t disk_used;
+      int64_t disk_estimate;
       int64_t log_space_pinned;
-      uint32_t deletes;
-      uint32_t outstanding_scanners;
-      void *user_data;
-      bool in_memory;
+      int64_t key_bytes;
+      int64_t value_bytes;
+      uint32_t file_count;
+      int32_t deletes;
+      int32_t outstanding_scanners;
+      float    compression_ratio;
+      int16_t  maintenance_flags;
+      uint64_t block_index_memory;
+      uint64_t bloom_filter_memory;
+      uint32_t bloom_filter_accesses;
+      uint32_t bloom_filter_maybes;
+      uint32_t bloom_filter_fps;
+      uint64_t shadow_cache_memory;
+      bool     in_memory;
+      bool     gc_needed;
+    };
+
+    class CellStoreInfo {
+    public:
+      CellStoreInfo(CellStore *csp) :
+	cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0), bloom_filter_accesses(0),
+ bloom_filter_maybes(0), bloom_filter_fps(0) {
+        init_from_trailer();
+      }
+      CellStoreInfo(CellStorePtr &csp) :
+	cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0), bloom_filter_accesses(0),
+ bloom_filter_maybes(0), bloom_filter_fps(0) {
+        init_from_trailer();
+      }
+      CellStoreInfo(CellStorePtr &csp, CellCachePtr &scp, int64_t ecr) :
+	cs(csp), shadow_cache(scp), shadow_cache_ecr(ecr), shadow_cache_hits(0),
+ bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0)  {
+        init_from_trailer();
+      }
+      CellStoreInfo() : cell_count(0), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0),
+      bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0) { }
+      void init_from_trailer() {
+        int divisor = 0;
+        try {
+          divisor = (boost::any_cast<uint32_t>(cs->get_trailer()->get("flags")) & CellStoreTrailerV5::SPLIT) ? 2 : 1;
+          cell_count = boost::any_cast<int64_t>(cs->get_trailer()->get("total_entries")) / divisor;
+          timestamp_min = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_min"));
+          timestamp_max = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_max"));
+          expirable_data = boost::any_cast<int64_t>(cs->get_trailer()->get("expirable_data"))
+                           / divisor ;
+        }
+        catch (std::exception &e) {
+          divisor = 0;
+          cell_count = 0;
+          timestamp_min = TIMESTAMP_MAX;
+          timestamp_max = TIMESTAMP_MIN;
+          expirable_data = 0;
+        }
+        try {
+          if (divisor) {
+            key_bytes = boost::any_cast<int64_t>(cs->get_trailer()->get("key_bytes")) / divisor;
+            value_bytes = boost::any_cast<int64_t>(cs->get_trailer()->get("value_bytes")) /divisor;
+          }
+          else
+            key_bytes = value_bytes = 0;
+        }
+        catch (std::exception &e) {
+          key_bytes = value_bytes = 0;
+        }
+      }
+      CellStorePtr cs;
+      CellCachePtr shadow_cache;
+      uint64_t cell_count;
+      int64_t key_bytes;
+      int64_t value_bytes;
+      int64_t shadow_cache_ecr;
+      uint32_t shadow_cache_hits;
+      uint32_t bloom_filter_accesses;
+      uint32_t bloom_filter_maybes;
+      uint32_t bloom_filter_fps;
+      int64_t timestamp_min;
+      int64_t timestamp_max;
+      int64_t expirable_data;
+      int64_t total_data;
     };
 
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema,
                 Schema::AccessGroup *ag, const RangeSpec *range);
-    virtual ~AccessGroup();
+
     virtual void add(const Key &key, const ByteString value);
 
     virtual const char *get_split_row();
@@ -85,7 +180,7 @@ namespace Hypertable {
         total += m_immutable_cache->get_total_entries();
       if (!m_in_memory) {
         for (size_t i=0; i<m_stores.size(); i++)
-          total += m_stores[i]->get_total_entries();
+          total += m_stores[i].cs->get_total_entries();
       }
       return total;
     }
@@ -101,31 +196,19 @@ namespace Hypertable {
     uint64_t disk_usage();
     uint64_t memory_usage();
     void space_usage(int64_t *memp, int64_t *diskp);
-    void add_cell_store(CellStorePtr &cellstore, uint32_t id);
-    void run_compaction(bool major);
+    void add_cell_store(CellStorePtr &cellstore);
 
-    int64_t purgeable_index_memory(uint64_t access_counter) {
-      int64_t total = 0;
-      for (size_t i=0; i<m_stores.size(); i++)
-        total += m_stores[i]->purgeable_index_memory(access_counter);
-      return total;
-    }
+    void compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp);
 
-    void purge_index_data(uint64_t access_counter);
+    void run_compaction(int maintenance_flags);
 
-    MaintenanceData *get_maintenance_data(ByteArena &arena);
+    uint64_t purge_memory(MaintenanceFlag::Map &subtask_map);
 
-    void set_compaction_bit() { m_needs_compaction = true; }
+    MaintenanceData *get_maintenance_data(ByteArena &arena, time_t now);
 
-    bool needs_compaction() { return m_needs_compaction; }
+    void stage_compaction();
 
-    void initiate_compaction();
-
-    bool compaction_initiated() {
-      ScopedLock lock(m_mutex);
-      return (bool)m_immutable_cache;
-    }
-
+    void unstage_compaction();
 
     const char *get_name() { return m_name.c_str(); }
 
@@ -143,8 +226,6 @@ namespace Hypertable {
       return m_cell_cache->size();
     }
 
-    void drop() { m_drop = true; }
-
     void get_file_list(String &file_list, bool include_blocked) {
       m_file_tracker.get_file_list(file_list, include_blocked);
     }
@@ -156,9 +237,18 @@ namespace Hypertable {
 
     void dump_keys(std::ofstream &out);
 
+    void set_next_csid(uint32_t nid) { 
+      if (nid > m_next_cs_id) {
+        m_next_cs_id = nid;
+        m_file_tracker.set_next_csid(nid);
+      }
+    }
+
   private:
-    void update_files_column(const String &end_row, const String &file_list);
+
     void merge_caches();
+    void range_dir_initialize();
+    void recompute_compression_ratio();
 
     Mutex                m_mutex;
     Mutex                m_outstanding_scanner_mutex;
@@ -169,26 +259,26 @@ namespace Hypertable {
     String               m_name;
     String               m_full_name;
     String               m_table_name;
+    String               m_range_dir;
     String               m_start_row;
     String               m_end_row;
     String               m_range_name;
-    std::vector<CellStorePtr> m_stores;
+    std::vector<CellStoreInfo> m_stores;
     PropertiesPtr        m_cellstore_props;
     CellCachePtr         m_cell_cache;
     CellCachePtr         m_immutable_cache;
     uint32_t             m_next_cs_id;
     uint64_t             m_disk_usage;
     float                m_compression_ratio;
-    bool                 m_is_root;
     int64_t              m_compaction_revision;
     int64_t              m_earliest_cached_revision;
     int64_t              m_earliest_cached_revision_saved;
     int64_t              m_latest_stored_revision;
     uint64_t             m_collisions;
-    bool                 m_needs_compaction;
-    bool                 m_in_memory;
-    bool                 m_drop;
     LiveFileTracker      m_file_tracker;
+    AccessGroupGarbageTracker m_garbage_tracker;
+    bool                 m_is_root;
+    bool                 m_in_memory;
     bool                 m_recovering;
     bool                 m_bloom_filter_disabled;
 

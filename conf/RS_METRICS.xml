@@ -1,0 +1,34 @@
+<Schema generation="1">
+  <AccessGroup name="server">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>server</Name>
+      <Counter>false</Counter>
+      <MaxVersions>336</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="range">
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>range</Name>
+      <Counter>false</Counter>
+      <MaxVersions>24</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>range_start_row</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>range_move</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>

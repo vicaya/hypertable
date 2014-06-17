@@ -16,7 +16,6 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-# Obtain the soname via objdump
 macro(HT_GET_SONAME var fpath)
   exec_program(${CMAKE_SOURCE_DIR}/bin/soname.sh ARGS ${fpath}
                OUTPUT_VARIABLE SONAME_OUT RETURN_VALUE SONAME_RETURN)
@@ -35,7 +34,7 @@ macro(HT_GET_SONAME var fpath)
   endif ()
 
   # check if the library is prelinked, if so, warn
-  exec_program(objdump ARGS -h ${fpath} OUTPUT_VARIABLE ODH_OUT
+  exec_program(env ARGS objdump -h ${fpath} OUTPUT_VARIABLE ODH_OUT
                RETURN_VALUE ODH_RETURN)
   if (ODH_RETURN STREQUAL "0")
     string(REGEX MATCH "prelink_undo" match ${ODH_OUT})
@@ -47,14 +46,20 @@ endmacro()
 
 # This is a workaround for install() which always preserves symlinks
 macro(HT_INSTALL_LIBS dest)
-  foreach(fpath ${ARGN})
-    if (NOT ${fpath} MATCHES "(NOTFOUND|\\.a)$")
-      #message(STATUS "install copy: ${fpath}")
-      HT_GET_SONAME(soname ${fpath})
-      configure_file(${fpath} "${dest}/${soname}" COPYONLY)
-      install(FILES "${CMAKE_BINARY_DIR}/${dest}/${soname}" DESTINATION ${dest})
-    endif ()
-  endforeach()
+  if (INSTALL_EXCLUDE_DEPENDENT_LIBS)
+    message(STATUS "Not installing dependent libraries")
+  else ()
+    foreach(fpath ${ARGN})
+      if (NOT ${fpath} MATCHES "(NOTFOUND|\\.a)$")
+        if (HT_CMAKE_DEBUG)
+          message(STATUS "install copy: ${fpath}")
+        endif ()
+        HT_GET_SONAME(soname ${fpath})
+        configure_file(${fpath} "${dest}/${soname}" COPYONLY)
+        install(FILES "${CMAKE_BINARY_DIR}/${dest}/${soname}" DESTINATION ${dest})
+      endif ()
+    endforeach()
+  endif ()
 endmacro()
 
 # Dependent libraries
@@ -62,7 +67,7 @@ HT_INSTALL_LIBS(lib ${BOOST_LIBS} ${BDB_LIBRARIES} ${Thrift_LIBS}
                 ${Kfs_LIBRARIES} ${LibEvent_LIB} ${Log4cpp_LIBRARIES}
                 ${READLINE_LIBRARIES} ${EXPAT_LIBRARIES} ${BZIP2_LIBRARIES}
                 ${ZLIB_LIBRARIES} ${SIGAR_LIBRARY} ${Tcmalloc_LIBRARIES}
-                ${Ceph_LIBRARIES})
+                ${Ceph_LIBRARIES} ${RRD_LIBRARIES} ${RE2_LIBRARIES})
 
 # Need to include some "system" libraries as well
 exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
@@ -74,12 +79,66 @@ if (HT_CMAKE_DEBUG)
 endif ()
 
 if (LDD_RETURN STREQUAL "0")
-  string(REGEX MATCH "[ \t](/[^ ]+/libgcc_s\\.[^ ]+)" dummy ${LDD_OUT})
+  string(REGEX MATCH "[ \t](/[^ ]+/libgcc_s\\.[^ \n]+)" dummy ${LDD_OUT})
   set(gcc_s_lib ${CMAKE_MATCH_1})
-  string(REGEX MATCH "[ \t](/[^ ]+/libstdc\\+\\+\\.[^ ]+)" dummy ${LDD_OUT})
+  string(REGEX MATCH "[ \t](/[^ ]+/libstdc\\+\\+\\.[^ \n]+)" dummy ${LDD_OUT})
   set(stdcxx_lib ${CMAKE_MATCH_1})
-  HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib})
+  string(REGEX MATCH "[ \t](/[^ ]+/libstacktrace\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(stacktrace_lib ${CMAKE_MATCH_1})
+  HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib} ${stacktrace_lib})
 endif ()
+
+# Include other RRDTool dependencies found in Hypertable.Master
+exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+             ARGS ${CMAKE_BINARY_DIR}/src/cc/Hypertable/Master/Hypertable.Master
+             OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
+
+if (HT_CMAKE_DEBUG)
+  message("ldd.sh output: ${LDD_OUT}")
+endif ()
+
+if (LDD_RETURN STREQUAL "0")
+  string(REGEX MATCH "[ \t](/[^ ]+/libpangocairo-[^ \n]+)" dummy ${LDD_OUT})
+  set(pangocairo_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libpango-[^ \n]+)" dummy ${LDD_OUT})
+  set(pango_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libcairo\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(cairo_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libfontconfig\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(fontconfig_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libXrender\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(Xrender_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libX11\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(X11_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libxml2\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(xml2_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libpixman-[^ \n]+)" dummy ${LDD_OUT})
+  set(pixman_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libgobject-[^ \n]+)" dummy ${LDD_OUT})
+  set(gobject_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libgmodule-[^ \n]+)" dummy ${LDD_OUT})
+  set(gmodule_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libglib-[^ \n]+)" dummy ${LDD_OUT})
+  set(glib_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libpangoft2-[^ \n]+)" dummy ${LDD_OUT})
+  set(pangoft2_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libxcb-xlib\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(xcb_xlib_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libxcb\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(xcb_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libpcre\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(pcre_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libXau\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(Xau_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libXdmcp\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(Xdmcp_lib ${CMAKE_MATCH_1})
+  HT_INSTALL_LIBS(lib ${pangocairo_lib} ${pango_lib} ${cairo_lib}
+                  ${fontconfig_lib} ${Xrender_lib} ${X11_lib} ${xml2_lib}
+		  ${pixman_lib} ${gobject_lib} ${gmodule_lib} ${glib_lib}
+		  ${pangoft2_lib} ${xcb_xlib_lib} ${xcb_lib} ${pcre_lib}
+		  ${Xau_lib} ${Xdmcp_lib})
+endif ()
+
 
 # General package variables
 if (NOT CPACK_PACKAGE_NAME)
@@ -87,7 +146,7 @@ if (NOT CPACK_PACKAGE_NAME)
 endif ()
 
 if (NOT CPACK_PACKAGE_CONTACT)
-  set(CPACK_PACKAGE_CONTACT "llu@hypertable.org")
+  set(CPACK_PACKAGE_CONTACT "doug@hypertable.org")
 endif ()
 
 if (NOT CPACK_PACKAGE_DESCRIPTION_SUMMARY)
@@ -127,7 +186,7 @@ set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 # Debian pakcage variables
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
-    "${CMAKE_BINARY_DIR}/postinst;${CMAKE_BINARY_DIR}/prerm")
+    "${CMAKE_BINARY_DIR}/prerm")
 
 # RPM package variables
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv2+")
@@ -135,13 +194,14 @@ set(CPACK_RPM_PACKAGE_GROUP "Applications/Databases")
 
 # rpm perl dependencies stuff is dumb
 set(CPACK_RPM_SPEC_MORE_DEFINE "
+Provides: perl(Thrift)
+Provides: perl(Thrift::BinaryProtocol)
+Provides: perl(Thrift::FramedTransport)
+Provides: perl(Thrift::Socket)
 Provides: perl(Hypertable::ThriftGen2::HqlService)
 Provides: perl(Hypertable::ThriftGen2::Types)
 Provides: perl(Hypertable::ThriftGen::ClientService)
 Provides: perl(Hypertable::ThriftGen::Types)
-
-%post
-${CMAKE_INSTALL_PREFIX}/bin/fhsize.sh
 
 %preun
 ${CMAKE_INSTALL_PREFIX}/bin/prerm.sh")

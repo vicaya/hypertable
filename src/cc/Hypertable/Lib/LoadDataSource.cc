@@ -41,43 +41,96 @@ extern "C" {
 
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
+#include "Common/FileUtils.h"
 #include "Common/Logger.h"
+#include "Common/Time.h"
 
 #include "Key.h"
 
+#include "LoadDataFlags.h"
 #include "LoadDataSource.h"
 
 using namespace boost::iostreams;
 using namespace Hypertable;
 using namespace std;
 
-namespace {
-
-  enum TypeMask {
-    ROW_KEY =           (1 << 0),
-    TIMESTAMP =         (1 << 1)
-  };
-
-  inline bool should_skip(int idx, const uint32_t *masks, bool dupkeycols) {
-    uint32_t bm = masks[idx];
-    return bm && ((bm & TIMESTAMP) || !(dupkeycols && (bm & ROW_KEY)));
-  }
-
-} // local namespace
 
 /**
  *
  */
-LoadDataSource::LoadDataSource(int row_uniquify_chars, bool dupkeycols)
+LoadDataSource::LoadDataSource(const String &header_fname, int row_uniquify_chars, int load_flags)
   : m_type_mask(0), m_cur_line(0), m_line_buffer(0),
     m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false),
     m_timestamp_index(-1), m_timestamp(AUTO_ASSIGN), m_offset(0),
-    m_zipped(false), m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars),
-    m_dupkeycols(dupkeycols) {
+    m_zipped(false), m_rsgen(0), m_header_fname(header_fname),
+    m_row_uniquify_chars(row_uniquify_chars),
+    m_load_flags(load_flags), m_first_line_cached(false), m_source_size(0) {
   if (row_uniquify_chars)
     m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
 
+  // Verify existence of header file
+  if (m_header_fname != "") {
+    if (!FileUtils::exists(m_header_fname))
+      HT_THROWF(Error::FILE_NOT_FOUND, "Unable to open header file '%s'",
+                m_header_fname.c_str());
+  }
+
   return;
+}
+
+String
+LoadDataSource::get_header()
+{
+  String header = "";
+  if (m_header_fname != "") {
+    std::ifstream in(m_header_fname.c_str());
+    getline(in, header);
+  }
+  else if (LoadDataFlags::single_cell_format(m_load_flags)) {
+    // force autodetect
+    size_t tabs = 0;
+    getline(m_fin, m_first_line);
+    for (const char *ptr = m_first_line.c_str(); *ptr; ptr++) {
+      if (*ptr == '\t')
+	tabs++;
+    }
+    if (tabs == 2) {
+      if (strcmp(m_first_line.c_str(), "#row\tcolumn\tvalue"))
+	m_first_line_cached = true;
+      header = "#row\tcolumn\tvalue";
+    }
+    else if (tabs == 3) {
+      if (strcmp(m_first_line.c_str(), "#timestamp\trow\tcolumn\tvalue"))
+	m_first_line_cached = true;
+      header = "#timestamp\trow\tcolumn\tvalue";
+    }
+    else
+      HT_THROWF(Error::HQL_BAD_LOAD_FILE_FORMAT,
+		"Untable to autodetect format, expected 2 or 3 tabs, got %d", (int)tabs);
+  }
+  else {
+    // autodetect
+    getline(m_fin, m_first_line);
+    if (m_first_line[0] == '#')
+      header = m_first_line;
+    else {
+      size_t tabs = 0;
+      for (const char *ptr = m_first_line.c_str(); *ptr; ptr++) {
+	       if (*ptr == '\t')
+	         tabs++;
+      }
+      if (tabs == 2)
+	       header = "#row\tcolumn\tvalue";
+      else if (tabs == 3)
+	       header = "#timestamp\trow\tcolumn\tvalue";
+      else
+	       HT_THROWF(Error::HQL_BAD_LOAD_FILE_FORMAT,
+		          "Untable to autodetect format, expected 2 or 3 tabs, got %d", (int)tabs);
+        m_first_line_cached = true;
+    }
+  }
+
+  return header;
 }
 
 void
@@ -239,7 +292,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
     uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
   String line;
   int index;
-  char *base, *ptr, *colon, *endptr;
+  char *base, *ptr, *colon;
 
   if (type_flagp)
     *type_flagp = FLAG_INSERT;
@@ -249,7 +302,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
 
   if (m_hyperformat) {
 
-    while (getline(m_fin, line)) {
+    while (get_next_line(line)) {
       m_cur_line++;
 
       if (consumedp && !m_zipped)
@@ -266,16 +319,19 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
        */
       if (m_leading_timestamps) {
         if ((ptr = strchr(base, '\t')) == 0) {
-          cerr << "error: too few fields on line " << m_cur_line << endl;
+          cerr << "warning: too few fields on line " << m_cur_line << endl;
           continue;
         }
         *ptr++ = 0;
-        keyp->timestamp = strtoll(base, &endptr, 10);
-        if (*endptr != 0) {
-          cerr << "error: invalid timestamp (" << base << ") on line "
-               << m_cur_line << endl;
+
+        int64_t timestamp;
+        if (!parse_date_format(base, timestamp)) {
+          cerr << "warn: invalid timestamp format on line " << m_cur_line
+               << ", skipping..." << endl;
           continue;
         }
+        keyp->timestamp = (int64_t)timestamp;
+
         base = ptr;
       }
       else
@@ -285,7 +341,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
        * Get row key
        */
       if ((ptr = strchr(base, '\t')) == 0) {
-        cerr << "error: too few fields on line " << m_cur_line << endl;
+        cerr << "warning: too few fields on line " << m_cur_line << endl;
         continue;
       }
       if (m_rsgen) {
@@ -301,6 +357,10 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         keyp->row = base;
         keyp->row_len = ptr - base;
       }
+      if (keyp->row_len == 0) {
+        cerr << "warning: zero-lengthed row key on line " << m_cur_line << ", skipping..." << endl;
+        continue;
+      }
       *ptr++ = 0;
       base = ptr;
 
@@ -308,7 +368,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
        * Get column family and qualifier
        */
       if ((ptr = strchr(base, '\t')) == 0) {
-        cerr << "error: too few fields on line " << m_cur_line << endl;
+        cerr << "warning: too few fields on line " << m_cur_line << endl;
         continue;
       }
       *ptr = 0;
@@ -349,7 +409,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
 
     // skip timestamp and rowkey (if needed)
     while (m_next_value < m_limit &&
-           should_skip(m_next_value, m_type_mask, m_dupkeycols))
+           should_skip(m_next_value, m_type_mask))
       m_next_value++;
 
     // get from parsed cells if available
@@ -386,7 +446,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
       return true;
     }
 
-    while (getline(m_fin, line)) {
+    while (get_next_line(line)) {
       m_cur_line++;
       index = 0;
 
@@ -448,8 +508,6 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
       *m_row_key_buffer.ptr = 0;
 
       if (m_timestamp_index >= 0) {
-        struct tm tm;
-        time_t t;
 
         if (m_values.size() <= (size_t)m_timestamp_index) {
           cerr << "warn: timestamp field not found on line " << m_cur_line
@@ -457,25 +515,17 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
           continue;
         }
 
-        if (!parse_date_format(m_values[m_timestamp_index], &tm)) {
+        if (!parse_date_format(m_values[m_timestamp_index], m_timestamp)) {
           cerr << "warn: invalid timestamp format on line " << m_cur_line
                << ", skipping..." << endl;
           continue;
         }
-
-        if ((t = timegm(&tm)) == (time_t)-1) {
-          cerr << "warn: invalid timestamp format on line " << m_cur_line
-               << ", skipping..." << endl;
-          continue;
-        }
-
-        m_timestamp = (uint64_t)t * 1000000000LL;
       }
       else
         m_timestamp = AUTO_ASSIGN;
 
       m_next_value = 0;
-      while (should_skip(m_next_value, m_type_mask, m_dupkeycols))
+      while (should_skip(m_next_value, m_type_mask))
         m_next_value++;
 
       if (m_rsgen) {
@@ -567,20 +617,26 @@ bool LoadDataSource::add_row_component(int index) {
 
 }
 
-bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
+bool LoadDataSource::parse_date_format(const char *str, int64_t &timestamp) {
   int ival;
+  double dval=0;
   const char *ptr = str;
   char *end_ptr;
+  struct tm tm;
+  time_t tt;
+  int64_t ns;
 
-  /**
-   * year
-   */
-  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 4 ||
-      *end_ptr != '-')
+  ns = (int64_t)strtoll(ptr, &end_ptr, 10);
+  if (*end_ptr == 0) {
+    timestamp = ns;
+    return true;
+  }
+  else if ((end_ptr - ptr) != 4)
     return false;
 
-  tm->tm_year = ival - 1900;
+  tm.tm_year = ns - 1900;
   ptr = end_ptr + 1;
+  ns = 0;
 
   /**
    * month
@@ -589,17 +645,17 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
       *end_ptr != '-')
     return false;
 
-  tm->tm_mon = ival - 1;
+  tm.tm_mon = ival - 1;
   ptr = end_ptr + 1;
 
   /**
    * day
    */
   if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 2 ||
-      *end_ptr != ' ')
+      (*end_ptr != ' ' && *end_ptr != 'T'))
     return false;
 
-  tm->tm_mday = ival;
+  tm.tm_mday = ival;
   ptr = end_ptr + 1;
 
   /**
@@ -608,7 +664,7 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
   ival = strtol(ptr, &end_ptr, 10);
   if ((end_ptr - ptr) != 2 || *end_ptr != ':')
     return false;
-  tm->tm_hour = ival;
+  tm.tm_hour = ival;
 
   ptr = end_ptr + 1;
 
@@ -618,20 +674,31 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
   ival = strtol(ptr, &end_ptr, 10);
   if ((end_ptr - ptr) != 2 || *end_ptr != ':')
     return false;
-  tm->tm_min = ival;
+  tm.tm_min = ival;
 
   ptr = end_ptr + 1;
 
   /**
    * second
    */
-  ival = strtol(ptr, &end_ptr, 10);
-  if ((end_ptr - ptr) != 2)
-    return false;
-  tm->tm_sec = ival;
+  dval = strtod(ptr, &end_ptr);
+  tm.tm_sec = 0;
 
-  tm->tm_gmtoff = 0;
-  tm->tm_zone = "GMT";
+#if !defined(__sun__)
+  tm.tm_gmtoff = 0;
+  tm.tm_zone = (char *)"GMT";
+#endif
+
+  if ((tt = timegm(&tm)) == (time_t)-1)
+    return false;
+
+  ptr = end_ptr + 1;
+  // add integer nanoseconds
+  if (*end_ptr == ':') {
+    ns = strtoul(ptr, &end_ptr, 10);
+  }
+
+  timestamp = (int64_t)(((double)tt + dval) * 1000000000LL) + ns;
 
   return true;
 }

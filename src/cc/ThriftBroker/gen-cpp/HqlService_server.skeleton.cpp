@@ -7,10 +7,10 @@
 #include <transport/TServerSocket.h>
 #include <transport/TBufferTransports.h>
 
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
-using namespace apache::thrift::server;
+using namespace ::apache::thrift;
+using namespace ::apache::thrift::protocol;
+using namespace ::apache::thrift::transport;
+using namespace ::apache::thrift::server;
 
 using boost::shared_ptr;
 
@@ -22,22 +22,22 @@ class HqlServiceHandler : virtual public HqlServiceIf {
     // Your initialization goes here
   }
 
-  void hql_exec(HqlResult& _return, const std::string& command, const bool noflush, const bool unbuffered) {
+  void hql_exec(HqlResult& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) {
     // Your implementation goes here
     printf("hql_exec\n");
   }
 
-  void hql_query(HqlResult& _return, const std::string& command) {
+  void hql_query(HqlResult& _return, const int64_t ns, const std::string& command) {
     // Your implementation goes here
     printf("hql_query\n");
   }
 
-  void hql_exec2(HqlResult2& _return, const std::string& command, const bool noflush, const bool unbuffered) {
+  void hql_exec2(HqlResult2& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) {
     // Your implementation goes here
     printf("hql_exec2\n");
   }
 
-  void hql_query2(HqlResult2& _return, const std::string& command) {
+  void hql_query2(HqlResult2& _return, const int64_t ns, const std::string& command) {
     // Your implementation goes here
     printf("hql_query2\n");
   }

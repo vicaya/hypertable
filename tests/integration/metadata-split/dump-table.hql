@@ -1,0 +1,2 @@
+use '/';
+dump table LoadTest;

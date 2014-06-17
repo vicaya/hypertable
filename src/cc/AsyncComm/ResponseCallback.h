@@ -78,6 +78,16 @@ namespace Hypertable {
       memcpy(&addr, &m_event_ptr->addr, sizeof(addr));
     }
 
+    /** Gets the remote address of the client.
+     *
+     * @return remote address
+     */
+    const InetAddr get_address() const {
+      return m_event_ptr->addr;
+    }
+
+    EventPtr &get_event() { return m_event_ptr; }
+
   protected:
     Comm          *m_comm;
     EventPtr       m_event_ptr;

@@ -51,3 +51,4 @@ control=(REV|TS|SHARED) row='delete_none' family=1 qualifier='insert' ts=12 rev=
 control=(REV|TS|SHARED) row='delete_large' ts=8753 rev=8753 DELETE_ROW
 control=(REV|TS|SHARED) row='delete_large' family=1 qualifier='' ts=4378 rev=4378 DELETE_COLUMN_FAMILY
 control=(REV|TS|SHARED) row='delete_large' family=1 qualifier='insert' ts=13 rev=13
+trailer.delete_count= 8

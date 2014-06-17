@@ -22,11 +22,14 @@
 #include "Common/Compat.h"
 
 #include <iostream>
-using namespace std;
 
 extern "C" {
 #include <errno.h>
 #include <netinet/tcp.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 }
 
 #define HT_DISABLE_LOG_DEBUG 1
@@ -39,23 +42,38 @@ extern "C" {
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
 #include "ReactorFactory.h"
-using namespace Hypertable;
 
+using namespace Hypertable;
+using namespace std;
+
+
+bool
+IOHandlerAccept::handle_event(struct pollfd *event, clock_t arrival_clocks, time_t arival_time) {
+  if (event->revents & POLLIN)
+    return handle_incoming_connection();
+  return true;
+}
 
 /**
  *
  */
-#if defined(__APPLE__)
-bool IOHandlerAccept::handle_event(struct kevent *event, clock_t ) {
+#if defined(__APPLE__) || defined(__FreeBSD__)
+bool IOHandlerAccept::handle_event(struct kevent *event, clock_t, time_t) {
   //DisplayEvent(event);
   if (event->filter == EVFILT_READ)
     return handle_incoming_connection();
   return true;
 }
 #elif defined(__linux__)
-bool IOHandlerAccept::handle_event(struct epoll_event *event, clock_t ) {
+bool IOHandlerAccept::handle_event(struct epoll_event *event, clock_t, time_t) {
   //DisplayEvent(event);
   return handle_incoming_connection();
+}
+#elif defined(__sun__)
+bool IOHandlerAccept::handle_event(port_event_t *event, clock_t, time_t) {
+  if (event->portev_events == POLLIN)
+    return handle_incoming_connection();
+  return true;
 }
 #else
   ImplementMe;
@@ -80,7 +98,7 @@ bool IOHandlerAccept::handle_incoming_connection() {
     }
 
     HT_DEBUGF("Just accepted incoming connection, fd=%d (%s:%d)",
-              m_sd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+	      m_sd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
     // Set to non-blocking
     FileUtils::set_flags(sd, O_NONBLOCK);
@@ -88,30 +106,36 @@ bool IOHandlerAccept::handle_incoming_connection() {
 #if defined(__linux__)
     if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
       HT_WARNF("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
-#elif defined(__APPLE__)
+#elif defined(__sun__)
+    if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(one)) < 0)
+      HT_ERRORF("setting TCP_NODELAY: %s", strerror(errno));
+#elif defined(__APPLE__) || defined(__FreeBSD__)
     if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
       HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
     int bufsize = 4*32768;
 
-    if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize))
-        < 0) {
+    if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0)
       HT_WARNF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
-    }
-    if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize))
-        < 0) {
+
+    if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) < 0)
       HT_WARNF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
-    }
 
     DispatchHandlerPtr dhp;
     m_handler_factory_ptr->get_instance(dhp);
 
-    data_handler = new IOHandlerData(sd, addr, dhp);
+    data_handler = new IOHandlerData(sd, addr, dhp, true);
 
     IOHandlerPtr handler(data_handler);
-    m_handler_map_ptr->insert_handler(data_handler);
-    data_handler->start_polling();
+    int32_t error = m_handler_map_ptr->insert_handler(data_handler);
+    if (error != Error::OK) {
+      HT_ERRORF("Problem registering accepted connection in handler map - %s",
+                Error::get_text(error));
+      ::close(sd);
+      return false;
+    }
+    data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
 
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK));
   }

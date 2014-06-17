@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright (C) 2009  Luke Lu (llu@hypertable.org)
 #
@@ -84,23 +84,23 @@ _install_libunwind() {
 }
 
 _install_tcmalloc() {
-  install_libunwind
+  _install_libunwind || return 1
   get http://google-perftools.googlecode.com/files/google-perftools-1.4.tar.gz tcmalloc.tgz
   tar zxf tcmalloc.tgz
   (cd google-perftools-1.4 && ./configure && make && make install)
 }
 
 _install_boost() {
-  get http://sourceforge.net/projects/boost/files/boost/1.39.0/boost_1_39_0.tar.bz2/download boost.tbz2
+  get http://sourceforge.net/projects/boost/files/boost/1.40.0/boost_1_40_0.tar.bz2/download boost.tbz2
   tar jxf boost.tbz2
-  (cd boost_1_39_0 && ./bootstrap.sh --with-libraries=filesystem,iostreams,program_options,system,thread && ./bjam install)
+  (cd boost_1_40_0 && ./bootstrap.sh --with-libraries=filesystem,iostreams,program_options,system,thread && ./bjam install)
 }
 
 _install_bdb() {
-  get http://download.oracle.com/berkeley-db/db-4.7.25.tar.gz bdb.tgz
+  get http://download.oracle.com/berkeley-db/db-4.8.26.tar.gz bdb.tgz
   tar zxf bdb.tgz
-  (cd db-4.7.25/build_unix && ../dist/configure --enable-cxx && make &&
-      make install && echo /usr/local/BerkeleyDB.4.7/lib \
+  (cd db-4.8.26/build_unix && ../dist/configure --enable-cxx && make &&
+      make install && echo /usr/local/BerkeleyDB.4.8/lib \
       > /etc/ld.so.conf.d/bdb.conf)
 }
 
@@ -118,11 +118,15 @@ _install_sigar() {
 }
 
 _install_thrift() {
-  get http://hypertable.org/pub/thrift-r796538.tgz thrift.tgz
+  get http://hypertable.org/pub/thrift-0.2.0-incubating.tar.gz thrift.tgz
   tar zxf thrift.tgz
 
   if [ "$SETUP_DEV_ENV" ]; then
     confargs=
+    # handle ubuntu python packaging
+    pylib=`python -c 'import sys; print sys.path[1]'`
+    [ -d $pylib/dist-packages ] &&
+        ln -sf $pylib/dist-packages $pylib/site-packages
   else
     confargs="--without-py --without-perl --without-ruby"
   fi
@@ -131,31 +135,36 @@ _install_thrift() {
 }
 
 _install_kfs() {
-  svn co http://kosmosfs.svn.sourceforge.net/svnroot/kosmosfs/trunk@364 kfs
-  (cd kfs && mv CMakeLists.txt CMakeLists.txt.orig &&
-      sed -e 's/_VERSIONS "1.37" "1.38")/_VERSIONS "1.37" "1.38" "1.39")/' \
-          -e 's/NOT ${JAVA_INCLUDE_PATH} STREQUAL ""/JAVA_INCLUDE_PATH/' \
-          CMakeLists.txt.orig > CMakeLists.txt &&
+  get http://downloads.sourceforge.net/project/kosmosfs/kosmosfs/kfs-0.4/kfs-0.4.tar.gz kfs.tgz
+  tar zxf kfs.tgz
+  (cd kfs-0.4 && mv CMakeLists.txt CMakeLists.txt.orig && sed \
+      -e 's/"1.37" "1.38")/"1.37" "1.38" "1.39" "1.40")/' \
+      -e 's/NOT ${JAVA_INCLUDE_PATH} STREQUAL ""/JAVA_INCLUDE_PATH/' \
+        CMakeLists.txt.orig > CMakeLists.txt &&
       mkdir -p build && cd build &&
       cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=/opt/kfs .. &&
       make install)
 }
 
-_install_ceph() {
-  get http://ceph.newdream.net/download/ceph-0.14.tar.gz ceph.tgz
+e_install_ceph() {
+  get http://ceph.newdream.net/download/ceph-0.19.tar.gz ceph.tgz
   tar zxf ceph.tgz
-  (cd ceph-0.14 && ./autogen.sh && ./configure && make && make install)
-  # fix permission problems for 0.14
+  (cd ceph-0.19 && ./autogen.sh && ./configure && make && make install)
   chmod 644 /usr/local/include/ceph/*.h
+}
+
+has_command() {
+  type $1 > /dev/null 2>&1
 }
 
 do_install() {
   for i in "$@"; do
-    if type install_$i > /dev/null; then
-      install_$i
-    elif type _install_$i > /dev/null; then
+    if has_command install_$i; then
+      install_$i || exit 1
+    elif has_command _install_$i; then
       installed $i && continue
-      _install_$i && set_installed $i
+      _install_$i || exit 1
+      set_installed $i
     else
       echo "Unknown install target: $i"
     fi
@@ -200,7 +209,8 @@ disable_prelink() {
 
 rpm_setup_repos() {
   disable_prelink
-  yum install -y curl curl-devel || exit 1
+  yum install -y ntpdate curl curl-devel || exit 1
+  ntpdate -b -u pool.ntp.org
 }
 
 install_dev_env_from_src() {
@@ -210,7 +220,7 @@ install_dev_env_from_src() {
   # in a non-standard directory if compiled from source. This is and is
   # required for regression tests to finish properly. The normal usage of
   # binary packages themselves doesn't require selinux to be off.
-  type setenforce 2>/dev/null && setenforce 0
+  has_command setenforce && setenforce 0
   ldconfig
 }
 
@@ -219,8 +229,15 @@ rpm_install_dev_env() {
       libevent-devel readline-devel ncurses-devel bison flex pkgconfig \
       subversion rpm-build xfsprogs-devel openssl-devel
 
-  case `yum info cmake | grep Version:` in
-    Version:*2.6*) yum install -y cmake;;
+  yum install -y log4cpp-devel && set_installed log4cpp
+
+  case `yum info cmake | grep Version` in
+    Version*:*2.6*) yum install -y cmake && set_installed cmake;;
+  esac
+
+  case `yum info boost-devel | grep Version` in
+    Version*:*1.3[5-9]*|Version*:*1.4*)
+        yum install -y boost-devel && set_installed boost;;
   esac
 
   if [ "$SETUP_DEV_ENV" ]; then
@@ -244,7 +261,8 @@ deb_setup_repos() {
       >> /etc/apt/sources.list
 
   apt-get update || exit 1
-  apt-get install -y curl
+  apt-get install -y curl ntpdate
+  ntpdate -b -u pool.ntp.org
 }
 
 deb_install_dev_env() {
@@ -362,7 +380,7 @@ do_ami() {
 }
 
 sanity_check() {
-  type do_$TARGET > /dev/null || { echo "$TARGET not supported"; exit 1; }
+  has_command do_$TARGET || { echo "$TARGET not supported"; exit 1; }
 
   if [ ${#INSTALLS} -eq 0 -a ${#GENERATORS} -eq 0 ]; then
     echo "one or more generators required"

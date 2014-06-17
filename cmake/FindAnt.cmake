@@ -3,7 +3,7 @@
 #  ANT_VERSION version string of ant if found
 #  ANT_FOUND, If false, do not try to use ant
 
-exec_program(ant ARGS -version OUTPUT_VARIABLE ANT_VERSION
+exec_program(env ARGS ant -version OUTPUT_VARIABLE ANT_VERSION
              RETURN_VALUE ANT_RETURN)
 
 if (ANT_RETURN STREQUAL "0")
@@ -17,7 +17,7 @@ else ()
   set(SKIP_JAVA_BUILD TRUE)
 endif ()
 
-exec_program(javac ARGS -version OUTPUT_VARIABLE JAVAC_OUT
+exec_program(env ARGS javac -version OUTPUT_VARIABLE JAVAC_OUT
              RETURN_VALUE JAVAC_RETURN)
 
 if (JAVAC_RETURN STREQUAL "0")

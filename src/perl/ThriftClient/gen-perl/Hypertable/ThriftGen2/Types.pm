@@ -9,17 +9,17 @@ use warnings;
 use Thrift;
 
 package Hypertable::ThriftGen2::HqlResult;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen2::HqlResult->mk_accessors( qw( results cells scanner mutator ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{results} = undef;
-$self->{cells} = undef;
-$self->{scanner} = undef;
-$self->{mutator} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{results} = undef;
+  $self->{cells} = undef;
+  $self->{scanner} = undef;
+  $self->{mutator} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{results}) {
       $self->{results} = $vals->{results};
@@ -34,7 +34,7 @@ $self->{mutator} = undef;
       $self->{mutator} = $vals->{mutator};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -42,8 +42,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -115,35 +114,34 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlResult');
   if (defined $self->{results}) {
     $xfer += $output->writeFieldBegin('results', TType::LIST, 1);
     {
-      $output->writeListBegin(TType::STRING, scalar(@{$self->{results}}));
+      $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{results}}));
       {
         foreach my $iter12 (@{$self->{results}}) 
         {
           $xfer += $output->writeString($iter12);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{cells}) {
     $xfer += $output->writeFieldBegin('cells', TType::LIST, 2);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
         foreach my $iter13 (@{$self->{cells}}) 
         {
           $xfer += ${iter13}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -163,17 +161,17 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlResult2;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen2::HqlResult2->mk_accessors( qw( results cells scanner mutator ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{results} = undef;
-$self->{cells} = undef;
-$self->{scanner} = undef;
-$self->{mutator} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{results} = undef;
+  $self->{cells} = undef;
+  $self->{scanner} = undef;
+  $self->{mutator} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{results}) {
       $self->{results} = $vals->{results};
@@ -188,7 +186,7 @@ $self->{mutator} = undef;
       $self->{mutator} = $vals->{mutator};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -196,8 +194,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -280,44 +277,43 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlResult2');
   if (defined $self->{results}) {
     $xfer += $output->writeFieldBegin('results', TType::LIST, 1);
     {
-      $output->writeListBegin(TType::STRING, scalar(@{$self->{results}}));
+      $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{results}}));
       {
         foreach my $iter32 (@{$self->{results}}) 
         {
           $xfer += $output->writeString($iter32);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{cells}) {
     $xfer += $output->writeFieldBegin('cells', TType::LIST, 2);
     {
-      $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
         foreach my $iter33 (@{$self->{cells}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter33}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter33}}));
             {
               foreach my $iter34 (@{${iter33}}) 
               {
                 $xfer += $output->writeString($iter34);
               }
             }
-            $output->writeListEnd();
+            $xfer += $output->writeListEnd();
           }
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }

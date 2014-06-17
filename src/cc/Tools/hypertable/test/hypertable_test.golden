@@ -5,11 +5,52 @@ For information about Hypertable, visit http://www.hypertable.org/
 Type 'help' for a list of commands, or 'help shell' for a
 list of shell meta commands.
 
+CREATE NAMESPACE "/test";
+USE "/test";
+CREATE TABLE foo('test');
+CREATE NAMESPACE "subtest";
+GET LISTING;
+foo
+subtest	(namespace)
+SHOW TABLES;
+foo
+USE "subtest";
+CREATE TABLE foo('subtest');
+USE "/test/subtest";
+USE "/test/subtest/subsubtest";
+Error: test/subtest/subsubtest - HYPERTABLE namespace does not exist
+SHOW CREATE TABLE foo;
+
+CREATE TABLE foo (
+  subtest,
+  ACCESS GROUP default (subtest)
+)
+
+DROP TABLE foo;
+DROP NAMESPACE "/test";
+Error: MasterClient operation drop_namespace('test', if_exists=false) failed - HYPERSPACE directory not empty
+USE "/test";
+DROP NAMESPACE "subtest";
+RENAME TABLE foo TO foo_renamed;
+GET LISTING;
+foo_renamed
+DROP TABLE foo;
+Error: MasterClient operation drop_table('test/foo', if_exists=false) failed - HYPERTABLE table does not exist
+DROP TABLE foo_renamed;
+DROP NAMESPACE "/test";
+CREATE TABLE foo('test');
+Error: MasterClient operation create_table('test/foo') failed - HYPERTABLE namespace does not exist
+CREATE NAMESPACE "/test";
+USE "/test";
 DROP TABLE IF EXISTS hypertable;
+EXISTS TABLE hypertable;
+false
 CREATE TABLE hypertable (
 apple,
 banana
 );
+EXISTS TABLE hypertable;
+true
 insert into hypertable VALUES ('2007-12-02 08:00:00', 'foo', 'apple:0', 'nothing'), ('2007-12-02 08:00:01', 'foo', 'apple:1', 'nothing'), ('2007-12-02 08:00:02', 'foo', 'apple:2', 'nothing');
 insert into hypertable VALUES ('2007-12-02 08:00:03', 'foo', 'banana:0', 'nothing'), ('2007-12-02 08:00:04', 'foo', 'banana:1', 'nothing'), ('2007-12-02 08:00:05', 'bar', 'banana:2', 'nothing');
 select * from hypertable display_timestamps;
@@ -38,23 +79,23 @@ insert into hypertable VALUES ('2007-12-02 08:00:00', 'lowrey', 'apple:0', 'noth
 insert into hypertable VALUES ('2028-02-17 08:00:01', 'lowrey', 'apple:0', 'nothing');
 insert into hypertable VALUES ('2028-02-17 08:00:00', 'season', 'apple:1', 'nothing');
 drop table if exists Pages;
-create table Pages ("refer-url", "http-code", timestamp, rowkey, ACCESS GROUP default ("refer-url", "http-code"), ACCESS GROUP misc (timestamp, rowkey));
-insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern", 'http-code', '200');
-select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
-2008-01-28 22:00:03.000000000	calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern	http-code	200
+create table Pages ("refer_url", "http_code", timestamp, rowkey, ACCESS GROUP default ("refer_url", "http_code"), ACCESS GROUP misc (timestamp, rowkey));
+insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern", 'http_code', '200');
+select http_code from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
+2008-01-28 22:00:03.000000000	calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern	http_code	200
 delete * from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" TIMESTAMP '2008-01-28 22:00:10';
-select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
-select * from Pages where CELL = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern","http-code" display_timestamps;
+select http_code from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
+select * from Pages where CELL = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern","http_code" display_timestamps;
 DROP TABLE IF EXISTS Pages_clone;
 CREATE TABLE Pages_clone LIKE Pages;
 SHOW CREATE TABLE Pages_clone;
 
-CREATE TABLE Pages_clone (
-  'refer-url',
-  'http-code',
+CREATE TABLE 'Pages_clone' (
+  'refer_url',
+  'http_code',
   timestamp,
   rowkey,
-  ACCESS GROUP default ('refer-url', 'http-code'),
+  ACCESS GROUP default ('refer_url', 'http_code'),
   ACCESS GROUP misc (timestamp, rowkey)
 )
 
@@ -70,12 +111,55 @@ INSERT INTO hypertable VALUES ('2008-06-28 01:00:03', 'k1', 'a', 'a22');
 SELECT * FROM hypertable WHERE ROW = 'k1' AND TIMESTAMP < '2008-06-28 01:00:01' DISPLAY_TIMESTAMPS;
 2008-06-28 01:00:00.000000000	k1	a	a11
 2008-06-28 01:00:00.000000000	k1	b	b11
+SELECT * FROM hypertable CELL_LIMIT=1 LIMIT=1;
+k1	a	a22
+k1	b	b11
+SELECT * FROM hypertable CELL_LIMIT=1 REVS=2;
+k1	a	a22
+k1	b	b11
+k2	a	a21
+k2	b	b22
+SELECT * FROM hypertable CELL_LIMIT=2 REVS=2;
+k1	a	a22
+k1	a	a11
+k1	b	b11
+k2	a	a21
+k2	b	b22
+k2	b	b21
+SELECT * FROM hypertable CELL_LIMIT=1;
+k1	a	a22
+k1	b	b11
+k2	a	a21
+k2	b	b22
+SELECT * FROM hypertable LIMIT=1 REVS=2;
+k1	a	a22
+k1	a	a11
+k1	b	b11
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( TestColumnFamily );
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_test.tsv" INTO TABLE hypertable;
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey IGNORE_UNKNOWN_CFS "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
 SELECT * FROM hypertable;
 key1	TestColumnFamily	tcf1
 key2	TestColumnFamily	tcf2
+key3	TestColumnFamily	tcf3
+key4	TestColumnFamily	tcf4
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
+ERROR hypertable : caught std::exception: Bad column family 'Unknown'
+Error: line number 2 - HQL bad load file format
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable ( TestColumnFamily );
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_ts.tsv" INTO TABLE hypertable;
+SELECT * from hypertable WHERE TIMESTAMP > '2009-02-12 02:12:12.100000000' DISPLAY_TIMESTAMPS;
+2009-02-12 02:12:13.000000001	192.168.14.2	TestColumnFamily	testvalue_2
+2009-02-12 02:12:14.000000000	192.168.14.3	TestColumnFamily	testvalue_3
+SELECT * from hypertable WHERE TIMESTAMP < '2009-02-12 02:12:13:4' DISPLAY_TIMESTAMPS;
+2009-02-12 02:12:12.100000000	192.168.14.1	TestColumnFamily	testvalue_1
+2009-02-12 02:12:13.000000001	192.168.14.2	TestColumnFamily	testvalue_2
+SELECT * from hypertable WHERE TIMESTAMP <= '2009-02-12 02:12:15' DISPLAY_TIMESTAMPS;
+2009-02-12 02:12:12.100000000	192.168.14.1	TestColumnFamily	testvalue_1
+2009-02-12 02:12:13.000000001	192.168.14.2	TestColumnFamily	testvalue_2
+2009-02-12 02:12:14.000000000	192.168.14.3	TestColumnFamily	testvalue_3
 DROP TABLE IF EXISTS test;
 CREATE TABLE test ( e, d );
 INSERT INTO test VALUES("k1", "e", "x");
@@ -101,7 +185,7 @@ INSERT INTO test VALUES('2008-07-28 00:00:10', "fz", "b", "n");
 INSERT INTO test VALUES('2008-07-28 00:00:11', "g", "b", "n");
 INSERT INTO test VALUES('2008-07-28 00:00:12', "gz", "b", "n");
 SELECT * FROM test WHERE ('z' < ROW < 'a');
-Error: start_row > end_row - HYPERTABLE bad scan specification
+Error: start_row (z) > end_row (a) - HYPERTABLE bad scan specification
 DELETE c FROM test WHERE ROW = "k1";
 SELECT * FROM test WHERE TIMESTAMP < '2008-06-30 00:00:04';
 k1	b	x
@@ -181,6 +265,8 @@ a	b	n
 az	b	n
 b	b	n
 bz	b	n
+SELECT * FROM test WHERE (ROW =^'a' or 'd' < ROW < 'b' or ROW =^ 'b');
+Error: start_row (d) > end_row (b) - HYPERTABLE bad scan specification
 DROP TABLE IF EXISTS test;
 CREATE TABLE test ( tag );
 INSERT INTO test VALUES("how", "tag:A", "n");
@@ -562,17 +648,34 @@ ALTER TABLE Fruits ADD(
 );
 Error: Column family 'Red' multiply defined - HYPERTABLE bad schema
 
+ALTER TABLE Fruits RENAME COLUMN FAMILY ('Orange', 'Pink') RENAME COLUMN FAMILY ('refer-url', 'referral');
+insert into Fruits values('www.cnn.com', 'Orange', 'Kumquat');
+ERROR hypertable : caught std::exception: Bad column family 'Orange'
+Error: Bad column family 'Orange' - HYPERTABLE bad key
+insert into Fruits values('www.cnn.com', 'Pink', 'Grapefruit');
+select * from Fruits;
+www.cnn.com	Pink	Grapefruit
+www.google.com	referral	www.yahoo.com
+www.google.com	Green	Lime
+www.yahoo.com	Yellow	Banana
+www.yahoo.com	Pink	Clementine
+ALTER TABLE Fruits RENAME COLUMN FAMILY ('Orange', 'Blue');
+Error: Column family 'Orange' not defined - HYPERTABLE bad schema
+ALTER TABLE Fruits RENAME COLUMN FAMILY ('Pink', 'Green');
+Error: Column family 'Green' multiply defined - HYPERTABLE bad schema
+
 alter table Fruits add ('7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '100', '101', '102', '103', '104', '105', '106', '107', '108', '109', '110', '111', '112', '113', '114', '115', '116', '117', '118', '119', '120', '121', '122', '123', '124', '125', '126', '127', '128', '129', '130', '131', '132', '133', '134', '135', '136', '137', '138', '139', '140', '141', '142', '143', '144', '145', '146', '147', '148', '149', '150', '151', '152', '153', '154', '155', '156', '157', '158', '159', '160', '161', '162', '163', '164', '165', '166', '167', '168', '169', '170', '171', '172', '173', '174', '175', '176', '177', '178', '179', '180', '181', '182', '183', '184', '185', '186', '187', '188', '189', '190', '191', '192', '193', '194', '195', '196', '197', '198', '199', '200', '201', '202', '203', '204', '205', '206', '207', '208', '209', '210', '211', '212', '213', '214', '215', '216', '217', '218', '219', '220', '221', '222', '223', '224', '225', '226', '227', '228', '229', '230', '231', '232', '233', '234', '235', '236', '237', '238', '239', '240', '241', '242', '243', '244', '245', '246', '247', '248', '249', '250', '251', '252', '253', '254', '255') ;
 
 alter table Fruits drop ('7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '100', '101', '102', '103', '104', '105', '106', '107', '108', '109', '110', '111', '112', '113', '114', '115', '116', '117', '118', '119', '120', '121', '122', '123', '124', '125', '126', '127', '128', '129', '130', '131', '132', '133', '134', '135', '136', '137', '138', '139', '140', '141', '142', '143', '144', '145', '146', '147', '148', '149', '150', '151', '152', '153', '154', '155', '156', '157', '158', '159', '160', '161', '162', '163', '164', '165', '166', '167', '168', '169', '170', '171', '172', '173', '174', '175', '176', '177', '178', '179', '180', '181', '182', '183', '184', '185', '186', '187', '188', '189', '190', '191', '192', '193', '194', '195', '196', '197', '198', '199', '200', '201', '202', '203', '204', '205', '206', '207', '208', '209', '210', '211', '212', '213', '214', '215', '216', '217', '218', '219', '220', '221', '222', '223', '224', '225', '226', '227', '228', '229', '230', '231', '232', '233', '234', '235', '236', '237', '238', '239', '240', '241', '242', '243', '244', '245', '246', '247', '248', '249', '250', '251', '252', '253', '254', '255') ;
 alter table Fruits add('256');
 Error: Attempting to add > 255 column families to table - HYPERTABLE too many columns
 DESCRIBE TABLE WITH IDS Fruits;
-<Schema generation="5">
+<Schema generation="6">
   <AccessGroup name="ag1">
     <ColumnFamily id="1">
       <Generation>1</Generation>
-      <Name>refer-url</Name>
+      <Name>referral</Name>
+      <Counter>false</Counter>
       <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
@@ -580,6 +683,7 @@ DESCRIBE TABLE WITH IDS Fruits;
     <ColumnFamily id="2">
       <Generation>1</Generation>
       <Name>http-code</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
   </AccessGroup>
@@ -587,1258 +691,1509 @@ DESCRIBE TABLE WITH IDS Fruits;
     <ColumnFamily id="3">
       <Generation>2</Generation>
       <Name>Red</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="default">
     <ColumnFamily id="6">
       <Generation>3</Generation>
-      <Name>Orange</Name>
+      <Name>Pink</Name>
+      <Counter>false</Counter>
       <deleted>false</deleted>
     </ColumnFamily>
     <ColumnFamily id="7">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>7</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="8">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>8</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="9">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>9</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="10">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>10</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="11">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>11</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="12">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>12</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="13">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>13</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="14">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>14</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="15">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>15</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="16">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>16</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="17">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>17</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="18">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>18</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="19">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>19</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="20">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>20</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="21">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>21</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="22">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>22</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="23">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>23</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="24">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>24</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="25">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>25</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="26">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>26</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="27">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>27</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="28">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>28</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="29">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>29</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="30">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>30</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="31">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>31</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="32">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>32</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="33">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>33</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="34">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>34</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="35">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>35</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="36">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>36</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="37">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>37</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="38">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>38</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="39">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>39</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="40">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>40</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="41">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>41</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="42">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>42</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="43">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>43</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="44">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>44</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="45">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>45</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="46">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>46</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="47">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>47</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="48">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>48</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="49">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>49</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="50">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>50</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="51">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>51</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="52">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>52</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="53">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>53</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="54">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>54</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="55">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>55</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="56">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>56</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="57">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>57</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="58">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>58</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="59">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>59</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="60">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>60</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="61">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>61</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="62">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>62</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="63">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>63</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="64">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>64</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="65">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>65</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="66">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>66</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="67">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>67</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="68">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>68</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="69">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>69</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="70">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>70</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="71">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>71</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="72">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>72</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="73">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>73</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="74">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>74</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="75">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>75</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="76">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>76</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="77">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>77</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="78">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>78</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="79">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>79</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="80">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>80</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="81">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>81</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="82">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>82</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="83">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>83</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="84">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>84</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="85">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>85</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="86">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>86</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="87">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>87</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="88">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>88</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="89">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>89</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="90">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>90</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="91">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>91</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="92">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>92</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="93">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>93</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="94">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>94</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="95">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>95</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="96">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>96</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="97">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>97</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="98">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>98</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="99">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>99</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="100">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>100</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="101">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>101</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="102">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>102</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="103">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>103</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="104">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>104</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="105">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>105</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="106">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>106</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="107">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>107</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="108">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>108</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="109">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>109</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="110">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>110</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="111">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>111</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="112">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>112</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="113">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>113</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="114">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>114</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="115">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>115</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="116">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>116</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="117">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>117</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="118">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>118</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="119">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>119</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="120">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>120</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="121">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>121</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="122">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>122</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="123">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>123</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="124">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>124</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="125">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>125</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="126">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>126</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="127">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>127</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="128">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>128</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="129">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>129</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="130">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>130</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="131">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>131</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="132">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>132</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="133">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>133</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="134">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>134</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="135">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>135</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="136">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>136</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="137">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>137</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="138">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>138</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="139">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>139</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="140">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>140</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="141">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>141</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="142">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>142</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="143">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>143</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="144">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>144</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="145">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>145</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="146">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>146</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="147">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>147</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="148">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>148</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="149">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>149</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="150">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>150</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="151">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>151</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="152">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>152</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="153">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>153</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="154">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>154</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="155">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>155</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="156">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>156</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="157">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>157</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="158">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>158</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="159">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>159</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="160">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>160</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="161">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>161</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="162">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>162</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="163">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>163</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="164">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>164</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="165">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>165</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="166">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>166</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="167">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>167</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="168">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>168</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="169">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>169</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="170">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>170</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="171">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>171</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="172">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>172</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="173">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>173</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="174">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>174</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="175">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>175</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="176">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>176</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="177">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>177</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="178">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>178</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="179">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>179</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="180">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>180</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="181">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>181</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="182">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>182</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="183">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>183</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="184">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>184</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="185">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>185</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="186">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>186</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="187">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>187</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="188">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>188</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="189">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>189</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="190">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>190</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="191">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>191</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="192">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>192</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="193">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>193</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="194">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>194</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="195">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>195</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="196">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>196</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="197">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>197</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="198">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>198</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="199">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>199</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="200">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>200</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="201">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>201</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="202">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>202</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="203">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>203</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="204">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>204</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="205">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>205</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="206">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>206</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="207">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>207</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="208">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>208</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="209">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>209</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="210">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>210</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="211">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>211</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="212">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>212</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="213">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>213</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="214">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>214</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="215">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>215</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="216">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>216</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="217">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>217</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="218">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>218</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="219">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>219</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="220">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>220</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="221">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>221</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="222">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>222</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="223">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>223</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="224">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>224</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="225">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>225</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="226">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>226</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="227">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>227</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="228">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>228</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="229">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>229</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="230">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>230</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="231">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>231</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="232">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>232</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="233">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>233</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="234">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>234</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="235">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>235</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="236">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>236</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="237">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>237</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="238">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>238</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="239">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>239</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="240">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>240</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="241">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>241</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="242">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>242</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="243">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>243</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="244">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>244</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="245">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>245</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="246">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>246</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="247">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>247</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="248">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>248</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="249">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>249</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="250">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>250</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="251">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>251</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="252">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>252</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="253">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>253</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="254">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>254</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
     <ColumnFamily id="255">
-      <Generation>4</Generation>
+      <Generation>5</Generation>
       <Name>255</Name>
+      <Counter>false</Counter>
       <deleted>true</deleted>
     </ColumnFamily>
   </AccessGroup>
@@ -1846,11 +2201,13 @@ DESCRIBE TABLE WITH IDS Fruits;
     <ColumnFamily id="4">
       <Generation>3</Generation>
       <Name>Green</Name>
+      <Counter>false</Counter>
       <deleted>false</deleted>
     </ColumnFamily>
     <ColumnFamily id="5">
       <Generation>3</Generation>
       <Name>Yellow</Name>
+      <Counter>false</Counter>
       <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
@@ -1867,7 +2224,7 @@ ACCESS GROUP bar_group ( bar )
 
 show create table render_bug;
 
-CREATE TABLE render_bug (
+CREATE TABLE 'render_bug' (
   foo,
   bar,
   ACCESS GROUP 'foo_group' (foo),
@@ -1889,12 +2246,12 @@ insert into Fruits values("www.google.com", "http-code", "200");
 SELECT * FROM Fruits INTO FILE 'hypertable_select_gz_test.output.gz';
 
 DROP table if exists Fruits;
-CREATE TABLE IN_MEMORY BLOCKSIZE=10000 TTL=1 WEEK MAX_VERSIONS=3 Fruits (
+CREATE TABLE Fruits (
 apple TTL=2 DAYS,
 banana MAX_VERSIONS=2,
 carrot,
 ACCESS GROUP foo BLOCKSIZE=20000 ( banana )
-);
+) IN_MEMORY BLOCKSIZE=10000 TTL=1 WEEK MAX_VERSIONS=3;
 SHOW CREATE TABLE Fruits;
 
 CREATE TABLE Fruits (
@@ -1906,3 +2263,358 @@ CREATE TABLE Fruits (
 )
 
 
+DROP TABLE IF EXISTS test;
+CREATE TABLE test ( foo, bar );
+LOAD DATA INFILE DUP_KEY_COLS "foobar.tsv" INTO TABLE test;
+LOAD DATA INFILE SINGLE_CELL_FORMAT "single_cell_test.tsv" INTO TABLE test;
+SELECT * from test;
+#rowkey1	foo	hello
+#rowkey2	bar	world
+Bonnie	foo	Bonnie
+Bonnie	bar	Clyde
+Ferrante	foo	Ferrante
+Ferrante	bar	Teicher
+Laural	foo	Laural
+Laural	bar	Hardy
+create table "foo-bar" ( a ) ;
+insert into "foo-bar" values ("1965-02-23 07:00:00", "hello", "a", "wow");
+select * from "foo-bar" display_timestamps;
+1965-02-23 07:00:00.000000000	hello	a	wow
+drop table "foo-bar";
+#issue 175
+DROP TABLE IF EXISTS test;
+CREATE TABLE test ('col');
+INSERT INTO test VALUES('1234','col','300');
+SELECT * FROM test;
+1234	col	300
+DROP TABLE IF EXISTS test;
+#replication factor
+CREATE TABLE reptest1 ( a, b ) REPLICATION=2;
+CREATE TABLE reptest2 (
+a,
+b,
+c,
+ACCESS GROUP ag1 REPLICATION=2 ( a ),
+ACCESS GROUP ag2 REPLICATION=7 ( b )
+) REPLICATION=5;
+DESCRIBE TABLE reptest1;
+<Schema>
+  <AccessGroup name="default" replication="2">
+    <ColumnFamily>
+      <Name>a</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>b</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+
+SHOW CREATE TABLE reptest1;
+
+CREATE TABLE reptest1 (
+  a,
+  b,
+  ACCESS GROUP default REPLICATION=2 (a, b)
+)
+
+DESCRIBE TABLE reptest2;
+<Schema>
+  <AccessGroup name="ag1" replication="2">
+    <ColumnFamily>
+      <Name>a</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="ag2" replication="7">
+    <ColumnFamily>
+      <Name>b</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="default" replication="5">
+    <ColumnFamily>
+      <Name>c</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+
+SHOW CREATE TABLE reptest2;
+
+CREATE TABLE reptest2 (
+  a,
+  b,
+  c,
+  ACCESS GROUP ag1 REPLICATION=2 (a),
+  ACCESS GROUP ag2 REPLICATION=7 (b),
+  ACCESS GROUP default REPLICATION=5 (c)
+)
+
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable ( col1, col2 );
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Russell', 'col1', 'first');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Russell', 'col1', 'second');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Russell', 'col2', 'third');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col1:foo', 'first');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col1:foo', 'second');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col2:foo', 'third');
+SELECT * FROM hypertable DISPLAY_TIMESTAMPS;
+2010-04-12 10:19:32.000000000	Russell	col1	second
+2010-04-12 10:19:32.000000000	Russell	col2	third
+2010-04-12 10:19:32.000000000	Stover	col1:foo	second
+2010-04-12 10:19:32.000000000	Stover	col2:foo	third
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable ( 'media:image' );
+Error: Invalid column family name 'media:image', ':' character not allowed - HYPERTABLE HQL parse error
+DROP TABLE IF EXISTS CounterTest;
+CREATE TABLE CounterTest(cf1 COUNTER,
+cf2,
+cf3,
+cf4 COUNTER,
+ACCESS GROUP ag1(cf1, cf2),
+ACCESS GROUP ag2(cf3, cf4));
+SHOW CREATE TABLE CounterTest;
+
+CREATE TABLE CounterTest (
+  cf1 COUNTER,
+  cf2,
+  cf3,
+  cf4 COUNTER,
+  ACCESS GROUP ag1 (cf1, cf2),
+  ACCESS GROUP ag2 (cf3, cf4)
+)
+
+DESCRIBE TABLE CounterTest;
+<Schema>
+  <AccessGroup name="ag1">
+    <ColumnFamily>
+      <Name>cf1</Name>
+      <Counter>true</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>cf2</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="ag2">
+    <ColumnFamily>
+      <Name>cf3</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>cf4</Name>
+      <Counter>true</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq1', '0');
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq1', '3');
+SELECT * from CounterTest;
+row0	cf1:cq1	3
+DELETE * FROM CounterTest where ROW = "row0";
+DELETE 'cf1' FROM CounterTest where ROW = "row1";
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq1', '2');
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq1', '29');
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq2', '5');
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq2', '2');
+INSERT INTO CounterTest VALUES ('row0', 'cf3:cq1', 'Hello');
+INSERT INTO CounterTest VALUES ('row0', 'cf3:cq1', 'World');
+INSERT INTO CounterTest VALUES ('row0', 'cf4:cq1', '6');
+INSERT INTO CounterTest VALUES ('row0', 'cf4:cq1', '5');
+INSERT INTO CounterTest VALUES ('row1', 'cf1', '13');
+INSERT INTO CounterTest VALUES ('row1', 'cf2:cq1', 'Foo1');
+INSERT INTO CounterTest VALUES ('row1', 'cf1', '3');
+INSERT INTO CounterTest VALUES ('row1', 'cf1', '1');
+DELETE 'cf1:cq1' FROM CounterTest WHERE ROW = 'row0';
+DELETE 'cf4' FROM CounterTest WHERE ROW = 'row0';
+INSERT INTO CounterTest VALUES ('row0', 'cf4:cq1', '2');
+INSERT INTO CounterTest VALUES ('row0', 'cf4:cq1', '4');
+SELECT * from CounterTest WHERE "row0","cf1:cq1" <= CELL <= "row1","cf1:cq1" RETURN_DELETES;
+row0		DELETE ROW
+row0		DELETE ROW
+row0	cf1:cq1		DELETE CELL
+row0	cf1:cq2	7
+row0	cf3:cq1	World
+row0	cf3:cq1	Hello
+row0	cf4		DELETE COLUMN FAMILY
+row0	cf4:cq1	6
+row1	cf1		DELETE COLUMN FAMILY
+row1	cf1	17
+INSERT INTO CounterTest VALUES ('row2', 'cf2', 'Foo2');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '6');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '7');
+SELECT * from CounterTest WHERE ROW >= 'row1';
+row1	cf1	17
+row1	cf1:cq1	13
+row1	cf2:cq1	Foo1
+row2	cf2	Foo2
+SELECT * from CounterTest WHERE CELL > 'row0','cf1:cq2' LIMIT=2 CELL_LIMIT=1 MAX_VERSIONS=2;
+row0	cf3:cq1	World
+row0	cf4:cq1	6
+row1	cf1	17
+row1	cf2:cq1	Foo1
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '=3');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '+2');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '7');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '-2');
+SELECT * from CounterTest WHERE ROW = 'row1';
+row1	cf1	17
+row1	cf1:cq1	10
+row1	cf2:cq1	Foo1
+CREATE TABLE CounterTest2(cf1, cf2, cf3,
+ACCESS GROUP ag1 COUNTER (cf1, cf2));
+INSERT INTO CounterTest2 VALUES ('row1', 'cf1:cq1', '=3');
+INSERT INTO CounterTest2 VALUES ('row1', 'cf1:cq1', '+2');
+INSERT INTO CounterTest2 VALUES ('row1', 'cf1:cq1', '7');
+INSERT INTO CounterTest2 VALUES ('row1', 'cf1:cq1', '-2');
+SELECT * from CounterTest2 WHERE ROW = 'row1';
+row1	cf1:cq1	10
+SHOW CREATE TABLE CounterTest2;
+
+CREATE TABLE CounterTest2 (
+  cf1 COUNTER,
+  cf2 COUNTER,
+  cf3,
+  ACCESS GROUP ag1 COUNTER (cf1, cf2),
+  ACCESS GROUP default (cf3)
+)
+
+DROP NAMESPACE IF EXISTS badns;
+
+# test regexp filtering
+DROP TABLE IF EXISTS RegexpTest;
+CREATE TABLE RegexpTest('col1', 'col2');
+INSERT INTO RegexpTest VALUES('suitability', 'col1', 'centrist');
+INSERT INTO RegexpTest VALUES('http://yahoo.com', 'col2:bird', 'pheasant');
+INSERT INTO RegexpTest VALUES('http://yahoo.com', 'col2:mailto', 'bodhi2sattva17');
+INSERT INTO RegexpTest VALUES('http://www.dmv.ca.gov', 'col1:fish', 'salmon tuna');
+INSERT INTO RegexpTest VALUES('moss berry', 'col1:word', 'panini');
+INSERT INTO RegexpTest VALUES('martingale_123', 'col2:ergodic1', 'Consignificative65Era');
+INSERT INTO RegexpTest VALUES('moss berry', 'col1:w1234', 'giants');
+INSERT INTO RegexpTest VALUES('orange marmalade', 'col1:w1234', 'clone');
+SELECT * from RegexpTest WHERE ROW REGEXP "^[sm]\D+$";
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+suitability	col1	centrist
+SELECT col2:bird from RegexpTest WHERE ROW REGEXP "http://.*";
+http://yahoo.com	col2:bird	pheasant
+SELECT col2:"bird" from RegexpTest WHERE ROW REGEXP "http://.*";
+http://yahoo.com	col2:bird	pheasant
+SELECT col2:"bird",col2:/mail/ from RegexpTest WHERE ROW REGEXP "http://.*";
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
+moss berry	col1:w1234	giants
+SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "^\D+" AND VALUE REGEXP "l.*e";
+orange marmalade	col1:w1234	clone
+SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a";
+http://yahoo.com	col2:mailto	bodhi2sattva17
+martingale_123	col2:ergodic1	Consignificative65Era
+moss berry	col1:w1234	giants
+
+# test empty qualifier filtering
+INSERT INTO RegexpTest VALUES('http://yahoo.com', 'col2', 'swiss');
+SELECT col1, col2 from RegexpTest;
+http://www.dmv.ca.gov	col1:fish	salmon tuna
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+martingale_123	col2:ergodic1	Consignificative65Era
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT col1:"", col2:"" from RegexpTest;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT CELLS col1:"", col2:"" from RegexpTest;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT col1:"" from RegexpTest WHERE ROW = 'suitability';
+suitability	col1	centrist
+SELECT CELLS col1:"" from RegexpTest WHERE ROW = 'suitability';
+suitability	col1	centrist
+SELECT col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';
+http://yahoo.com	col2	swiss
+SELECT CELLS col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';
+http://yahoo.com	col2	swiss
+
+# test scan and filter rows
+SELECT col1, col2 from RegexpTest SCAN_AND_FILTER_ROWS;
+http://www.dmv.ca.gov	col1:fish	salmon tuna
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+martingale_123	col2:ergodic1	Consignificative65Era
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT col1:"", col2:"" from RegexpTest SCAN_AND_FILTER_ROWS;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT CELLS col1:"", col2:"" from RegexpTest SCAN_AND_FILTER_ROWS;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT col1:"" from RegexpTest WHERE ROW = 'suitability' SCAN_AND_FILTER_ROWS;
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry') SCAN_AND_FILTER_ROWS;
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade') SCAN_AND_FILTER_ROWS;
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com' OR ROW = 'http://www.dmv.ca.gov' OR ROW = 'martingale_123') SCAN_AND_FILTER_ROWS;
+http://www.dmv.ca.gov	col1:fish	salmon tuna
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+martingale_123	col2:ergodic1	Consignificative65Era
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE ROW REGEXP "http://.*" AND (ROW = 'http://www.dmv.ca.gov' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+http://www.dmv.ca.gov	col1:fish	salmon tuna
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+SELECT CELLS * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade') AND VALUE REGEXP "^c.*" SCAN_AND_FILTER_ROWS;
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+moss berry	col1:w1234	giants
+orange marmalade	col1:w1234	clone
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'Suitability' OR ROW = 'moss berry' OR ROW = 'moss abc') SCAN_AND_FILTER_ROWS;
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+suitability	col1	centrist
+SELECT col1:"", col2:"" from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT CELLS col1:"" from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'Suitability' OR ROW = 'suitability') SCAN_AND_FILTER_ROWS;
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'Suitability' OR ROW = 'moss Berry' OR ROW = 'Orange marmalade' OR ROW = 'http://yahoo.com/mail') SCAN_AND_FILTER_ROWS;

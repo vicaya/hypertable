@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_RANGELOCATIONINFO_H
 #define HYPERTABLE_RANGELOCATIONINFO_H
 
+#include "AsyncComm/CommAddress.h"
 #include "Types.h"
 
 namespace Hypertable {
@@ -31,7 +32,7 @@ class RangeLocationInfo {
  public:
   String start_row;
   String end_row;
-  String location;
+  CommAddress addr;
 };
 
 } // namespace Hypertable

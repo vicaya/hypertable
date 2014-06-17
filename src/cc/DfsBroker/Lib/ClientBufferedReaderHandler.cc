@@ -71,7 +71,7 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(
         m_eof = true;
         throw;
       }
-      m_outstanding_offset -= toread;
+      m_outstanding_offset += toread;
     }
     m_ptr = m_end_ptr = 0;
   }
@@ -229,7 +229,7 @@ void ClientBufferedReaderHandler::read_ahead() {
       throw;
     }
     m_outstanding++;
-    m_outstanding_offset -= toread;
+    m_outstanding_offset += toread;
   }
 }
 

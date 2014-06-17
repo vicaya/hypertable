@@ -82,6 +82,7 @@ typedef Meta::list<AppPolicy, DefaultCommPolicy> Policies;
 
 int main(int argc, char **argv) {
   ClientPtr hypertable_client_ptr;
+  NamespacePtr namespace_ptr;
   TablePtr table_ptr;
   TableMutatorPtr mutator_ptr;
   KeySpec key;
@@ -127,7 +128,8 @@ int main(int argc, char **argv) {
       else
         hypertable_client_ptr = new Hypertable::Client();
 
-      table_ptr = hypertable_client_ptr->open_table("RandomTest");
+      namespace_ptr = hypertable_client_ptr->open_namespace("/");
+      table_ptr = namespace_ptr->open_table("RandomTest");
       mutator_ptr = table_ptr->create_mutator(0, mutator_flags);
     }
     catch (Hypertable::Exception &e) {

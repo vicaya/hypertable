@@ -1,0 +1,504 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+#navigator_line {
+    font-size: 10px;
+    padding-top: 3px;
+    margin-bottom: 15px;
+}
+#title {
+    float: left;
+}
+
+#upper_right {
+    float: right;
+    font-weight: bold;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    font-size:medium;
+    color: #555;
+}
+
+body a{
+    text-decoration:none;
+    color: #1d3688;
+}
+
+body a:hover{
+    text-decoration:underline;
+}
+
+body{
+    min-width:960px;
+    background-color:#fff;
+    font-family: verdana, sans-serif;
+    font-size: small;
+    margin-left: 2%;
+    margin-right: 2%;
+}
+
+h1 {
+   color: #4f6b72;
+}
+
+h2 {
+    margin-top: 10px;
+    margin-bottom: 5px;
+
+}
+
+h3 {
+    margin-bottom: 5px;
+    font-size: medium;
+    font-weight: bold;
+}
+
+h4 {
+    margin-bottom: 5px;
+    font-size: small;
+    font-weight: bold;
+}
+
+   #menu{                         /* menu list container */
+        list-style-type: none;      /* disable the display of the list item bullets */
+        margin: 0;                /* space around the list container */
+        padding: 0;               /* space within the list container */
+        position: static;           /* need this so that the z-index stuff works correctly */
+        color: #555;                /* the default font color (not links) within the main menu container */
+        z-index: 20;                /* push the menu up in the layer order a bit so it isn't hidden behind anything */
+    }
+
+    #menu > li{                      /* top-level menu element */
+        list-style-type: none;      /* disable the display of the list item bullets */
+        float: left;                /* this is to allow for the horizontal main menu */
+        /*background-color: #eee; */    /* main menu item background color */
+        color: #555;                /* main menu item font color (not links) */
+        margin: 0;                /* spacing between main menu items */
+        padding: 0;               /* padding within main menu items */
+        width: 119px;               /* the width of each main menu item */
+        display: block;
+        border-right: 1px solid #ccc;
+        /*height:20px;*/
+        height: 1.6em;
+    }
+
+    #menu li ul li {
+   /*     border-bottom: 1px solid #ccc;*/
+    }
+
+    #menu ul {                     /* third-level (or greater) menu element list elements */
+        position: relative;         /* this is so that it doesn't push that page content around on hover */
+        margin: 0;                /* space around the list container */
+        padding: 0;               /* space within the list container */
+        list-style-type: none;      /* disable the display of the list item bullets */
+        display: none;
+        width: 119px;
+        top: 0;
+        left: -1px;
+        background-color: #eee;     /* sub-menu default background color */
+        background-image: none;
+        z-index: 99;                /* want to be sure this is above the rest of the menu */
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+    }
+
+    #menu ul li{                   /* second-level or greater menu element links */
+        background-color: #eee;     /* default background color for sub-menu container */
+        color: #555;                /* default font color (not links) for sub-menu container */
+        border: none;               /* sub-menu item border settings */
+        margin: 0;                /* spacing between sub-menu containers */
+    }
+
+    #menu li a{                    /* top-level menu element links */
+        text-align: left;         /* text alignment in main menu item links */
+        /*width: 112px;*/
+        width: 99px;
+        display: block;
+        color: #555;
+        font-size: 12px;
+        padding: 3px 10px 2px 10px;
+        margin: 0;
+    }
+
+
+    #menu > li > a {                   /* all the other level menu link elements */
+        height: 1.3em; /* was 16*/
+    }
+
+    #menu a:hover,                 /* top-level hovering properties */
+    #menu li:hover{
+        display: block;
+        background-color: #ddd;
+    }
+
+    /*not in use*/
+    #menu ul ul{                   /* higher-level list containers */
+        display: none;              /* don't display by default */
+        position: absolute;
+        /*margin-left: 122px;   */      /* this should be the width of #dmenu ul li */
+        margin-top: -2em;           /* this will push the sub-menu up to the level of it's parent */
+    }
+
+    /* only non-MSIE browsers use this */
+    #menu ul li>ul,
+    #menu ul ul li>ul{
+        margin-top: -2em;           /* should be set to the same as #dmenu ul ul margin-top */
+    }
+
+
+    /* additional sub-menu levels in the next 2 blocks. (For up to 5 levels of drop menus) */
+    #menu li:hover ul ul,
+    #menu li:hover ul ul ul,
+    #menu li:hover ul ul ul ul,
+    #menu li:hover ul ul ul ul ul{
+        display:none;
+    }
+
+    #menu li:hover ul,
+    #menu ul li:hover ul,
+    #menu ul ul li:hover ul,
+    #menu ul ul ul li:hover ul,
+    #menu ul ul ul ul li:hover ul{
+        display:block;
+    }
+
+    li>ul {
+        top: auto;
+        left: auto;
+    }
+
+
+
+/*END NEW NAVIGATION*/
+
+#head {
+    min-width: 960px;
+    background-image: url(/images/bg1.png);
+    border-right: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+}
+
+#head_middle {
+    background: #fbfbfb;
+    min-width: 940px;
+    padding-right: 9px;
+    padding-left: 9px;
+}
+
+
+#main {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#main p {
+    padding-bottom: 10px;
+}
+
+#top_menu {
+    min-width: 940px;
+    position: relative;
+    font-size: 12px;
+
+    padding-top: 3px;
+    padding-bottom: 2px;
+    padding-left: 10px;
+    padding-right: 10px;
+    background-image: url(/images/bg1.png);
+    height: 1.3em;
+}
+
+#navigator_line2 {
+    min-width: 940px;
+    position: relative;
+    font-size: 12px;
+
+    padding-top: 3px;
+    padding-bottom: 2px;
+    padding-left: 10px;
+    padding-right: 10px;
+    background-image: url(/images/bg1.png);
+    height: 1.3em;
+}
+
+#navigator_line2_menu{
+    position: absolute;
+    left: 0;
+    padding-left: 10px;
+}
+
+#navigator_line2_update{
+    position: absolute;
+    right: 0;
+    padding-right: 10px;
+}
+
+.on {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+#navigator_line2 a{
+    color: #1d3688;
+}
+
+#buttons {
+    float:left;
+    padding-right: 10px;
+}
+
+h1 {
+    padding-bottom: 10px;
+}
+
+.state_select {
+    width: 135px;
+}
+
+.button {
+    margin-right: 10px;
+    margin-top: 10px;
+}
+
+.warning {
+    color: #c4110d;
+    border: thin dotted #c4110d;
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+#footer p {
+    border-top: 1px solid #ccc;
+    text-align: center;
+    font-size: x-small;
+    color: #555;
+    padding-top: 5px;
+}
+
+.spacer{
+    clear: both;
+}
+
+.problem {
+    background-color: #f9aa9f;
+}
+
+
+
+.radio {
+    border: none;
+    margin-bottom: 5px;
+}
+
+.container {
+
+    padding: 10px;
+}
+
+
+.table_nodes{
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    font-size: small;
+}
+
+.table_nodes th{
+    border: 1px solid #ccc;
+    background-color: #eee;
+    padding: 3px 10px;
+    font-size: small;
+}
+
+.first_col {
+    font-weight: bold;
+    border: 1px solid #ccc;
+    background-color: #eee;
+    padding: 3px 10px;
+}
+
+.table_nodes td{
+    border: 1px solid #ccc;
+    padding: 3px 10px;
+    font-size: small;
+}
+
+.table_nodes tr.summary{
+    font-weight: bold;
+}
+
+
+.table_caption {
+    text-align: left;
+    font-weight: bold;
+    margin-bottom: 15px;
+    margin-top: 20px;
+}
+
+.centered {
+    text-align:center;
+    padding: 0;
+    float: none;
+}
+
+.small_top_margin {
+    margin-top: 10px;
+}
+
+a img {
+    border: none;
+}
+
+.vertical_spacer {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+
+.docproc {
+   width: 200px;
+}
+
+.top_align td{
+    vertical-align: top;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.noline_and_spacing {
+    border: none;
+    margin-bottom: 10px;
+}
+
+
+.noline_and_spacing td{
+    border: none;
+    padding: 0;
+    vertical-align: top;
+}
+
+
+.index_left{
+    width: 410px;
+    float: left;
+    height: 240px;
+    border: thin dotted #ccc;
+    padding: 10px;
+}
+
+.index_right{
+    width: 410px;
+    float: left;
+    height: 240px;
+    border: thin dotted #ccc;
+    padding: 10px;
+}
+
+.indexmiddle{
+    width: 42px;
+    float: left;
+    margin-top: 110px;
+}
+
+.index_arrow_side{
+    width: 432px;
+    float: left;
+    height: 42px;
+}
+
+.index_arrow_middle{
+    width: 42px;
+    float: left;
+    height: 42px;
+}
+
+.small_text {
+    font-size: x-small;
+}
+
+
+
+div#graphs {
+  clear: both;
+  padding: 0 2em;
+  margin-top: 2em;
+}
+
+div.graph {
+  margin: 0.5em 0;
+  clear: both;
+}
+
+div.chart {
+  margin: 0.5em auto;
+  clear: both;
+}
+
+.ht-table {
+   border-top:solid 0;
+   border-left:solid 0;
+   empty-cells:show;
+   border-collapse:collapse;
+}
+
+.ht-table-cell {
+   border-right:solid 0;
+   border-bottom:solid 0;
+   padding:4px 4px 4px 4px;
+}
+.ht-subtable-cell{
+   border-right:solid 0;
+   border-bottom:solid 0;
+   padding:4px 4px 4px 4px;
+}
+.ht-table-header{
+   background-image:url(/images/gradient.png);
+   background-position:top left;background-repeat:repeat-x;
+}
+.ht-table-headercell{
+    border-right:solid 0;
+    border-bottom:solid 0;
+    padding:4px 4px 4px 4px;
+    text-align:center;
+}
+
+.ht-table-sortable-header {
+    background-position:right center;
+    background-repeat:no-repeat;
+    white-space:nowrap;
+}
+
+.ht-table-thead {
+        border-bottom:solid 0;
+}
+
+.ht-table-subheadercell {
+        border-right:solid 0;
+        padding:4px 4px 4px 4px;
+        text-align:center;
+        white-space:nowrap;
+}
+
+.ht-table-subfootercell {
+        border-right:solid 0;
+        border-bottom:solid 0;
+        padding:4px 4px 4px 4px;
+        text-align:left;
+}
+.ht-subtable-headercell {
+        border-right:solid 0;
+        border-bottom:solid 0;
+        padding:4px 4px 4px 4px;
+        text-align:center;
+}
+.ht-subtable-footercell{
+        border-right:solid 0;
+        border-bottom:solid 0;
+        padding:4px 4px 4px 4px;
+        text-align:left;
+}

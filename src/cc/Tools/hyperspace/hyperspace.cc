@@ -47,6 +47,8 @@ public:
   virtual void jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl; }
   virtual void safe() { cout << "SESSION CALLBACK: Safe" << endl; }
   virtual void expired() { cout << "SESSION CALLBACK: Expired" << endl; }
+  virtual void disconnected() { cout << "SESSION CALLBACK: Disconnected" << endl; }
+  virtual void reconnected() { cout << "SESSION CALLBACK: Reconnected" << endl; }
 };
 
 int main(int argc, char **argv) {
@@ -64,7 +66,8 @@ int main(int argc, char **argv) {
     HsClientState::exit_status = 0;
     comm = Comm::instance();
 
-    session_ptr = new Hyperspace::Session(comm, properties, &session_handler);
+    session_ptr = new Hyperspace::Session(comm, properties);
+    session_ptr->add_callback(&session_handler);
 
     interp = session_ptr->create_hs_interpreter();
     shell = new CommandShell("hyperspace", interp, properties);

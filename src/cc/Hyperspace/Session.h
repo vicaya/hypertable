@@ -37,12 +37,14 @@
 #include "Common/Timer.h"
 #include "Common/Properties.h"
 #include "Common/String.h"
+#include "Common/HashMap.h"
 
 #include "ClientKeepaliveHandler.h"
 #include "HandleCallback.h"
 #include "LockSequencer.h"
 #include "Protocol.h"
 #include "DirEntry.h"
+#include "DirEntryAttr.h"
 #include "HsCommandInterpreter.h"
 
 namespace Hyperspace {
@@ -81,10 +83,17 @@ namespace Hyperspace {
    */
   class SessionCallback {
   public:
+    SessionCallback() : m_id(0){}
     virtual ~SessionCallback() { return; }
     virtual void safe() = 0;
     virtual void expired() = 0;
     virtual void jeopardy() = 0;
+    virtual void disconnected() = 0;
+    virtual void reconnected() = 0;
+    void set_id(uint32_t id) {m_id = id;}
+    uint32_t get_id() {return m_id;}
+  private:
+    uint32_t m_id;
   };
 
   /*
@@ -139,26 +148,39 @@ namespace Hyperspace {
       /** session is in jeopardy */
       STATE_JEOPARDY,
       /** session is OK */
-      STATE_SAFE
+      STATE_SAFE,
+      /** attempting to reconnect session */
+      STATE_DISCONNECTED
+    };
+
+    enum Locate {
+      LOCATE_MASTER=1,
+      LOCATE_REPLICAS
     };
 
     /** Constructor.  Establishes a connection to %Hyperspace master and
      * initiates keepalive pings.  The location of the master is determined by
-     * the following two properties of the config file:
-     * <pre>
-     * Hyperspace.Master.host
-     * Hyperspace.Master.port
-     * </pre>
+     * contacting one of the replicas (Hyperspace.Replica) at the port
+     * specified by Hyperspace.port
      * The session callback is used to notify the application of session state
      * changes.
      *
      * @param comm pointer to the Comm object
      * @param props reference to config properties
-     * @param callback session state callback
      */
-    Session(Comm *comm, PropertiesPtr &props, SessionCallback *callback=0);
+    Session(Comm *comm, PropertiesPtr &props);
 
     virtual ~Session();
+
+    /**
+     * Register a new session callback
+     */
+    void add_callback(SessionCallback *cb);
+
+    /**
+     * De-register session callback
+     */
+    bool remove_callback(SessionCallback *cb);
 
     /** Opens a file.  The open mode
      * is determined by the bits in the flags argument and the callback
@@ -174,6 +196,17 @@ namespace Hyperspace {
      */
     uint64_t open(const std::string &name, uint32_t flags,
                   HandleCallbackPtr &callback, Timer *timer = 0);
+
+    /** Opens a file.  The open mode is determined by the bits in the
+     * flags argument.  No callback is registered for this handle and
+     * no events are reported on this handle.
+     *
+     * @param name pathname of file to open
+     * @param flags OR'ed together set of open flags (see \ref OpenFlags)
+     * @param timer maximum wait timer
+     * @return opened file handle
+     */
+    uint64_t open(const std::string &name, uint32_t flags, Timer *timer = 0);
 
     /** Creates a file.  This method is basically the same as the #open method
      * except that it implicitly sets the OPEN_FLAG_CREATE and OPEN_FLAG_EXCL
@@ -207,6 +240,13 @@ namespace Hyperspace {
      */
     void close(uint64_t handle, Timer *timer=0);
 
+    /** Attempts close a file handle, but doesn't block.
+     * Handle may not get closed.
+     *
+     * @param handle file handle to close
+     */
+    void close_nowait(uint64_t handle);
+
     /**
      * Creates a directory.  The name
      * argument should be the absolute path to the file.  All of the directories
@@ -218,6 +258,15 @@ namespace Hyperspace {
      */
     void mkdir(const std::string &name, Timer *timer=0);
 
+    /**
+     * Creates a directory, including all intermediate paths.  The name
+     * argument should be the absolute path to the file.
+     *
+     * @param name absolute pathname of directory to create
+     * @param timer maximum wait timer
+     */
+    void mkdirs(const std::string &name, Timer *timer=0);
+
     /** Sets an extended attribute of a file.
      *
      * @param handle file handle
@@ -228,6 +277,15 @@ namespace Hyperspace {
      */
     void attr_set(uint64_t handle, const std::string &name,
                   const void *value, size_t value_len, Timer *timer=0);
+
+    /** Atomically increments the attribute and returns pre-incremented value
+     * Attribute is assumed to be a uint64_t
+     *
+     * @param handle file handle
+     * @param name name of extended attribute
+     * @param timer maximum wait timer
+     */
+    uint64_t attr_incr(uint64_t handle, const std::string &name, Timer *timer=0);
 
     /** Lists all extended attributes of a file.
      *
@@ -286,6 +344,33 @@ namespace Hyperspace {
     void readdir(uint64_t handle, std::vector<DirEntry> &listing,
                  Timer *timer=0);
 
+    /** Gets a listing of all entries in a directory which have a certain attribute .
+     * The listing comes back as a vector of
+     * DirEntryAttr which contains a name, attr and boolean flag indicating if the
+     * entry is a directory or not.
+     *
+     * @param handle handle of directory to scan
+     * @param attr attribute name
+     * @param include_sub_entries include or not include all sub entries
+     * @param listing reference to vector of DirEntry structures to hold result
+     * @param timer maximum wait timer
+     */
+    void readdir_attr(uint64_t handle, const std::string &attr, bool include_sub_entries,
+                      std::vector<DirEntryAttr> &listing, Timer *timer=0);
+
+    /** Gets a listing of the value of a specified atribute for each path components
+     * of the file/dir name.
+     * The listing comes back as a vector of
+     * DirEntryAttr which contains a name, attr and boolean flag indicating if the
+     * entry is a directory or not.
+     *
+     * @param handle handle of the file/directory to scan
+     * @param attr attribute name
+     * @param listing reference to vector of DirEntry structures to hold result
+     * @param timer maximum wait timer
+     */
+    void readpath_attr(uint64_t handle, const std::string &attr,
+                       std::vector<DirEntryAttr> &listing, Timer *timer=0);
 
     /** Locks a file.  The mode argument indicates the type of lock to be
      * acquired and takes a value of either LOCK_MODE_SHARED
@@ -355,6 +440,12 @@ namespace Hyperspace {
      */
     void check_sequencer(LockSequencer &sequencer, Timer *timer=0);
 
+
+    /** Returns location of Hyperspace Master/Replicas
+     *
+     */
+    String locate(int type);
+
     /** Check the status of the Hyperspace master server
      *
      * @param timer maximum wait timer
@@ -415,29 +506,43 @@ namespace Hyperspace {
       xtime_add_millis(m_expire_time, m_lease_interval);
     }
 
+    void update_master_addr(const String &host);
+
   private:
+
+    typedef hash_map<uint64_t, SessionCallback *> CallbackMap;
 
     bool wait_for_safe();
     int send_message(CommBufPtr &, DispatchHandler *, Timer *timer);
     void normalize_name(const std::string &name, std::string &normal);
     uint64_t open(ClientHandleStatePtr &, CommBufPtr &, Timer *timer);
 
-    Mutex        m_mutex;
-    boost::condition m_cond;
-    Comm *m_comm;
-    bool m_verbose;
-    bool m_silent;
-    int  m_state;
-    uint32_t m_grace_period;
-    uint32_t m_lease_interval;
-    uint32_t m_timeout_ms;
-    boost::xtime m_expire_time;
-    InetAddr m_master_addr;
+    Mutex                     m_mutex;
+    boost::condition          m_cond;
+    Comm                      *m_comm;
+    PropertiesPtr             m_cfg;
+    bool                      m_verbose;
+    bool                      m_silent;
+    bool                      m_reconnect;
+    uint16_t                  m_hyperspace_port;
+    int                       m_state;
+    uint32_t                  m_grace_period;
+    uint32_t                  m_lease_interval;
+    uint32_t                  m_timeout_ms;
+    boost::xtime              m_expire_time;
+    InetAddr                  m_master_addr;
     ClientKeepaliveHandlerPtr m_keepalive_handler_ptr;
-    SessionCallback *m_session_callback;
+    CallbackMap               m_callbacks;
+    uint64_t                  m_last_callback_id;
+    Mutex                     m_callback_mutex;
+    vector<String>            m_hyperspace_replicas;
+    String                    m_hyperspace_master;
   };
 
   typedef boost::intrusive_ptr<Session> SessionPtr;
+
+  void close_handle(SessionPtr hyperspace, uint64_t handle);
+  void close_handle_ptr(SessionPtr hyperspace, uint64_t *handlep);
 
 } // namespace Hyperspace
 

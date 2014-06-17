@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_RANGESERVERSTATE_H
 #define HYPERTABLE_RANGESERVERSTATE_H
 
+#include "Common/HashMap.h"
 #include "Common/ReferenceCount.h"
 
 namespace Hypertable {
@@ -30,10 +31,14 @@ namespace Hypertable {
   public:
     std::string         location;
     uint64_t            hyperspace_handle;
-    struct sockaddr_in  addr;
+    CommAddress         addr;
+    InetAddr            connection;
+    bool                connected;
   };
 
   typedef boost::intrusive_ptr<RangeServerState> RangeServerStatePtr;
+
+  typedef hash_map<String, RangeServerStatePtr> RangeServerStateMap;
 
 }
 

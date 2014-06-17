@@ -84,14 +84,23 @@ int main(int argc, char **argv) {
     MasterPtr master = new Master(conn_mgr, properties,
                                   keepalive_handler, app_queue_ptr);
     uint16_t port = get_i16("port");
-    InetAddr local_addr(INADDR_ANY, port);
+    CommAddress local_addr = InetAddr(INADDR_ANY, port);
     ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue_ptr,
                                                       master));
     comm->listen(local_addr, hf);
 
     DispatchHandlerPtr dhp(keepalive_handler.get());
     // give hyperspace message higher priority if possible
-    comm->create_datagram_receive_socket(&local_addr, 0x10, dhp);
+    comm->create_datagram_receive_socket(local_addr, 0x10, dhp);
+
+    // set up maintenance timer
+    uint32_t maintenance_interval = get_i32("Hyperspace.Maintenance.Interval");
+    DispatchHandlerPtr maintenance_dhp;
+    int error;
+
+    hf->get_instance(maintenance_dhp);
+    if ((error = comm->set_timer(maintenance_interval, maintenance_dhp.get())) != Error::OK)
+      HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 
     app_queue_ptr->join();
   }

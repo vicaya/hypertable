@@ -5,15 +5,15 @@ For information about Hypertable, visit http://www.hypertable.org/
 Type 'help' for a list of commands, or 'help shell' for a
 list of shell meta commands.
 
-UPDATE Test4 "Test4-data.txt";
+UPDATE 'test/Test4' "Test4-data.txt";
 success
-CREATE SCANNER ON Test4[..??];
+CREATE SCANNER ON 'test/Test4'[..??];
 1181153477000234 photoalbum plum:http://terraserver-usa.com/image.aspx?s=14&lon=-75.684776&lat=39.620362&w=2
 1181153477000269 pseudomitotic broccoli:http://maps.yahoo.com/maps_result?lat=40.787484&lon=-76.538358&mag=4
 1181153477000189 somatology apple:http://www.imdb.com/name/nm0071818/
 1181153477000314 twentymo yam:http://www.sld.gov.tw/english/index.htm
 DESTROY SCANNER;
-CREATE SCANNER ON Test4[..??] RETURN_DELETES;
+CREATE SCANNER ON 'test/Test4'[..??] RETURN_DELETES;
 1181153477000081 immotile plum DELETE
 1181153477000018 overbuild broccoli:http://www.deltacountymi.org DELETE
 1181153477000219 photoalbum plum DELETE

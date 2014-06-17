@@ -10,7 +10,8 @@ if (DOXYGEN_FOUND)
                  ${HYPERTABLE_BINARY_DIR}/Doxyfile)
   add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${HYPERTABLE_BINARY_DIR}/Doxyfile)
 
-  add_custom_command(TARGET doc POST_BUILD COMMAND make hqldoc)
+  add_custom_command(TARGET doc PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory 
+                     ${CMAKE_SOURCE_DIR}/doc/markdown markdown POST_BUILD COMMAND make hqldoc)
 
   if (Thrift_FOUND)
     add_custom_command(TARGET doc POST_BUILD COMMAND make thriftdoc)

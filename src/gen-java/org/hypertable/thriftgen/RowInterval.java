@@ -9,14 +9,16 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Collections;
-import org.apache.log4j.Logger;
-
-import org.apache.thrift.*;
-import org.apache.thrift.meta_data.*;
-import org.apache.thrift.protocol.*;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Specifies a range of rows
@@ -35,41 +37,104 @@ import org.apache.thrift.protocol.*;
  *   <dd>Whether the end row is included in the result (default: true)</dd>
  * </dl>
  */
-public class RowInterval implements TBase, java.io.Serializable, Cloneable {
-  private static final TStruct STRUCT_DESC = new TStruct("RowInterval");
-  private static final TField START_ROW_FIELD_DESC = new TField("start_row", TType.STRING, (short)1);
-  private static final TField START_INCLUSIVE_FIELD_DESC = new TField("start_inclusive", TType.BOOL, (short)2);
-  private static final TField END_ROW_FIELD_DESC = new TField("end_row", TType.STRING, (short)3);
-  private static final TField END_INCLUSIVE_FIELD_DESC = new TField("end_inclusive", TType.BOOL, (short)4);
+public class RowInterval implements org.apache.thrift.TBase<RowInterval, RowInterval._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("RowInterval");
+
+  private static final org.apache.thrift.protocol.TField START_ROW_FIELD_DESC = new org.apache.thrift.protocol.TField("start_row", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField START_INCLUSIVE_FIELD_DESC = new org.apache.thrift.protocol.TField("start_inclusive", org.apache.thrift.protocol.TType.BOOL, (short)2);
+  private static final org.apache.thrift.protocol.TField END_ROW_FIELD_DESC = new org.apache.thrift.protocol.TField("end_row", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField END_INCLUSIVE_FIELD_DESC = new org.apache.thrift.protocol.TField("end_inclusive", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
   public String start_row;
-  public static final int START_ROW = 1;
   public boolean start_inclusive;
-  public static final int START_INCLUSIVE = 2;
   public String end_row;
-  public static final int END_ROW = 3;
   public boolean end_inclusive;
-  public static final int END_INCLUSIVE = 4;
 
-  private final Isset __isset = new Isset();
-  private static final class Isset implements java.io.Serializable {
-    public boolean start_inclusive = false;
-    public boolean end_inclusive = false;
+  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+    START_ROW((short)1, "start_row"),
+    START_INCLUSIVE((short)2, "start_inclusive"),
+    END_ROW((short)3, "end_row"),
+    END_INCLUSIVE((short)4, "end_inclusive");
+
+    private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+    static {
+      for (_Fields field : EnumSet.allOf(_Fields.class)) {
+        byName.put(field.getFieldName(), field);
+      }
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, or null if its not found.
+     */
+    public static _Fields findByThriftId(int fieldId) {
+      switch(fieldId) {
+        case 1: // START_ROW
+          return START_ROW;
+        case 2: // START_INCLUSIVE
+          return START_INCLUSIVE;
+        case 3: // END_ROW
+          return END_ROW;
+        case 4: // END_INCLUSIVE
+          return END_INCLUSIVE;
+        default:
+          return null;
+      }
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, throwing an exception
+     * if it is not found.
+     */
+    public static _Fields findByThriftIdOrThrow(int fieldId) {
+      _Fields fields = findByThriftId(fieldId);
+      if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+      return fields;
+    }
+
+    /**
+     * Find the _Fields constant that matches name, or null if its not found.
+     */
+    public static _Fields findByName(String name) {
+      return byName.get(name);
+    }
+
+    private final short _thriftId;
+    private final String _fieldName;
+
+    _Fields(short thriftId, String fieldName) {
+      _thriftId = thriftId;
+      _fieldName = fieldName;
+    }
+
+    public short getThriftFieldId() {
+      return _thriftId;
+    }
+
+    public String getFieldName() {
+      return _fieldName;
+    }
   }
 
-  public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-    put(START_ROW, new FieldMetaData("start_row", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(START_INCLUSIVE, new FieldMetaData("start_inclusive", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.BOOL)));
-    put(END_ROW, new FieldMetaData("end_row", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(END_INCLUSIVE, new FieldMetaData("end_inclusive", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.BOOL)));
-  }});
+  // isset id assignments
+  private static final int __START_INCLUSIVE_ISSET_ID = 0;
+  private static final int __END_INCLUSIVE_ISSET_ID = 1;
+  private BitSet __isset_bit_vector = new BitSet(2);
 
+  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
-    FieldMetaData.addStructMetaDataMap(RowInterval.class, metaDataMap);
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.START_ROW, new org.apache.thrift.meta_data.FieldMetaData("start_row", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.START_INCLUSIVE, new org.apache.thrift.meta_data.FieldMetaData("start_inclusive", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.END_ROW, new org.apache.thrift.meta_data.FieldMetaData("end_row", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.END_INCLUSIVE, new org.apache.thrift.meta_data.FieldMetaData("end_inclusive", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(RowInterval.class, metaDataMap);
   }
 
   public RowInterval() {
@@ -79,55 +144,50 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable {
 
   }
 
-  public RowInterval(
-    String start_row,
-    boolean start_inclusive,
-    String end_row,
-    boolean end_inclusive)
-  {
-    this();
-    this.start_row = start_row;
-    this.start_inclusive = start_inclusive;
-    this.__isset.start_inclusive = true;
-    this.end_row = end_row;
-    this.end_inclusive = end_inclusive;
-    this.__isset.end_inclusive = true;
-  }
-
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public RowInterval(RowInterval other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetStart_row()) {
       this.start_row = other.start_row;
     }
-    __isset.start_inclusive = other.__isset.start_inclusive;
     this.start_inclusive = other.start_inclusive;
     if (other.isSetEnd_row()) {
       this.end_row = other.end_row;
     }
-    __isset.end_inclusive = other.__isset.end_inclusive;
     this.end_inclusive = other.end_inclusive;
   }
 
-  @Override
-  public RowInterval clone() {
+  public RowInterval deepCopy() {
     return new RowInterval(this);
+  }
+
+  @Override
+  public void clear() {
+    this.start_row = null;
+    this.start_inclusive = true;
+
+    this.end_row = null;
+    this.end_inclusive = true;
+
   }
 
   public String getStart_row() {
     return this.start_row;
   }
 
-  public void setStart_row(String start_row) {
+  public RowInterval setStart_row(String start_row) {
     this.start_row = start_row;
+    return this;
   }
 
   public void unsetStart_row() {
     this.start_row = null;
   }
 
-  // Returns true if field start_row is set (has been asigned a value) and false otherwise
+  /** Returns true if field start_row is set (has been assigned a value) and false otherwise */
   public boolean isSetStart_row() {
     return this.start_row != null;
   }
@@ -142,37 +202,39 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable {
     return this.start_inclusive;
   }
 
-  public void setStart_inclusive(boolean start_inclusive) {
+  public RowInterval setStart_inclusive(boolean start_inclusive) {
     this.start_inclusive = start_inclusive;
-    this.__isset.start_inclusive = true;
+    setStart_inclusiveIsSet(true);
+    return this;
   }
 
   public void unsetStart_inclusive() {
-    this.__isset.start_inclusive = false;
+    __isset_bit_vector.clear(__START_INCLUSIVE_ISSET_ID);
   }
 
-  // Returns true if field start_inclusive is set (has been asigned a value) and false otherwise
+  /** Returns true if field start_inclusive is set (has been assigned a value) and false otherwise */
   public boolean isSetStart_inclusive() {
-    return this.__isset.start_inclusive;
+    return __isset_bit_vector.get(__START_INCLUSIVE_ISSET_ID);
   }
 
   public void setStart_inclusiveIsSet(boolean value) {
-    this.__isset.start_inclusive = value;
+    __isset_bit_vector.set(__START_INCLUSIVE_ISSET_ID, value);
   }
 
   public String getEnd_row() {
     return this.end_row;
   }
 
-  public void setEnd_row(String end_row) {
+  public RowInterval setEnd_row(String end_row) {
     this.end_row = end_row;
+    return this;
   }
 
   public void unsetEnd_row() {
     this.end_row = null;
   }
 
-  // Returns true if field end_row is set (has been asigned a value) and false otherwise
+  /** Returns true if field end_row is set (has been assigned a value) and false otherwise */
   public boolean isSetEnd_row() {
     return this.end_row != null;
   }
@@ -187,26 +249,27 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable {
     return this.end_inclusive;
   }
 
-  public void setEnd_inclusive(boolean end_inclusive) {
+  public RowInterval setEnd_inclusive(boolean end_inclusive) {
     this.end_inclusive = end_inclusive;
-    this.__isset.end_inclusive = true;
+    setEnd_inclusiveIsSet(true);
+    return this;
   }
 
   public void unsetEnd_inclusive() {
-    this.__isset.end_inclusive = false;
+    __isset_bit_vector.clear(__END_INCLUSIVE_ISSET_ID);
   }
 
-  // Returns true if field end_inclusive is set (has been asigned a value) and false otherwise
+  /** Returns true if field end_inclusive is set (has been assigned a value) and false otherwise */
   public boolean isSetEnd_inclusive() {
-    return this.__isset.end_inclusive;
+    return __isset_bit_vector.get(__END_INCLUSIVE_ISSET_ID);
   }
 
   public void setEnd_inclusiveIsSet(boolean value) {
-    this.__isset.end_inclusive = value;
+    __isset_bit_vector.set(__END_INCLUSIVE_ISSET_ID, value);
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
+  public void setFieldValue(_Fields field, Object value) {
+    switch (field) {
     case START_ROW:
       if (value == null) {
         unsetStart_row();
@@ -239,13 +302,11 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable {
       }
       break;
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
   }
 
-  public Object getFieldValue(int fieldID) {
-    switch (fieldID) {
+  public Object getFieldValue(_Fields field) {
+    switch (field) {
     case START_ROW:
       return getStart_row();
 
@@ -258,14 +319,17 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable {
     case END_INCLUSIVE:
       return new Boolean(isEnd_inclusive());
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
   }
 
-  // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-  public boolean isSet(int fieldID) {
-    switch (fieldID) {
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+  public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
+    switch (field) {
     case START_ROW:
       return isSetStart_row();
     case START_INCLUSIVE:
@@ -274,9 +338,8 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable {
       return isSetEnd_row();
     case END_INCLUSIVE:
       return isSetEnd_inclusive();
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
   }
 
   @Override
@@ -336,61 +399,113 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable {
     return 0;
   }
 
-  public void read(TProtocol iprot) throws TException {
-    TField field;
+  public int compareTo(RowInterval other) {
+    if (!getClass().equals(other.getClass())) {
+      return getClass().getName().compareTo(other.getClass().getName());
+    }
+
+    int lastComparison = 0;
+    RowInterval typedOther = (RowInterval)other;
+
+    lastComparison = Boolean.valueOf(isSetStart_row()).compareTo(typedOther.isSetStart_row());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetStart_row()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.start_row, typedOther.start_row);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetStart_inclusive()).compareTo(typedOther.isSetStart_inclusive());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetStart_inclusive()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.start_inclusive, typedOther.start_inclusive);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_row()).compareTo(typedOther.isSetEnd_row());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetEnd_row()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.end_row, typedOther.end_row);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_inclusive()).compareTo(typedOther.isSetEnd_inclusive());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetEnd_inclusive()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.end_inclusive, typedOther.end_inclusive);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
+  }
+
+  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+    org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
-      switch (field.id)
-      {
-        case START_ROW:
-          if (field.type == TType.STRING) {
+      switch (field.id) {
+        case 1: // START_ROW
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.start_row = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case START_INCLUSIVE:
-          if (field.type == TType.BOOL) {
+        case 2: // START_INCLUSIVE
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
             this.start_inclusive = iprot.readBool();
-            this.__isset.start_inclusive = true;
+            setStart_inclusiveIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case END_ROW:
-          if (field.type == TType.STRING) {
+        case 3: // END_ROW
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.end_row = iprot.readString();
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case END_INCLUSIVE:
-          if (field.type == TType.BOOL) {
+        case 4: // END_INCLUSIVE
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
             this.end_inclusive = iprot.readBool();
-            this.__isset.end_inclusive = true;
+            setEnd_inclusiveIsSet(true);
           } else { 
-            TProtocolUtil.skip(iprot, field.type);
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
+          org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
       iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 
-
     // check for required fields of primitive type, which can't be checked in the validate method
     validate();
   }
 
-  public void write(TProtocol oprot) throws TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
@@ -462,9 +577,26 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable {
     return sb.toString();
   }
 
-  public void validate() throws TException {
+  public void validate() throws org.apache.thrift.TException {
     // check for required fields
-    // check that fields of type enum have valid values
+  }
+
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    try {
+      write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
+  }
+
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
+      read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+    } catch (org.apache.thrift.TException te) {
+      throw new java.io.IOException(te);
+    }
   }
 
 }

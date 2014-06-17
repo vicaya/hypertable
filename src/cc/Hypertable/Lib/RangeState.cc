@@ -28,6 +28,14 @@
 using namespace Hypertable;
 using namespace Serialization;
 
+void RangeState::clear() {
+  state = STEADY;
+  // timestmp shouldn't be cleared
+  soft_limit = 0;
+  transfer_log = split_point = old_boundary_row = 0;
+}
+
+
 size_t RangeState::encoded_length() const {
   return 9 + 8 + encoded_length_vstr(transfer_log) +
       encoded_length_vstr(split_point) + encoded_length_vstr(old_boundary_row);
@@ -53,6 +61,17 @@ void RangeState::decode(const uint8_t **bufp, size_t *remainp) {
     split_point = decode_vstr(bufp, remainp);
     old_boundary_row = decode_vstr(bufp, remainp));
 
+}
+
+void RangeStateManaged::clear() {
+  RangeState::clear();
+  *this = *this;
+}
+
+
+void RangeStateManaged::decode(const uint8_t **bufp, size_t *remainp) {
+  RangeState::decode(bufp, remainp);
+  *this = *this;
 }
 
 std::ostream& Hypertable::operator<<(std::ostream &out, const RangeState &st) {

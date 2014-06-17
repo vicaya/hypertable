@@ -1,0 +1,21 @@
+To run this test do the following:
+1. Copy entire dir to mothercompiler:<HT_INSTALL_DIR>
+2. Run run.pl
+3. Follow hyperspace recovery procedure
+4. Run some queries/loads 
+
+Hyperspace recovery procedure
+
+Say you have three Hyperspace replicas running on "host[1-3].somedomain.com" respectively and the master replica which was running on host2 fails:
+
+1. Run "cap stop" to stop the cluster
+2. Login to one of the functioning servers which was running Hyperspace replica (in this case most likely host1 or host3) and run:
+    /usr/local/BerkeleyDB.4.8/bin/db_hotbackup -h <HYPERTABLE_INSTALL_DIR>/hyperspace/ -b hyperspace_snapshot
+    tar -zcvf hyperspace_snapshot
+3. Identify the new machine you want to use as a Hyperspace replica (say host4.somedomain.com)
+4. Delete contents of "host4:/<HYPERTABLE_INSTALL_DIR>/hyperspace". Copy hyperspace_snapshot.tgz to host4:/<HYPERTABLE_INSTALL_DIR>/hyperspace/ & extract.
+5. Modify your hypertable config file to remove host2 and add host4 under the property Hyperspace.Replica.Host .
+6. Modify hypertable config file to replace host2 with host 4 in case it was set as Hypertable.Master.Host
+7. Modify the Capfile list of hyperspace servers to replace host2 with host4 and master server in case host2 was the master.
+8. Run "cap dist" to distribute the new config file through the cluster
+9. Run "cap start"

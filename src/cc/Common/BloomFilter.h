@@ -38,25 +38,68 @@ namespace Hypertable {
 template <class HasherT = MurmurHash2>
 class BasicBloomFilter {
 public:
-  BasicBloomFilter(size_t element_count, float false_positive_prob) {
-    m_element_count = element_count;
+  BasicBloomFilter(size_t items_estimate, float false_positive_prob) {
+    m_items_actual = 0;
+    m_items_estimate = items_estimate;
     m_false_positive_prob = false_positive_prob;
     double num_hashes = -std::log(m_false_positive_prob) / std::log(2);
     m_num_hash_functions = (size_t)num_hashes;
-    m_num_bits = (size_t)(m_element_count * num_hashes / std::log(2));
+    m_num_bits = (size_t)(m_items_estimate * num_hashes / std::log(2));
     if (m_num_bits == 0) {
       HT_THROWF(Error::EMPTY_BLOOMFILTER, "Num elements=%lu false_positive_prob=%.3f",
-                (Lu)element_count, false_positive_prob);
+                (Lu)items_estimate, false_positive_prob);
     }
     m_num_bytes = (m_num_bits / CHAR_BIT) + (m_num_bits % CHAR_BIT ? 1 : 0);
     m_bloom_bits = new uint8_t[m_num_bytes];
 
-    for(unsigned ii = 0; ii< m_num_bytes; ++ii)
-      m_bloom_bits[ii] = 0x00;
+    memset(m_bloom_bits, 0, m_num_bytes);
 
     HT_DEBUG_OUT <<"num funcs="<< m_num_hash_functions
                  <<" num bits="<< m_num_bits <<" num bytes="<< m_num_bytes
-                 <<" bits per element="<< double(m_num_bits) / element_count
+                 <<" bits per element="<< double(m_num_bits) / items_estimate
+                 << HT_END;
+  }
+
+  BasicBloomFilter(size_t items_estimate, float bits_per_item, size_t num_hashes) {
+    m_items_actual = 0;
+    m_items_estimate = items_estimate;
+    m_false_positive_prob = 0.0;
+    m_num_hash_functions = num_hashes;
+    m_num_bits = (size_t)((double)items_estimate * (double)bits_per_item);
+    if (m_num_bits == 0) {
+      HT_THROWF(Error::EMPTY_BLOOMFILTER, "Num elements=%lu bits_per_item=%.3f",
+                (Lu)items_estimate, bits_per_item);
+    }
+    m_num_bytes = (m_num_bits / CHAR_BIT) + (m_num_bits % CHAR_BIT ? 1 : 0);
+    m_bloom_bits = new uint8_t[m_num_bytes];
+
+    memset(m_bloom_bits, 0, m_num_bytes);
+
+    HT_DEBUG_OUT <<"num funcs="<< m_num_hash_functions
+                 <<" num bits="<< m_num_bits <<" num bytes="<< m_num_bytes
+                 <<" bits per element="<< double(m_num_bits) / items_estimate
+                 << HT_END;
+  }
+
+  BasicBloomFilter(size_t items_estimate, size_t items_actual,
+                 int64_t length, size_t num_hashes) {
+    m_items_actual = items_actual;
+    m_items_estimate = items_estimate;
+    m_false_positive_prob = 0.0;
+    m_num_hash_functions = num_hashes;
+    m_num_bits = (size_t)length;
+    if (m_num_bits == 0) {
+      HT_THROWF(Error::EMPTY_BLOOMFILTER, "Estimated items=%lu actual items=%lu length=%lld num hashes=%lu",
+                (Lu)items_estimate, (Lu)items_actual, (Lld)length, (Lu)num_hashes);
+    }
+    m_num_bytes = (m_num_bits / CHAR_BIT) + (m_num_bits % CHAR_BIT ? 1 : 0);
+    m_bloom_bits = new uint8_t[m_num_bytes];
+
+    memset(m_bloom_bits, 0, m_num_bytes);
+
+    HT_DEBUG_OUT <<"num funcs="<< m_num_hash_functions
+                 <<" num bits="<< m_num_bits <<" num bytes="<< m_num_bytes
+                 <<" bits per element="<< double(m_num_bits) / items_estimate
                  << HT_END;
   }
 
@@ -77,6 +120,7 @@ public:
       hash = m_hasher(key, len, hash) % m_num_bits;
       m_bloom_bits[hash / CHAR_BIT] |= (1 << (hash % CHAR_BIT));
     }
+    m_items_actual++;
   }
 
   void insert(const String& key) {
@@ -116,9 +160,18 @@ public:
     return m_num_bytes;
   }
 
+  size_t get_num_hashes() { return m_num_hash_functions; }
+
+  size_t get_length_bits() { return m_num_bits; }
+
+  size_t get_items_estimate() { return m_items_estimate; }
+
+  size_t get_items_actual() { return m_items_actual; }
+
 private:
   HasherT    m_hasher;
-  size_t     m_element_count;
+  size_t     m_items_estimate;
+  size_t     m_items_actual;
   float      m_false_positive_prob;
   size_t     m_num_hash_functions;
   size_t     m_num_bits;

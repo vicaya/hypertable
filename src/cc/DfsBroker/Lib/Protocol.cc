@@ -24,11 +24,11 @@
 #include <cassert>
 #include <iostream>
 
-#include "Common/Serialization.h"
+#include "Common/Filesystem.h"
 #include "Common/Logger.h"
+#include "Common/Serialization.h"
 
 #include "AsyncComm/CommHeader.h"
-
 
 #include "Protocol.h"
 
@@ -68,9 +68,10 @@ namespace Hypertable {
      *
      */
     CommBuf *
-    Protocol::create_open_request(const String &fname, uint32_t bufsz) {
+    Protocol::create_open_request(const String &fname, uint32_t flags, uint32_t bufsz) {
       CommHeader header(COMMAND_OPEN);
-      CommBuf *cbuf = new CommBuf(header, 4 + encoded_length_str16(fname));
+      CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_str16(fname));
+      cbuf->append_i32(flags);
       cbuf->append_i32(bufsz);
       cbuf->append_str16(fname);
       return cbuf;
@@ -80,13 +81,13 @@ namespace Hypertable {
     /**
      */
     CommBuf *
-    Protocol::create_create_request(const String &fname, bool overwrite,
+    Protocol::create_create_request(const String &fname, uint32_t flags,
         int32_t bufsz, int32_t replication, int64_t blksz) {
       CommHeader header(COMMAND_CREATE);
-      CommBuf *cbuf = new CommBuf(header, 18 + encoded_length_str16(fname));
-      cbuf->append_i16((overwrite) ? 1 : 0);
-      cbuf->append_i32(replication);
+      CommBuf *cbuf = new CommBuf(header, 20 + encoded_length_str16(fname));
+      cbuf->append_i32(flags);
       cbuf->append_i32(bufsz);
+      cbuf->append_i32(replication);
       cbuf->append_i64(blksz);
       cbuf->append_str16(fname);
       return cbuf;
@@ -119,10 +120,13 @@ namespace Hypertable {
                                              bool flush) {
       CommHeader header(COMMAND_APPEND);
       header.gid = fd;
-      CommBuf *cbuf = new CommBuf(header, 9, buffer);
+      header.alignment = HT_DIRECT_IO_ALIGNMENT;
+      CommBuf *cbuf = new CommBuf(header, HT_DIRECT_IO_ALIGNMENT, buffer);
       cbuf->append_i32(fd);
       cbuf->append_i32(buffer.size);
       cbuf->append_bool(flush);
+      memset(cbuf->get_data_ptr(), 0, HT_DIRECT_IO_ALIGNMENT-9);
+      cbuf->advance_data_ptr( HT_DIRECT_IO_ALIGNMENT-9 );
       return cbuf;
     }
 

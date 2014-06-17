@@ -27,7 +27,6 @@
 #include "Common/Usage.h"
 
 #include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/Defaults.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -87,6 +86,7 @@ int main(int argc, char **argv) {
 
   try {
     Client *hypertable = new Client(argv[0], "./hypertable.cfg");
+    NamespacePtr ns = hypertable->open_namespace("/");
 
     TablePtr table_ptr;
     TableMutatorPtr mutator_ptr;
@@ -99,10 +99,10 @@ int main(int argc, char **argv) {
     /**
      * Validate large object returned by CREATE_SCANNER
      */
-    hypertable->drop_table("BigTest", true);
-    hypertable->create_table("BigTest", schema);
+    ns->drop_table("BigTest", true);
+    ns->create_table("BigTest", schema);
 
-    table_ptr = hypertable->open_table("BigTest");
+    table_ptr = ns->open_table("BigTest");
 
     mutator_ptr = table_ptr->create_mutator();
 
@@ -150,10 +150,10 @@ int main(int argc, char **argv) {
      * Validate large object returned by FETCH_SCANBLOCK
      */
 
-    hypertable->drop_table("BigTest", true);
-    hypertable->create_table("BigTest", schema);
+    ns->drop_table("BigTest", true);
+    ns->create_table("BigTest", schema);
 
-    table_ptr = hypertable->open_table("BigTest");
+    table_ptr = ns->open_table("BigTest");
 
     mutator_ptr = table_ptr->create_mutator();
 

@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
+#include "Common/System.h"
 
 #include "ClientConnectionHandler.h"
 #include "Master.h"
@@ -85,8 +86,8 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
 
     memcpy(&m_master_addr, &event_ptr->addr, sizeof(struct sockaddr_in));
 
-    CommBufPtr cbp(Hyperspace::Protocol::create_handshake_request(
-                   m_session_id));
+    CommBufPtr
+        cbp(Hyperspace::Protocol::create_handshake_request(m_session_id, System::exe_name));
 
     if ((error = m_comm->send_request(event_ptr->addr, m_timeout_ms, cbp, this))
         != Error::OK) {

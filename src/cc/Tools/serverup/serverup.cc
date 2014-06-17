@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <boost/algorithm/string.hpp>
+
 extern "C" {
 #include <netdb.h>
 }
@@ -32,6 +34,7 @@ extern "C" {
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Init.h"
+#include "Common/Timer.h"
 #include "Common/Usage.h"
 
 #include "AsyncComm/ApplicationQueue.h"
@@ -45,6 +48,7 @@ extern "C" {
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
+#include "Hypertable/Lib/Types.h"
 
 #ifdef HT_WITH_THRIFT
 # include "ThriftBroker/Config.h"
@@ -104,28 +108,30 @@ namespace {
   void check_dfsbroker(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
     HT_DEBUG_OUT <<"Checking dfsbroker at "<< get_str("dfs-host")
                  <<':'<< get_i16("dfs-port") << HT_END;
-    DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
+    DfsBroker::ClientPtr dfs = new DfsBroker::Client(conn_mgr, properties);
 
     if (!dfs->wait_for_connection(wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to dfsbroker");
 
     HT_TRY("getting dfsbroker status", dfs->status());
+
   }
 
   Hyperspace::Session *hyperspace;
 
   void check_hyperspace(ConnectionManagerPtr &conn_mgr, uint32_t max_wait_ms) {
-    HT_DEBUG_OUT <<"Checking hyperspace at "<< get_str("hs-host")
-                 <<':'<< get_i16("hs-port") << HT_END;
+    HT_DEBUG_OUT <<"Checking hyperspace"<< HT_END;
     Timer timer(max_wait_ms, true);
     int error;
-    hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties, 0);
+    hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
 
     if (!hyperspace->wait_for_connection(max_wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
 
-    if ((error = hyperspace->status(&timer)) != Error::OK)
+    if ((error = hyperspace->status(&timer)) != Error::OK &&
+      error != Error::HYPERSPACE_NOT_MASTER_LOCATION) {
       HT_THROW(error, "getting hyperspace status");
+    }
   }
 
   void check_master(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
@@ -133,15 +139,20 @@ namespace {
     Timer timer(wait_ms, true);
 
     if (!hyperspace) {
-      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties, 0);
+      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
 
       if (!hyperspace->wait_for_connection(wait_ms))
         HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
     }
     ApplicationQueuePtr app_queue = new ApplicationQueue(1);
     Hyperspace::SessionPtr hyperspace_ptr = hyperspace;
+
+    String toplevel_dir = properties->get_str("Hypertable.Directory");
+    boost::trim_if(toplevel_dir, boost::is_any_of("/"));
+    toplevel_dir = String("/") + toplevel_dir;
+
     MasterClient *master = new MasterClient(conn_mgr, hyperspace_ptr,
-                                            wait_ms, app_queue);
+                                            toplevel_dir, wait_ms, app_queue);
     master->set_verbose_flag(get_bool("verbose"));
 
     master->initiate_connection(0);
@@ -153,27 +164,27 @@ namespace {
   }
 
   void check_rangeserver(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
+    HT_DEBUG_OUT <<"Checking rangeserver at "<< get_str("rs-host")
+                 <<':'<< get_i16("rs-port") << HT_END;
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
 
     wait_for_connection("range server", conn_mgr, addr, wait_ms, wait_ms);
 
     RangeServerClient *range_server =
       new RangeServerClient(conn_mgr->get_comm(), wait_ms);
-    range_server->set_timeout(wait_ms);
-    range_server->status(addr);
+    Timer timer(wait_ms, true);
+    range_server->status(addr, timer);
   }
 
   void check_thriftbroker(ConnectionManagerPtr &conn_mgr, int wait_ms) {
 #ifdef HT_WITH_THRIFT
-    int32_t id = -1;
-    int timeout = get_i32("thrift-timeout");
+    String table_id;
     InetAddr addr(get_str("thrift-host"), get_i16("thrift-port"));
-
-    wait_for_connection("thrift broker", conn_mgr, addr, timeout, wait_ms);
 
     try {
       Thrift::Client client(get_str("thrift-host"), get_i16("thrift-port"));
-      id = client.get_table_id("METADATA");
+      ThriftGen::Namespace ns = client.open_namespace("sys");
+      client.get_table_id(table_id, ns, "METADATA");
     }
     catch (ThriftGen::ClientException &e) {
       HT_THROW(e.code, e.message);
@@ -181,7 +192,7 @@ namespace {
     catch (std::exception &e) {
       HT_THROW(Error::EXTERNAL, e.what());
     }
-    HT_EXPECT(id == 0, Error::INVALID_METADATA);
+    HT_EXPECT(table_id == TableIdentifier::METADATA_ID, Error::INVALID_METADATA);
 #else
     HT_THROW(Error::FAILED_EXPECTATION, "Thrift support not installed");
 #endif

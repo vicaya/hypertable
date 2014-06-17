@@ -4,6 +4,7 @@
 #include "Common/Stopwatch.h"
 #include "Common/Init.h"
 
+#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 

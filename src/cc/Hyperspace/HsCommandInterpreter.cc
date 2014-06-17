@@ -25,13 +25,17 @@
 #include <cstdio>
 #include <cstring>
 
+extern "C" {
+#include <time.h>
+#if defined(__sun__)
+#include <inttypes.h>
+#endif
+}
+
+
 #include <boost/progress.hpp>
 #include <boost/timer.hpp>
 #include <boost/thread/xtime.hpp>
-
-extern "C" {
-#include <time.h>
-}
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
@@ -41,6 +45,7 @@ extern "C" {
 #include "HsHelpText.h"
 #include "HsParser.h"
 #include "DirEntry.h"
+#include "DirEntryAttr.h"
 #include "FileHandleCallback.h"
 
 using namespace std;
@@ -74,7 +79,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_OPEN) {
-      uint64_t handle;
+      ::uint64_t handle;
       int event_mask = state.event_mask;
       int open_flag = state.open_flag;
       String fname = state.node_name;
@@ -96,7 +101,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_CREATE) {
-      uint64_t handle;
+      ::uint64_t handle;
       int event_mask = state.event_mask;
       int open_flag = state.open_flag;
       String fname = state.file_name;
@@ -118,7 +123,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_CLOSE) {
-      uint64_t handle;
+      ::uint64_t handle;
       String fname = state.node_name;
       handle = Util::get_handle(fname);
       String normal_name;
@@ -128,7 +133,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTRSET) {
-      uint64_t handle;
+      ::uint64_t handle;
       int size = state.last_attr_size;
       String name = state.last_attr_name;
       String value = state.last_attr_value;
@@ -141,7 +146,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTRGET) {
-      uint64_t handle;
+      ::uint64_t handle;
       String name = state.last_attr_name;
       String fname = state.node_name;
       DynamicBuffer value(0);
@@ -150,13 +155,27 @@ void HsCommandInterpreter::execute_line(const String &line) {
 
       m_session->attr_get(handle, name, value);
 
-     String valstr = String((const char*)(value.base),value.fill());
-     cout << valstr << endl;
+      String valstr = String((const char*)(value.base),value.fill());
+      cout << valstr << endl;
+
+    }
+
+    else if (state.command == COMMAND_ATTRINCR) {
+      ::uint64_t handle;
+      String name = state.last_attr_name;
+      String fname = state.node_name;
+      uint64_t attr_val;
+
+      handle = Util::get_handle(fname);
+
+      attr_val = m_session->attr_incr(handle, name);
+
+      cout << attr_val << endl;
 
     }
 
     else if (state.command == COMMAND_ATTREXISTS) {
-      uint64_t handle;
+      ::uint64_t handle;
       String name = state.last_attr_name;
       String fname = state.node_name;
       bool exists;
@@ -172,7 +191,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTRLIST) {
-      uint64_t handle;
+      ::uint64_t handle;
       String fname = state.node_name;
       vector<String> attrs;
 
@@ -186,7 +205,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTRDEL) {
-      uint64_t handle;
+      ::uint64_t handle;
       String name = state.last_attr_name;
       String fname = state.node_name;
 
@@ -208,7 +227,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_READDIR) {
-      uint64_t handle;
+      ::uint64_t handle;
       vector<struct DirEntry> listing;
       String fname = state.dir_name;
 
@@ -227,9 +246,36 @@ void HsCommandInterpreter::execute_line(const String &line) {
       cout << flush ;
     }
 
+    else if (state.command == COMMAND_READDIRATTR) {
+      ::uint64_t handle;
+      vector<struct DirEntryAttr> listing;
+      String fname = state.dir_name;
+      String name = state.last_attr_name;
+
+      handle = Util::get_handle(fname);
+      m_session->readdir_attr(handle, name, state.recursive, listing);
+
+      struct LtDirEntryAttr ascending;
+      sort(listing.begin(), listing.end(), ascending);
+      printDirEntryAttrListing(0, name, listing);
+    }
+
+    else if (state.command == COMMAND_READPATHATTR) {
+      ::uint64_t handle;
+      vector<struct DirEntryAttr> listing;
+      String fname = state.dir_name;
+      String name = state.last_attr_name;
+
+      handle = Util::get_handle(fname);
+      m_session->readpath_attr(handle, name, listing);
+
+      struct LtDirEntryAttr ascending;
+      sort(listing.begin(), listing.end(), ascending);
+      printDirEntryAttrListing(0, name, listing);
+    }
     else if (state.command == COMMAND_LOCK) {
-      uint64_t handle;
-      uint32_t mode = state.lock_mode;
+      ::uint64_t handle;
+      ::uint32_t mode = state.lock_mode;
       String fname = state.node_name;
       struct LockSequencer lockseq;
 
@@ -242,11 +288,11 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_TRYLOCK) {
-      uint64_t handle;
-      uint32_t mode = state.lock_mode;
+      ::uint64_t handle;
+      ::uint32_t mode = state.lock_mode;
       String fname = state.node_name;
       struct LockSequencer lockseq;
-      uint32_t status;
+      ::uint32_t status;
 
       handle = Util::get_handle(fname);
       m_session->try_lock(handle, mode, &status, &lockseq);
@@ -262,7 +308,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_RELEASE) {
-      uint64_t handle;
+      ::uint64_t handle;
       String fname = state.node_name;
 
       handle = Util::get_handle(fname);
@@ -271,7 +317,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_GETSEQ) {
-      uint64_t handle;
+      ::uint64_t handle;
       struct LockSequencer lockseq;
       String fname = state.node_name;
 
@@ -287,6 +333,12 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String str = state.str;
 
       cout << str << endl;
+    }
+
+    else if (state.command == COMMAND_LOCATE) {
+      int type = state.locate_type;
+      String result = m_session->locate(type);
+      cout << result << endl;
     }
 
     else if (state.command == COMMAND_HELP) {
@@ -307,4 +359,24 @@ void HsCommandInterpreter::execute_line(const String &line) {
   else
     HT_THROWF(Error::HYPERSPACE_CLI_PARSE_ERROR, "parse error at: %s",
               info.stop);
+}
+
+void HsCommandInterpreter::printDirEntryAttrListing(int indent, const String& attr_name, const std::vector<DirEntryAttr> listing) {
+  static const int indent_size = 2;
+  for (size_t ii=0; ii<listing.size(); ii++) {
+    if (listing[ii].is_dir)
+      cout << "(dir) ";
+    else
+      cout << "      ";
+    if (indent) cout << String(indent - indent_size, ' ') << "+" << String(indent_size - 1, ' ');
+    if (listing[ii].has_attr) {
+      String attr_val((const char*)listing[ii].attr.base);
+      cout << listing[ii].name << ", " << attr_name << "=" << attr_val << endl ;
+    }
+    else
+      cout << listing[ii].name << endl ;
+
+    printDirEntryAttrListing(indent + indent_size, attr_name, listing[ii].sub_entries);
+  }
+  cout << flush ;
 }

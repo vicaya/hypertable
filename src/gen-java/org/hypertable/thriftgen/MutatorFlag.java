@@ -6,20 +6,45 @@
 package org.hypertable.thriftgen;
 
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Collections;
-import org.apache.thrift.IntRangeSet;
 import java.util.Map;
 import java.util.HashMap;
+import org.apache.thrift.TEnum;
 
-public class MutatorFlag {
-  public static final int NO_LOG_SYNC = 1;
+/**
+ * Mutator creation flags
+ * 
+ * NO_LOG_SYNC: Do not sync the commit log
+ * IGNORE_UNKNOWN_CFS: Don't throw exception if mutator writes to unknown column family
+ */
+public enum MutatorFlag implements org.apache.thrift.TEnum {
+  NO_LOG_SYNC(1),
+  IGNORE_UNKNOWN_CFS(2);
 
-  public static final IntRangeSet VALID_VALUES = new IntRangeSet(
-    NO_LOG_SYNC );
+  private final int value;
 
-  public static final Map<Integer, String> VALUES_TO_NAMES = new HashMap<Integer, String>() {{
-    put(NO_LOG_SYNC, "NO_LOG_SYNC");
-  }};
+  private MutatorFlag(int value) {
+    this.value = value;
+  }
+
+  /**
+   * Get the integer value of this enum value, as defined in the Thrift IDL.
+   */
+  public int getValue() {
+    return value;
+  }
+
+  /**
+   * Find a the enum type by its integer value, as defined in the Thrift IDL.
+   * @return null if the value is not found.
+   */
+  public static MutatorFlag findByValue(int value) { 
+    switch (value) {
+      case 1:
+        return NO_LOG_SYNC;
+      case 2:
+        return IGNORE_UNKNOWN_CFS;
+      default:
+        return null;
+    }
+  }
 }

@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/InetAddr.h"
 
 #include "AsyncComm/CommBuf.h"
 
@@ -48,7 +49,27 @@ void RequestHandlerRenewSession::run() {
       return;
     }
 
+    // if this is not the current replication master then try to return
+    // addr of current master
+
+    if (!m_master->is_master()) {
+      String location = m_master->get_current_master();
+
+      HT_DEBUG_OUT << "Redirecting request to current master " << location << HT_END;
+
+      CommBufPtr cbp(Protocol::create_server_redirect_request(location));
+      error = m_comm->send_datagram(m_event->addr, *m_send_addr, cbp);
+      if (error != Error::OK) {
+        HT_ERRORF("Comm::send_datagram returned %s", Error::get_text(error));
+      }
+      HT_DEBUG_OUT << "Redirected request to current master " << location << HT_END;
+      return;
+    }
+
+    HT_DEBUG_OUT << "Handling renew session request at local (master) site" << HT_END;
+
     if (m_session_id == 0) {
+      HT_DEBUG_OUT << "Do create session request at local (master) site" << HT_END;
       m_session_id = m_master->create_session(m_event->addr);
       HT_INFOF("Session handle %llu created", (Llu)m_session_id);
       error = Error::OK;

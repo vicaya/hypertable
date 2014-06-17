@@ -28,10 +28,8 @@ namespace Hypertable {
 
   class MaintenanceTaskCompaction : public MaintenanceTask {
   public:
-    MaintenanceTaskCompaction(boost::xtime &stime, RangePtr &range, bool major);
+    MaintenanceTaskCompaction(boost::xtime &stime, RangePtr &range);
     virtual void execute();
-  private:
-    bool     m_major;
   };
 
 }

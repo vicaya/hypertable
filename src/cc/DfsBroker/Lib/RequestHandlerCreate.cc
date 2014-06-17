@@ -41,9 +41,9 @@ void RequestHandlerCreate::run() {
   size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    bool overwrite = decode_i16(&decode_ptr, &decode_remain);
-    int32_t replication = decode_i32(&decode_ptr, &decode_remain);
+    uint32_t flags = decode_i32(&decode_ptr, &decode_remain);
     int32_t bufsz = decode_i32(&decode_ptr, &decode_remain);
+    int32_t replication = decode_i32(&decode_ptr, &decode_remain);
     int64_t blksz = decode_i64(&decode_ptr, &decode_remain);
     const char *fname = decode_str16(&decode_ptr, &decode_remain);
 
@@ -51,8 +51,7 @@ void RequestHandlerCreate::run() {
     if (fname[strlen(fname)-1] == '/')
       HT_THROWF(Error::DFSBROKER_BAD_FILENAME, "bad filename: %s", fname);
 
-    m_broker->create(&cb, fname, overwrite, bufsz, replication,
-                     blksz);
+    m_broker->create(&cb, fname, flags, bufsz, replication, blksz);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

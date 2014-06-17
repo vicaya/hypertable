@@ -20,7 +20,7 @@
 #ifndef HYPERTABLE_CSTR_HASH_TRAITS_H
 #define HYPERTABLE_CSTR_HASH_TRAITS_H
 
-#include "CharArena.h"
+#include "PageArena.h"
 #include "TclHash.h"
 
 namespace Hypertable {

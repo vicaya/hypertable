@@ -22,6 +22,8 @@
 #ifndef HYPERSPACE_SERVERCONNECTIONHANDLER_H
 #define HYPERSPACE_SERVERCONNECTIONHANDLER_H
 
+#include "Common/Compat.h"
+
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandler.h"
 
@@ -34,10 +36,7 @@ namespace Hyperspace {
    */
   class ServerConnectionHandler : public DispatchHandler {
   public:
-    ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
-                            MasterPtr &master)
-      : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master),
-        m_session_id(0) { }
+    ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master);
 
     virtual void handle(EventPtr &event_ptr);
 
@@ -46,6 +45,7 @@ namespace Hyperspace {
     ApplicationQueuePtr  m_app_queue_ptr;
     MasterPtr            m_master_ptr;
     uint64_t             m_session_id;
+    uint32_t             m_maintenance_interval;
   };
 
 }

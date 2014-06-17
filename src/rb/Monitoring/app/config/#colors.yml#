@@ -1,0 +1,17 @@
+colors:
+	num_ranges: "#cc0000"
+	scans:	    "#eeeeec"
+	cells_read: "#edd400"
+	bytes_read: "#3465a4"
+	cells_written: "#73d216"
+	bytes_written: "#5c3566"
+	syncs: "#cc0000"
+	q_c_accesses: "#ef2929"
+	q_c_hits: "#8ae234"
+	b_c_access: "#729fcf"
+	b_c_hits: "#fcaf3e"
+	q_c_max_mem: "#c17d11"
+	q_c_avail_mem: "#888a85"
+	b_c_max_mem: "#73d216"
+	b_c_avail_mem: "#ad7fa8"
+	

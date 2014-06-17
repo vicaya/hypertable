@@ -72,11 +72,11 @@ bool ScannerMap::remove(uint32_t id) {
 
 void ScannerMap::purge_expired(uint32_t max_idle_millis) {
   ScopedLock lock(m_mutex);
-  uint64_t now_millis = get_timestamp_millis();
+  int64_t now_millis = get_timestamp_millis();
   CellListScannerMap::iterator iter = m_scanner_map.begin();
 
   while (iter != m_scanner_map.end()) {
-    if ((now_millis - (*iter).second.last_access_millis) > max_idle_millis) {
+    if ((now_millis - (*iter).second.last_access_millis) > (int64_t)max_idle_millis) {
       CellListScannerMap::iterator tmp_iter = iter;
       HT_WARNF("Destroying scanner %d because it has not been used in %u "
                "milliseconds", (*iter).first, max_idle_millis);
@@ -92,8 +92,8 @@ void ScannerMap::purge_expired(uint32_t max_idle_millis) {
 }
 
 
-uint64_t ScannerMap::get_timestamp_millis() {
+int64_t ScannerMap::get_timestamp_millis() {
   boost::xtime now;
   boost::xtime_get(&now, boost::TIME_UTC);
-  return ((uint64_t)now.sec * 1000LL) + ((uint64_t)now.nsec / 1000000LL);
+  return ((int64_t)now.sec * 1000LL) + ((int64_t)now.nsec / 1000000LL);
 }

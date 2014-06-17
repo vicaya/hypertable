@@ -25,8 +25,6 @@
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandler.h"
 
-#include "Hypertable/Lib/MasterClient.h"
-
 #include "RangeServer.h"
 
 namespace Hypertable {
@@ -38,8 +36,6 @@ namespace Hypertable {
   class ConnectionHandler : public DispatchHandler {
   public:
 
-    ConnectionHandler(Comm *, ApplicationQueuePtr &, RangeServerPtr,
-                      MasterClientPtr &);
     ConnectionHandler(Comm *, ApplicationQueuePtr &, RangeServerPtr);
 
     virtual void handle(EventPtr &event_ptr);
@@ -48,7 +44,6 @@ namespace Hypertable {
     Comm                *m_comm;
     ApplicationQueuePtr  m_app_queue_ptr;
     RangeServerPtr       m_range_server_ptr;
-    MasterClientPtr      m_master_client_ptr;
     bool                 m_shutdown;
   };
 

@@ -22,7 +22,9 @@
 #ifndef HYPERTABLE_BLOCKCOMPRESSIONCODECQUICKLZ_H
 #define HYPERTABLE_BLOCKCOMPRESSIONCODECQUICKLZ_H
 
+#include "Common/Compat.h"
 #include "BlockCompressionCodec.h"
+#include "quicklz/quicklz.h"
 
 namespace Hypertable {
 
@@ -39,7 +41,8 @@ namespace Hypertable {
     virtual int get_type() { return QUICKLZ; }
 
   private:
-    uint8_t *m_workmem;
+    qlz_state_compress m_compress;
+    qlz_state_decompress m_decompress;
   };
 
 }

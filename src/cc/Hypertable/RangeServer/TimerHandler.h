@@ -23,6 +23,7 @@
 #define HYPERSPACE_TIMERHANDLER_H
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/condition.hpp>
 #include <boost/thread/xtime.hpp>
 
 #include "Common/Mutex.h"
@@ -44,12 +45,12 @@ namespace Hypertable {
     virtual bool low_memory() { return m_app_queue_paused; }
 
   private:
-    Mutex         m_mutex;
     Comm         *m_comm;
     RangeServer  *m_range_server;
     ApplicationQueuePtr m_app_queue;
     int32_t       m_timer_interval;
     int32_t       m_current_interval;
+    int64_t       m_last_low_memory_maintenance;
     bool          m_urgent_maintenance_scheduled;
     bool          m_app_queue_paused;
     boost::xtime  m_last_maintenance;

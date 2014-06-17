@@ -37,9 +37,9 @@ namespace Hypertable {
     explicit DynamicBuffer(size_t initialSize = 0, bool own_buffer = true) :
         size(initialSize), own(own_buffer) {
       if (size)
-        base = ptr = new uint8_t[size];
+        base = ptr = mark = new uint8_t[size];
       else
-        base = ptr = 0;
+        base = ptr = mark = 0;
     }
 
     ~DynamicBuffer() { if (own) delete [] base; }
@@ -47,6 +47,8 @@ namespace Hypertable {
     size_t remaining() const { return size - (ptr-base); }
 
     size_t fill() const { return ptr-base; }
+
+    bool empty() const { return ptr==base; }
 
     /**
      * Ensure space for additional data
@@ -94,10 +96,14 @@ namespace Hypertable {
       ptr = base;
     }
 
+    void set_mark() {
+      mark = ptr;
+    }
+
     void free() {
       if (own)
         delete [] base;
-      base = ptr = 0;
+      base = ptr = mark = 0;
       size = 0;
     }
 
@@ -105,7 +111,7 @@ namespace Hypertable {
       uint8_t *rbuf = base;
       if (lenp)
         *lenp = fill();
-      ptr = base = 0;
+      ptr = base = mark = 0;
       size = 0;
       return rbuf;
     }
@@ -117,6 +123,7 @@ namespace Hypertable {
         memcpy(new_buf, base, ptr-base);
 
       ptr = new_buf + (ptr-base);
+      mark = new_buf + (mark-base);
       if (own)
         delete [] base;
       base = new_buf;
@@ -125,6 +132,7 @@ namespace Hypertable {
 
     uint8_t *base;
     uint8_t *ptr;
+    uint8_t *mark;
     uint32_t size;
     bool own;
   };

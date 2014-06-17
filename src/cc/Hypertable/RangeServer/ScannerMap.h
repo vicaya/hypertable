@@ -88,7 +88,7 @@ namespace Hypertable {
     /**
      * Returns the number of milliseconds since the epoch
      */
-    uint64_t get_timestamp_millis();
+    int64_t get_timestamp_millis();
 
     static atomic_t ms_next_id;
 
@@ -97,7 +97,7 @@ namespace Hypertable {
     struct ScanInfo {
       CellListScannerPtr scanner_ptr;
       RangePtr range_ptr;
-      uint64_t last_access_millis;
+      int64_t last_access_millis;
       TableIdentifierManaged table;
     };
     typedef hash_map<uint32_t, ScanInfo> CellListScannerMap;

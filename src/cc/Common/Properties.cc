@@ -34,7 +34,7 @@ using namespace boost::program_options;
 // Custom validator defintions
 namespace boost { namespace program_options {
 
-void validate(boost::any &v, const Strings &values, int64_t *, int) {
+void validate(boost::any &v, const Strings &values, ::int64_t *, int) {
   validators::check_first_occurrence(v);
   const std::string &s = validators::get_single_string(values);
   char *last;
@@ -78,7 +78,7 @@ void validate(boost::any &v, const Strings &values, double *, int) {
   v = any(result);
 }
 
-void validate(boost::any &v, const Strings &values, int32_t *, int) {
+void validate(boost::any &v, const Strings &values, ::int32_t *, int) {
   validate(v, values, (int64_t *)0, 0);
   int64_t res = any_cast<int64_t>(v);
 
@@ -89,7 +89,7 @@ void validate(boost::any &v, const Strings &values, int32_t *, int) {
   v = any((int32_t)res);
 }
 
-void validate(boost::any &v, const Strings &values, uint16_t *, int) {
+void validate(boost::any &v, const Strings &values, ::uint16_t *, int) {
   validate(v, values, (int64_t *)0, 0);
   int64_t res = any_cast<int64_t>(v);
 

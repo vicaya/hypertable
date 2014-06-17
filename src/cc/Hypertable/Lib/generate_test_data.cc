@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   Schema *schema;
   std::string schemaspec;
   struct timeval tval;
-  uint64_t timestamp = 0;
+  int64_t timestamp = 0;
   uint32_t index;
   const char *rowkey;
   const char *qualifier;
@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
   int modval;
   std::string cfgfile = "";
   Client *client;
+  NamespacePtr ns;
   std::string tablename = "";
   unsigned int seed = 1234;
   bool gen_timestamps = false;
@@ -144,21 +145,27 @@ int main(int argc, char **argv) {
     Usage::dump_and_exit(usage);
 
   client = new Client(System::locate_install_dir(argv[0]), cfgfile);
+  ns = client->open_namespace("/");
 
   if (!tdata.load(System::install_dir + "/demo"))
     exit(1);
 
   try {
-    schemaspec = client->get_schema(tablename);
+    schemaspec = ns->get_schema_str(tablename);
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem getting schema for table '%s' - %s", argv[1], e.what());
     return e.code();
   }
 
-  schema = Schema::new_instance(schemaspec.c_str(), schemaspec.length(), true);
+  schema = Schema::new_instance(schemaspec.c_str(), schemaspec.length());
   if (!schema->is_valid()) {
     HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
+    exit(1);
+  }
+
+  if (schema->need_id_assignment()) {
+    HT_ERROR("Schema Parse Error: needs ID assignment");
     exit(1);
   }
 
@@ -197,7 +204,7 @@ int main(int argc, char **argv) {
     if (gen_timestamps) {
       // timestamp
       gettimeofday(&tval, 0);
-      timestamp = ((uint64_t)tval.tv_sec * 1000000LL) + tval.tv_usec;
+      timestamp = ((int64_t)tval.tv_sec * 1000000LL) + tval.tv_usec;
     }
 
     // row key

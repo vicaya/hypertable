@@ -1,15 +1,18 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
+HYPERTABLE_HOME=${HT_HOME}
 HT_SHELL=$HT_HOME/bin/hypertable
 SCRIPT_DIR=`dirname $0`
 #DATA_SEED=42 # for repeating certain runs
 DIGEST="openssl dgst -md5"
 
+. $HT_HOME/bin/ht-env.sh
+
 gen_test_data() {
   seed=${DATA_SEED:-$$}
   size=${DATA_SIZE:-"2000000"}
-  perl -e 'print "# rowkey\tcolumnkey\tvalue\n"' > data.header
+  perl -e 'print "#row\tcolumn\tvalue\n"' > data.header
   perl -e 'srand('$seed'); for($i=0; $i<'$size'; ++$i) {
     printf "row%07d\tcolumn%d\tvalue%d\n", $i, int(rand(3))+1, $i
   }' > data.body
@@ -50,7 +53,8 @@ run_test() {
 
   stop_range_server
   $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
-
+  # give rangeserver time to get registered etc 
+  sleep 3;
   $HT_SHELL --batch < $SCRIPT_DIR/create-test-table.hql
   if [ $? != 0 ] ; then
     echo "Unable to create table 'split-test', exiting ..."

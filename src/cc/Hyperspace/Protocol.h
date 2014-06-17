@@ -37,6 +37,8 @@ namespace Hyperspace {
    * Structure to hold extended attribute and value
    */
   struct Attribute {
+    Attribute() { }
+  Attribute(const char *n, const void *v, uint32_t vl) : name(n), value(v), value_len(vl) { }
     /** name of extended attribute */
     const char *name;
     /** pointer to attribute value */
@@ -57,8 +59,9 @@ namespace Hyperspace {
     create_server_keepalive_request(uint64_t session_id, int error);
     static CommBuf *
     create_server_keepalive_request(SessionDataPtr &session_data);
-    static CommBuf *create_handshake_request(uint64_t session_id);
-
+    static CommBuf *
+    create_server_redirect_request(const std::string &host);
+    static CommBuf *create_handshake_request(uint64_t session_id, const std::string &name);
     static CommBuf *
     create_open_request(const std::string &name, uint32_t flags,
         HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs);
@@ -69,12 +72,16 @@ namespace Hyperspace {
     create_attr_set_request(uint64_t handle, const std::string &name,
                             const void *value, size_t value_len);
     static CommBuf *
+    create_attr_incr_request(uint64_t handle, const std::string &name);
+    static CommBuf *
     create_attr_get_request(uint64_t handle, const std::string &name);
     static CommBuf *
     create_attr_del_request(uint64_t handle, const std::string &name);
     static CommBuf *create_attr_exists_request(uint64_t handle, const std::string &name);
     static CommBuf *create_attr_list_request(uint64_t handle);
     static CommBuf *create_readdir_request(uint64_t handle);
+    static CommBuf *create_readdir_attr_request(uint64_t handle, const std::string &name, bool include_sub_entries);
+    static CommBuf *create_readpath_attr_request(uint64_t handle, const std::string &name);
     static CommBuf *create_exists_request(const std::string &name);
 
     static CommBuf *
@@ -107,7 +114,11 @@ namespace Hyperspace {
     static const uint64_t COMMAND_RELEASE        = 17;
     static const uint64_t COMMAND_CHECKSEQUENCER = 18;
     static const uint64_t COMMAND_STATUS         = 19;
-    static const uint64_t COMMAND_MAX            = 20;
+    static const uint64_t COMMAND_REDIRECT       = 20;
+    static const uint64_t COMMAND_READDIRATTR    = 21;
+    static const uint64_t COMMAND_ATTRINCR       = 22;
+    static const uint64_t COMMAND_READPATHATTR   = 23;
+    static const uint64_t COMMAND_MAX            = 24;
 
     static const char * command_strs[COMMAND_MAX];
 

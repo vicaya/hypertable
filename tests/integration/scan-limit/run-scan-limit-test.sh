@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 if test ${INSTALL_DIR}
   then HT_HOME=${INSTALL_DIR}
@@ -14,7 +14,7 @@ restart_servers() {
 
 test() {
   restart_servers
-  $HT_HOME/bin/hypertable --no-prompt < \
+  $HT_HOME/bin/ht shell --no-prompt < \
       $SCRIPT_DIR/ScanLimit_test.hql > ScanLimit_test.output
 
   diff ScanLimit_test.output $SCRIPT_DIR/ScanLimit_test.golden

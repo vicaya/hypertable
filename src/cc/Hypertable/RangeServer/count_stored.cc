@@ -77,7 +77,7 @@ struct CellStoreInfo {
 };
 
 void
-fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
+fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_name,
                        std::vector<CellStoreInfo> &file_vector);
 
 } // local namespace
@@ -102,6 +102,7 @@ int main(int argc, char **argv) {
 
     // Create Hypertable client object
     ClientPtr hypertable_client = new Hypertable::Client(argv[0]);
+    NamespacePtr ns = hypertable_client->open_namespace("/");
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
     DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
 
@@ -112,10 +113,12 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    Global::block_cache = new FileBlockCache(200000000LL);
+    Global::block_cache = new FileBlockCache(200000000LL, 200000000LL);
+    Global::memory_tracker = new MemoryTracker(Global::block_cache);
+
     std::vector<CellStoreInfo> file_vector;
 
-    fill_cell_store_vector(hypertable_client, table_name.c_str(), file_vector);
+    fill_cell_store_vector(hypertable_client, ns, table_name.c_str(), file_vector);
 
     ScanContextPtr scan_context_ptr(new ScanContext());
     Key key;
@@ -166,31 +169,31 @@ int main(int argc, char **argv) {
 namespace {
 
 void
-fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
+fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_name,
                        std::vector<CellStoreInfo> &file_vector) {
   TablePtr table_ptr;
+  NamespacePtr ns_system;
   TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
   RowInterval ri;
   Cell cell;
-  uint32_t table_id;
   char start_row[16];
   char end_row[16];
   RangeCellStoreInfo range_cell_store_info;
   CellStoreInfo cell_store_info;
+  String table_id;
 
   try {
-
+    ns_system = client->open_namespace("sys");
     // Open the 'METADATA' table
-    table_ptr = hypertable_client_ptr->open_table("METADATA");
-
-    table_id = hypertable_client_ptr->get_table_id(table_name);
+    table_ptr = ns_system->open_table("METADATA");
+    table_id = ns->get_table_id(table_name);
 
     // Set up the scan specification
     scan_spec.max_versions = 1;
-    sprintf(start_row, "%d:", table_id);
+    sprintf(start_row, "%s:", table_id.c_str());
     ri.start = start_row;
-    sprintf(end_row, "%d:%s", table_id, Key::END_ROW_MARKER);
+    sprintf(end_row, "%s:%s", table_id.c_str(), Key::END_ROW_MARKER);
     ri.end = end_row;
     scan_spec.row_intervals.push_back(ri);
     scan_spec.columns.clear();

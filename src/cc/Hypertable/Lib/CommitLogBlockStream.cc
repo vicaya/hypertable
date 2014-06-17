@@ -35,13 +35,13 @@ namespace {
 bool CommitLogBlockStream::ms_assert_on_error = true;
 
 
-CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs)
+CommitLogBlockStream::CommitLogBlockStream(FilesystemPtr &fs)
   : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),
     m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
 }
 
 
-CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs,
+CommitLogBlockStream::CommitLogBlockStream(FilesystemPtr &fs,
     const String &log_dir, const String &fragment)
   : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),
     m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
@@ -62,7 +62,7 @@ void CommitLogBlockStream::load(const String &log_dir, const String &fragment) {
   m_log_dir = log_dir;
   m_cur_offset = 0;
   m_file_length = m_fs->length(m_fname);
-  m_fd = m_fs->open_buffered(m_fname, READAHEAD_BUFFER_SIZE, 2);
+  m_fd = m_fs->open_buffered(m_fname, Filesystem::OPEN_FLAG_DIRECTIO, READAHEAD_BUFFER_SIZE, 2);
 }
 
 
@@ -104,6 +104,8 @@ CommitLogBlockStream::next(CommitLogBlockInfo *infop,
 
   // check for truncation
   if ((m_file_length - m_cur_offset) < header->get_data_zlength()) {
+    HT_WARNF("Commit log fragment '%s' truncated (entry start position %llu)",
+             m_fname.c_str(), (Llu)(m_cur_offset-BlockCompressionHeaderCommitLog::LENGTH));
     infop->end_offset = m_file_length;
     infop->error = Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
     m_cur_offset = m_file_length;
@@ -115,7 +117,14 @@ CommitLogBlockStream::next(CommitLogBlockInfo *infop,
 
   nread = m_fs->read(m_fd, m_block_buffer.ptr, header->get_data_zlength());
 
-  HT_ASSERT(nread == header->get_data_zlength());
+  if (nread != header->get_data_zlength()) {
+    HT_WARNF("Commit log fragment '%s' truncated (entry start position %llu)",
+             m_fname.c_str(), (Llu)(m_cur_offset-BlockCompressionHeaderCommitLog::LENGTH));
+    infop->end_offset = m_file_length;
+    infop->error = Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
+    m_cur_offset = m_file_length;
+    return true;
+  }
 
   m_block_buffer.ptr += nread;
   m_cur_offset += nread;
@@ -138,7 +147,6 @@ CommitLogBlockStream::load_next_valid_header(
     m_block_buffer.ptr = m_block_buffer.base;
 
     while ((nread = m_fs->read(m_fd, m_block_buffer.ptr, toread)) < toread) {
-      HT_INFOF("Tried to read %lu but only got %lu", (Lu)toread, (Lu)nread);
       toread -= nread;
       m_block_buffer.ptr += nread;
     }

@@ -33,8 +33,12 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#ifdef HT_HT_XATTR_ENABLED
-# include <sys/xattr.h>
+#ifdef HT_XATTR_ENABLED
+# if defined(__FreeBSD__)
+#   include <sys/extattr.h>
+# else
+#   include <sys/xattr.h>
+# endif
 # if defined(__linux__)
 #   include <attr/xattr.h>
 # endif
@@ -48,6 +52,18 @@ extern "C" {
 
 using namespace Hypertable;
 using namespace std;
+
+ssize_t FileUtils::read(const String &fname, String &contents) {
+  off_t len = 0;
+  String str;
+  char *buf = file_to_buffer(fname, &len);
+  if (buf != 0) {
+    contents.append(buf, len);
+    delete [] buf;
+  }
+  return (ssize_t)len;
+}
+
 
 
 /**
@@ -65,8 +81,9 @@ ssize_t FileUtils::read(int fd, void *vptr, size_t n) {
         nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
         break;
-      else
+      else {
         return -1;
+      }
     } else if (nread == 0)
       break;/* EOF */
 
@@ -91,8 +108,9 @@ ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
         nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
         break;
-      else
+      else {
         return -1;
+      }
     } else if (nread == 0)
       break;/* EOF */
 
@@ -102,6 +120,23 @@ ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
   }
   return n - nleft;
 }
+
+
+ssize_t FileUtils::write(const String &fname, String &contents) {
+  int fd = open(fname.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
+  if (fd < 0) {
+    int saved_errno = errno;
+    HT_ERRORF("Unable to open file \"%s\" for writing - %s", fname.c_str(),
+              strerror(saved_errno));
+    errno = saved_errno;
+    return -1;
+  }
+  ssize_t rval = write(fd, contents.c_str(), contents.length());
+  ::close(fd);
+  return rval;
+}
+
+
 
 /**
  */
@@ -116,10 +151,11 @@ ssize_t FileUtils::write(int fd, const void *vptr, size_t n) {
     if ((nwritten = ::write(fd, ptr, nleft)) <= 0) {
       if (errno == EINTR)
         nwritten = 0; /* and call write() again */
-      if (errno == EAGAIN)
+      else if (errno == EAGAIN)
         break;
-      else
+      else {
         return -1; /* error */
+      }
     }
 
     nleft -= nwritten;
@@ -133,12 +169,13 @@ ssize_t FileUtils::writev(int fd, const struct iovec *vector, int count) {
   while ((nwritten = ::writev(fd, vector, count)) <= 0) {
     if (errno == EINTR)
       nwritten = 0; /* and call write() again */
-    if (errno == EAGAIN) {
+    else if (errno == EAGAIN) {
       nwritten = 0;
       break;
     }
-    else
+    else {
       return -1; /* error */
+    }
   }
   return nwritten;
 }
@@ -157,10 +194,11 @@ FileUtils::sendto(int fd, const void *vptr, size_t n, const sockaddr *to,
     if ((nsent = ::sendto(fd, ptr, nleft, 0, to, tolen)) <= 0) {
       if (errno == EINTR)
         nsent = 0; /* and call sendto() again */
-      if (errno == EAGAIN || errno == ENOBUFS)
+      else if (errno == EAGAIN || errno == ENOBUFS)
         break;
-      else
+      else {
         return -1; /* error */
+      }
     }
 
     nleft -= nsent;
@@ -182,10 +220,11 @@ ssize_t FileUtils::send(int fd, const void *vptr, size_t n) {
     if ((nsent = ::send(fd, ptr, nleft, 0)) <= 0) {
       if (errno == EINTR)
         nsent = 0; /* and call sendto() again */
-      if (errno == EAGAIN || errno == ENOBUFS)
+      else if (errno == EAGAIN || errno == ENOBUFS)
         break;
-      else
+      else {
         return -1; /* error */
+      }
     }
 
     nleft -= nsent;
@@ -230,13 +269,19 @@ ssize_t FileUtils::recv(int fd, void *vptr, size_t n) {
 void FileUtils::set_flags(int fd, int flags) {
   int val;
 
-  if ((val = fcntl(fd, F_GETFL, 0)) < 0)
-    cerr << "fcnt(F_GETFL) failed : " << strerror(errno) << endl;
+  if ((val = fcntl(fd, F_GETFL, 0)) < 0) {
+    int saved_errno = errno;
+    cerr << "fcnt(F_GETFL) failed : " << strerror(saved_errno) << endl;
+    errno = saved_errno;
+  }
 
   val |= flags;
 
-  if (fcntl(fd, F_SETFL, val) < 0)
-    cerr << "fcnt(F_SETFL) failed : " << strerror(errno) << endl;
+  if (fcntl(fd, F_SETFL, val) < 0) {
+    int saved_errno = errno;
+    cerr << "fcnt(F_SETFL) failed : " << strerror(saved_errno) << endl;
+    errno = saved_errno;
+  }
 }
 
 
@@ -250,12 +295,16 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
   *lenp = 0;
 
   if ((fd = open(fname.c_str(), O_RDONLY)) < 0) {
-    HT_ERRORF("open(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
+    int saved_errno = errno;
+    HT_ERRORF("open(\"%s\") failure - %s", fname.c_str(),  strerror(saved_errno));
+    errno = saved_errno;
     return 0;
   }
 
   if (fstat(fd, &statbuf) < 0) {
-    HT_ERRORF("fstat(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
+    int saved_errno = errno;
+    HT_ERRORF("fstat(\"%s\") failure - %s", fname.c_str(),  strerror(saved_errno));
+    errno = saved_errno;
     return 0;
   }
 
@@ -265,8 +314,12 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
 
   ssize_t nread = FileUtils::read(fd, rbuf, *lenp);
 
+  ::close(fd);
+
   if (nread == (ssize_t)-1) {
-    HT_ERRORF("read(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
+    int saved_errno = errno;
+    HT_ERRORF("read(\"%s\") failure - %s", fname.c_str(),  strerror(saved_errno));
+    errno = saved_errno;
     delete [] rbuf;
     *lenp = 0;
     return 0;
@@ -282,6 +335,16 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
   return rbuf;
 }
 
+String FileUtils::file_to_string(const String &fname) {
+  String str;
+  off_t len;
+  char *contents = file_to_buffer(fname, &len);
+  str = (contents == 0) ? "" : contents;
+  delete [] contents;
+  return str;
+}
+
+
 
 bool FileUtils::mkdirs(const String &dirname) {
   struct stat statbuf;
@@ -296,14 +359,18 @@ bool FileUtils::mkdirs(const String &dirname) {
     if (stat(tmpdir, &statbuf) != 0) {
       if (errno == ENOENT) {
         if (mkdir(tmpdir, 0755) != 0) {
+          int saved_errno = errno;
           HT_ERRORF("Problem creating directory '%s' - %s",
-                    tmpdir, strerror(errno));
+                    tmpdir, strerror(saved_errno));
+          errno = saved_errno;
           return false;
         }
       }
       else {
+        int saved_errno = errno;
         HT_ERRORF("Problem stat'ing directory '%s' - %s",
-                  tmpdir, strerror(errno));
+                  tmpdir, strerror(saved_errno));
+        errno = saved_errno;
         return false;
       }
     }
@@ -313,14 +380,18 @@ bool FileUtils::mkdirs(const String &dirname) {
   if (stat(tmpdir, &statbuf) != 0) {
     if (errno == ENOENT) {
       if (mkdir(tmpdir, 0755) != 0) {
+        int saved_errno = errno;
         HT_ERRORF("Problem creating directory '%s' - %s",
-                  tmpdir, strerror(errno));
+                  tmpdir, strerror(saved_errno));
+        errno = saved_errno;
         return false;
       }
     }
     else {
+      int saved_errno = errno;
       HT_ERRORF("Problem stat'ing directory '%s' - %s",
-                tmpdir, strerror(errno));
+                tmpdir, strerror(saved_errno));
+      errno = saved_errno;
       return false;
     }
   }
@@ -333,6 +404,27 @@ bool FileUtils::exists(const String &fname) {
   struct stat statbuf;
   if (stat(fname.c_str(), &statbuf) != 0)
     return false;
+  return true;
+}
+
+bool FileUtils::unlink(const String &fname) {
+  if (::unlink(fname.c_str()) == -1) {
+    int saved_errno = errno;
+    HT_ERRORF("unlink(\"%s\") failed - %s", fname.c_str(), strerror(saved_errno));
+    errno = saved_errno;
+    return false;
+  }
+  return true;
+}
+
+bool FileUtils::rename(const String &oldpath, const String &newpath) {
+  if (::rename(oldpath.c_str(), newpath.c_str()) == -1) {
+    int saved_errno = errno;
+    HT_ERRORF("rename(\"%s\", \"%s\") failed - %s",
+              oldpath.c_str(), newpath.c_str(), strerror(saved_errno));
+    errno = saved_errno;
+    return false;
+  }
   return true;
 }
 
@@ -404,6 +496,8 @@ FileUtils::getxattr(const String &path, const String &name, void *value,
   return ::getxattr(path.c_str(), canonic.c_str(), value, size);
 #elif defined(__APPLE__)
   return ::getxattr(path.c_str(), canonic.c_str(), value, size, 0, 0);
+#elif defined(__FreeBSD__)
+  return ::extattr_get_file(path.c_str(), EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
 #else
   ImplementMe;
 #endif
@@ -418,6 +512,8 @@ FileUtils::setxattr(const String &path, const String &name, const void *value,
   return ::setxattr(path.c_str(), canonic.c_str(), value, size, flags);
 #elif defined(__APPLE__)
   return ::setxattr(path.c_str(), canonic.c_str(), value, size, 0, flags);
+#elif defined(__FreeBSD__)
+  return ::extattr_set_file(path.c_str(), EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
 #else
   ImplementMe;
 #endif
@@ -430,6 +526,8 @@ int FileUtils::fgetxattr(int fd, const String &name, void *value, size_t size) {
   return ::fgetxattr(fd, canonic.c_str(), value, size);
 #elif defined(__APPLE__)
   return ::fgetxattr(fd, canonic.c_str(), value, size, 0, 0);
+#elif defined(__FreeBSD__)
+  return ::extattr_get_fd(fd, EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
 #else
   ImplementMe;
 #endif
@@ -444,6 +542,8 @@ FileUtils::fsetxattr(int fd, const String &name, const void *value,
   return ::fsetxattr(fd, canonic.c_str(), value, size, flags);
 #elif defined(__APPLE__)
   return ::fsetxattr(fd, canonic.c_str(), value, size, 0, flags);
+#elif defined(__FreeBSD__)
+  return ::extattr_set_fd(fd, EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
 #else
   ImplementMe;
 #endif
@@ -456,6 +556,8 @@ int FileUtils::removexattr(const String &path, const String &name) {
   return ::removexattr(path.c_str(), canonic.c_str());
 #elif defined(__APPLE__)
   return ::removexattr(path.c_str(), canonic.c_str(), 0);
+#elif defined(__FreeBSD__)
+  return ::extattr_delete_file(path.c_str(), EXTATTR_NAMESPACE_USER, canonic.c_str());
 #else
   ImplementMe;
 #endif
@@ -467,6 +569,8 @@ int FileUtils::fremovexattr(int fd, const String &name) {
   return ::fremovexattr(fd, canonic.c_str());
 #elif defined(__APPLE__)
   return ::fremovexattr(fd, canonic.c_str(), 0);
+#elif defined(__FreeBSD__)
+  return ::extattr_delete_fd(fd, EXTATTR_NAMESPACE_USER, canonic.c_str());
 #else
   ImplementMe;
 #endif

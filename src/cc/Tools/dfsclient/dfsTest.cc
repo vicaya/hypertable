@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -58,7 +59,6 @@ using namespace Hypertable;
 using namespace std;
 
 namespace {
-  const uint16_t DEFAULT_DFSBROKER_PORT = 38030;
   const char *usage[] = {
     "usage: dfsTest",
     "",
@@ -116,7 +116,7 @@ namespace {
     char buf[1024];
     String file_a = testdir +"/filename.a";
     String file_b = testdir +"/filename.b";
-    int fd = client->create(file_a, true, -1, -1, -1);
+    int fd = client->create(file_a, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
     StaticBuffer sbuf((char *)magic, strlen(magic) + 1, false);
     client->append(fd, sbuf);
     client->close(fd);
@@ -143,7 +143,9 @@ int main(int argc, char **argv) {
     System::initialize(argv[0]);
     ReactorFactory::initialize(2);
 
-    InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
+    uint16_t port = Config::properties->get_i16("DfsBroker.Port");
+
+    InetAddr::initialize(&addr, "localhost", port);
 
     conn_mgr = new ConnectionManager();
     client = new DfsBroker::Client(conn_mgr, addr, 15000);
@@ -152,7 +154,7 @@ int main(int argc, char **argv) {
       HT_ERROR("Unable to connect to DFS");
       return 1;
     }
-    String testdir = format("/dfsTest%d", getpid());
+    String testdir = format("/dfsTest%d", (int)getpid());
     client->mkdirs(testdir);
 
     test_copy(client, testdir);

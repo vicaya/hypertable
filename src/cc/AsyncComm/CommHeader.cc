@@ -32,6 +32,7 @@ void CommHeader::encode(uint8_t **bufp) {
   uint8_t *base = *bufp;
   Serialization::encode_i8(bufp, version);
   Serialization::encode_i8(bufp, header_len);
+  Serialization::encode_i16(bufp, alignment);
   Serialization::encode_i16(bufp, flags);
   Serialization::encode_i32(bufp, 0);
   Serialization::encode_i32(bufp, id);
@@ -42,7 +43,7 @@ void CommHeader::encode(uint8_t **bufp) {
   Serialization::encode_i64(bufp, command);
   // compute and serialize header checksum
   header_checksum = fletcher32(base, (*bufp)-base);
-  base += 4;
+  base += 6;
   Serialization::encode_i32(&base, header_checksum);
 }
 
@@ -55,6 +56,7 @@ void CommHeader::decode(const uint8_t **bufp, size_t *remainp) {
   HT_TRY("decoding comm header",
          version = Serialization::decode_i8(bufp, remainp);
          header_len = Serialization::decode_i8(bufp, remainp);
+         alignment = Serialization::decode_i16(bufp, remainp);
          flags = Serialization::decode_i16(bufp, remainp);
          header_checksum = Serialization::decode_i32(bufp, remainp);
          id = Serialization::decode_i32(bufp, remainp);
@@ -63,7 +65,7 @@ void CommHeader::decode(const uint8_t **bufp, size_t *remainp) {
          timeout_ms = Serialization::decode_i32(bufp, remainp);
          payload_checksum = Serialization::decode_i32(bufp, remainp);
          command = Serialization::decode_i64(bufp, remainp));
-  memset((void *)(base+4), 0, 4);
+  memset((void *)(base+6), 0, 4);
   uint32_t checksum = fletcher32(base, *bufp-base);
   if (checksum != header_checksum)
     HT_THROWF(Error::COMM_HEADER_CHECKSUM_MISMATCH, "%u != %u", checksum,

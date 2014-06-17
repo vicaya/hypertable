@@ -22,8 +22,10 @@
 #ifndef HYPERTABLE_RANGESTATSGATHERER_H
 #define HYPERTABLE_RANGESTATSGATHERER_H
 
-#include "Common/CharArena.h"
+#include "Common/PageArena.h"
 #include "Common/ReferenceCount.h"
+
+#include "Hypertable/Lib/TableMutator.h"
 
 #include "MaintenanceQueue.h"
 #include "Range.h"
@@ -39,7 +41,7 @@ namespace Hypertable {
 
     virtual ~RangeStatsGatherer() { }
 
-    void fetch(RangeStatsVector &range_stats);
+    void fetch(RangeStatsVector &range_stats, size_t *lenp=0, TableMutator *mutator=0);
 
     void clear();
 

@@ -23,6 +23,7 @@
 #define HYPERTABLE_MASTERCLIENT_H
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/condition.hpp>
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/CommBuf.h"
@@ -30,6 +31,7 @@
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Common/ReferenceCount.h"
+#include "Common/StatsSystem.h"
 #include "Common/Timer.h"
 
 #include "Hyperspace/HandleCallback.h"
@@ -41,48 +43,83 @@
 namespace Hypertable {
 
   class Comm;
+  class MasterClient;
+  class MasterClientHyperspaceSessionCallback: public Hyperspace::SessionCallback {
+  public:
+    MasterClientHyperspaceSessionCallback() {}
+    ~MasterClientHyperspaceSessionCallback() {}
+    void safe() {}
+    void expired() {}
+    void jeopardy() {}
+    void disconnected();
+    void reconnected();
+
+  private:
+    friend class MasterClient;
+    MasterClient *m_masterclient;
+  };
 
   class MasterClient : public ReferenceCount {
   public:
 
     MasterClient(ConnectionManagerPtr &, Hyperspace::SessionPtr &,
-                 uint32_t timeout_ms, ApplicationQueuePtr &);
+                 const String &toplevel_dir, uint32_t timeout_ms,
+                 ApplicationQueuePtr &);
+    MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms);
     ~MasterClient();
 
-    void initiate_connection(DispatchHandlerPtr dhp);
+    void initiate_connection(DispatchHandlerPtr dhp=0, ConnectionInitializerPtr init=0);
 
     bool wait_for_connection(uint32_t max_wait_ms);
     bool wait_for_connection(Timer &timer);
 
-    void create_table(const char *tablename, const char *schemastr,
+    void create_namespace(const String &name, int flags,
+                          DispatchHandler *handler, Timer *timer=0);
+    void create_namespace(const String &name, int flags, Timer *timer=0);
+
+    void drop_namespace(const String &name, bool if_exists,
+                        DispatchHandler *handler, Timer *timer=0);
+    void drop_namespace(const String &name, bool if_exists, Timer *timer=0);
+
+    void create_table(const String &tablename, const String &schema,
                       DispatchHandler *handler, Timer *timer = 0);
-    void create_table(const char *tablename, const char *schemastr,
+    void create_table(const String &tablename, const String &schema,
                       Timer *timer = 0);
-    void alter_table(const char *tablename, const char *schemastr,
-                         DispatchHandler *handler, Timer *timer = 0);
-    void alter_table(const char *tablename, const char *schemastr,
+    void alter_table(const String &tablename, const String &schema,
+                     DispatchHandler *handler, Timer *timer = 0);
+    void alter_table(const String &tablename, const String &schema,
                      Timer *timer = 0);
-    void get_schema(const char *tablename, DispatchHandler *handler,
+    void rename_table(const String &old_name, const String &new_name,
+                      DispatchHandler *handler, Timer *timer = 0);
+    void rename_table(const String &old_name, const String &new_name,
+                      Timer *timer = 0);
+    void get_schema(const String &tablename, DispatchHandler *handler,
                     Timer *timer = 0);
-    void get_schema(const char *tablename, std::string &schema, Timer *timer=0);
+    void get_schema(const String &tablename, std::string &schema, Timer *timer=0);
 
     void status(Timer *timer=0);
 
-    void register_server(std::string &location, DispatchHandler *handler,
-                         Timer *timer = 0);
-    void register_server(std::string &location, Timer *timer=0);
+    void register_server(std::string &location, uint16_t listen_port,
+                         StatsSystem &system_stats,
+                         DispatchHandler *handler, Timer *timer = 0);
+    void register_server(std::string &location, uint16_t listen_port,
+                         StatsSystem &system_stats, Timer *timer=0);
 
-    void report_split(TableIdentifier *table, RangeSpec &range,
-                      const char *log_dir, uint64_t soft_limit,
-                      DispatchHandler *handler, Timer *timer = 0);
-    void report_split(TableIdentifier *table, RangeSpec &range,
-                      const char *log_dir, uint64_t soft_limit, Timer *timer=0);
+    void move_range(TableIdentifier *table, RangeSpec &range,
+                    const String &log_dir, uint64_t soft_limit,
+                    bool split, DispatchHandler *handler, Timer *timer = 0);
+    void move_range(TableIdentifier *table, RangeSpec &range,
+                    const String &log_dir, uint64_t soft_limit,
+                    bool split, Timer *timer=0);
 
-    void drop_table(const char *table_name, bool if_exists,
+    void relinquish_acknowledge(TableIdentifier *table, RangeSpec &range,
+                                DispatchHandler *handler, Timer *timer = 0);
+    void relinquish_acknowledge(TableIdentifier *table, RangeSpec &range,
+                                Timer *timer=0);
+
+    void drop_table(const String &table_name, bool if_exists,
                     DispatchHandler *handler, Timer *timer=0);
-    void drop_table(const char *table_name, bool if_exists, Timer *timer=0);
-
-    void close(Timer *timer=0);
+    void drop_table(const String &table_name, bool if_exists, Timer *timer=0);
 
     void shutdown(Timer *timer=0);
 
@@ -91,22 +128,36 @@ namespace Hypertable {
     void set_verbose_flag(bool verbose) { m_verbose = verbose; }
 
   private:
+    friend class MasterClientHyperspaceSessionCallback;
 
-    void send_message(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer);
+    void hyperspace_disconnected();
+    void hyperspace_reconnected();
+    void send_message_async(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer, const String &label);
+    bool send_message(CommBufPtr &cbp, Timer *timer, EventPtr &event, const String &label);
+    void fetch_result(int64_t id, Timer *timer, EventPtr &event, const String &label);
+    void initialize_hyperspace();
+    void initialize(Timer *&timer, Timer &tmp_timer);
 
     Mutex                  m_mutex;
+    boost::condition       m_cond;
     bool                   m_verbose;
     Comm                  *m_comm;
-    ConnectionManagerPtr   m_conn_manager_ptr;
-    Hyperspace::SessionPtr m_hyperspace_ptr;
-    ApplicationQueuePtr    m_app_queue_ptr;
-    uint32_t               m_timeout_ms;
-    bool                   m_initiated;
+    ConnectionManagerPtr   m_conn_manager;
+    Hyperspace::SessionPtr m_hyperspace;
+    ApplicationQueuePtr    m_app_queue;
     uint64_t               m_master_file_handle;
-    Hyperspace::HandleCallbackPtr m_master_file_callback_ptr;
+    Hyperspace::HandleCallbackPtr m_master_file_callback;
     InetAddr               m_master_addr;
     String                 m_master_addr_string;
-    DispatchHandlerPtr     m_dispatcher_handler_ptr;
+    DispatchHandlerPtr     m_dispatcher_handler;
+    ConnectionInitializerPtr m_connection_initializer;
+    bool                   m_hyperspace_init;
+    bool                   m_hyperspace_connected;
+    Mutex                  m_hyperspace_mutex;
+    uint32_t               m_timeout_ms;
+    MasterClientHyperspaceSessionCallback m_hyperspace_session_callback;
+    String                 m_toplevel_dir;
+    uint32_t               m_retry_interval;
   };
 
   typedef intrusive_ptr<MasterClient> MasterClientPtr;

@@ -1,0 +1,46 @@
+Hypertable Monitoring
+=====================
+
+in development 
+
+
+# to run
+
+* install required tools
+	
+		sudo port install rrdtool
+		
+		
+	* OS X install error encountered: 
+		
+			...
+			Image error: /opt/local/lib/perl5/5.8.9/darwin-2level/perllocal.pod already exists and does not belong to a registered port.  Unable to activate port
+			...
+	
+		resolved with: 
+
+				mv /opt/local/lib/perl5/5.8.9/darwin-2level/perllocal.pod /opt/local/lib/perl5/5.8.9/darwin-2level/perllocal.old.pod
+	
+
+* install rrdtool ruby bindings OS X notes
+
+ * [http://oss.oetiker.ch/rrdtool/prog/rrdruby.en.html](http://oss.oetiker.ch/rrdtool/prog/rrdruby.en.html)
+
+	* Find the ruby bindings in the bindings directory of the rrdtool source. [http://oss.oetiker.ch/rrdtool/download.en.html](http://oss.oetiker.ch/rrdtool/download.en.html)
+
+	* Then follow the readme instructions, with the following change:
+
+			dir_config("rrd","../../src","../../src/.libs")
+		
+		to
+			
+			dir_config("rrd","../../src","/opt/local/lib") # or your location
+
+* run app
+
+		script/server
+
+No database or migrations currently required
+
+
+

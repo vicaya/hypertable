@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -24,8 +24,13 @@
 
 #include <queue>
 #include <set>
+#include <vector>
 
 #include <boost/thread/thread.hpp>
+
+extern "C" {
+#include <poll.h>
+}
 
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
@@ -35,6 +40,11 @@
 #include "ExpireTimer.h"
 
 namespace Hypertable {
+
+  typedef struct {
+    struct pollfd pollfd;
+    IOHandler *handler;
+  } PollDescriptorT;
 
   class Reactor : public ReferenceCount {
 
@@ -55,9 +65,7 @@ namespace Hypertable {
     void add_request(uint32_t id, IOHandler *handler, DispatchHandler *dh,
                      boost::xtime &expire) {
       ScopedLock lock(m_mutex);
-      boost::xtime now;
       m_request_cache.insert(id, handler, dh, expire);
-      boost::xtime_get(&now, boost::TIME_UTC);
       if (m_next_wakeup.sec == 0 || xtime_cmp(expire, m_next_wakeup) < 0)
         poll_loop_interrupt();
     }
@@ -91,14 +99,25 @@ namespace Hypertable {
 
     void handle_timeouts(PollTimeout &next_timeout);
 
-#if defined(__linux__)
+#if defined(__linux__) || defined (__sun__)
     int poll_fd;
-#elif defined (__APPLE__)
+#elif defined (__APPLE__) || defined(__FreeBSD__)
     int kqd;
 #endif
 
-    void poll_loop_interrupt();
-    void poll_loop_continue();
+    int add_poll_interest(int sd, short events, IOHandler *handler);
+    int remove_poll_interest(int sd);
+    int modify_poll_interest(int sd, short events);
+    void fetch_poll_array(std::vector<struct pollfd> &fdarray,
+			  std::vector<IOHandler *> &handlers);
+
+    Mutex m_poll_array_mutex;
+    std::vector<PollDescriptorT> polldata;
+
+    int poll_loop_interrupt();
+    int poll_loop_continue();
+
+    int interrupt_sd() { return m_interrupt_sd; }
 
   protected:
     typedef std::priority_queue<ExpireTimer, std::vector<ExpireTimer>, LtTimer>

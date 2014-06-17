@@ -82,7 +82,7 @@ CellStoreV0::~CellStoreV0() {
     HT_ERROR_OUT << e << HT_END;
   }
   if (m_memory_consumed)
-    Global::memory_tracker.subtract(m_memory_consumed);
+    Global::memory_tracker->subtract(m_memory_consumed);
 }
 
 
@@ -152,7 +152,7 @@ CellStoreV0::create(const char *fname, size_t max_entries,
       (BlockCompressionCodec::Type)m_trailer.compression_type,
       m_compressor_args);
 
-  m_fd = m_filesys->create(m_filename, true, -1, -1, -1);
+  m_fd = m_filesys->create(m_filename, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
 
   m_bloom_filter_mode = props->get<BloomFilterMode>("bloom-filter-mode");
   m_max_approx_items = props->get_i32("max-approx-items");
@@ -390,7 +390,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   delete [] m_fix_index_buffer.release();
 
   // Add table information
-  m_trailer.table_id = table_identifier->id;
+  m_trailer.table_id = table_identifier->index();
   m_trailer.table_generation = table_identifier->generation;
 
   // write trailer
@@ -417,11 +417,14 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   m_fd = m_filesys->open(m_filename);
 
   m_disk_usage = (uint32_t)m_file_length;
+  if (m_disk_usage < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
+                << HT_END;
 
   m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();
-  Global::memory_tracker.add(m_memory_consumed);
+  Global::memory_tracker->add(m_memory_consumed);
 
   delete m_compressor;
   m_compressor = 0;
@@ -576,11 +579,14 @@ void CellStoreV0::load_index() {
   }
 
   m_disk_usage = m_index_map32.disk_used();
+  if (m_disk_usage < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
+                << HT_END;
 
   m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();
-  Global::memory_tracker.add(m_memory_consumed);
+  Global::memory_tracker->add(m_memory_consumed);
 
   delete m_compressor;
   m_compressor = 0;

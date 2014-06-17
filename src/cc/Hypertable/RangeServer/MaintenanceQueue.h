@@ -35,7 +35,7 @@
 #include "Common/ReferenceCount.h"
 
 #include "MaintenanceTask.h"
-#include "MaintenanceTaskIndexPurge.h"
+#include "MaintenanceTaskMemoryPurge.h"
 
 namespace Hypertable {
 
@@ -65,6 +65,7 @@ namespace Hypertable {
       TaskQueue          queue;
       Mutex              mutex;
       boost::condition   cond;
+      boost::condition   empty_cond;
       bool               shutdown;
       std::set<Range *>  pending;
       std::set<Range *>  in_progress;
@@ -121,7 +122,7 @@ namespace Hypertable {
 
           }
           catch(Hypertable::Exception &e) {
-            if (static_cast<MaintenanceTaskIndexPurge *>(task) == 0) {
+            if (dynamic_cast<MaintenanceTaskMemoryPurge *>(task) == 0) {
               HT_ERROR_OUT << e << HT_END;
               if (task->retry()) {
                 ScopedLock lock(m_state.mutex);
@@ -140,7 +141,9 @@ namespace Hypertable {
 
           {
             ScopedLock lock(m_state.mutex);
-            m_state.in_progress.erase(task->get_range());              
+            m_state.in_progress.erase(task->get_range());
+	    if (m_state.queue.empty() && m_state.in_progress.empty())
+	      m_state.empty_cond.notify_one();
           }
 
           delete task;
@@ -220,8 +223,12 @@ namespace Hypertable {
      */
     void clear() {
       ScopedLock lock(m_state.mutex);
-      while (!m_state.queue.empty())
+      MaintenanceTask *task = 0;
+      while (!m_state.queue.empty()) {
+	task = m_state.queue.top();
         m_state.queue.pop();
+	delete task;
+      }
       m_state.pending.clear();
     }
 
@@ -252,6 +259,22 @@ namespace Hypertable {
       ScopedLock lock(m_state.mutex);
       return m_state.pending.size();
     }
+
+    void wait_for_empty() {
+      ScopedLock lock(m_state.mutex);
+      while (!m_state.queue.empty() || !m_state.in_progress.empty())
+	m_state.empty_cond.wait(lock);
+    }
+
+    bool wait_for_empty(boost::xtime &expire_time) {
+      ScopedLock lock(m_state.mutex);
+      while (!m_state.queue.empty() || !m_state.in_progress.empty()) {
+	if (!m_state.empty_cond.timed_wait(lock, expire_time))
+          return false;
+      }
+      return true;
+    }
+
   };
 
   typedef boost::intrusive_ptr<MaintenanceQueue> MaintenanceQueuePtr;

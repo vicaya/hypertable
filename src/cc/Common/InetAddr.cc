@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Serialization.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -65,7 +66,7 @@ bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
     return true;
   }
   else {
-#ifdef __linux__
+#if defined(__linux__)
     // Let's hope this is not broken in the glibc we're using
     struct hostent hent, *he = 0;
     char hbuf[2048];
@@ -76,7 +77,7 @@ bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
       HT_ERRORF("gethostbyname '%s': error: %d", host, err);
       return false;
     }
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
     // This is supposed to be safe on Darwin (despite the man page)
     // and FreeBSD, as it's implemented with thread local storage.
     struct hostent *he = gethostbyname(host);
@@ -176,11 +177,37 @@ bool InetAddr::initialize(sockaddr_in *addr, uint32_t haddr, uint16_t port) {
   return true;
 }
 
+size_t InetAddr::encoded_length() const {
+  return 8;
+}
+
+void InetAddr::encode(uint8_t **bufp) const {
+  *(*bufp)++ = sizeof(sockaddr_in);
+  *(*bufp)++ = sin_family;
+  Serialization::encode_i16(bufp, sin_port);
+  Serialization::encode_i32(bufp, sin_addr.s_addr);
+}
+
+void InetAddr::decode(const uint8_t **bufp, size_t *remainp) {
+  Serialization::decode_i8(bufp, remainp);
+  sin_family = Serialization::decode_i8(bufp, remainp);
+  sin_port = Serialization::decode_i16(bufp, remainp);
+  sin_addr.s_addr = Serialization::decode_i32(bufp, remainp);
+}
+
+
 String InetAddr::format(const sockaddr_in &addr, int sep) {
   // inet_ntoa is not thread safe on many platforms and deprecated
   const uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;
   return Hypertable::format("%d.%d.%d.%d%c%d", (int)ip[0], (int)ip[1],
       (int)ip[2],(int)ip[3], sep, (int)ntohs(addr.sin_port));
+}
+
+String InetAddr::format_ipaddress(const sockaddr_in &addr) {
+  // inet_ntoa is not thread safe on many platforms and deprecated
+  const uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;
+  return Hypertable::format("%d.%d.%d.%d", (int)ip[0], (int)ip[1],
+			    (int)ip[2],(int)ip[3]);
 }
 
 String InetAddr::hex(const sockaddr_in &addr, int sep) {

@@ -1,25 +1,47 @@
-<Schema>
+<Schema generation="2">
   <AccessGroup name="default">
-    <ColumnFamily>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
       <Name>LogDir</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
     </ColumnFamily>
-    <ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
       <Name>Files</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="6">
+      <Generation>2</Generation>
+      <Name>NextCSID</Name>
+      <MaxVersions>1</MaxVersions>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="location" inMemory="true">
-    <ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
       <Name>StartRow</Name>
+      <Counter>false</Counter>
       <MaxVersions>5</MaxVersions>
+      <deleted>false</deleted>
     </ColumnFamily>
-    <ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
       <Name>Location</Name>
+      <Counter>false</Counter>
       <MaxVersions>5</MaxVersions>
+      <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="logging">
-    <ColumnFamily>
+    <ColumnFamily id="5">
+      <Generation>1</Generation>
       <Name>Event</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

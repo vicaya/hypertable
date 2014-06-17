@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright 2008 Doug Judd (Zvents, Inc.)
 #
@@ -25,6 +25,7 @@ usage() {
   echo ""
   echo "OPTIONS:"
   echo "  --valgrind  run range server with valgrind"
+  echo "  --heapcheck run range server with google-perf-tools Heapcheck"
   echo ""
 }
 
@@ -32,6 +33,10 @@ while [ "$1" != "${1##[-+]}" ]; do
   case $1 in
     --valgrind)
       VALGRIND="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
+      shift
+      ;;
+    --heapcheck)
+      HEAPCHECK="env HEAPCHECK=normal"
       shift
       ;;
     *)

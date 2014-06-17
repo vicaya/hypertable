@@ -30,23 +30,21 @@
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 #include "Common/HashMap.h"
+#include "Common/Filesystem.h"
 
 #include "BlockCompressionCodec.h"
 #include "BlockCompressionHeaderCommitLog.h"
 #include "CommitLogBase.h"
 #include "CommitLogBlockStream.h"
-#include "Filesystem.h"
 #include "Key.h"
 
 
 namespace Hypertable {
 
-  typedef std::stack<CommitLogFileInfo> LogFragmentStack;
-
   class CommitLogReader : public CommitLogBase {
 
   public:
-    CommitLogReader(Filesystem *fs, const String &log_dir, bool mark_for_deletion=false);
+    CommitLogReader(FilesystemPtr &fs, const String &log_dir, bool mark_for_deletion=false);
     virtual ~CommitLogReader();
 
     bool next_raw_block(CommitLogBlockInfo *,
@@ -66,7 +64,7 @@ namespace Hypertable {
     void load_fragments(String log_dir, bool mark_for_deletion);
     void load_compressor(uint16_t ztype);
 
-    Filesystem       *m_fs;
+    FilesystemPtr     m_fs;
     uint64_t          m_fragment_queue_offset;
     DynamicBuffer     m_block_buffer;
     int64_t           m_revision;

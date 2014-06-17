@@ -23,6 +23,12 @@
 #include "Common/InetAddr.h"
 #include "Config.h"
 
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+#include <strings.h>
+
 namespace Hypertable { namespace Config {
 
 void init_hyperspace_client_options() {
@@ -43,15 +49,36 @@ void init_hyperspace_client_options() {
   alias("lease-interval", "Hyperspace.Lease.Interval");
   alias("grace-period", "Hyperspace.GracePeriod");
   // hidden aliases
-  alias("hs-host", "Hyperspace.Master.Host");
-  alias("hs-port", "Hyperspace.Master.Port");
+  alias("hs-host", "Hyperspace.Replica.Host");
+  alias("hs-port", "Hyperspace.Replica.Port");
 }
 
 void init_hyperspace_client() {
-  Endpoint e = InetAddr::parse_endpoint(get_str("hyperspace"));
-  bool isdefaulted = defaulted("hyperspace");
-  properties->set("hs-host", e.host, isdefaulted);
-  properties->set("hs-port", e.port, !e.port || isdefaulted);
+  // prepare hidden aliases to be synced
+  if (properties->has("hyperspace")) {
+    Endpoint e = InetAddr::parse_endpoint(get_str("hyperspace"));
+    bool defaulted = properties->defaulted("hyperspace");
+    Strings hosts;
+    if (properties->has("Hyperspace.Replica.Host"))
+      hosts = properties->get_strs("Hyperspace.Replica.Host");
+
+    size_t i;
+    for (i=0; i<hosts.size(); i++) {
+#if defined(__WIN32__) || defined(_WIN32) || defined(WIN32) || defined(__WINDOWS_386__)
+      if (stricmp(hosts[i].c_str(), e.host.c_str()) == 0)
+        break;
+#else
+      if (strcasecmp(hosts[i].c_str(), e.host.c_str()) == 0)
+        break;
+#endif
+    }
+    // if not found ...
+    if (i == hosts.size()) {
+      hosts.insert(hosts.begin(), e.host);
+      properties->set("hs-host", hosts, defaulted);
+    }
+    properties->set("hs-port", e.port, !e.port || defaulted);
+  }
 }
 
 void init_hyperspace_command_shell_options() {
@@ -69,10 +96,10 @@ void init_hyperspace_master_options() {
     ("lease-interval", i32()->default_value(20000),
         "Hyperspace master lease interval in milliseconds")
     ;
-  alias("reactors", "Hyperspace.Master.Reactors");
-  alias("workers", "Hyperspace.Master.Workers");
-  alias("port", "Hyperspace.Master.Port");
-  alias("dir", "Hyperspace.Master.Dir");
+  alias("reactors", "Hyperspace.Replica.Reactors");
+  alias("workers", "Hyperspace.Replica.Workers");
+  alias("port", "Hyperspace.Replica.Port");
+  alias("dir", "Hyperspace.Replica.Dir");
   alias("keepalive", "Hyperspace.KeepAlive.Interval");
   alias("lease-interval", "Hyperspace.Lease.Interval");
 }

@@ -23,6 +23,7 @@
 #include <cassert>
 
 #include "Common/Error.h"
+#include "Common/Filesystem.h"
 #include "Common/System.h"
 
 #include "Hypertable/Lib/BlockCompressionHeader.h"
@@ -35,7 +36,7 @@
 using namespace Hypertable;
 
 namespace {
-  const uint32_t MINIMUM_READAHEAD_AMOUNT = 65536;
+  const uint32_t MINIMUM_READAHEAD_AMOUNT = 524288;
 }
 
 
@@ -43,11 +44,17 @@ template <typename IndexT>
 CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(CellStore *cellstore,
      IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContextPtr &scan_ctx) :
   m_cellstore(cellstore), m_end_key(end_key), m_zcodec(0), m_fd(-1), m_offset(0),
-  m_end_offset(0), m_check_for_range_end(false), m_eos(false), m_scan_ctx(scan_ctx) {
+  m_end_offset(0), m_check_for_range_end(false), m_eos(false), m_scan_ctx(scan_ctx),
+  m_oflags(0) {
   int64_t start_offset;
 
   memset(&m_block, 0, sizeof(m_block));
   m_zcodec = m_cellstore->create_block_compression_codec();
+  m_key_decompressor = m_cellstore->create_key_decompressor();
+
+  uint16_t csversion = boost::any_cast<uint16_t>(cellstore->get_trailer()->get("version"));
+  if (csversion >= 4)
+    m_oflags = Filesystem::OPEN_FLAG_DIRECTIO;
 
   if (index) {
     IndexIteratorT iter, end_iter;
@@ -82,8 +89,8 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
     buf_size = MINIMUM_READAHEAD_AMOUNT;
 
   try {
-    m_fd = Global::dfs->open_buffered(cellstore->get_filename(), buf_size,
-                                      2, start_offset, m_end_offset);
+    m_fd = Global::dfs->open_buffered(cellstore->get_filename(), m_oflags,
+                                      buf_size, 5, start_offset, m_end_offset);
   }
   catch (Exception &e) {
     m_eos = true;
@@ -101,36 +108,35 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
    */
 
   if (start_key) {
-    while (m_cur_key < start_key) {
-      m_cur_key.ptr = m_cur_value.ptr + m_cur_value.length();
-      m_cur_value.ptr = m_cur_key.ptr + m_cur_key.length();
-      if (m_cur_key.ptr >= m_block.end) {
-        if (!fetch_next_block_readahead()) {
+    const uint8_t *ptr;
+    while (m_key_decompressor->less_than(start_key)) {
+      ptr = m_cur_value.ptr + m_cur_value.length();
+      if (ptr >= m_block.end) {
+        if (!fetch_next_block_readahead(true)) {
           m_eos = true;
           return;
         }
       }
+      else
+        m_cur_value.ptr = m_key_decompressor->add(ptr);
     }
   }
 
   /**
    * End of range check
    */
-  if (end_key && m_cur_key >= end_key) {
+  if (m_end_key && !m_key_decompressor->less_than(m_end_key)) {
     m_eos = true;
     return;
   }
 
-
   /**
    * Column family check
    */
-  if (!m_key.load(m_cur_key))
-    HT_ERROR("Problem parsing key!");
-  else if (m_key.flag != FLAG_DELETE_ROW &&
-           !m_scan_ctx->family_mask[m_key.column_family_code])
+  m_key_decompressor->load(m_key);
+  if (m_key.flag != FLAG_DELETE_ROW &&
+      !m_scan_ctx->family_mask[m_key.column_family_code])
     forward();
-
 }
 
 
@@ -141,6 +147,7 @@ CellStoreScannerIntervalReadahead<IndexT>::~CellStoreScannerIntervalReadahead() 
       Global::dfs->close(m_fd, 0);
     delete [] m_block.base;
     delete m_zcodec;
+    delete m_key_decompressor;
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -168,30 +175,37 @@ bool CellStoreScannerIntervalReadahead<IndexT>::get(Key &key, ByteString &value)
 
 template <typename IndexT>
 void CellStoreScannerIntervalReadahead<IndexT>::forward() {
+  const uint8_t *ptr;
 
   while (true) {
 
     if (m_eos)
       return;
 
+    ptr = m_cur_value.ptr + m_cur_value.length();
 
-    m_cur_key.ptr = m_cur_value.ptr + m_cur_value.length();
-
-    if (m_cur_key.ptr >= m_block.end && !fetch_next_block_readahead())
-      return;
-
-    if (m_check_for_range_end && m_cur_key >= m_end_key) {
-      m_eos = true;
-      return;
+    if (ptr >= m_block.end) {
+      if (!fetch_next_block_readahead(true)) {
+        m_eos = true;
+        return;
+      }
+      if (m_check_for_range_end && !m_key_decompressor->less_than(m_end_key)) {
+        m_eos = true;
+        return;
+      }
     }
-
-    m_cur_value.ptr = m_cur_key.ptr + m_cur_key.length();
+    else {
+      m_cur_value.ptr = m_key_decompressor->add(ptr);
+      if (m_check_for_range_end && !m_key_decompressor->less_than(m_end_key)) {
+        m_eos = true;
+        return;
+      }
+    }
 
     /**
      * Column family check
      */
-    if (!m_key.load(m_cur_key))
-      HT_ERROR("Problem parsing key!");
+    m_key_decompressor->load(m_key);
     if (m_key.flag == FLAG_DELETE_ROW
         || m_scan_ctx->family_mask[m_key.column_family_code])
       break;
@@ -212,13 +226,14 @@ void CellStoreScannerIntervalReadahead<IndexT>::forward() {
  *  2. m_block is loaded with the current block and m_iter points to the
  *     m_index entry of the current block
  *
+ * @param eob true if at end of block
  * @return true if next block successfully fetched, false if no next block
  */
 template <typename IndexT>
-bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead() {
+bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead(bool eob) {
 
   // If we're at the end of the current block, deallocate and move to next
-  if (m_block.base != 0 && m_cur_key.ptr >= m_block.end) {
+  if (m_block.base != 0 && eob) {
     delete [] m_block.base;
     memset(&m_block, 0, sizeof(m_block));
   }
@@ -245,10 +260,16 @@ bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead() {
 
       header.decode((const uint8_t **)&input_buf.ptr, &remaining);
 
-      input_buf.grow( input_buf.fill() + header.get_data_zlength() );
-      nread = Global::dfs->read(m_fd, input_buf.ptr,  header.get_data_zlength());
-      HT_EXPECT(nread == header.get_data_zlength(), Error::RANGESERVER_SHORT_CELLSTORE_READ);
-      input_buf.ptr +=  header.get_data_zlength();
+      size_t extra = 0;
+      if (m_oflags & Filesystem::OPEN_FLAG_DIRECTIO) {
+        if ((header.length()+header.get_data_zlength())%HT_DIRECT_IO_ALIGNMENT)
+          extra = HT_DIRECT_IO_ALIGNMENT - ((header.length()+header.get_data_zlength())%HT_DIRECT_IO_ALIGNMENT);
+      }
+
+      input_buf.grow( input_buf.fill() + header.get_data_zlength() + extra );
+      nread = Global::dfs->read(m_fd, input_buf.ptr,  header.get_data_zlength()+extra);
+      HT_EXPECT(nread == header.get_data_zlength()+extra, Error::RANGESERVER_SHORT_CELLSTORE_READ);
+      input_buf.ptr += header.get_data_zlength() + extra;
 
       if (m_offset + (int64_t)input_buf.fill() >= m_end_offset && m_end_key)
         m_check_for_range_end = true;
@@ -261,7 +282,7 @@ bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead() {
                  "Error inflating cell store block - magic string mismatch");
     }
     catch (Exception &e) {
-      HT_ERROR_OUT <<"Error reading cell store ("
+      HT_ERROR_OUT <<"Error reading cell store ( fd=" << m_fd << " file="
                    << m_cellstore->get_filename() <<") block: "
                    << e << HT_END;
       HT_THROW2(e.code(), e, e.what());
@@ -272,9 +293,9 @@ bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead() {
     m_block.base = expand_buf.release(&fill);
     len = fill;
 
+    m_key_decompressor->reset();
     m_block.end = m_block.base + len;
-    m_cur_key.ptr = m_block.base;
-    m_cur_value.ptr = m_cur_key.ptr + m_cur_key.length();
+    m_cur_value.ptr = m_key_decompressor->add(m_block.base);
 
     return true;
   }

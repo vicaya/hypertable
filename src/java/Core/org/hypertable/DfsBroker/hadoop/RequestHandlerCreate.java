@@ -42,8 +42,8 @@ public class RequestHandlerCreate extends ApplicationHandler {
 
     public void run() {
         ResponseCallbackCreate cb = new ResponseCallbackCreate(mComm, mEvent);
-        short sval, replication;
-        int   ival, bufferSize;
+        short replication;
+        int   ival, flags, bufferSize;
         long  blockSize;
         boolean overwrite;
         String  fileName;
@@ -53,13 +53,11 @@ public class RequestHandlerCreate extends ApplicationHandler {
             if (mEvent.payload.remaining() < 18)
                 throw new ProtocolException("Truncated message");
 
-            sval = mEvent.payload.getShort();
-            overwrite = (sval == 0) ? false : true;
+            flags = mEvent.payload.getInt();
+            bufferSize = mEvent.payload.getInt();
 
             ival = mEvent.payload.getInt();
             replication = (short)ival;
-
-            bufferSize = mEvent.payload.getInt();
 
             blockSize = mEvent.payload.getLong();
 
@@ -67,7 +65,7 @@ public class RequestHandlerCreate extends ApplicationHandler {
                 throw new ProtocolException(
                     "Filename not properly encoded in request packet");
 
-            mBroker.Create(cb, fileName, overwrite, bufferSize, replication,
+            mBroker.Create(cb, fileName, flags, bufferSize, replication,
                            blockSize);
         }
         catch (ProtocolException e) {

@@ -23,7 +23,7 @@
 #include "Common/Version.h"
 #include "Common/Logger.h"
 #include "Common/String.h"
-#include "Common/Filesystem.h"
+#include "Common/Path.h"
 #include "Common/FileUtils.h"
 #include "Common/Config.h"
 #include "Common/SystemInfo.h"
@@ -116,9 +116,23 @@ void file_desc(const Desc &desc) {
   file_descp = new Desc(desc);
 }
 
-void init_default_options() {
-  Path config(System::install_dir);
-  config /= "conf/hypertable.cfg";
+void DefaultPolicy::init_options() {
+  String default_config;
+  HT_EXPECT(!System::install_dir.empty(), Error::FAILED_EXPECTATION);
+
+  // Detect installed path and assume the layout, otherwise assume the
+  // default config file in the current directory.
+  if (System::install_dir == boost::filesystem::current_path().string()) {
+    Path exe(System::proc_info().exe);
+    default_config = exe.parent_path() == System::install_dir
+        ? "hypertable.cfg" : "conf/hypertable.cfg";
+  }
+  else {
+    Path config(System::install_dir);
+    config /= "conf/hypertable.cfg";
+    default_config = config.string();
+  }
+  String default_data_dir = System::install_dir;
 
   cmdline_desc().add_options()
     ("help,h", "Show this help message and exit")
@@ -133,7 +147,7 @@ void init_default_options() {
         "Show as little output as possible")
     ("logging-level,l", str()->default_value("info"),
         "Logging level: debug, info, notice, warn, error, crit, alert, fatal")
-    ("config", str()->default_value(config.string()), "Configuration file.\n")
+    ("config", str()->default_value(default_config), "Configuration file.\n")
     ("induce-failure", str(), "Arguments for inducing failure")
     ;
   alias("logging-level", "Hypertable.Logging.Level");
@@ -145,21 +159,32 @@ void init_default_options() {
   file_desc().add_options()
     ("Comm.DispatchDelay", i32()->default_value(0), "[TESTING ONLY] "
         "Delay dispatching of read requests by this number of milliseconds")
+    ("Comm.UsePoll", boo()->default_value(false), "Use poll() interface")
     ("Hypertable.Verbose", boo()->default_value(false),
         "Enable verbose output (system wide)")
     ("Hypertable.Silent", boo()->default_value(false),
         "Disable verbose output (system wide)")
     ("Hypertable.Logging.Level", str()->default_value("info"),
         "Set system wide logging level (default: info)")
-    ("Hypertable.Client.Workers", i32()->default_value(2),
+    ("Hypertable.DataDirectory", str()->default_value(default_data_dir),
+        "Hypertable data directory root")
+    ("Hypertable.Client.Workers", i32()->default_value(20),
         "Number of client worker threads created")
+    ("Hypertable.Client.RefreshSchema", boo()->default_value(true),
+        "Refresh client version of schema automatically")
+    ("Hypertable.Connection.Retry.Interval", i32()->default_value(10000),
+        "Average time, in milliseconds, between connection retry atempts")
+    ("Hypertable.LoadMetrics.Interval", i32()->default_value(3600), "Period of "
+        "time, in seconds, between writing metrics to sys/RS_METRICS")
     ("Hypertable.Request.Timeout", i32()->default_value(600000), "Length of "
         "time, in milliseconds, before timing out requests (system wide)")
     ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
         "errors instead of throwing exceptions on metalog errors")
+    ("Hypertable.Network.Interface", str(),
+     "Use this interface for network communication")
     ("CephBroker.Port", i16(),
      "Port number on which to listen (read by CephBroker only)")
-    ("CephBroker.Workers", i32(),
+    ("CephBroker.Workers", i32()->default_value(20),
      "Number of Ceph broker worker threads created, maybe")
     ("CephBroker.MonAddr", str(),
      "Ceph monitor address to connect to")
@@ -177,6 +202,8 @@ void init_default_options() {
     ("Kfs.Broker.Reactors", i32(), "Number of Kfs broker reactor threads")
     ("Kfs.MetaServer.Name", str(), "Hostname of Kosmos meta server")
     ("Kfs.MetaServer.Port", i16(), "Port number for Kosmos meta server")
+    ("DfsBroker.Local.DirectIO", boo()->default_value(false),
+        "Read and write files using direct i/o")
     ("DfsBroker.Local.Port", i16()->default_value(38030),
         "Port number on which to listen (read by LocalBroker only)")
     ("DfsBroker.Local.Root", str(), "Root of file and directory "
@@ -186,7 +213,7 @@ void init_default_options() {
         "Number of local broker worker threads created")
     ("DfsBroker.Local.Reactors", i32(),
         "Number of local broker communication reactor threads created")
-    ("DfsBroker.Host", str(),
+    ("DfsBroker.Host", str()->default_value("localhost"),
         "Host on which the DFS broker is running (read by clients only)")
     ("DfsBroker.Port", i16()->default_value(38030),
         "Port number on which DFS broker is listening (read by clients only)")
@@ -195,15 +222,27 @@ void init_default_options() {
         "takes precedence over Hypertable.Request.Timeout")
     ("Hyperspace.Timeout", i32()->default_value(30000), "Timeout (millisec) "
         "for hyperspace requests (preferred to Hypertable.Request.Timeout")
-    ("Hyperspace.Master.Host", str(),
-        "Host on which Hyperspace Master is or should be running")
-    ("Hyperspace.Master.Port", i16()->default_value(38040),
-        "Port number on which Hyperspace Master is or should be listening")
-    ("Hyperspace.Master.Workers", i32(),
-        "Number of Hyperspace Master worker threads created")
-    ("Hyperspace.Master.Reactors", i32(),
+    ("Hyperspace.Maintenance.Interval", i32()->default_value(60000), "Hyperspace "
+        " maintenance interval (checkpoint BerkeleyDB, log cleanup etc)")
+    ("Hyperspace.Checkpoint.Size", i32()->default_value(1*M), "Run BerkeleyDB checkpoint"
+        " when logs exceed this size limit")
+    ("Hyperspace.LogGc.Interval", i32()->default_value(3600000), "Check for unused BerkeleyDB "
+        "log files after this much time")
+    ("Hyperspace.LogGc.MaxUnusedLogs", i32()->default_value(200), "Number of unused BerkeleyDB "
+        " to keep around in case of lagging replicas")
+    ("Hyperspace.Replica.Host", strs(), "Hostname of Hyperspace replica")
+    ("Hyperspace.Replica.Port", i16()->default_value(38040),
+        "Port number on which Hyperspace is or should be listening for requests")
+    ("Hyperspace.Replica.Replication.Port", i16()->default_value(38041),
+        "Hyperspace replication port ")
+    ("Hyperspace.Replica.Replication.Timeout", i32()->default_value(10000),
+        "Hyperspace replication master dies if it doesn't receive replication acknowledgement "
+        "within this period")
+    ("Hyperspace.Replica.Workers", i32(),
+        "Number of Hyperspace Replica worker threads created")
+    ("Hyperspace.Replica.Reactors", i32(),
         "Number of Hyperspace Master communication reactor threads created")
-    ("Hyperspace.Master.Dir", str(), "Root of hyperspace file and directory "
+    ("Hyperspace.Replica.Dir", str(), "Root of hyperspace file and directory "
         "heirarchy in local filesystem (if relative path, then is relative to "
         "the installation directory)")
     ("Hyperspace.KeepAlive.Interval", i32()->default_value(10000),
@@ -212,16 +251,24 @@ void init_default_options() {
         "Hyperspace Lease interval (see Chubby paper)")
     ("Hyperspace.GracePeriod", i32()->default_value(60000),
         "Hyperspace Grace period (see Chubby paper)")
+    ("Hyperspace.Session.Reconnect", boo()->default_value(false),
+        "Reconnect to Hyperspace on session expiry")
+    ("Hypertable.Directory", str()->default_value("hypertable"),
+        "Top-level hypertable directory name")
+    ("Hypertable.Monitoring.Interval", i32()->default_value(30000),
+        "Monitoring statistics gathering interval (in milliseconds)")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "
         "milliseconds to wait prior to flushing scatter buffers (for testing)")
     ("Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer",
-     i32()->default_value(1*M), "Amount of updates (bytes) accumulated for a "
+     i32()->default_value(10*M), "Amount of updates (bytes) accumulated for a "
         "single server to trigger a scatter buffer flush")
     ("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate",
-     i64()->default_value(40*M), "Amount of updates (bytes) accumulated for "
+     i64()->default_value(50*M), "Amount of updates (bytes) accumulated for "
         "all servers to trigger a scatter buffer flush")
+    ("Hypertable.Scanner.QueueSize",
+     i32()->default_value(5), "Size of Scanner ScanBlock queue")
     ("Hypertable.LocationCache.MaxEntries", i64()->default_value(1*M),
         "Size of range location cache in number of entries")
     ("Hypertable.Master.Host", str(),
@@ -234,28 +281,47 @@ void init_default_options() {
         "Number of Hypertable Master communication reactor threads created")
     ("Hypertable.Master.Gc.Interval", i32()->default_value(300000),
         "Garbage collection interval in milliseconds by Master")
+    ("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage",
+     i32()->default_value(20), "Perform major compaction when garbage accounts "
+     "for this percentage of the data")
     ("Hypertable.RangeServer.MemoryLimit", i64(), "RangeServer memory limit")
-    ("Hypertable.RangeServer.MemoryLimit.Percentage", i32()->default_value(60),
+    ("Hypertable.RangeServer.MemoryLimit.Percentage", i32()->default_value(50),
      "RangeServer memory limit specified as percentage of physical RAM")
+    ("Hypertable.RangeServer.LowMemoryLimit.Percentage", i32()->default_value(10),
+     "Amount of memory to free in low memory condition as percentage of RangeServer memory limit")
     ("Hypertable.RangeServer.Port", i16()->default_value(38060),
         "Port number on which range servers are or should be listening")
     ("Hypertable.RangeServer.AccessGroup.CellCache.PageSize",
      i32()->default_value(512*KiB), "Page size for CellCache pool allocator")
+    ("Hypertable.RangeServer.AccessGroup.CellCache.ScannerCacheSize",
+     i32()->default_value(1024), "CellCache scanner cache size")
+    ("Hypertable.RangeServer.AccessGroup.ShadowCache",
+     boo()->default_value(false), "Enable CellStore shadow caching")
     ("Hypertable.RangeServer.AccessGroup.MaxFiles", i32()->default_value(20),
         "Maximum number of cell store files to create before merging")
     ("Hypertable.RangeServer.AccessGroup.MaxMemory", i64()->default_value(1*G),
         "Maximum bytes consumed by an Access Group")
     ("Hypertable.RangeServer.AccessGroup.MergeFiles", i32()->default_value(5),
         "How many files to merge during a merging compaction")
+    ("Hypertable.RangeServer.CellStore.TargetSize.Minimum",
+        i64()->default_value(50*M), "Target minimum size for CellStores")
     ("Hypertable.RangeServer.CellStore.DefaultBlockSize",
         i32()->default_value(64*KiB), "Default block size for cell stores")
+    ("Hypertable.RangeServer.CellStore.DefaultReplication",
+        i32(), "Default replication for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultCompressor",
         str()->default_value("lzo"), "Default compressor for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultBloomFilter",
         str()->default_value("rows"), "Default bloom filter for cell stores")
-    ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(200*M),
-        "Bytes to dedicate to the block cache")
-    ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(200*M),
+    ("Hypertable.RangeServer.CellStore.SkipNotFound",
+        boo()->default_value(false), "Skip over cell stores that are non-existent")
+    ("Hypertable.RangeServer.CommitInterval", i32()->default_value(50),
+     "Default minimum group commit interval in milliseconds")
+    ("Hypertable.RangeServer.BlockCache.MinMemory", i64()->default_value(150*M),
+        "Minimum size of block cache")
+    ("Hypertable.RangeServer.QueryCache.MaxMemory", i64()->default_value(50*M),
+        "Maximum size of query cache")
+    ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(256*MiB),
         "Size of range in bytes before splitting")
     ("Hypertable.RangeServer.Range.MaximumSize", i64()->default_value(3*G),
         "Maximum size of a range in bytes before updates get throttled")
@@ -269,32 +335,37 @@ void init_default_options() {
         "Host of DFS Broker to use for Commit Log")
     ("Hypertable.RangeServer.CommitLog.DfsBroker.Port", i16(),
         "Port of DFS Broker to use for Commit Log")
-    ("Hypertable.RangeServer.CommitLog.PruneThreshold.Min", i64(),
+    ("Hypertable.RangeServer.CommitLog.PruneThreshold.Min", i64()->default_value(1*G),
         "Lower threshold for amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.PruneThreshold.Max", i64(),
         "Upper threshold for amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.PruneThreshold.Max.MemoryPercentage",
-        i32()->default_value(75), "Upper threshold in terms of % RAM for "
+        i32()->default_value(50), "Upper threshold in terms of % RAM for "
         "amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
     ("Hypertable.RangeServer.CommitLog.Compressor",
         str()->default_value("quicklz"),
         "Commit log compressor to use (zlib, lzo, quicklz, bmz, none)")
+    ("Hypertable.CommitLog.Replication", i32(),
+        "Replication factor for commit log files")
     ("Hypertable.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
     ("Hypertable.CommitLog.Compressor", str()->default_value("quicklz"),
         "Commit log compressor to use (zlib, lzo, quicklz, bmz, none)")
     ("Hypertable.CommitLog.SkipErrors", boo()->default_value(false),
         "Skip over any corruption encountered in the commit log")
-    ("Hypertable.RangeServer.Scanner.Ttl", i32()->default_value(120000),
+    ("Hypertable.RangeServer.Scanner.Ttl", i32()->default_value(100*M),
         "Number of milliseconds of inactivity before destroying scanners")
+    ("Hypertable.RangeServer.Scanner.BufferSize", i64()->default_value(1*M),
+        "Size of transfer buffer for scan results")
     ("Hypertable.RangeServer.Timer.Interval", i32()->default_value(20000),
-        "Timer interval in milliseconds (reaping scanners, "
-        "purging commit logs, etc.)")
+        "Timer interval in milliseconds (reaping scanners, purging commit logs, etc.)")
     ("Hypertable.RangeServer.Maintenance.Interval", i32()->default_value(30000),
         "Maintenance scheduling interval in milliseconds")
-    ("Hypertable.RangeServer.Workers", i32()->default_value(30),
+    ("Hypertable.RangeServer.Monitoring.DataDirectories", str()->default_value("/"),
+        "Comma-separated list of directory mount points of disk volumes to monitor")
+    ("Hypertable.RangeServer.Workers", i32()->default_value(50),
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),
         "Number of Range Server communication reactor threads created")
@@ -302,16 +373,23 @@ void init_default_options() {
         "Number of maintenance threads.  Default is min(2, number-of-cores).")
     ("Hypertable.RangeServer.UpdateDelay", i32()->default_value(0),
         "Number of milliseconds to wait before carrying out an update (TESTING)")
-    ("ThriftBroker.Timeout", i32()->default_value(20*K), "Timeout (ms) "
+    ("Hypertable.RangeServer.ProxyName", str()->default_value(""),
+        "Use this value for the proxy name (if set) instead of reading from run dir.")
+    ("ThriftBroker.Timeout", i32()->default_value(1600*K), "Timeout (ms) "
         "for thrift broker")
     ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "
         "thrift broker")
-    ("ThriftBroker.NextLimit", i32()->default_value(100), "Iteration chunk "
-        "size (number of cells) for thrift broker")
+    ("ThriftBroker.Future.QueueSize", i32()->default_value(10), "Capacity "
+        "of result queue for Future objects")
+    ("ThriftBroker.NextThreshold", i32()->default_value(128*K), "Total size  "
+        "threshold for (size of cell data) for thrift broker next calls")
     ("ThriftBroker.API.Logging", boo()->default_value(false), "Enable or "
         "disable Thrift API logging")
     ("ThriftBroker.Mutator.FlushInterval", i32()->default_value(1000),
         "Maximum flush interval in milliseconds")
+    ("ThriftBroker.Workers", i32()->default_value(50), "Number of "
+        "worker threads for thrift broker")
+
     ;
   alias("Hypertable.RangeServer.CommitLog.RollLimit",
         "Hypertable.CommitLog.RollLimit");
@@ -344,16 +422,14 @@ void parse_args(int argc, char *argv[]) {
     _exit(0);
   }
 
-  Path defaultcfg(System::install_dir);
-  defaultcfg /= "conf/hypertable.cfg";
-  filename = get("config", defaultcfg.string());
+  filename = get_str("config");
 
   // Only try to parse config file if it exists or not default
   if (FileUtils::exists(filename)) {
     parse_file(filename, cmdline_hidden_desc());
     file_loaded = true;
   }
-  else if (filename != defaultcfg)
+  else if (!defaulted("config"))
     HT_THROW(Error::FILE_NOT_FOUND, filename);
 
   sync_aliases();       // call before use
@@ -372,7 +448,7 @@ void sync_aliases() {
   properties->sync_aliases();
 }
 
-void init_default_actions() {
+void DefaultPolicy::init() {
   String loglevel = get_str("logging-level");
   bool verbose = get_bool("verbose");
 
@@ -421,6 +497,27 @@ bool allow_unregistered_options(bool choice) {
 bool allow_unregistered_options() {
   ScopedRecLock lock(rec_mutex);
   return allow_unregistered;
+}
+
+void cleanup() {
+  ScopedRecLock lock(rec_mutex);
+  properties = 0;
+  if (cmdline_descp) {
+    delete cmdline_descp;
+    cmdline_descp = 0;
+  }
+  if (cmdline_hidden_descp) {
+    delete cmdline_hidden_descp;
+    cmdline_hidden_descp = 0;
+  }
+  if (cmdline_positional_descp) {
+    delete cmdline_positional_descp;
+    cmdline_positional_descp = 0;
+  }
+  if (file_descp) {
+    delete file_descp;
+    file_descp = 0;
+  }
 }
 
 }} // namespace Hypertable::Config

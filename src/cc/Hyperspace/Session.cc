@@ -22,6 +22,9 @@
 #include "Common/Compat.h"
 #include <cassert>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
+
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -44,35 +47,55 @@ using namespace Hyperspace;
 using namespace Serialization;
 
 
-Session::Session(Comm *comm, PropertiesPtr &cfg, SessionCallback *cb)
-  : m_comm(comm), m_verbose(false), m_silent(false), m_state(STATE_JEOPARDY),
-    m_session_callback(cb) {
-  uint16_t master_port;
-  String master_host;
+Session::Session(Comm *comm, PropertiesPtr &cfg)
+  : m_comm(comm), m_cfg(cfg), m_verbose(false), m_silent(false),
+    m_state(STATE_JEOPARDY), m_last_callback_id(0) {
 
   HT_TRY("getting config values",
     m_verbose = cfg->get_bool("Hypertable.Verbose");
     m_silent = cfg->get_bool("Hypertable.Silent");
-    master_host = cfg->get_str("Hyperspace.Master.Host");
-    master_port = cfg->get_i16("Hyperspace.Master.Port");
     m_grace_period = cfg->get_i32("Hyperspace.GracePeriod");
-    m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval"));
+    m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval");
+    m_hyperspace_port = cfg->get_i16("Hyperspace.Replica.Port");
+    m_reconnect = cfg->get_bool("Hyperspace.Session.Reconnect"));
+
+  foreach(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
+    m_hyperspace_replicas.push_back(replica);
+  }
 
   m_timeout_ms = m_lease_interval * 2;
-
-  HT_EXPECT(InetAddr::initialize(&m_master_addr, master_host.c_str(),
-            master_port), Error::BAD_DOMAIN_NAME);
 
   boost::xtime_get(&m_expire_time, boost::TIME_UTC);
   xtime_add_millis(m_expire_time, m_grace_period);
 
-  m_keepalive_handler_ptr = new ClientKeepaliveHandler(comm, cfg, this);
+  m_keepalive_handler_ptr = new ClientKeepaliveHandler(m_comm, m_cfg, this);
 }
 
 Session::~Session() {
   m_keepalive_handler_ptr->destroy_session();
 }
 
+void Session::update_master_addr(const String &host)
+{
+  ScopedLock lock(m_mutex);
+  HT_EXPECT(InetAddr::initialize(&m_master_addr, host.c_str(),m_hyperspace_port),
+            Error::BAD_DOMAIN_NAME);
+  m_hyperspace_master = host;
+}
+
+void Session::add_callback(SessionCallback *cb)
+{
+  ScopedLock lock(m_callback_mutex);
+  ++m_last_callback_id;
+  m_callbacks[m_last_callback_id] = cb;
+  cb->set_id(m_last_callback_id);
+}
+
+bool Session::remove_callback(SessionCallback *cb)
+{
+  ScopedLock lock(m_callback_mutex);
+  return m_callbacks.erase(cb->get_id());
+}
 
 uint64_t
 Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr,
@@ -117,6 +140,7 @@ Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr,
                   << ", name=" << handle_state->normal_name
                   << ", handle=" << handle_state->handle << ", flags=" << open_flags
                   << ", event_mask=" << handle_state->event_mask << HT_END;
+
       return handle_state->handle;
     }
   }
@@ -136,12 +160,19 @@ Session::open(const std::string &name, uint32_t flags,
   handle_state->open_flags = flags;
   handle_state->event_mask = (callback) ? callback->get_event_mask() : 0;
   handle_state->callback = callback;
+
   normalize_name(name, handle_state->normal_name);
 
   CommBufPtr cbuf_ptr(Protocol::create_open_request(handle_state->normal_name,
                       flags, callback, empty_attrs));
 
   return open(handle_state, cbuf_ptr, timer);
+}
+
+uint64_t
+Session::open(const std::string &name, uint32_t flags, Timer *timer) {
+  HandleCallbackPtr null_handle_callback;
+  return open(name, flags, null_handle_callback, timer);
 }
 
 
@@ -171,7 +202,7 @@ void Session::close(uint64_t handle, Timer *timer) {
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_close_request(handle));
 
- try_again:
+  try_again:
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
@@ -185,6 +216,16 @@ void Session::close(uint64_t handle, Timer *timer) {
     state_transition(Session::STATE_JEOPARDY);
     goto try_again;
   }
+}
+
+void Session::close_nowait(uint64_t handle) {
+  {
+    ScopedLock lock(m_mutex);
+    if (m_state != STATE_SAFE)
+      return;
+  }
+  CommBufPtr cbuf_ptr(Protocol::create_close_request(handle));
+  send_message(cbuf_ptr, 0, 0);
 }
 
 
@@ -213,6 +254,34 @@ void Session::mkdir(const std::string &name, Timer *timer) {
   else {
     state_transition(Session::STATE_JEOPARDY);
     goto try_again;
+  }
+
+}
+
+
+/**
+ *
+ */
+void Session::mkdirs(const std::string &name, Timer *timer) {
+  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  boost::char_separator<char> sep("/");
+  std::vector<String> name_components;
+  String path;
+
+  tokenizer tokens(name, sep);
+  for (tokenizer::iterator tok_iter = tokens.begin();
+       tok_iter != tokens.end(); ++tok_iter)
+    name_components.push_back(*tok_iter);
+
+  for (size_t i=0; i<name_components.size(); i++) {
+    path += String("/") + name_components[i];
+    try {
+      mkdir(path, timer);
+    }
+    catch (Exception &e) {
+      if (e.code() != Error::HYPERSPACE_FILE_EXISTS)
+        throw;
+    }
   }
 
 }
@@ -306,6 +375,43 @@ void Session::attr_set(uint64_t handle, const std::string &name,
 
   state_transition(Session::STATE_JEOPARDY);
   goto try_again;
+}
+
+/**
+ */
+uint64_t Session::attr_incr(uint64_t handle, const std::string &name, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  Hypertable::EventPtr event_ptr;
+  CommBufPtr cbuf_ptr(Protocol::create_attr_incr_request(handle, name));
+
+ try_again:
+  if (!wait_for_safe())
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
+
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
+  if (error == Error::OK) {
+    if (!sync_handler.wait_for_reply(event_ptr)) {
+      ClientHandleStatePtr handle_state;
+      String fname = "UNKNOWN";
+      if (m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
+        fname = handle_state->normal_name.c_str();
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+                "Problem incrementing attribute '%s' of hyperspace file '%s'",
+                name.c_str(), fname.c_str());
+    }
+    else {
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      uint64_t attr_val = decode_i64(&decode_ptr, &decode_remain);
+
+      return attr_val;
+    }
+  }
+  else {
+    state_transition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
 }
 
 
@@ -499,7 +605,100 @@ Session::readdir(uint64_t handle, std::vector<DirEntry> &listing,
   }
 }
 
+void
+Session::readdir_attr(uint64_t handle, const std::string &attr, bool include_sub_entries,
+                      std::vector<DirEntryAttr> &listing, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  Hypertable::EventPtr event_ptr;
+  CommBufPtr cbuf_ptr(Protocol::create_readdir_attr_request(handle, attr, include_sub_entries));
 
+ try_again:
+  if (!wait_for_safe())
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
+
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
+  if (error == Error::OK) {
+    if (!sync_handler.wait_for_reply(event_ptr)) {
+      HT_THROW((int)Protocol::response_code(event_ptr.get()),
+               "Hyperspace 'readdir_attr' error");
+    }
+    else {
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      uint32_t entry_cnt;
+      DirEntryAttr dentry;
+      try {
+        entry_cnt = decode_i32(&decode_ptr, &decode_remain);
+      }
+      catch (Exception &e) {
+        HT_THROW2(Error::PROTOCOL_ERROR, e, "");
+      }
+      listing.clear();
+      listing.reserve(entry_cnt);
+      for (uint32_t ii=0; ii<entry_cnt; ii++) {
+        try {
+          decode_dir_entry_attr(&decode_ptr, &decode_remain, dentry);
+        }
+        catch (Exception &e) {
+          HT_THROW2F(Error::PROTOCOL_ERROR, e,
+                     "Problem decoding entry %d of READDIR_ATTR return packet", ii);
+        }
+        listing.push_back(dentry);
+      }
+    }
+  }
+  else {
+    state_transition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+}
+
+void
+Session::readpath_attr(uint64_t handle, const std::string &attr,
+                      std::vector<DirEntryAttr> &listing, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  Hypertable::EventPtr event_ptr;
+  CommBufPtr cbuf_ptr(Protocol::create_readpath_attr_request(handle, attr));
+
+ try_again:
+  if (!wait_for_safe())
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
+
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
+  if (error == Error::OK) {
+    if (!sync_handler.wait_for_reply(event_ptr)) {
+      HT_THROW((int)Protocol::response_code(event_ptr.get()),
+               "Hyperspace 'readpath_attr' error");
+    }
+    else {
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      uint32_t entry_cnt;
+      DirEntryAttr dentry;
+      try {
+        entry_cnt = decode_i32(&decode_ptr, &decode_remain);
+      }
+      catch (Exception &e) {
+        HT_THROW2(Error::PROTOCOL_ERROR, e, "");
+      }
+      listing.clear();
+      for (uint32_t ii=0; ii<entry_cnt; ii++) {
+        try {
+          decode_dir_entry_attr(&decode_ptr, &decode_remain, dentry);
+        }
+        catch (Exception &e) {
+          HT_THROW2F(Error::PROTOCOL_ERROR, e,
+                     "Problem decoding entry %d of READPATH_ATTR return packet", ii);
+        }
+        listing.push_back(dentry);
+      }
+    }
+  }
+  else {
+    state_transition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+}
 
 void
 Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp,
@@ -678,6 +877,22 @@ void Session::check_sequencer(LockSequencer &sequencer, Timer *timer) {
   HT_WARN("CheckSequencer not implemented.");
 }
 
+/**
+ */
+String Session::locate(int type) {
+  String location;
+
+  switch(type) {
+  case LOCATE_MASTER:
+    location = m_hyperspace_master +  "\n";
+    break;
+  case LOCATE_REPLICAS:
+    foreach(const String &replica, m_hyperspace_replicas)
+      location += replica + "\n";
+    break;
+  }
+  return location;
+}
 
 /**
  */
@@ -700,19 +915,36 @@ int Session::state_transition(int state) {
   m_state = state;
   if (m_state == STATE_SAFE) {
     m_cond.notify_all();
-    if (m_session_callback && old_state == STATE_JEOPARDY)
-      m_session_callback->safe();
+    if (old_state == STATE_JEOPARDY) {
+      for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+        (it->second)->safe();
+    }
+    else if (old_state == STATE_DISCONNECTED)
+      for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+        (it->second)->reconnected();
   }
   else if (m_state == STATE_JEOPARDY) {
-    if (m_session_callback && old_state == STATE_SAFE) {
-      m_session_callback->jeopardy();
+    if (old_state == STATE_SAFE) {
+      for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+        (it->second)->jeopardy();
+      boost::xtime_get(&m_expire_time, boost::TIME_UTC);
+      xtime_add_millis(m_expire_time, m_grace_period);
+    }
+  }
+  else if (m_state == STATE_DISCONNECTED) {
+    if (m_reconnect) {
+      if (old_state != STATE_DISCONNECTED)
+        for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+          (it->second)->disconnected();
       boost::xtime_get(&m_expire_time, boost::TIME_UTC);
       xtime_add_millis(m_expire_time, m_grace_period);
     }
   }
   else if (m_state == STATE_EXPIRED) {
-    if (m_session_callback && old_state != STATE_EXPIRED)
-      m_session_callback->expired();
+    if (old_state != STATE_EXPIRED) {
+      for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+        (it->second)->reconnected();
+    }
     m_cond.notify_all();
   }
   return old_state;
@@ -781,6 +1013,7 @@ bool Session::wait_for_safe() {
 int
 Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler,
                       Timer *timer) {
+  ScopedLock lock(m_mutex);
   int error;
   uint32_t timeout_ms = timer ? (time_t)timer->remaining() : m_timeout_ms;
 
@@ -820,3 +1053,13 @@ HsCommandInterpreter *Session::create_hs_interpreter()
   return new HsCommandInterpreter(this);
 }
 
+
+void Hyperspace::close_handle(SessionPtr hyperspace, uint64_t handle) {
+  if (handle)
+    hyperspace->close(handle);
+}
+
+void Hyperspace::close_handle_ptr(SessionPtr hyperspace, uint64_t *handlep) {
+  if (*handlep)
+    hyperspace->close(*handlep);
+}

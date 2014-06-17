@@ -67,12 +67,14 @@ int main(int argc, char *argv[]) {
     init_with_policy<DefaultClientPolicy>(argc, argv);
 
     ClientPtr client = new Hypertable::Client();
+    NamespacePtr ns = client->open_namespace("/");
     HqlInterpreterPtr hql = client->create_hql_interpreter();
 
+    hql->execute("use '/'");
     hql->execute("drop table if exists periodic_flush_test");
     hql->execute("create table periodic_flush_test(col)");
 
-    TablePtr table = client->open_table("periodic_flush_test");
+    TablePtr table = ns->open_table("periodic_flush_test");
 
     default_test(table.get());
     no_log_sync_test(table.get());

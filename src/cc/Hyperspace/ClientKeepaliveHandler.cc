@@ -43,30 +43,35 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
   : m_dead(false), m_comm(comm), m_session(session), m_session_id(0),
     m_last_known_event(0) {
   int error;
-  uint16_t master_port;
-  String master_host;
 
   HT_TRY("getting config values",
     m_verbose = cfg->get_bool("Hypertable.Verbose");
-    master_host = cfg->get_str("Hyperspace.Master.Host");
-    master_port = cfg->get_i16("Hyperspace.Master.Port");
+    m_hyperspace_port = cfg->get_i16("Hyperspace.Replica.Port");
     m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval");
-    m_keep_alive_interval = cfg->get_i32("Hyperspace.KeepAlive.Interval"));
-
-  HT_EXPECT(InetAddr::initialize(&m_master_addr, master_host.c_str(),
-            master_port), Error::BAD_DOMAIN_NAME);
+    m_keep_alive_interval = cfg->get_i32("Hyperspace.KeepAlive.Interval");
+    m_reconnect = cfg->get_bool("Hyperspace.Session.Reconnect"));
 
   boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
   boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
   xtime_add_millis(m_jeopardy_time, m_lease_interval);
 
-  InetAddr::initialize(&m_local_addr, INADDR_ANY, 0);
+  m_local_addr = InetAddr(INADDR_ANY, 0);
 
   DispatchHandlerPtr dhp(this);
-  m_comm->create_datagram_receive_socket(&m_local_addr, 0x10, dhp);
+  m_comm->create_datagram_receive_socket(m_local_addr, 0x10, dhp);
 
-  CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
-      m_session_id, m_last_known_event));
+  foreach(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
+    m_hyperspace_replicas.push_back(replica);
+  }
+
+  HT_DEBUG_OUT << "Looking for Hyperspace master at " << m_hyperspace_replicas[0]
+               << ":" << m_hyperspace_port << HT_END;
+  HT_EXPECT(InetAddr::initialize(&m_master_addr, m_hyperspace_replicas[0].c_str(),
+                                 m_hyperspace_port), Error::BAD_DOMAIN_NAME);
+
+  m_session->update_master_addr(m_hyperspace_replicas[0]);
+  CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id,
+                                                                       m_last_known_event));
 
   if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
       != Error::OK)) {
@@ -107,6 +112,35 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
                   (Llu)event->header.command);
 
       switch (event->header.command) {
+      case Protocol::COMMAND_REDIRECT:
+        {
+          const char *host;
+          host = decode_vstr(&decode_ptr, &decode_remain);
+
+          // if we know who the new master is then send a keepalive to it
+          // else send a keepalive to whichever replica we sent it to last time
+          if (strlen(host) != 0) {
+            HT_DEBUG_OUT << "Received COMMAND_REDIRECT looking for master at "
+                        << host << HT_END;
+            HT_EXPECT(InetAddr::initialize(&m_master_addr, host, m_hyperspace_port),
+                      Error::BAD_DOMAIN_NAME);
+            m_session->update_master_addr(host);
+          }
+
+          CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id,
+              m_last_known_event));
+
+          if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK)) {
+            HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
+            exit(1);
+          }
+
+          if ((error = m_comm->set_timer(m_keep_alive_interval, this)) != Error::OK) {
+            HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
+            exit(1);
+          }
+          break;
+        }
       case Protocol::COMMAND_KEEPALIVE:
         {
           uint64_t session_id;
@@ -362,11 +396,56 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
 
 void ClientKeepaliveHandler::expire_session() {
-  m_session->state_transition(Session::STATE_EXPIRED);
-  if (m_conn_handler_ptr)
-    m_conn_handler_ptr->close();
-  poll(0,0,2000);
-  m_conn_handler_ptr = 0;
+
+  if (m_reconnect) {
+    int error;
+    m_conn_handler_ptr = 0;
+    m_handle_map.clear();
+    m_bad_handle_map.clear();
+    m_session_id = 0;
+    m_last_known_event = 0;
+
+    m_session->state_transition(Session::STATE_DISCONNECTED);
+
+    if (m_conn_handler_ptr)
+      m_conn_handler_ptr->close();
+    poll(0,0,2000);
+    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
+    boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
+    xtime_add_millis(m_jeopardy_time, m_lease_interval);
+
+    m_local_addr = InetAddr(INADDR_ANY, 0);
+
+    DispatchHandlerPtr dhp(this);
+    m_comm->create_datagram_receive_socket(m_local_addr, 0x10, dhp);
+
+    CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
+        m_session_id, m_last_known_event));
+
+    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
+        != Error::OK)) {
+      HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
+      exit(1);
+    }
+
+    if ((error = m_comm->set_timer(m_keep_alive_interval, this))
+        != Error::OK) {
+      HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
+      exit(1);
+    }
+  }
+  else {
+    m_session->state_transition(Session::STATE_EXPIRED);
+    if (m_conn_handler_ptr)
+      m_conn_handler_ptr->close();
+    poll(0,0,2000);
+    m_conn_handler_ptr = 0;
+    m_handle_map.clear();
+    m_bad_handle_map.clear();
+    m_session_id = 0;
+    m_last_known_event = 0;
+  }
+
   return;
 }
 
@@ -384,3 +463,4 @@ void ClientKeepaliveHandler::destroy_session() {
   m_dead = true;
   //m_comm->close_socket(m_local_addr);
 }
+

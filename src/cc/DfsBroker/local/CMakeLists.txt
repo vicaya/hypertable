@@ -21,6 +21,4 @@
 add_executable(localBroker main.cc LocalBroker.cc)
 target_link_libraries(localBroker HyperDfsBroker ${MALLOC_LIBRARY})
 
-if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS localBroker RUNTIME DESTINATION bin)
-endif ()
+install(TARGETS localBroker RUNTIME DESTINATION bin)

@@ -43,6 +43,21 @@
 namespace Hypertable {
 
   class RangeServerClient;
+  class RangeLocator;
+  class RangeLocatorHyperspaceSessionCallback: public Hyperspace::SessionCallback {
+  public:
+    RangeLocatorHyperspaceSessionCallback(){}
+    ~RangeLocatorHyperspaceSessionCallback() {}
+    void safe() {}
+    void expired() {}
+    void jeopardy() {}
+    void disconnected();
+    void reconnected();
+
+  private:
+    friend class RangeLocator;
+    RangeLocator *m_rangelocator;
+  };
 
   /** Locates containing range given a key.  This class does the METADATA range
    * searching to find the location of the range that contains a row key.
@@ -131,10 +146,14 @@ namespace Hypertable {
     }
 
   private:
+    friend class RangeLocatorHyperspaceSessionCallback;
 
     void initialize(Timer &timer);
-    int process_metadata_scanblock(ScanBlock &scan_block);
+    void hyperspace_disconnected();
+    void hyperspace_reconnected();
+    int process_metadata_scanblock(ScanBlock &scan_block, Timer &timer);
     int read_root_location(Timer &timer);
+    void initialize();
 
     Mutex                  m_mutex;
     ConnectionManagerPtr   m_conn_manager;
@@ -143,14 +162,18 @@ namespace Hypertable {
     uint64_t               m_root_file_handle;
     Hyperspace::HandleCallbackPtr m_root_handler;
     bool                   m_root_stale;
-    InetAddr               m_root_addr;
     RangeLocationInfo      m_root_range_info;
     RangeServerClient      m_range_server;
-    SchemaPtr              m_metadata_schema;
     uint8_t                m_startrow_cid;
     uint8_t                m_location_cid;
     TableIdentifier        m_metadata_table;
     std::deque<Exception>  m_last_errors;
+    bool                   m_hyperspace_init;
+    bool                   m_hyperspace_connected;
+    Mutex                  m_hyperspace_mutex;
+    uint32_t               m_timeout_ms;
+    RangeLocatorHyperspaceSessionCallback m_hyperspace_session_callback;
+    String                 m_toplevel_dir;
   };
 
   typedef intrusive_ptr<RangeLocator> RangeLocatorPtr;

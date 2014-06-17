@@ -9,31 +9,32 @@ import hyperthrift.gen.ttypes
 
 
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TBinaryProtocol, TProtocol
 try:
   from thrift.protocol import fastbinary
 except:
   fastbinary = None
 
 
+
 class HqlResult:
   """
   Result type of HQL queries
-  
+
   <dl>
     <dt>results</dt>
     <dd>String results from metadata queries</dd>
-  
+
     <dt>cells</dt>
     <dd>Resulting table cells of for buffered queries</dd>
-  
+
     <dt>scanner</dt>
     <dd>Resulting scanner ID for unbuffered queries</dd>
-  
+
     <dt>mutator</dt>
     <dd>Resulting mutator ID for unflushed modifying queries</dd>
   </dl>
-  
+
   Attributes:
    - results
    - cells
@@ -129,6 +130,9 @@ class HqlResult:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -144,7 +148,7 @@ class HqlResult:
 class HqlResult2:
   """
   Same as HqlResult except with cell as array
-  
+
   Attributes:
    - results
    - cells
@@ -247,6 +251,9 @@ class HqlResult2:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -258,4 +265,3 @@ class HqlResult2:
 
   def __ne__(self, other):
     return not (self == other)
-

@@ -7,6 +7,7 @@
 #define Hql_TYPES_H
 
 #include <Thrift.h>
+#include <TApplicationException.h>
 #include <protocol/TProtocol.h>
 #include <transport/TTransport.h>
 
@@ -15,11 +16,19 @@
 
 namespace Hypertable { namespace ThriftGen {
 
+typedef struct _HqlResult__isset {
+  _HqlResult__isset() : results(false), cells(false), scanner(false), mutator(false) {}
+  bool results;
+  bool cells;
+  bool scanner;
+  bool mutator;
+} _HqlResult__isset;
+
 class HqlResult {
  public:
 
-  static const char* ascii_fingerprint; // = "18145C760E907938802BB3CC3490043E";
-  static const uint8_t binary_fingerprint[16]; // = {0x18,0x14,0x5C,0x76,0x0E,0x90,0x79,0x38,0x80,0x2B,0xB3,0xCC,0x34,0x90,0x04,0x3E};
+  static const char* ascii_fingerprint; // = "A95F71465AD755FCA9B583321990B6B0";
+  static const uint8_t binary_fingerprint[16]; // = {0xA9,0x5F,0x71,0x46,0x5A,0xD7,0x55,0xFC,0xA9,0xB5,0x83,0x32,0x19,0x90,0xB6,0xB0};
 
   HqlResult() : scanner(0), mutator(0) {
   }
@@ -31,13 +40,7 @@ class HqlResult {
   int64_t scanner;
   int64_t mutator;
 
-  struct __isset {
-    __isset() : results(false), cells(false), scanner(false), mutator(false) {}
-    bool results;
-    bool cells;
-    bool scanner;
-    bool mutator;
-  } __isset;
+  _HqlResult__isset __isset;
 
   bool operator == (const HqlResult & rhs) const
   {
@@ -65,10 +68,18 @@ class HqlResult {
 
   bool operator < (const HqlResult & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
+
+typedef struct _HqlResult2__isset {
+  _HqlResult2__isset() : results(false), cells(false), scanner(false), mutator(false) {}
+  bool results;
+  bool cells;
+  bool scanner;
+  bool mutator;
+} _HqlResult2__isset;
 
 class HqlResult2 {
  public:
@@ -86,13 +97,7 @@ class HqlResult2 {
   int64_t scanner;
   int64_t mutator;
 
-  struct __isset {
-    __isset() : results(false), cells(false), scanner(false), mutator(false) {}
-    bool results;
-    bool cells;
-    bool scanner;
-    bool mutator;
-  } __isset;
+  _HqlResult2__isset __isset;
 
   bool operator == (const HqlResult2 & rhs) const
   {
@@ -120,8 +125,8 @@ class HqlResult2 {
 
   bool operator < (const HqlResult2 & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 

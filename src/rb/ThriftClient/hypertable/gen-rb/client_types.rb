@@ -7,7 +7,7 @@
 
 module Hypertable
   module ThriftGen
-        module CellFlag
+        module KeyFlag
           DELETE_ROW = 0
           DELETE_CF = 1
           DELETE_CELL = 2
@@ -18,8 +18,9 @@ module Hypertable
 
         module MutatorFlag
           NO_LOG_SYNC = 1
-          VALUE_MAP = {1 => "NO_LOG_SYNC"}
-          VALID_VALUES = Set.new([NO_LOG_SYNC]).freeze
+          IGNORE_UNKNOWN_CFS = 2
+          VALUE_MAP = {1 => "NO_LOG_SYNC", 2 => "IGNORE_UNKNOWN_CFS"}
+          VALID_VALUES = Set.new([NO_LOG_SYNC, IGNORE_UNKNOWN_CFS]).freeze
         end
 
         # Specifies a range of rows
@@ -38,13 +39,12 @@ module Hypertable
         #   <dd>Whether the end row is included in the result (default: true)</dd>
         # </dl>
         class RowInterval
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           START_ROW = 1
           START_INCLUSIVE = 2
           END_ROW = 3
           END_INCLUSIVE = 4
 
-          ::Thrift::Struct.field_accessor self, :start_row, :start_inclusive, :end_row, :end_inclusive
           FIELDS = {
             START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
             START_INCLUSIVE => {:type => ::Thrift::Types::BOOL, :name => 'start_inclusive', :default => true, :optional => true},
@@ -57,6 +57,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Specifies a range of cells
@@ -83,7 +84,7 @@ module Hypertable
         #   <dd>Whether the end row is included in the result (default: true)</dd>
         # </dl>
         class CellInterval
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           START_ROW = 1
           START_COLUMN = 2
           START_INCLUSIVE = 3
@@ -91,7 +92,6 @@ module Hypertable
           END_COLUMN = 5
           END_INCLUSIVE = 6
 
-          ::Thrift::Struct.field_accessor self, :start_row, :start_column, :start_inclusive, :end_row, :end_column, :end_inclusive
           FIELDS = {
             START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
             START_COLUMN => {:type => ::Thrift::Types::STRING, :name => 'start_column', :optional => true},
@@ -106,6 +106,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Specifies options for a scan
@@ -137,9 +138,21 @@ module Hypertable
         # 
         #   <dt>columns</dt>
         #   <dd>Specifies the names of the columns to return</dd>
+        # 
+        #   <dt>cell_limit</dt>
+        #   <dd>Specifies max number of cells to return per column family per row</dd>
+        # 
+        #   <dt>row_regexp</dt>
+        #   <dd>Specifies a regexp used to filter by rowkey</dd>
+        # 
+        #   <dt>value_regexp</dt>
+        #   <dd>Specifies a regexp used to filter by cell value</dd>
+        # 
+        #   <dt>scan_and_filter_rows</dt>
+        #   <dd>Indicates whether table scan filters the rows specified instead of individual look up</dd>
         # </dl>
         class ScanSpec
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           ROW_INTERVALS = 1
           CELL_INTERVALS = 2
           RETURN_DELETES = 3
@@ -148,8 +161,12 @@ module Hypertable
           START_TIME = 6
           END_TIME = 7
           COLUMNS = 8
+          KEYS_ONLY = 9
+          CELL_LIMIT = 10
+          ROW_REGEXP = 11
+          VALUE_REGEXP = 12
+          SCAN_AND_FILTER_ROWS = 13
 
-          ::Thrift::Struct.field_accessor self, :row_intervals, :cell_intervals, :return_deletes, :revs, :row_limit, :start_time, :end_time, :columns
           FIELDS = {
             ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
             CELL_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'cell_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::CellInterval}, :optional => true},
@@ -158,7 +175,12 @@ module Hypertable
             ROW_LIMIT => {:type => ::Thrift::Types::I32, :name => 'row_limit', :default => 0, :optional => true},
             START_TIME => {:type => ::Thrift::Types::I64, :name => 'start_time', :optional => true},
             END_TIME => {:type => ::Thrift::Types::I64, :name => 'end_time', :optional => true},
-            COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRING}, :optional => true}
+            COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRING}, :optional => true},
+            KEYS_ONLY => {:type => ::Thrift::Types::BOOL, :name => 'keys_only', :default => false, :optional => true},
+            CELL_LIMIT => {:type => ::Thrift::Types::I32, :name => 'cell_limit', :default => 0, :optional => true},
+            ROW_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'row_regexp', :optional => true},
+            VALUE_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'value_regexp', :optional => true},
+            SCAN_AND_FILTER_ROWS => {:type => ::Thrift::Types::BOOL, :name => 'scan_and_filter_rows', :default => false, :optional => true}
           }
 
           def struct_fields; FIELDS; end
@@ -166,12 +188,13 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
-        # Defines a table cell
+        # Defines a cell key
         # 
         # <dl>
-        #   <dt>row_key</dt>
+        #   <dt>row</dt>
         #   <dd>Specifies the row key. Note, it cannot contain null characters.
         #   If a row key is not specified in a return cell, it's assumed to
         #   be the same as the previous cell</dd>
@@ -182,9 +205,6 @@ module Hypertable
         #   <dt>column_qualifier</dt>
         #   <dd>Specifies the column qualifier. A column family must be specified.</dd>
         # 
-        #   <dt>value</dt>
-        #   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
-        # 
         #   <dt>timestamp</dt>
         #   <dd>Nanoseconds since epoch for the cell<dd>
         # 
@@ -194,25 +214,87 @@ module Hypertable
         #   <dt>flag</dt>
         #   <dd>A 16-bit integer indicating the state of the cell</dd>
         # </dl>
-        class Cell
-          include ::Thrift::Struct
-          ROW_KEY = 1
+        class Key
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          ROW = 1
           COLUMN_FAMILY = 2
           COLUMN_QUALIFIER = 3
-          VALUE = 4
-          TIMESTAMP = 5
-          REVISION = 6
-          FLAG = 7
+          TIMESTAMP = 4
+          REVISION = 5
+          FLAG = 6
 
-          ::Thrift::Struct.field_accessor self, :row_key, :column_family, :column_qualifier, :value, :timestamp, :revision, :flag
           FIELDS = {
-            ROW_KEY => {:type => ::Thrift::Types::STRING, :name => 'row_key', :optional => true},
-            COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family', :optional => true},
-            COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier', :optional => true},
-            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true},
+            ROW => {:type => ::Thrift::Types::STRING, :name => 'row'},
+            COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family'},
+            COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier'},
             TIMESTAMP => {:type => ::Thrift::Types::I64, :name => 'timestamp', :optional => true},
             REVISION => {:type => ::Thrift::Types::I64, :name => 'revision', :optional => true},
-            FLAG => {:type => ::Thrift::Types::I16, :name => 'flag', :default => 255, :optional => true}
+            FLAG => {:type => ::Thrift::Types::I32, :name => 'flag', :default =>             255, :enum_class => Hypertable::ThriftGen::KeyFlag}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            unless @flag.nil? || Hypertable::ThriftGen::KeyFlag::VALID_VALUES.include?(@flag)
+              raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Invalid value of field flag!')
+            end
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Specifies options for a shared periodic mutator
+        # 
+        # <dl>
+        #   <dt>appname</dt>
+        #   <dd>String key used to share/retrieve mutator, eg: "my_ht_app"</dd>
+        # 
+        #   <dt>flush_interval</dt>
+        #   <dd>Time interval between flushes</dd>
+        # 
+        #   <dt>flags</dt>
+        #   <dd>Mutator flags</dt>
+        # </dl>
+        class MutateSpec
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          APPNAME = 1
+          FLUSH_INTERVAL = 2
+          FLAGS = 3
+
+          FIELDS = {
+            APPNAME => {:type => ::Thrift::Types::STRING, :name => 'appname', :default => %q""},
+            FLUSH_INTERVAL => {:type => ::Thrift::Types::I32, :name => 'flush_interval', :default => 1000},
+            FLAGS => {:type => ::Thrift::Types::I32, :name => 'flags', :default => 2}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field appname is unset!') unless @appname
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field flush_interval is unset!') unless @flush_interval
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field flags is unset!') unless @flags
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Defines a table cell
+        # 
+        # <dl>
+        #   <dt>key</dt>
+        #   <dd>Specifies the cell key</dd>
+        # 
+        #   <dt>value</dt>
+        #   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
+        # </dl>
+        class Cell
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          KEY = 1
+          VALUE = 2
+
+          FIELDS = {
+            KEY => {:type => ::Thrift::Types::STRUCT, :name => 'key', :class => Hypertable::ThriftGen::Key},
+            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :binary => true, :optional => true}
           }
 
           def struct_fields; FIELDS; end
@@ -220,6 +302,372 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Specifies a result object for asynchronous requests.
+        # TODO: add support for update results
+        # 
+        # <dl>
+        #   <dt>is_empty</dt>
+        #   <dd>Indicates whether this object contains a result or not</dd>
+        # 
+        #   <dt>id</dt>
+        #   <dd>Scanner/mutator id for which these results pertain to</dd>
+        #   
+        #   <dt>is_scan</dt>
+        #   <dd>Indicates whether these are scan results or update results</dd>
+        #   
+        #   <dt>is_error</dt>
+        #   <dd>Indicates whether the async request was successful or not</dd>
+        #   
+        #   <dt>error</dt>
+        #   <dd>Error code</dd>
+        # 
+        #   <dt>error_msg</dt>
+        #   <dd>Error message</dd>
+        # 
+        #   <dt>cells</dt>
+        #   <dd>Cells returned by asynchronous scanner</dd>
+        # </dl>
+        class Result
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          IS_EMPTY = 1
+          ID = 2
+          IS_SCAN = 3
+          IS_ERROR = 4
+          ERROR = 5
+          ERROR_MSG = 6
+          CELLS = 7
+
+          FIELDS = {
+            IS_EMPTY => {:type => ::Thrift::Types::BOOL, :name => 'is_empty'},
+            ID => {:type => ::Thrift::Types::I64, :name => 'id'},
+            IS_SCAN => {:type => ::Thrift::Types::BOOL, :name => 'is_scan'},
+            IS_ERROR => {:type => ::Thrift::Types::BOOL, :name => 'is_error'},
+            ERROR => {:type => ::Thrift::Types::I32, :name => 'error', :optional => true},
+            ERROR_MSG => {:type => ::Thrift::Types::STRING, :name => 'error_msg', :optional => true},
+            CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}, :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_empty is unset!') if @is_empty.nil?
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field id is unset!') unless @id
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_scan is unset!') if @is_scan.nil?
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_error is unset!') if @is_error.nil?
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Specifies a result object for asynchronous requests.
+        # TODO: add support for update results
+        # 
+        # <dl>
+        #   <dt>is_empty</dt>
+        #   <dd>Indicates whether this object contains a result or not</dd>
+        # 
+        #   <dt>id</dt>
+        #   <dd>Scanner/mutator id for which these results pertain to</dd>
+        #   
+        #   <dt>is_scan</dt>
+        #   <dd>Indicates whether these are scan results or update results</dd>
+        #   
+        #   <dt>is_error</dt>
+        #   <dd>Indicates whether the async request was successful or not</dd>
+        #   
+        #   <dt>error</dt>
+        #   <dd>Error code</dd>
+        # 
+        #   <dt>error_msg</dt>
+        #   <dd>Error message</dd>
+        # 
+        #   <dt>cells</dt>
+        #   <dd>Cells returned by asynchronous scanner</dd>
+        # </dl>
+        class ResultAsArrays
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          IS_EMPTY = 1
+          ID = 2
+          IS_SCAN = 3
+          IS_ERROR = 4
+          ERROR = 5
+          ERROR_MSG = 6
+          CELLS = 7
+
+          FIELDS = {
+            IS_EMPTY => {:type => ::Thrift::Types::BOOL, :name => 'is_empty'},
+            ID => {:type => ::Thrift::Types::I64, :name => 'id'},
+            IS_SCAN => {:type => ::Thrift::Types::BOOL, :name => 'is_scan'},
+            IS_ERROR => {:type => ::Thrift::Types::BOOL, :name => 'is_error'},
+            ERROR => {:type => ::Thrift::Types::I32, :name => 'error', :optional => true},
+            ERROR_MSG => {:type => ::Thrift::Types::STRING, :name => 'error_msg', :optional => true},
+            CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}, :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_empty is unset!') if @is_empty.nil?
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field id is unset!') unless @id
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_scan is unset!') if @is_scan.nil?
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_error is unset!') if @is_error.nil?
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Specifies a serialized result object for asynchronous requests.
+        # TODO: add support for update results
+        # 
+        # <dl>
+        #   <dt>is_empty</dt>
+        #   <dd>Indicates whether this object contains a result or not</dd>
+        # 
+        #   <dt>id</dt>
+        #   <dd>Scanner/mutator id for which these results pertain to</dd>
+        #   
+        #   <dt>is_scan</dt>
+        #   <dd>Indicates whether these are scan results or update results</dd>
+        #   
+        #   <dt>is_error</dt>
+        #   <dd>Indicates whether the async request was successful or not</dd>
+        #   
+        #   <dt>error</dt>
+        #   <dd>Error code</dd>
+        # 
+        #   <dt>error_msg</dt>
+        #   <dd>Error message</dd>
+        # 
+        #   <dt>cells</dt>
+        #   <dd>Cells returned by asynchronous scanner</dd>
+        # </dl>
+        class ResultSerialized
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          IS_EMPTY = 1
+          ID = 2
+          IS_SCAN = 3
+          IS_ERROR = 4
+          ERROR = 5
+          ERROR_MSG = 6
+          CELLS = 7
+
+          FIELDS = {
+            IS_EMPTY => {:type => ::Thrift::Types::BOOL, :name => 'is_empty'},
+            ID => {:type => ::Thrift::Types::I64, :name => 'id'},
+            IS_SCAN => {:type => ::Thrift::Types::BOOL, :name => 'is_scan'},
+            IS_ERROR => {:type => ::Thrift::Types::BOOL, :name => 'is_error'},
+            ERROR => {:type => ::Thrift::Types::I32, :name => 'error', :optional => true},
+            ERROR_MSG => {:type => ::Thrift::Types::STRING, :name => 'error_msg', :optional => true},
+            CELLS => {:type => ::Thrift::Types::STRING, :name => 'cells', :binary => true, :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_empty is unset!') if @is_empty.nil?
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field id is unset!') unless @id
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_scan is unset!') if @is_scan.nil?
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_error is unset!') if @is_error.nil?
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Defines an individual namespace listing
+        # 
+        # <dl>
+        #   <dt>name</dt>
+        #   <dd>Name of the listing.</dd>
+        # 
+        #   <dt>is_namespace</dt>
+        #   <dd>true if this entry is a namespace.</dd>
+        # </dl>
+        class NamespaceListing
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          NAME = 1
+          IS_NAMESPACE = 2
+
+          FIELDS = {
+            NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+            IS_NAMESPACE => {:type => ::Thrift::Types::BOOL, :name => 'is_namespace'}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field name is unset!') unless @name
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_namespace is unset!') if @is_namespace.nil?
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Defines a table split
+        # 
+        # <dl>
+        #   <dt>start_row</dt>
+        #   <dd>Starting row of the split.</dd>
+        # 
+        #   <dt>end_row</dt>
+        #   <dd>Ending row of the split.</dd>
+        # 
+        #   <dt>location</dt>
+        #   <dd>Location (proxy name) of the split.</dd>
+        # 
+        #   <dt>ip_address</dt>
+        #   <dd>The IP address of the split.</dd>
+        # </dl>
+        class TableSplit
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          START_ROW = 1
+          END_ROW = 2
+          LOCATION = 3
+          IP_ADDRESS = 4
+
+          FIELDS = {
+            START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
+            END_ROW => {:type => ::Thrift::Types::STRING, :name => 'end_row', :optional => true},
+            LOCATION => {:type => ::Thrift::Types::STRING, :name => 'location', :optional => true},
+            IP_ADDRESS => {:type => ::Thrift::Types::STRING, :name => 'ip_address', :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Describes a ColumnFamily
+        # <dl>
+        #   <dt>name</dt>
+        #   <dd>Name of the column family</dd>
+        # 
+        #   <dt>ag</dt>
+        #   <dd>Name of the access group for this CF</dd>
+        # 
+        #   <dt>max_versions</dt>
+        #   <dd>Max versions of the same cell to be stored</dd>
+        # 
+        #   <dt>ttl</dt>
+        #   <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
+        # </dl>
+        class ColumnFamily
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          NAME = 1
+          AG = 2
+          MAX_VERSIONS = 3
+          TTL = 4
+
+          FIELDS = {
+            NAME => {:type => ::Thrift::Types::STRING, :name => 'name', :optional => true},
+            AG => {:type => ::Thrift::Types::STRING, :name => 'ag', :optional => true},
+            MAX_VERSIONS => {:type => ::Thrift::Types::I32, :name => 'max_versions', :optional => true},
+            TTL => {:type => ::Thrift::Types::STRING, :name => 'ttl', :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Describes an AccessGroup
+        # <dl>
+        #   <dt>name</dt>
+        #   <dd>Name of the access group</dd>
+        # 
+        #   <dt>in_memory</dt>
+        #   <dd>Is this access group in memory</dd>
+        # 
+        #   <dt>replication</dt>
+        #   <dd>Replication factor for this AG</dd>
+        # 
+        #   <dt>blocksize</dt>
+        #   <dd>Specifies blocksize for this AG</dd>
+        # 
+        #   <dt>compressor</dt>
+        #   <dd>Specifies compressor for this AG</dd>
+        # 
+        #   <dt>bloom_filter</dt>
+        #   <dd>Specifies bloom filter type</dd>
+        # 
+        #   <dt>columns</dt>
+        #   <dd>Specifies list of column families in this AG</dd>
+        # </dl>
+        class AccessGroup
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          NAME = 1
+          IN_MEMORY = 2
+          REPLICATION = 3
+          BLOCKSIZE = 4
+          COMPRESSOR = 5
+          BLOOM_FILTER = 6
+          COLUMNS = 7
+
+          FIELDS = {
+            NAME => {:type => ::Thrift::Types::STRING, :name => 'name', :optional => true},
+            IN_MEMORY => {:type => ::Thrift::Types::BOOL, :name => 'in_memory', :optional => true},
+            REPLICATION => {:type => ::Thrift::Types::I16, :name => 'replication', :optional => true},
+            BLOCKSIZE => {:type => ::Thrift::Types::I32, :name => 'blocksize', :optional => true},
+            COMPRESSOR => {:type => ::Thrift::Types::STRING, :name => 'compressor', :optional => true},
+            BLOOM_FILTER => {:type => ::Thrift::Types::STRING, :name => 'bloom_filter', :optional => true},
+            COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnFamily}, :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        # Describes a schema
+        # <dl>
+        #   <dt>name</dt>
+        #   <dd>Name of the access group</dd>
+        # 
+        #   <dt>in_memory</dt>
+        #   <dd>Is this access group in memory</dd>
+        # 
+        #   <dt>replication</dt>
+        #   <dd>Replication factor for this AG</dd>
+        # 
+        #   <dt>blocksize</dt>
+        #   <dd>Specifies blocksize for this AG</dd>
+        # 
+        #   <dt>compressor</dt>
+        #   <dd>Specifies compressor for this AG</dd>
+        # 
+        #   <dt>bloom_filter</dt>
+        #   <dd>Specifies bloom filter type</dd>
+        # 
+        #   <dt>columns</dt>
+        #   <dd>Specifies list of column families in this AG</dd>
+        # </dl>
+        class Schema
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          ACCESS_GROUPS = 1
+          COLUMN_FAMILIES = 2
+
+          FIELDS = {
+            ACCESS_GROUPS => {:type => ::Thrift::Types::MAP, :name => 'access_groups', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::AccessGroup}, :optional => true},
+            COLUMN_FAMILIES => {:type => ::Thrift::Types::MAP, :name => 'column_families', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnFamily}, :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Exception for thrift clients.
@@ -232,11 +680,10 @@ module Hypertable
         # Note: some languages (like php) don't have adequate namespace, so Exception
         # would conflict with language builtins.
         class ClientException < ::Thrift::Exception
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           CODE = 1
           MESSAGE = 2
 
-          ::Thrift::Struct.field_accessor self, :code, :message
           FIELDS = {
             CODE => {:type => ::Thrift::Types::I32, :name => 'code'},
             MESSAGE => {:type => ::Thrift::Types::STRING, :name => 'message'}
@@ -247,6 +694,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
       end

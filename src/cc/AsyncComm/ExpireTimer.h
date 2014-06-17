@@ -35,7 +35,7 @@ namespace Hypertable {
 
   struct LtTimer {
     bool operator()(const ExpireTimer &t1, const ExpireTimer &t2) const {
-      return xtime_cmp(t1.expire_time, t2.expire_time) >= 0;
+      return xtime_cmp(t1.expire_time, t2.expire_time) > 0;
     }
   };
 

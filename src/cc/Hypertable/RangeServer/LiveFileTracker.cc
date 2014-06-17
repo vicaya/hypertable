@@ -19,9 +19,11 @@
  * 02110-1301, USA.
  */
 #include "Common/Compat.h"
+#include "Common/FailureInducer.h"
 
 #include "Hypertable/Lib/Key.h"
 
+#include "Global.h"
 #include "LiveFileTracker.h"
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
@@ -36,8 +38,21 @@ LiveFileTracker::LiveFileTracker(const TableIdentifier *identifier,
   m_start_row(range->start_row), m_end_row(range->end_row),
   m_ag_name(ag_name), m_need_update(false), m_is_root(false) {
 
-  m_is_root = (m_identifier.id == 0 && *range->start_row == 0
+  m_is_root = (m_identifier.is_metadata() && *range->start_row == 0
                && !strcmp(range->end_row, Key::END_ROOT_ROW));
+
+  m_file_basename = Global::toplevel_dir + "/tables/";
+
+}
+
+void LiveFileTracker::update_live(const String &add, std::vector<String> &deletes, uint32_t nextcsid) {
+  ScopedLock lock(m_mutex);
+  for (size_t i=0; i<deletes.size(); i++)
+    m_live.erase(strip_basename(deletes[i]));
+  if (add != "")
+    m_live.insert(strip_basename(add));
+  m_cur_nextcsid = nextcsid;
+  m_need_update = true;
 }
 
 
@@ -79,17 +94,27 @@ void LiveFileTracker::update_files_column() {
     return;
 
   String file_list;
+  String printable_list;
   String end_row;
+  int retry_count = 0;
+
+  try_again:
+
+  file_list.clear();
+  end_row.clear();
 
   m_mutex.lock();
 
-  foreach(const String &file, m_live)
+  foreach(const String &file, m_live) {
     file_list += file + ";\n";
+    printable_list += file + "; ";
+  }
 
   m_blocked.clear();
   foreach(const FileRefCountMap::value_type &v, m_referenced) {
     if (m_live.count(v.first) == 0) {
       file_list += format("#%s;\n", v.first.c_str());
+      printable_list += String("#") + v.first + "; ";
       m_blocked.insert(v.first);
     }
   }
@@ -102,18 +127,34 @@ void LiveFileTracker::update_files_column() {
   try {
     if (m_is_root) {
       MetadataRoot metadata(m_schema_ptr);
-      metadata.write_files(m_ag_name, file_list);
+      if (m_cur_nextcsid != m_last_nextcsid) {
+        metadata.write_files(m_ag_name, file_list, m_cur_nextcsid);
+        m_last_nextcsid = m_cur_nextcsid;
+      }
+      else
+        metadata.write_files(m_ag_name, file_list);
     }
     else {
       MetadataNormal metadata(&m_identifier, end_row);
-      metadata.write_files(m_ag_name, file_list);
+      if (m_cur_nextcsid != m_last_nextcsid) {
+        metadata.write_files(m_ag_name, file_list, m_cur_nextcsid);
+        m_last_nextcsid = m_cur_nextcsid;
+      }
+      else
+        metadata.write_files(m_ag_name, file_list);
     }
+    HT_MAYBE_FAIL("LiveFileTracker-update_files_column");
   }
   catch (Hypertable::Exception &e) {
     m_update_mutex.unlock();
-    HT_ERROR_OUT <<"Problem updating 'Files' column of METADATA: "
-                 << e << HT_END;
-    HT_THROW2(e.code(), e, "Problem updating 'Files' column of METADATA: ");
+    HT_ERROR_OUT <<"Problem updating 'Files' column of METADATA, retry count=" << retry_count
+                 << " : " << e << HT_END;
+    if (retry_count < 6) {
+      ++retry_count;
+      poll(0, 0, 15000);
+      goto try_again;
+    }
+      HT_THROW2(e.code(), e, "Problem updating 'Files' column of METADATA: ");
   }
 
   m_need_update = false;
@@ -142,4 +183,8 @@ void LiveFileTracker::get_file_list(String &file_list, bool include_blocked) {
 
 }
 
-
+String LiveFileTracker::strip_basename(const String &fname) {
+  size_t basename_len = m_file_basename.length();
+  HT_ASSERT(!strncmp(fname.c_str(), m_file_basename.c_str(), basename_len));
+  return fname.substr(basename_len);
+}

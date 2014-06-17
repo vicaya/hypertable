@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include "CellStore.h"
+#include "KeyDecompressorNone.h"
 
 using namespace Hypertable;
 
@@ -30,3 +31,15 @@ const char CellStore::INDEX_FIXED_BLOCK_MAGIC[10]    =
     { 'I','d','x','F','i','x','-','-','-','-' };
 const char CellStore::INDEX_VARIABLE_BLOCK_MAGIC[10] =
     { 'I','d','x','V','a','r','-','-','-','-' };
+
+KeyDecompressor *CellStore::create_key_decompressor() {
+  return new KeyDecompressorNone();
+}
+
+void CellStore::set_replaced_files(const std::vector<String> &old_files) {
+  m_replaced_files = old_files;
+}
+
+const std::vector<String> &CellStore::get_replaced_files() {
+  return m_replaced_files;
+}

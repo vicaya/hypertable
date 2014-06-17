@@ -14,17 +14,21 @@ use Hypertable::ThriftGen::ClientService;
 # HELPER FUNCTIONS AND STRUCTURES
 
 package Hypertable::ThriftGen2::HqlService_hql_exec_args;
-use Class::Accessor;
-use base('Class::Accessor');
-Hypertable::ThriftGen2::HqlService_hql_exec_args->mk_accessors( qw( command noflush unbuffered ) );
+use base qw(Class::Accessor);
+Hypertable::ThriftGen2::HqlService_hql_exec_args->mk_accessors( qw( ns command noflush unbuffered ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{command} = undef;
-$self->{noflush} = 0;
-$self->{unbuffered} = 0;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{command} = undef;
+  $self->{noflush} = 0;
+  $self->{unbuffered} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
     if (defined $vals->{command}) {
       $self->{command} = $vals->{command};
     }
@@ -35,7 +39,7 @@ $self->{unbuffered} = 0;
       $self->{unbuffered} = $vals->{unbuffered};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -43,8 +47,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -58,19 +61,25 @@ sub read {
     }
     SWITCH: for($fid)
     {
-      /^1$/ && do{      if ($ftype == TType::STRING) {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
         $xfer += $input->readString(\$self->{command});
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^2$/ && do{      if ($ftype == TType::BOOL) {
+      /^3$/ && do{      if ($ftype == TType::BOOL) {
         $xfer += $input->readBool(\$self->{noflush});
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^3$/ && do{      if ($ftype == TType::BOOL) {
+      /^4$/ && do{      if ($ftype == TType::BOOL) {
         $xfer += $input->readBool(\$self->{unbuffered});
       } else {
         $xfer += $input->skip($ftype);
@@ -85,22 +94,26 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlService_hql_exec_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
   if (defined $self->{command}) {
-    $xfer += $output->writeFieldBegin('command', TType::STRING, 1);
+    $xfer += $output->writeFieldBegin('command', TType::STRING, 2);
     $xfer += $output->writeString($self->{command});
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{noflush}) {
-    $xfer += $output->writeFieldBegin('noflush', TType::BOOL, 2);
+    $xfer += $output->writeFieldBegin('noflush', TType::BOOL, 3);
     $xfer += $output->writeBool($self->{noflush});
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{unbuffered}) {
-    $xfer += $output->writeFieldBegin('unbuffered', TType::BOOL, 3);
+    $xfer += $output->writeFieldBegin('unbuffered', TType::BOOL, 4);
     $xfer += $output->writeBool($self->{unbuffered});
     $xfer += $output->writeFieldEnd();
   }
@@ -110,15 +123,15 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlService_hql_exec_result;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen2::HqlService_hql_exec_result->mk_accessors( qw( success ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{success} = undef;
-$self->{e} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  $self->{e} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{success}) {
       $self->{success} = $vals->{success};
@@ -127,7 +140,7 @@ $self->{e} = undef;
       $self->{e} = $vals->{e};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -135,8 +148,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -173,8 +185,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlService_hql_exec_result');
   if (defined $self->{success}) {
@@ -193,20 +204,24 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlService_hql_query_args;
-use Class::Accessor;
-use base('Class::Accessor');
-Hypertable::ThriftGen2::HqlService_hql_query_args->mk_accessors( qw( command ) );
+use base qw(Class::Accessor);
+Hypertable::ThriftGen2::HqlService_hql_query_args->mk_accessors( qw( ns command ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{command} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{command} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
     if (defined $vals->{command}) {
       $self->{command} = $vals->{command};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -214,8 +229,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -229,7 +243,13 @@ sub read {
     }
     SWITCH: for($fid)
     {
-      /^1$/ && do{      if ($ftype == TType::STRING) {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
         $xfer += $input->readString(\$self->{command});
       } else {
         $xfer += $input->skip($ftype);
@@ -244,12 +264,16 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlService_hql_query_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
   if (defined $self->{command}) {
-    $xfer += $output->writeFieldBegin('command', TType::STRING, 1);
+    $xfer += $output->writeFieldBegin('command', TType::STRING, 2);
     $xfer += $output->writeString($self->{command});
     $xfer += $output->writeFieldEnd();
   }
@@ -259,15 +283,15 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlService_hql_query_result;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen2::HqlService_hql_query_result->mk_accessors( qw( success ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{success} = undef;
-$self->{e} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  $self->{e} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{success}) {
       $self->{success} = $vals->{success};
@@ -276,7 +300,7 @@ $self->{e} = undef;
       $self->{e} = $vals->{e};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -284,8 +308,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -322,8 +345,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlService_hql_query_result');
   if (defined $self->{success}) {
@@ -342,17 +364,21 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlService_hql_exec2_args;
-use Class::Accessor;
-use base('Class::Accessor');
-Hypertable::ThriftGen2::HqlService_hql_exec2_args->mk_accessors( qw( command noflush unbuffered ) );
+use base qw(Class::Accessor);
+Hypertable::ThriftGen2::HqlService_hql_exec2_args->mk_accessors( qw( ns command noflush unbuffered ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{command} = undef;
-$self->{noflush} = 0;
-$self->{unbuffered} = 0;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{command} = undef;
+  $self->{noflush} = 0;
+  $self->{unbuffered} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
     if (defined $vals->{command}) {
       $self->{command} = $vals->{command};
     }
@@ -363,7 +389,7 @@ $self->{unbuffered} = 0;
       $self->{unbuffered} = $vals->{unbuffered};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -371,8 +397,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -386,19 +411,25 @@ sub read {
     }
     SWITCH: for($fid)
     {
-      /^1$/ && do{      if ($ftype == TType::STRING) {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
         $xfer += $input->readString(\$self->{command});
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^2$/ && do{      if ($ftype == TType::BOOL) {
+      /^3$/ && do{      if ($ftype == TType::BOOL) {
         $xfer += $input->readBool(\$self->{noflush});
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^3$/ && do{      if ($ftype == TType::BOOL) {
+      /^4$/ && do{      if ($ftype == TType::BOOL) {
         $xfer += $input->readBool(\$self->{unbuffered});
       } else {
         $xfer += $input->skip($ftype);
@@ -413,22 +444,26 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlService_hql_exec2_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
   if (defined $self->{command}) {
-    $xfer += $output->writeFieldBegin('command', TType::STRING, 1);
+    $xfer += $output->writeFieldBegin('command', TType::STRING, 2);
     $xfer += $output->writeString($self->{command});
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{noflush}) {
-    $xfer += $output->writeFieldBegin('noflush', TType::BOOL, 2);
+    $xfer += $output->writeFieldBegin('noflush', TType::BOOL, 3);
     $xfer += $output->writeBool($self->{noflush});
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{unbuffered}) {
-    $xfer += $output->writeFieldBegin('unbuffered', TType::BOOL, 3);
+    $xfer += $output->writeFieldBegin('unbuffered', TType::BOOL, 4);
     $xfer += $output->writeBool($self->{unbuffered});
     $xfer += $output->writeFieldEnd();
   }
@@ -438,15 +473,15 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlService_hql_exec2_result;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen2::HqlService_hql_exec2_result->mk_accessors( qw( success ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{success} = undef;
-$self->{e} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  $self->{e} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{success}) {
       $self->{success} = $vals->{success};
@@ -455,7 +490,7 @@ $self->{e} = undef;
       $self->{e} = $vals->{e};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -463,8 +498,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -501,8 +535,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlService_hql_exec2_result');
   if (defined $self->{success}) {
@@ -521,20 +554,24 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlService_hql_query2_args;
-use Class::Accessor;
-use base('Class::Accessor');
-Hypertable::ThriftGen2::HqlService_hql_query2_args->mk_accessors( qw( command ) );
+use base qw(Class::Accessor);
+Hypertable::ThriftGen2::HqlService_hql_query2_args->mk_accessors( qw( ns command ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{command} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{command} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
     if (defined $vals->{command}) {
       $self->{command} = $vals->{command};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -542,8 +579,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -557,7 +593,13 @@ sub read {
     }
     SWITCH: for($fid)
     {
-      /^1$/ && do{      if ($ftype == TType::STRING) {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
         $xfer += $input->readString(\$self->{command});
       } else {
         $xfer += $input->skip($ftype);
@@ -572,12 +614,16 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlService_hql_query2_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
   if (defined $self->{command}) {
-    $xfer += $output->writeFieldBegin('command', TType::STRING, 1);
+    $xfer += $output->writeFieldBegin('command', TType::STRING, 2);
     $xfer += $output->writeString($self->{command});
     $xfer += $output->writeFieldEnd();
   }
@@ -587,15 +633,15 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlService_hql_query2_result;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen2::HqlService_hql_query2_result->mk_accessors( qw( success ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{success} = undef;
-$self->{e} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  $self->{e} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{success}) {
       $self->{success} = $vals->{success};
@@ -604,7 +650,7 @@ $self->{e} = undef;
       $self->{e} = $vals->{e};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -612,8 +658,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -650,8 +695,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlService_hql_query2_result');
   if (defined $self->{success}) {
@@ -670,103 +714,119 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlServiceIf;
-use base('Hypertable::ThriftGen::ClientServiceIf');
+
+use strict;
+use base qw(Hypertable::ThriftGen::ClientServiceIf);
+
 sub hql_exec{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
   my $noflush = shift;
   my $unbuffered = shift;
 
   die 'implement interface';
 }
+
 sub hql_query{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
 
   die 'implement interface';
 }
+
 sub hql_exec2{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
   my $noflush = shift;
   my $unbuffered = shift;
 
   die 'implement interface';
 }
+
 sub hql_query2{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
 
   die 'implement interface';
 }
+
 package Hypertable::ThriftGen2::HqlServiceRest;
-use base('Hypertable::ThriftGen::ClientServiceRest');
-sub hql_exec{
-  my $self = shift;
-  my $request = shift;
 
+use strict;
+use base qw(Hypertable::ThriftGen::ClientServiceRest);
+
+sub hql_exec{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $command = ($request->{'command'}) ? $request->{'command'} : undef;
   my $noflush = ($request->{'noflush'}) ? $request->{'noflush'} : undef;
   my $unbuffered = ($request->{'unbuffered'}) ? $request->{'unbuffered'} : undef;
-  return $self->{impl}->hql_exec($command, $noflush, $unbuffered);
+  return $self->{impl}->hql_exec($ns, $command, $noflush, $unbuffered);
 }
 
 sub hql_query{
-  my $self = shift;
-  my $request = shift;
+  my ($self, $request) = @_;
 
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $command = ($request->{'command'}) ? $request->{'command'} : undef;
-  return $self->{impl}->hql_query($command);
+  return $self->{impl}->hql_query($ns, $command);
 }
 
 sub hql_exec2{
-  my $self = shift;
-  my $request = shift;
+  my ($self, $request) = @_;
 
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $command = ($request->{'command'}) ? $request->{'command'} : undef;
   my $noflush = ($request->{'noflush'}) ? $request->{'noflush'} : undef;
   my $unbuffered = ($request->{'unbuffered'}) ? $request->{'unbuffered'} : undef;
-  return $self->{impl}->hql_exec2($command, $noflush, $unbuffered);
+  return $self->{impl}->hql_exec2($ns, $command, $noflush, $unbuffered);
 }
 
 sub hql_query2{
-  my $self = shift;
-  my $request = shift;
+  my ($self, $request) = @_;
 
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $command = ($request->{'command'}) ? $request->{'command'} : undef;
-  return $self->{impl}->hql_query2($command);
+  return $self->{impl}->hql_query2($ns, $command);
 }
 
 package Hypertable::ThriftGen2::HqlServiceClient;
-use base('Hypertable::ThriftGen::ClientServiceClient');
-use base('Hypertable::ThriftGen2::HqlServiceIf');
+
+use base qw(Hypertable::ThriftGen::ClientServiceClient);
+use base qw(Hypertable::ThriftGen2::HqlServiceIf);
 sub new {
-  my $classname = shift;
-  my $input     = shift;
-  my $output    = shift;
+  my ($classname, $input, $output) = @_;
   my $self      = {};
-    $self = $classname->SUPER::new($input, $output);
+  $self = $classname->SUPER::new($input, $output);
   return bless($self,$classname);
 }
 
 sub hql_exec{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
   my $noflush = shift;
   my $unbuffered = shift;
 
-    $self->send_hql_exec($command, $noflush, $unbuffered);
+    $self->send_hql_exec($ns, $command, $noflush, $unbuffered);
   return $self->recv_hql_exec();
 }
 
 sub send_hql_exec{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
   my $noflush = shift;
   my $unbuffered = shift;
 
   $self->{output}->writeMessageBegin('hql_exec', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen2::HqlService_hql_exec_args();
+  $args->{ns} = $ns;
   $args->{command} = $command;
   $args->{noflush} = $noflush;
   $args->{unbuffered} = $unbuffered;
@@ -803,18 +863,21 @@ sub recv_hql_exec{
 }
 sub hql_query{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
 
-    $self->send_hql_query($command);
+    $self->send_hql_query($ns, $command);
   return $self->recv_hql_query();
 }
 
 sub send_hql_query{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
 
   $self->{output}->writeMessageBegin('hql_query', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen2::HqlService_hql_query_args();
+  $args->{ns} = $ns;
   $args->{command} = $command;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
@@ -849,22 +912,25 @@ sub recv_hql_query{
 }
 sub hql_exec2{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
   my $noflush = shift;
   my $unbuffered = shift;
 
-    $self->send_hql_exec2($command, $noflush, $unbuffered);
+    $self->send_hql_exec2($ns, $command, $noflush, $unbuffered);
   return $self->recv_hql_exec2();
 }
 
 sub send_hql_exec2{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
   my $noflush = shift;
   my $unbuffered = shift;
 
   $self->{output}->writeMessageBegin('hql_exec2', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen2::HqlService_hql_exec2_args();
+  $args->{ns} = $ns;
   $args->{command} = $command;
   $args->{noflush} = $noflush;
   $args->{unbuffered} = $unbuffered;
@@ -901,18 +967,21 @@ sub recv_hql_exec2{
 }
 sub hql_query2{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
 
-    $self->send_hql_query2($command);
+    $self->send_hql_query2($ns, $command);
   return $self->recv_hql_query2();
 }
 
 sub send_hql_query2{
   my $self = shift;
+  my $ns = shift;
   my $command = shift;
 
   $self->{output}->writeMessageBegin('hql_query2', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen2::HqlService_hql_query2_args();
+  $args->{ns} = $ns;
   $args->{command} = $command;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
@@ -946,11 +1015,12 @@ sub recv_hql_query2{
   die "hql_query2 failed: unknown result";
 }
 package Hypertable::ThriftGen2::HqlServiceProcessor;
-use base('Hypertable::ThriftGen::ClientServiceProcessor');
+
+use strict;
+use base qw(Hypertable::ThriftGen::ClientServiceProcessor);
+
 sub process {
-    my $self   = shift;
-    my $input  = shift;
-    my $output = shift;
+    my ($self, $input, $output) = @_;
     my $rseqid = 0;
     my $fname  = undef;
     my $mtype  = 0;
@@ -969,70 +1039,74 @@ sub process {
     }
     $self->$methodname($rseqid, $input, $output);
     return 1;
-  }
+}
 
-sub process_hql_exec{
-    my $self = shift;
-    my ($seqid, $input, $output) = @_;
+sub process_hql_exec {
+    my ($self, $seqid, $input, $output) = @_;
     my $args = new Hypertable::ThriftGen2::HqlService_hql_exec_args();
     $args->read($input);
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen2::HqlService_hql_exec_result();
     eval {
-      $result->{success} = $self->{handler}->hql_exec($args->command, $args->noflush, $args->unbuffered);
-    }; if( UNIVERSAL::isa($@,'ClientException') ){ 
+      $result->{success} = $self->{handler}->hql_exec($args->ns, $args->command, $args->noflush, $args->unbuffered);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
     $output->writeMessageBegin('hql_exec', TMessageType::REPLY, $seqid);
     $result->write($output);
+    $output->writeMessageEnd();
     $output->getTransport()->flush();
 }
-sub process_hql_query{
-  my $self = shift;
-  my ($seqid, $input, $output) = @_;
-  my $args = new Hypertable::ThriftGen2::HqlService_hql_query_args();
-  $args->read($input);
-  $input->readMessageEnd();
-  my $result = new Hypertable::ThriftGen2::HqlService_hql_query_result();
-  eval {
-    $result->{success} = $self->{handler}->hql_query($args->command);
-  }; if( UNIVERSAL::isa($@,'ClientException') ){ 
-    $result->{e} = $@;
-  }
-  $output->writeMessageBegin('hql_query', TMessageType::REPLY, $seqid);
-  $result->write($output);
-  $output->getTransport()->flush();
+
+sub process_hql_query {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen2::HqlService_hql_query_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen2::HqlService_hql_query_result();
+    eval {
+      $result->{success} = $self->{handler}->hql_query($args->ns, $args->command);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('hql_query', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
 }
-sub process_hql_exec2{
-my $self = shift;
-my ($seqid, $input, $output) = @_;
-my $args = new Hypertable::ThriftGen2::HqlService_hql_exec2_args();
-$args->read($input);
-$input->readMessageEnd();
-my $result = new Hypertable::ThriftGen2::HqlService_hql_exec2_result();
-eval {
-  $result->{success} = $self->{handler}->hql_exec2($args->command, $args->noflush, $args->unbuffered);
-}; if( UNIVERSAL::isa($@,'ClientException') ){ 
-  $result->{e} = $@;
+
+sub process_hql_exec2 {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen2::HqlService_hql_exec2_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen2::HqlService_hql_exec2_result();
+    eval {
+      $result->{success} = $self->{handler}->hql_exec2($args->ns, $args->command, $args->noflush, $args->unbuffered);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('hql_exec2', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
 }
-$output->writeMessageBegin('hql_exec2', TMessageType::REPLY, $seqid);
-$result->write($output);
-$output->getTransport()->flush();
+
+sub process_hql_query2 {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen2::HqlService_hql_query2_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen2::HqlService_hql_query2_result();
+    eval {
+      $result->{success} = $self->{handler}->hql_query2($args->ns, $args->command);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('hql_query2', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
 }
-sub process_hql_query2{
-my $self = shift;
-my ($seqid, $input, $output) = @_;
-my $args = new Hypertable::ThriftGen2::HqlService_hql_query2_args();
-$args->read($input);
-$input->readMessageEnd();
-my $result = new Hypertable::ThriftGen2::HqlService_hql_query2_result();
-eval {
-$result->{success} = $self->{handler}->hql_query2($args->command);
-}; if( UNIVERSAL::isa($@,'ClientException') ){ 
-$result->{e} = $@;
-}
-$output->writeMessageBegin('hql_query2', TMessageType::REPLY, $seqid);
-$result->write($output);
-$output->getTransport()->flush();
-}
+
 1;
